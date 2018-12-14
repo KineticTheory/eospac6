@@ -1,0 +1,60 @@
+8,14c8,14
+<     /opt/local/codes/data/eos/sesame
+<     /opt/local/codes/data/eos/sesou
+<     /opt/local/codes/data/eos/sescu
+<     /opt/local/codes/data/eos/sescu1
+<     /opt/local/codes/data/eos/sescu9
+<     /opt/local/codes/data/eos/export-controlled/ieee64/sesame
+<     /opt/local/codes/data/eos/export-controlled/ieee64/sesou
+---
+>     /usr/projects/data/eos/sesame
+>     /usr/projects/data/eos/sesou
+>     /usr/projects/data/eos/sescu
+>     /usr/projects/data/eos/sescu1
+>     /usr/projects/data/eos/sescu9
+>     /usr/projects/data/eos/export-controlled/ieee64/sesame
+>     /usr/projects/data/eos/export-controlled/ieee64/sesou
+17c17
+< TableHandle=1 matid =  2140 source = /opt/local/codes/data/eos/sesame page =  1
+---
+> TableHandle=1 matid =  2140 source = /usr/projects/data/eos/sesame page =  1
+127c127
+< TableHandle=1 matid =  2140 source = /opt/local/codes/data/eos/sesame page =  2
+---
+> TableHandle=1 matid =  2140 source = /usr/projects/data/eos/sesame page =  2
+135c135
+<    0.000000000000000E+00                     ---                     ---                     ---                     ---                     ---                     ---                     ---                     ---                     ---                     ---
+---
+>    0.000000000000000E+00                     ---   0.000000000000000E+00                     ---                     ---                     ---                     ---                     ---                     ---                     ---                     ---
+237c237
+< TableHandle=1 matid =  2140 source = /opt/local/codes/data/eos/sesame page =  3
+---
+> TableHandle=1 matid =  2140 source = /usr/projects/data/eos/sesame page =  3
+347c347
+< TableHandle=1 matid =  2140 source = /opt/local/codes/data/eos/sesame page =  4
+---
+> TableHandle=1 matid =  2140 source = /usr/projects/data/eos/sesame page =  4
+457c457
+< TableHandle=1 matid =  2140 source = /opt/local/codes/data/eos/sesame page =  5
+---
+> TableHandle=1 matid =  2140 source = /usr/projects/data/eos/sesame page =  5
+567c567
+< TableHandle=1 matid =  2140 source = /opt/local/codes/data/eos/sesame page =  6
+---
+> TableHandle=1 matid =  2140 source = /usr/projects/data/eos/sesame page =  6
+677c677
+< TableHandle=1 matid =  2140 source = /opt/local/codes/data/eos/sesame page =  7
+---
+> TableHandle=1 matid =  2140 source = /usr/projects/data/eos/sesame page =  7
+787c787
+< TableHandle=1 matid =  2140 source = /opt/local/codes/data/eos/sesame page =  8
+---
+> TableHandle=1 matid =  2140 source = /usr/projects/data/eos/sesame page =  8
+897c897
+< TableHandle=1 matid =  2140 source = /opt/local/codes/data/eos/sesame page =  9
+---
+> TableHandle=1 matid =  2140 source = /usr/projects/data/eos/sesame page =  9
+1007c1007
+< TableHandle=1 matid =  2140 source = /opt/local/codes/data/eos/sesame page = 10
+---
+> TableHandle=1 matid =  2140 source = /usr/projects/data/eos/sesame page = 10

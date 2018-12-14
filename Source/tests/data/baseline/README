@@ -1,0 +1,2 @@
+This directory contains the regression test baseline files. Typically, these files have been
+created using the default Cygwin configuration with gcc, g++, g95, and g77.

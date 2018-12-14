@@ -1,0 +1,61 @@
+TH
+--
+ 0. creating table EOS_Pic_DT (39)
+ 1. creating table EOS_Uic_DT (48)
+ 2. creating table EOS_T_DUic (50)
+ 3. creating table EOS_T_DPic (41)
+ 4. creating table EOS_Pic_DUic (42)
+ 5. creating table EOS_Uic_DPic (51)
+ 6. creating table EOS_Uic_DT (48)
+ 7. creating table EOS_Pv_T (159)
+ 8. creating table EOS_Dv_T (167)
+ 9. creating table EOS_Dls_T (175)
+10. creating table EOS_Uv_T (183)
+11. creating table EOS_Uls_T (191)
+12. creating table EOS_Av_T (199)
+13. creating table EOS_Als_T (207)
+14. creating table EOS_T_Pv (160)
+15. creating table EOS_T_Uls (192)
+16. creating table EOS_T_Uv (184)
+17. creating table EOS_Uls_Pv (193)
+18. creating table EOS_Pv_Uls (164)
+19. creating table EOS_Pv_Uv (163)
+20. creating table EOS_Uv_Pv (185)
+
+*** call Get/SetPackedTables BEFORE calling eos_LoadTables()
+
+TH
+--
+ 0. loading table EOS_Pic_DT (39)
+ 1. loading table EOS_Uic_DT (48)
+ 2. loading table EOS_T_DUic (50)
+ 3. loading table EOS_T_DPic (41)
+ 4. loading table EOS_Pic_DUic (42)
+ 5. loading table EOS_Uic_DPic (51)
+ 6. loading table EOS_Uic_DT (48)
+    eos_LoadTables ERROR 2042: EOS_CANT_MAKE_MONOTONIC: Can't make data monotonic in X
+    eos_LoadTables ERROR 72021: EOS_INVALID_TABLE_HANDLE: Invalid table handle because EOS_CANT_MAKE_MONOTONIC: Can't make data monotonic in X
+ 7. loading table EOS_Pv_T (159)
+ 8. loading table EOS_Dv_T (167)
+ 9. loading table EOS_Dls_T (175)
+10. loading table EOS_Uv_T (183)
+11. loading table EOS_Uls_T (191)
+12. loading table EOS_Av_T (199)
+13. loading table EOS_Als_T (207)
+14. loading table EOS_T_Pv (160)
+15. loading table EOS_T_Uls (192)
+16. loading table EOS_T_Uv (184)
+    eos_LoadTables ERROR 2042: EOS_CANT_MAKE_MONOTONIC: Can't make data monotonic in X
+    eos_LoadTables ERROR 172021: EOS_INVALID_TABLE_HANDLE: Invalid table handle because EOS_CANT_MAKE_MONOTONIC: Can't make data monotonic in X
+17. loading table EOS_Uls_Pv (193)
+18. loading table EOS_Pv_Uls (164)
+19. loading table EOS_Pv_Uv (163)
+20. loading table EOS_Uv_Pv (185)
+
+*** call Get/SetPackedTables AFTER calling eos_LoadTables()
+
+Interpolating EOS_T_DUic data
+	X = 4.4192528e-07, Y = 6.4494245e-02, F = 1.3193187e-10, extrapCode = 2026
+	X = 4.4192528e-07, Y = 9.5735247e-02, F = 1.3193187e-10, extrapCode = 2026
+	X = 4.4192528e-07, Y = 9.5735248e-02, F = 2.2764211e-08, extrapCode = 0
+	X = 4.4192528e-07, Y = 1.0538984e-01, F = 4.6817760e-01, extrapCode = 0

@@ -1,0 +1,4 @@
+2000: Invalid error code
+2002: EOS_BAD_INTERPOLATION_FLAG: Interpolation is not recognized
+2050: EOS_INVALID_INFO_CATEGORY_FLAG: The info category flag passed into eos_GetMetaData() is invalid
+2051: Invalid error code

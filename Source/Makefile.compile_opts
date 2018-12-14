@@ -1,0 +1,656 @@
+#-*-makefile-*-###################################################
+#
+#  Copyright -- see file named COPYRIGHTNOTICE
+#
+##################################################################
+### This file contains the following:                          ###
+###    Platform- and compiler-dependent options.               ###
+###    Common Makefile settings and variables.                 ###
+### This is to be included at the top of all Makefiles, and    ###
+### it is to be located at the topmost Source directory.       ###
+##################################################################
+
+ifeq (0,${MAKELEVEL})
+  # store command line for future use
+  export ORIGINAL_COMMAND_LINE := $(strip $(MAKE) $(if $(DEBUG),DEBUG=$(DEBUG),) $(MAKEFLAGS) $(MAKECMDGOALS))
+
+  # verify version is at least $(REQUIRED_MAKE_VERSION)
+  REQUIRED_MAKE_VERSION = 3.80
+  RECOMMENDED_MAKE_VERSION = 3.81
+  ver := $(shell echo $(MAKE_VERSION) | sed -e 's/^\([0-9][0-9]*\.[0-9][0-9]*\).*/\1/')
+  valid = $(shell perl -e '$$v="$(MAKE_VERSION)";$$v=~s/(^\d+\.\d+).*/$$1/;print (($$v>=$(REQUIRED_MAKE_VERSION)) ? 1: 0);')
+  got_recommended = $(shell perl -e '$$v="$(MAKE_VERSION)";$$v=~s/(^\d+\.\d+).*/$$1/;print (($$v>=$(RECOMMENDED_MAKE_VERSION)) ? 1: 0);')
+  ifeq ($(valid),1)
+    ifeq ($(got_recommended),1)
+      $(warning ==== GNU make $(MAKE_VERSION) is current enough. ====)
+    else
+      $(warning ==== GNU make $(MAKE_VERSION) is current enough; however, GNU make $(RECOMMENDED_MAKE_VERSION) or later is recommended. ====)
+    endif
+  else
+    $(error GNU make $(MAKE_VERSION) is not current enough. Version $(REQUIRED_MAKE_VERSION) or later is required. It has been available from ftp.gnu.org since 03-Oct-2002, so upgrade already!)
+  endif
+endif
+
+# Define some general variables
+LIBRARY = eospac
+MAJOR_VER = 6
+
+CVS_BASE_TAG_NAME = $(filter-out ame:,$(filter-out \$,$(subst -,.,$Name: v6-3-1 $)))
+ifeq ($(strip $(CVS_BASE_TAG_NAME)),)
+  # Assign a default value to CVS_BASE_TAG_NAME if empty
+  CVS_BASE_TAG_NAME = v$(MAJOR_VER).unreleased
+endif
+
+INSTALLEDFILESGROUP = $(filter pdata,$(shell groups))
+
+##################################################################
+### Useful functions used within this Makefile.                ###
+##################################################################
+_realpath = $(shell perl -e 'use Cwd "abs_path"; print abs_path(shift)," ";' $(1))
+whichloc = $(shell type $(1) 2>&1 | grep -iv 'not found' | cut -d' ' -f3 2> /dev/null)
+pathsearch = $(strip $(call whichloc,$(1)))
+filefound = $(strip $(call whichloc,$(1)))
+#pathsearch = $(strip $(shell which $(1) 2> /dev/null))
+#filefound = $(strip $(shell if [ `which $(1)` ]; then echo 'TRUE'; else echo 'FALSE'; fi; ))
+match = $(if $(findstring $(1),$(2)),TRUE,)
+match_r1 = $(if $(findstring x$(notdir $(1)),x$(notdir $(2))),$(1),)
+strip-trailing-slash = $(patsubst %/,%,$(1))
+#
+# Function: define_version_cmd
+# Arguments: 1: Compiler executable (i.e., $(CC), $(F77), etc.) with path removed
+#               so it is consistent with keys of the associative array named
+#               VERSION_FLAG
+#            2: Default version flag
+# Returns:   Executable statement composed of the Compiler executable and
+#            a version flag stored in associative array named VERSION_FLAG
+define_version_cmd  = $(firstword $(1)) $(if $(call defined,VERSION_FLAG,$(notdir $(firstword $(1)))),$(call get,VERSION_FLAG,$(notdir $(firstword $(1)))),$(2))
+#
+# Function: set_if_undefined
+# Description: Conditional form of gmsl::set function will set hash entry if not already set
+# Function:  set
+# Arguments: 1: Name of associative array
+#            2: The key value to associate
+#            3: The value associated with the key
+# Returns:   None
+set_if_undefined = $(if $(call defined,$(1),$(firstword $(2))),,$(call set,$(1),$(firstword $(2)),$(3)))
+#
+# Function: ifseq_set
+# Description: Conditional form of gmsl::set function returns one of two supplied values based upon
+#              string equivalence condition
+# Function:  set
+# Arguments: 1: A string to compare against...
+#            2: ...this string
+#            3: Return value if $(1) == $(2)
+#            4: Return value if $(1) != $(2)
+# Returns:   None
+ifseq_set = $(if $(call seq,$(1),$(2)),$(3),$(4))
+
+##################################################################
+### Start of system configuration section.                     ###
+##################################################################
+srcdir = .
+# Determine root path of Source/*.compile_opts
+# Makefiles are NOT to be any deeper than five subdirectory levels without
+# fixing the value assignment of REL_BASEDIR.
+REL_BASEDIR :=$(strip \
+                $(if $(wildcard *.compile_opts),., \
+                 $(if $(wildcard ../*.compile_opts),.., \
+                  $(if $(wildcard ../../*.compile_opts),../.., \
+                   $(if $(wildcard ../../../*.compile_opts),../../.., \
+                    $(if $(wildcard ../../../../*.compile_opts),../../../.., \
+                     $(if $(wildcard ../../../../../*.compile_opts),../../../../.., \
+                    $(error Makefiles are NOT to be any deeper than five subdirectory levels \
+                            without fixing the value assignment of REL_BASEDIR in Makefile.compile_opts))))))))
+BASEDIR := $(strip $(call _realpath,$(strip $(shell pwd))/$(REL_BASEDIR)))
+
+export REL_BASEDIR BASEDIR
+
+# If you use gcc, you should either run the
+# fixincludes script that comes with it or else use
+# gcc with the -traditional option.  Otherwise ioctl
+# calls will be compiled incorrectly on some systems.
+
+INSTALL     = install -c -m 664
+INSTALLDATA = install -c -m 664
+
+LIBS = -l$(LIBRARY)$(MAJOR_VER) -lm
+
+LIBRARY_AR = lib$(LIBRARY)$(MAJOR_VER).a
+LIBRARY_README = lib$(LIBRARY)$(MAJOR_VER).readme
+WINLIB_AR = lib$(LIBRARY)$(MAJOR_VER).lib
+BUILD_LOG = build.log
+
+##################################################################
+### Define BASE_* variables                                    ###
+##################################################################
+ifeq (0,${MAKELEVEL})
+  _BASE_ARCH0 = $(shell sh $(BASEDIR)/scripts/config.guess)
+  _BASE_ARCH = $(shell sh $(BASEDIR)/scripts/config.guess.wrapper)
+  ifneq ($(strip $(BASE_ARCH0)),)
+    ifneq ($(strip $(BASE_ARCH0)),$(strip $(_BASE_ARCH0)))
+      $(warning *** You cannot override BASE_ARCH0 on the command line! ***)
+    endif
+  endif
+  override BASE_ARCH0  = $(strip $(_BASE_ARCH0))
+  ifneq ($(strip $(BASE_ARCH)),)
+    ifneq ($(strip $(BASE_ARCH)),$(strip $(_BASE_ARCH)))
+      $(warning *** You cannot override BASE_ARCH on the command line! ***)
+    endif
+  endif
+  override BASE_ARCH  = $(strip $(_BASE_ARCH))
+  _ARCH = $(_BASE_ARCH)$(ALT_SUBDIR)
+  ifneq ($(strip $(ARCH)),)
+    ifneq ($(strip $(ARCH)),$(strip $(_ARCH)))
+      $(warning *** You cannot override ARCH on the command line! ***)
+    endif
+  endif
+  override ARCH       = $(_ARCH)
+  export BASE_ARCH0 BASE_ARCH ARCH
+endif
+
+EXAMPLEDIR = $(BASEDIR)/example/$(ARCH)
+OBJDIR     = $(BASEDIR)/_OBJ/$(ARCH)
+LIBDIR     = $(BASEDIR)/lib/$(ARCH)
+BINDIR     = $(BASEDIR)/bin/$(ARCH)
+INCDIR     = $(BASEDIR)/include/$(ARCH)
+SESIOINC   = $(BASEDIR)/ses_io/include
+SESIOSRC   = $(BASEDIR)/ses_io/src
+#SESIO_DEF  = -DSES_IO_USED
+SESIO_DEF  =
+SRCDIR     = $(BASEDIR)/src
+CPPDIR     = $(BASEDIR)/src/$(ARCH)
+
+BASE_EXAMPLEDIR = $(BASEDIR)/example/$(BASE_ARCH)
+BASE_OBJDIR     = $(BASEDIR)/_OBJ/$(BASE_ARCH)
+BASE_LIBDIR     = $(BASEDIR)/lib/$(BASE_ARCH)
+BASE_BINDIR     = $(BASEDIR)/bin/$(BASE_ARCH)
+BASE_INCDIR     = $(BASEDIR)/include/$(BASE_ARCH)
+BASE_CPPDIR     = $(BASEDIR)/src/$(BASE_ARCH)
+BASE_TESTEXEDIR = $(BASEDIR)/tests/$(BASE_ARCH)
+
+DOCDIR     = $(BASEDIR)/docs
+DOCS       = $(BASEDIR)/../Documentation/ES6-UserManual.pdf
+TESTEXEDIR = $(BASEDIR)/tests/$(ARCH)
+REGRESSION_DATA_EXCEPTIONS_DIR = $(BASEDIR)/tests/data/$(BASE_ARCH0)$(if $(filter -O%,$(DEBUG)),/optimized,)$(ALT_SUBDIR)
+REGRESSION_DATA_EXCEPTIONS_DIR_NEW = $(BASEDIR)/tests/data/$(BASE_ARCH)$(if $(filter -O%,$(DEBUG)),/optimized,)$(ALT_SUBDIR)
+REGRESSION_DATA_DIR = $(BASEDIR)/tests/data/baseline
+REGRESSION_DATA_DIR_PARENT = $(BASEDIR)/tests/data
+
+##################################################################
+### Define default compilers and options.                      ###
+### These may be overridden upon a platform-specific basis.    ###
+##################################################################
+CC  := gcc
+CXX := g++
+F77 := gfortran
+F90 := gfortran
+
+# Override RANLIB, since its functionality is typically performed by ar.
+RANLIB = :
+# In platform-specific config/Makefile.* files, use the following if ranlib
+# is required:
+#  RANLIB = $(call pathsearch,ranlib)
+
+PROFILE =
+DEBUG  = -g
+PURIFY =
+VALGRIND =
+
+ifneq ($(strip $(memcheck)),)
+  VALGRIND = $(call pathsearch,valgrind)
+  ifeq ($(strip $(VALGRIND)),)
+    PURIFY = $(call pathsearch,purify)
+  else
+  VALGRIND += --leak-check=full
+  endif
+endif
+
+_CFLAGS   = -Wall -fPIC -DHEADER_EOS
+_CXXFLAGS = -Wall -fPIC
+_FFLAGS   = -Wall -fPIC
+_F90FLAGS = -Wall -fPIC
+
+C_ADDRESS_FLAG =
+F_ADDRESS_FLAG =
+ALT_SUBDIR = $(shell $(BASEDIR)/scripts/define_module_subdir $(F90))
+N32 =
+
+##################################################################
+### Define default installation locations.                     ###
+##################################################################
+VERSION     = latest
+base_dirList= /opt/local/codes/data \
+              /usr/projects/data    \
+              /usr/local/codes/data \
+              /usr/gapps/lanl-data  \
+              /projects/lanl-data  \
+              /usr/local
+prefix      = $(addsuffix /eos/$(LIBRARY)/$(CVS_BASE_TAG_NAME), \
+                $(strip $(firstword $(wildcard $(base_dirList)))))
+exec_prefix = $(strip ${prefix})
+install_subdir = $(strip $(ARCH))
+
+export CVS_BASE_TAG_NAME F_ADDRESS_FLAG C_ADDRESS_FLAG ALT_SUBDIR N32 SERIES
+
+##################################################################
+### Use the gmsl (gnu standard library) from                   ###
+### http://sourceforge.net/projects/gmsl/                      ###
+##################################################################
+ifeq ($(MAKEFILE_LIST),)
+  __gmsl_root := $(BASEDIR)/config/
+endif
+include $(BASEDIR)/config/gmsl
+
+##################################################################
+### Platform-dependent system configuration section tests for  ###
+### MANUFACTURER and OPERATING_SYSTEM.                         ###
+### Given an ARCH value containing the machine specification   ###
+### into a single specification in the form:                   ###
+###   CPU_TYPE-MANUFACTURER-OPERATING_SYSTEM                   ###
+### or in some cases, the newer four-part form:                ###
+###   CPU_TYPE-MANUFACTURER-KERNEL-OPERATING_SYSTEM            ###
+##################################################################
+USE_C   = TRUE
+USE_CXX = TRUE
+USE_F77 = TRUE
+USE_F90 = TRUE
+
+ifeq ($(call match,pc-cygwin,$(BASE_ARCH)),TRUE)
+  # Cygwin and MS Windows PC
+  CONFIG_INC := $(BASEDIR)/config/Makefile.pc-cygwin
+
+else
+ifeq ($(call match,sgi-irix,$(BASE_ARCH)),TRUE)
+  # mips SGI and IRIX
+  CONFIG_INC := $(BASEDIR)/config/Makefile.sgi-irix
+
+else
+ifeq ($(call match,dec-osf,$(BASE_ARCH)),TRUE)
+  # Compaq Alpha and OSF
+  CONFIG_INC := $(BASEDIR)/config/Makefile.dec-osf
+
+else
+#ifeq ($(or $(call match,powerpc64-,$(BASE_ARCH)),$(call match,powerpc-,$(BASE_ARCH)))$(call match,-linux-gnu,$(BASE_ARCH)),TRUETRUE)
+ifeq ($(call match,powerpc64-,$(BASE_ARCH))$(call match,-linux-gnu,$(BASE_ARCH)),TRUETRUE)
+  # IBM PowerPC-64 and Linux
+  CONFIG_INC := $(BASEDIR)/config/Makefile.powerpc-linux-gnu
+
+else
+ifeq ($(call match,powerpc-,$(BASE_ARCH))$(call match,-linux-gnu,$(BASE_ARCH)),TRUETRUE)
+  # IBM PowerPC and Linux
+  CONFIG_INC := $(BASEDIR)/config/Makefile.powerpc-linux-gnu
+
+else
+ifeq ($(call match,powerpc-ibm-aix,$(BASE_ARCH)),TRUE)
+  # IBM PowerPC and AIX
+  CONFIG_INC := $(BASEDIR)/config/Makefile.powerpc-ibm-aix
+
+else
+ifeq ($(call match,powerpc-apple,$(BASE_ARCH)),TRUE)
+  # IBM PowerPC and MacOS
+  CONFIG_INC := $(BASEDIR)/config/Makefile.powerpc-apple
+
+else
+ifeq ($(call match,i386-apple,$(BASE_ARCH)),TRUE)
+  # Intel and MacOS
+  CONFIG_INC := $(BASEDIR)/config/Makefile.i386-apple
+
+else
+ifeq ($(call match,sun-solaris,$(BASE_ARCH)),TRUE)
+  # Sun and Solaris
+  CONFIG_INC := $(BASEDIR)/config/Makefile.sun-solaris
+
+else
+ifeq ($(call match,-linux-gnu,$(BASE_ARCH)),TRUE)
+  # PC or IBM PowerPC, and Linux
+  CONFIG_INC := $(BASEDIR)/config/Makefile.-linux-gnu
+
+else
+
+  # Default
+  CONFIG_INC :=
+
+endif
+endif
+endif
+endif
+endif
+endif
+endif
+endif
+endif
+endif
+
+##################################################################
+### Define ARCH                                                ###
+##################################################################
+ifeq (0,${MAKELEVEL})
+  _ARCH = $(_BASE_ARCH)$(ALT_SUBDIR)
+  ifneq ($(strip $(ARCH)),)
+    ifneq ($(strip $(ARCH)),$(strip $(_ARCH)))
+      $(warning *** You cannot override ARCH on the command line! ***)
+    endif
+  endif
+  override ARCH       = $(_ARCH)
+  export ARCH
+endif
+
+##################################################################
+###    - detect F90                                            ###
+###    - define ALT_SUBDIR                                     ###
+###    - optionally redefine ARCH                              ###
+##################################################################
+
+CONFIG_INC_DETECT = $(strip $(wildcard $(CONFIG_INC).detect))
+ifeq ($(strip $(wildcard $(CONFIG_INC_DETECT))),)
+  CONFIG_INC_DETECT = $(wildcard $(CONFIG_INC))
+endif
+ifeq ($(strip $(wildcard $(CONFIG_INC_DETECT))),)
+
+  # Default
+  ifeq (0,${MAKELEVEL})
+    $(warning **************************************************************************************)
+    $(warning WARNING: This is an unsupported platform. Attempting to compile using generic options.)
+    $(warning **************************************************************************************)
+  endif
+
+else
+
+  #$(warning include $(CONFIG_INC_DETECT))
+  include $(CONFIG_INC_DETECT)
+
+endif
+
+##################################################################
+### Platform-dependent system configuration section tests for  ###
+### MANUFACTURER and OPERATING_SYSTEM.                         ###
+### Given an BASE_ARCH value containing the machine            ###
+### specification into a single specification in the form:     ###
+###   CPU_TYPE-MANUFACTURER-OPERATING_SYSTEM                   ###
+### or in some cases, the newer four-part form:                ###
+###   CPU_TYPE-MANUFACTURER-KERNEL-OPERATING_SYSTEM            ###
+##################################################################
+
+CONFIG_INC_HASHES = $(strip $(wildcard $(CONFIG_INC).hashes))
+ifeq ($(strip $(wildcard $(CONFIG_INC_HASHES))),)
+  CONFIG_INC_DETECT = $(wildcard $(CONFIG_INC))
+endif
+ifeq ($(strip $(wildcard $(CONFIG_INC_HASHES))),)
+
+  # Default
+  ifeq (0,${MAKELEVEL})
+    $(warning **************************************************************************************)
+    $(warning WARNING: This is an unsupported platform. Attempting to compile using generic options.)
+    $(warning **************************************************************************************)
+  endif
+
+else
+
+  #$(warning include $(CONFIG_INC_HASHES))
+  include $(CONFIG_INC_HASHES)
+
+endif
+
+##################################################################
+### Complete configuration dependent upon ALT_SUBDIR, and ARCH ###
+##################################################################
+
+EXAMPLEDIR = $(BASEDIR)/example/$(ARCH)
+OBJDIR     = $(BASEDIR)/_OBJ/$(ARCH)
+LIBDIR     = $(BASEDIR)/lib/$(ARCH)
+BINDIR     = $(BASEDIR)/bin/$(ARCH)
+INCDIR     = $(BASEDIR)/include/$(ARCH)
+SESIOINC   = $(BASEDIR)/ses_io/include
+SRCDIR     = $(BASEDIR)/src
+CPPDIR     = $(BASEDIR)/src/$(ARCH)
+DOCDIR     = $(BASEDIR)/docs
+DOCS       = $(BASEDIR)/../Documentation/ES6-UserManual.pdf
+TESTEXEDIR = $(BASEDIR)/tests/$(ARCH)
+REGRESSION_DATA_EXCEPTIONS_DIR = $(BASEDIR)/tests/data/$(BASE_ARCH0)$(if $(filter -O%,$(DEBUG)),/optimized,)$(ALT_SUBDIR)
+REGRESSION_DATA_EXCEPTIONS_DIR_NEW = $(BASEDIR)/tests/data/$(BASE_ARCH)$(if $(filter -O%,$(DEBUG)),/optimized,)$(ALT_SUBDIR)
+install_subdir = $(strip $(ARCH))
+
+##################################################################
+### Define default installation locations.                     ###
+##################################################################
+VERSION     = latest
+base_dirList= /opt/local/codes/data \
+              /usr/projects/data    \
+              /usr/local/codes/data \
+              /usr/gapps/lanl-data  \
+              /projects/lanl-data  \
+              /usr/local
+prefix      = $(addsuffix /eos/$(LIBRARY)/$(CVS_BASE_TAG_NAME), \
+                $(strip $(firstword $(wildcard $(base_dirList)))))
+exec_prefix = $(strip ${prefix})
+
+export CVS_BASE_TAG_NAME F_ADDRESS_FLAG C_ADDRESS_FLAG ALT_SUBDIR N32 SERIES
+
+# Correct missing F77
+ifeq ($(strip $(notdir $(call pathsearch,$(F77)))),)
+  $(warning F77 compiler reset to $(F90) for this machine, because $(F77) was not found.)
+  F77 = $(F90)
+endif
+
+##################################################################
+### Assign values to associative arrays, which hold various    ###
+### compiler options -- unless already defined.                ###
+##################################################################
+#
+### VERSION_FLAG{$CC} = $flag
+$(call set_if_undefined,VERSION_FLAG,gcc,--version)
+$(call set_if_undefined,VERSION_FLAG,pgcc,-V)
+$(call set_if_undefined,VERSION_FLAG,icc,-V)
+$(call set_if_undefined,VERSION_FLAG,pathcc,-version)
+$(call set_if_undefined,VERSION_FLAG,cc,-V)
+#
+### VERSION_FLAG{$CXX} = $flag
+$(call set_if_undefined,VERSION_FLAG,g++,--version)
+$(call set_if_undefined,VERSION_FLAG,pgCC,-V)
+$(call set_if_undefined,VERSION_FLAG,icpc,-V)
+$(call set_if_undefined,VERSION_FLAG,pathCC,-version)
+$(call set_if_undefined,VERSION_FLAG,CC,-V)
+#
+### VERSION_FLAG{$F77} = $flag
+$(call set_if_undefined,VERSION_FLAG,pgf77,-V)
+$(call set_if_undefined,VERSION_FLAG,g77,--version)
+$(call set_if_undefined,VERSION_FLAG,f77,-V)
+#
+### VERSION_FLAG{$F90} = $flag
+$(call set_if_undefined,VERSION_FLAG,pgf90,-V)
+$(call set_if_undefined,VERSION_FLAG,pgf95,-V)
+$(call set_if_undefined,VERSION_FLAG,lf95,--version)
+$(call set_if_undefined,VERSION_FLAG,f90,-V)
+$(call set_if_undefined,VERSION_FLAG,pathf90,-version)
+$(call set_if_undefined,VERSION_FLAG,pathf95,-version)
+$(call set_if_undefined,VERSION_FLAG,ifort,-V)
+$(call set_if_undefined,VERSION_FLAG,g95,--version)
+$(call set_if_undefined,VERSION_FLAG,gfortran,--version)
+$(call set_if_undefined,VERSION_FLAG,f90,-V)
+$(call set_if_undefined,VERSION_FLAG,ftn,-V)
+#
+# Redefine compiler version commands based upon increased flexibility
+#
+CC_VERSION  = $(if $(_CC_VERSION),$(_CC_VERSION),$(call define_version_cmd,$(CC),--version))
+CXX_VERSION = $(if $(_CXX_VERSION),$(_CXX_VERSION),$(call define_version_cmd,$(CXX),--version))
+F77_VERSION = $(if $(_F77_VERSION),$(_F77_VERSION),$(call define_version_cmd,$(F77),--version))
+F90_VERSION = $(if $(_F90_VERSION),$(_F90_VERSION),$(call define_version_cmd,$(F90_Key),--version))
+
+export VERSION_FLAG CC_VERSION CXX_VERSION F90_VERSION
+
+##################################################################
+### Check to see if the specified compiler executables are     ###
+### available.                                                 ###
+##################################################################
+
+ifneq (${MAKECMDGOALS},help)
+  ifeq (0,${MAKELEVEL})
+    ifeq ($(call filefound,$(CC)),FALSE)
+      $(error Invalid C compiler: $(CC) not found)
+    endif
+    ifeq ($(call filefound,$(CXX)),FALSE)
+      $(error Invalid C++ compiler: $(CXX) not found)
+    endif
+    ifeq ($(call filefound,$(F77)),FALSE)
+      $(error Invalid F77 compiler: $(F77) not found)
+    endif
+    ifeq ($(call filefound,$(F90)),FALSE)
+      $(error Invalid F90 compiler: $(F90) not found)
+    endif
+
+    $(warning *** The following compiler executables are used ***)
+    $(warning C: $(notdir $(CC)) ... $(call pathsearch,$(CC)))
+    $(warning C++: $(notdir $(CXX)) ... $(call pathsearch,$(CXX)))
+    $(warning F77: $(notdir $(F77)) ... $(call pathsearch,$(F77)))
+    $(warning F90: $(notdir $(F90)) ... $(call pathsearch,$(F90)))
+    $(warning ***************************************************)
+  endif
+endif
+
+##################################################################
+### Define compiler and loader options.                        ###
+##################################################################
+_CFLAGS   := $(if $(call seq,gcc,$(notdir $(CC))),$(_CFLAGS),$(subst -Wall,,$(_CFLAGS)))
+_CXXFLAGS := $(if $(call seq,g++,$(notdir $(CXX))),$(_CXXFLAGS),$(subst -Wall,,$(_CXXFLAGS)))
+_FFLAGS   := $(if $(call seq,g77,$(notdir $(F77))),$(_FFLAGS),$(subst -Wall,,$(_FFLAGS)))
+_F90FLAGS := $(if $(call seq,gfortran,$(notdir $(F90))),$(_F90FLAGS),$(subst -Wall,,$(_F90FLAGS)))
+
+override CFLAGS   := $(_CFLAGS)   $(DEBUG) $(C_ADDRESS_FLAG) -I$(INCDIR) -I$(SESIOINC) -L$(LIBDIR) $(DEFS) $(PROFILE) $(CFLAGS)
+override CXXFLAGS := $(_CXXFLAGS) $(DEBUG) $(C_ADDRESS_FLAG) -I$(INCDIR) -I$(SESIOINC) -L$(LIBDIR) $(DEFS) $(PROFILE) $(CXXFLAGS)
+override FFLAGS   := $(_FFLAGS)   $(DEBUG) $(F_ADDRESS_FLAG) -I$(INCDIR) -I$(SESIOINC) -L$(LIBDIR) $(DEFS) $(PROFILE) $(FFLAGS)
+override F90FLAGS := $(_F90FLAGS) $(DEBUG) $(F_ADDRESS_FLAG) -I$(INCDIR) -I$(SESIOINC) -L$(LIBDIR) $(DEFS) $(PROFILE) $(F90FLAGS)
+
+override LDFLAGS  += $(_LDFLAGS) $(DEBUG) -I$(INCDIR) -I$(SESIOINC) -L$(LIBDIR) $(PROFILE)
+
+##################################################################
+### Define source, object and executable file names            ###
+##################################################################
+ifeq ($(USE_C),TRUE)
+  SRCS     = $(wildcard *.c)
+endif
+ifeq ($(USE_CXX),TRUE)
+  SRCS_CPP = $(wildcard *.cpp)
+endif
+ifeq ($(USE_F77),TRUE)
+  SRCS_F77 = $(wildcard *.f)
+endif
+ifeq ($(USE_F90),TRUE)
+  SRCS_F90 = $(wildcard *.f90)
+endif
+SRCS_ALL = $(SRCS) $(SRCS_CPP) $(SRCS_F77) $(SRCS_F90) $(SRCS_F03)
+HEADERS  = $(wildcard *.h *.fi)
+
+EXE0 := $(sort $(SRCS:%.c=%) $(SRCS_CPP:%.cpp=%) \
+               $(SRCS_F77:%.f=%) $(SRCS_F90:%.f90=%) $(SRCS_F03:%.f90=%))
+
+ifeq ($(strip $(SERIES)$(EXE)),)
+  override EXE = $(strip $(EXE0))
+else
+  ifeq ($(strip $(notdir $(shell pwd))),tests)
+    ifneq ($(strip $(SERIES)),)
+      EXE1 = $(filter $(addsuffix %,$(SERIES)),$(EXE0))
+      override EXE = $(sort $(filter $(EXE1),$(EXE0)))
+      ifeq ($(strip $(EXE)),)
+        EXE1 = $(foreach v,$(SERIES),$(shell egrep -l '(ingroup.*$(v))' $(SRCS_ALL)) $(wildcard *.$(v)))
+        override EXE = $(sort $(basename $(EXE1)))
+      endif
+    endif
+  else
+    override EXE = $(strip $(EXE0))
+  endif
+endif
+
+OBJS  = $(sort $(EXE:%=$(OBJDIR)/%.o))
+
+JUNKFILE = junk.stdout
+export NODEFAULTDATA
+
+ifdef VERBOSE
+
+  $(warning ALT_SUBDIR                         : $(ALT_SUBDIR))
+  $(warning ARCH                               : $(ARCH))
+  $(warning BASEDIR                            : $(BASEDIR))
+  $(warning BASE_ARCH0                         : $(BASE_ARCH0))
+  $(warning BASE_ARCH                          : $(BASE_ARCH))
+  $(warning BASE_BINDIR                        : $(BASE_BINDIR))
+  $(warning BASE_CPPDIR                        : $(BASE_CPPDIR))
+  $(warning BASE_EXAMPLEDIR                    : $(BASE_EXAMPLEDIR))
+  $(warning BASE_INCDIR                        : $(BASE_INCDIR))
+  $(warning BASE_LIBDIR                        : $(BASE_LIBDIR))
+  $(warning BASE_OBJDIR                        : $(BASE_OBJDIR))
+  $(warning BASE_TESTEXEDIR                    : $(BASE_TESTEXEDIR))
+  $(warning BINDIR                             : $(BINDIR))
+  $(warning BUILD_LOG                          : $(BUILD_LOG))
+  $(warning CC                                 : $(CC))
+  $(warning CC_VERSION                         : $(CC_VERSION))
+  $(warning CFLAGS                             : $(CFLAGS))
+  $(warning CPPDIR                             : $(CPPDIR))
+  $(warning CVS_BASE_TAG_NAME                  : $(CVS_BASE_TAG_NAME))
+  $(warning CXX                                : $(CXX))
+  $(warning CXXFLAGS                           : $(CXXFLAGS))
+  $(warning CXX_VERSION                        : $(CXX_VERSION))
+  $(warning C_ADDRESS_FLAG                     : $(C_ADDRESS_FLAG))
+  $(warning DEBUG                              : $(DEBUG))
+  $(warning DOCDIR                             : $(DOCDIR))
+  $(warning DOCS                               : $(DOCS))
+  $(warning EXAMPLEDIR                         : $(EXAMPLEDIR))
+  $(warning EXE0                               : $(EXE0))
+  $(warning EXE1                               : $(EXE1))
+  $(warning F77                                : $(F77))
+  $(warning F77_VERSION                        : $(F77_VERSION))
+  $(warning F90                                : $(F90))
+  $(warning F90FLAGS                           : $(F90FLAGS))
+  $(warning F90_VERSION                        : $(F90_VERSION))
+  $(warning FFLAGS                             : $(FFLAGS))
+  $(warning F_ADDRESS_FLAG                     : $(F_ADDRESS_FLAG))
+  $(warning HASH VERSION_FLAG                  : $(foreach k,$(call keys,VERSION_FLAG),$(k){$(call get,VERSION_FLAG,$(k))}))
+  $(warning HASH _COMP_FLAGS                   : $(foreach k,$(call keys,_COMP_FLAGS),$(k){$(call get,_COMP_FLAGS,$(k))}))
+  $(warning HEADERS                            : $(HEADERS))
+  $(warning INCDIR                             : $(INCDIR))
+  $(warning INSTALL                            : $(INSTALL))
+  $(warning INSTALLDATA                        : $(INSTALLDATA))
+  $(warning INSTALLEDFILESGROUP                : $(INSTALLEDFILESGROUP))
+  $(warning LDFLAGS                            : $(LDFLAGS))
+  $(warning LIBDIR                             : $(LIBDIR))
+  $(warning LIBRARY                            : $(LIBRARY))
+  $(warning LIBRARY_AR                         : $(LIBRARY_AR))
+  $(warning LIBRARY_README                     : $(LIBRARY_README))
+  $(warning LIBS                               : $(LIBS))
+  $(warning MAJOR_VER                          : $(MAJOR_VER))
+  $(warning N32                                : $(N32))
+  $(warning OBJDIR                             : $(OBJDIR))
+  $(warning OBJS                               : $(OBJS))
+  $(warning PROFILE                            : $(PROFILE))
+  $(warning PURIFY                             : $(PURIFY))
+  $(warning RANLIB                             : $(RANLIB))
+  $(warning RECOMMENDED_MAKE_VERSION           : $(RECOMMENDED_MAKE_VERSION))
+  $(warning REGRESSION_DATA_DIR_PARENT         : $(REGRESSION_DATA_DIR_PARENT))
+  $(warning REGRESSION_DATA_DIR                : $(REGRESSION_DATA_DIR))
+  $(warning REGRESSION_DATA_EXCEPTIONS_DIR     : $(REGRESSION_DATA_EXCEPTIONS_DIR))
+  $(warning REGRESSION_DATA_EXCEPTIONS_DIR_NEW : $(REGRESSION_DATA_EXCEPTIONS_DIR_NEW))
+  $(warning REL_BASEDIR                        : $(REL_BASEDIR))
+  $(warning REQUIRED_MAKE_VERSION              : $(REQUIRED_MAKE_VERSION))
+  $(warning SESIOINC                           : $(SESIOINC))
+  $(warning SRCDIR                             : $(SRCDIR))
+  $(warning SRCS                               : $(SRCS))
+  $(warning SRCS_ALL                           : $(SRCS_ALL))
+  $(warning SRCS_CPP                           : $(SRCS_CPP))
+  $(warning SRCS_F77                           : $(SRCS_F77))
+  $(warning SRCS_F90                           : $(SRCS_F90))
+  $(warning SRCS_F03                           : $(SRCS_F03))
+  $(warning TESTEXEDIR                         : $(TESTEXEDIR))
+  $(warning USE_C                              : $(USE_C))
+  $(warning USE_CXX                            : $(USE_CXX))
+  $(warning USE_F77                            : $(USE_F77))
+  $(warning USE_F90                            : $(USE_F90))
+  $(warning VALGRIND                           : $(VALGRIND))
+  $(warning VERSION                            : $(VERSION))
+  $(warning WINLIB_AR                          : $(WINLIB_AR))
+  $(warning _ARCH                              : $(_ARCH))
+  $(warning _BASE_ARCH                         : $(_BASE_ARCH))
+  $(warning _CFLAGS                            : $(_CFLAGS))
+  $(warning _CXXFLAGS                          : $(_CXXFLAGS))
+  $(warning _F90FLAGS                          : $(_F90FLAGS))
+  $(warning _FFLAGS                            : $(_FFLAGS))
+
+endif

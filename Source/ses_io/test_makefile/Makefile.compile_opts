@@ -1,0 +1,153 @@
+#-*-makefile-*-###################################################
+#
+
+##################################################################
+### Define default compilers and options.                      ###
+##################################################################
+
+CC  := gcc
+F90 := gfortran
+
+#####################################
+#  get the machine architecture    ##
+#####################################
+
+ifeq ($(OS),)
+OS=$(shell uname -s)
+endif
+
+#####################################
+#  determine root path             ##
+#####################################
+ifeq ($(BASEDIR),)
+match = $(if $(findstring $(1),$(2)),TRUE,)
+_realpath = $(shell perl -e 'use Cwd "abs_path"; print abs_path(shift)," ";' $(1))
+whichloc = $(shell type $(1) 2>&1 | grep -iv 'not found' | cut -d' ' -f3 2> /dev/null)
+pathsearch = $(strip $(call whichloc,$(1)))
+filefound = $(strip $(call whichloc,$(1)))
+endif
+
+# Determine root path of ses_io
+# Makefiles are NOT to be any deeper than two subdirectory levels without
+# fixing the value assignment of BASEDIR.
+REL_BASEDIR :=$(strip \
+                $(if $(wildcard *.compile_opts),., \
+                 $(if $(wildcard ../*.compile_opts),.., \
+                  $(if $(wildcard ../../*.compile_opts),../.., \
+                   $(if $(wildcard ../../../*.compile_opts),../../.., \
+                     $(if $(wildcard ../../../../*.compile_opts),../../../.., \
+                       $(if $(wildcard test_makefile/*.compile_opts),./test_makefile, \
+                         $(if $(wildcard ../test_makefile/*.compile_opts),../test_makefile, \
+                           $(if $(wildcard ../../test_makefile/*.compile_opts),../../test_makefile, \
+                             $(if $(wildcard ../../../test_makefile/*.compile_opts),../../../test_makefile, \
+                               $(if $(wildcard ../../../../test_makefile/*.compile_opts),../../../../test_makefile, \
+                             $(error Makefiles are NOT to be any deeper than three subdirectory levels \
+                            without fixing the value assignment of REL_BASEDIR in Makefile.compile_opts))))))))))))
+BASEDIR := $(strip $(call _realpath,$(strip $(shell pwd))/$(REL_BASEDIR)))
+
+
+
+#####################################
+#  include the config file         ##
+#####################################
+
+ifeq (0,${MAKELEVEL})
+  _BASE_ARCH = $(shell $(BASEDIR)/scripts/config.guess)
+  ifneq ($(strip $(BASE_ARCH)),)
+    ifneq ($(strip $(BASE_ARCH)),$(strip $(_BASE_ARCH)))
+      $(warning *** You cannot override BASE_ARCH on the command line! ***)
+    endif
+  endif
+  override BASE_ARCH  = $(strip $(_BASE_ARCH))
+  _ARCH = $(_BASE_ARCH)$(ALT_SUBDIR)
+  ifneq ($(strip $(ARCH)),)
+    ifneq ($(strip $(ARCH)),$(strip $(_ARCH)))
+      $(warning *** You cannot override ARCH on the command line! ***)
+    endif
+  endif
+  override ARCH       = $(_ARCH)
+  export BASE_ARCH ARCH
+endif
+
+
+ifeq ($(call match,pc-cygwin,$(ARCH)),TRUE)
+  # Cygwin and MS Windows PC
+  $(warning include $(BASEDIR)/config/Makefile.pc-cygwin)
+  include $(BASEDIR)/config/Makefile.pc-cygwin
+
+else
+ifeq ($(call match,sgi-irix,$(ARCH)),TRUE)
+  # mips SGI and IRIX
+  $(warning include $(BASEDIR)/config/Makefile.sgi-irix)
+  include $(BASEDIR)/config/Makefile.sgi-irix
+
+else
+ifeq ($(call match,dec-osf,$(ARCH)),TRUE)
+  # Compaq Alpha and OSF
+  $(warning include $(BASEDIR)/config/Makefile.dec-osf)
+  include $(BASEDIR)/config/Makefile.dec-osf
+
+else
+ifeq ($(call match,powerpc64-,$(ARCH))$(call match,-linux-gnu,$(ARCH)),TRUETRUE)
+  # IBM PowerPC-64 and Linux
+  $(warning include $(BASEDIR)/config/Makefile.powerpc-linux-gnu)
+  include $(BASEDIR)/config/Makefile.powerpc-linux-gnu
+
+else
+ifeq ($(call match,powerpc-,$(ARCH))$(call match,-linux-gnu,$(ARCH)),TRUETRUE)
+  # IBM PowerPC and Linux
+  $(warning include $(BASEDIR)/config/Makefile.powerpc-linux-gnu)
+  include $(BASEDIR)/config/Makefile.powerpc-linux-gnu
+
+else
+ifeq ($(call match,powerpc-ibm-aix,$(ARCH)),TRUE)
+  # IBM PowerPC and AIX
+  $(warning include $(BASEDIR)/config/Makefile.powerpc-ibm-aix)
+  include $(BASEDIR)/config/Makefile.powerpc-ibm-aix
+
+else
+ifeq ($(call match,powerpc-apple,$(ARCH)),TRUE)
+  # IBM PowerPC and MacOS
+  $(warning include $(BASEDIR)/config/Makefile.powerpc-apple)
+  include $(BASEDIR)/config/Makefile.powerpc-apple
+
+else
+ifeq ($(call match,i386-apple,$(ARCH)),TRUE)
+  # Intel and MacOS
+  $(warning include $(BASEDIR)/config/Makefile.i386-apple)
+  include $(BASEDIR)/config/Makefile.i386-apple
+
+else
+ifeq ($(call match,sun-solaris,$(ARCH)),TRUE)
+  # Sun and Solaris
+  $(warning include $(BASEDIR)/config/Makefile.sun-solaris)
+  include $(BASEDIR)/config/Makefile.sun-solaris
+
+else
+ifeq ($(call match,-linux-gnu,$(ARCH)),TRUE)
+  # PC or IBM PowerPC, and Linux
+  $(warning include $(BASEDIR)/config/Makefile.-linux-gnu)
+  include $(BASEDIR)/config/Makefile.-linux-gnu
+
+else
+
+# Default
+  ifeq (0,${MAKELEVEL})
+    $(warning **************************************************************************************)
+    $(warning WARNING: This is an unsupported platform. Attempting to compile using generic options.)
+    $(warning **************************************************************************************)
+  endif
+
+endif
+endif
+endif
+endif
+endif
+endif 
+endif 
+endif 
+endif 
+endif 
+
+
+

@@ -1,0 +1,50 @@
+
+
+BEFORE UNPACKING: 
+
+--- TEST eos_Interpolate using category 0 tableType: EOS_Pt_DT ---
+EOS_Pt_DT Interpolation Results:
+	i=0	X = 9.300000e-01, Y = 2.000000e+03, F = -1.101940e+00, dFx = -2.692105e-01, dFy = 6.513708e-04, errorCode: 0 EOS_OK
+	i=1	X = 2.000000e+00, Y = 2.000000e+03, F = 1.376799e+00, dFx = 7.309279e+00, dFy = 2.672322e-03, errorCode: 0 EOS_OK
+	i=2	X = 2.000000e+00, Y = 5.000000e+03, F = 9.134893e+00, dFx = 1.298585e+01, dFy = 2.533237e-03, errorCode: 0 EOS_OK
+	i=3	X = 2.000000e+00, Y = 6.000000e+03, F = 1.165887e+01, dFx = 1.478165e+01, dFy = 2.515897e-03, errorCode: 0 EOS_OK
+	i=4	X = 1.150000e+00, Y = 6.000000e+03, F = 2.891292e+00, dFx = 6.752147e+00, dFy = 9.615165e-04, errorCode: 0 EOS_OK
+	i=5	X = 2.000000e-01, Y = 6.000000e+03, F = 4.620302e-02, dFx = -2.891825e-01, dFy = 7.507235e-05, errorCode: 0 EOS_OK
+	i=6	X = 2.000000e-01, Y = 4.975000e+03, F = -2.862905e-02, dFx = -6.584775e-01, dFy = 7.105128e-05, errorCode: 0 EOS_OK
+	i=7	X = 2.000000e-01, Y = 1.050000e+03, F = -2.813206e-01, dFx = -1.902100e+00, dFy = 6.172003e-05, errorCode: 0 EOS_OK
+
+COMMENTS:
+101: material. aluminum (z=13.0, a=26.9815) /source. S. D. Crockett, T-1/date. Aug.28  /refs. LAUR-04-6442 /comp. Al /codes. GRIZZLY (ver. 030603)  /Classification. Unclassified /                                                                  
+102: This EOS was produced to using the standard LANL GRIZZLY models. The aluminum EOS is an improvement over prior SESAME EOS produced.  A comparison to the 3710 series is provided in LAUR-04-6442. A copy of all the input decks required to reproduce this EOS are contained in the above report.                               
+
+EOS_Exchange_Coeff: 0
+EOS_Mean_Atomic_Mass: 26.9815
+EOS_Mean_Atomic_Num: 13
+EOS_Modulus: 0
+EOS_Normal_Density: 2.7
+
+
+
+AFTER UNPACKING: 
+
+--- TEST eos_Interpolate using category 0 tableType: EOS_Pt_DT ---
+EOS_Pt_DT Interpolation Results:
+	i=0	X = 9.300000e-01, Y = 2.000000e+03, F = -1.101940e+00, dFx = -2.692105e-01, dFy = 6.513708e-04, errorCode: 0 EOS_OK
+	i=1	X = 2.000000e+00, Y = 2.000000e+03, F = 1.376799e+00, dFx = 7.309279e+00, dFy = 2.672322e-03, errorCode: 0 EOS_OK
+	i=2	X = 2.000000e+00, Y = 5.000000e+03, F = 9.134893e+00, dFx = 1.298585e+01, dFy = 2.533237e-03, errorCode: 0 EOS_OK
+	i=3	X = 2.000000e+00, Y = 6.000000e+03, F = 1.165887e+01, dFx = 1.478165e+01, dFy = 2.515897e-03, errorCode: 0 EOS_OK
+	i=4	X = 1.150000e+00, Y = 6.000000e+03, F = 2.891292e+00, dFx = 6.752147e+00, dFy = 9.615165e-04, errorCode: 0 EOS_OK
+	i=5	X = 2.000000e-01, Y = 6.000000e+03, F = 4.620302e-02, dFx = -2.891825e-01, dFy = 7.507235e-05, errorCode: 0 EOS_OK
+	i=6	X = 2.000000e-01, Y = 4.975000e+03, F = -2.862905e-02, dFx = -6.584775e-01, dFy = 7.105128e-05, errorCode: 0 EOS_OK
+	i=7	X = 2.000000e-01, Y = 1.050000e+03, F = -2.813206e-01, dFx = -1.902100e+00, dFy = 6.172003e-05, errorCode: 0 EOS_OK
+
+COMMENTS:
+101: material. aluminum (z=13.0, a=26.9815) /source. S. D. Crockett, T-1/date. Aug.28  /refs. LAUR-04-6442 /comp. Al /codes. GRIZZLY (ver. 030603)  /Classification. Unclassified /                                                                  
+102: This EOS was produced to using the standard LANL GRIZZLY models. The aluminum EOS is an improvement over prior SESAME EOS produced.  A comparison to the 3710 series is provided in LAUR-04-6442. A copy of all the input decks required to reproduce this EOS are contained in the above report.                               
+
+EOS_Exchange_Coeff: 0
+EOS_Mean_Atomic_Mass: 26.9815
+EOS_Mean_Atomic_Num: 13
+EOS_Modulus: 0
+EOS_Normal_Density: 2.7
+

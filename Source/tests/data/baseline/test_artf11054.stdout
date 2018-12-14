@@ -1,0 +1,8 @@
+
+--- Interpolate using tableType EOS_T_DUt ---
+EOS_T_DUt Interpolation Results:
+eos_Interpolate ERROR 12008 (TH=0): EOS_INTERP_EXTRAPOLATED: Interpolation caused extrapolation beyond data table boundaries
+	i=0	X = 2.900000e+01, Y = 1.100000e-02, F = 0.000000e+00, dFx = -3.073353e+03, dFy = 1.291904e+06, extrap: 2026 (EOS_xOk_yLo)
+	i=1	X = 2.910288e+01, Y = 1.300000e-02, F = 1.145239e+03, dFx = -1.827976e+03, dFy = 7.633892e+05, extrap: 0 (EOS_OK)
+	i=2	X = 3.000000e+01, Y = 1.500000e-02, F = 9.561465e+02, dFx = -2.007727e+03, dFy = 7.678347e+05, extrap: 0 (EOS_OK)
+	i=3	X = 3.100000e+01, Y = 5.000000e+01, F = 2.098568e+06, dFx = 7.116563e+03, dFy = 2.729524e+04, extrap: 0 (EOS_OK)

@@ -1,0 +1,10 @@
+##################################################################
+#  
+#  Copyright -- see file named COPYRIGHTNOTICE
+#  
+##################################################################
+# Sesame3 test data file list
+../data/sesame3
+
+# Sesame1 test data file list
+../data/sesame1

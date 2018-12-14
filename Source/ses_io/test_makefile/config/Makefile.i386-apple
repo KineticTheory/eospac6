@@ -1,0 +1,117 @@
+#-*-makefile-*-###################################################
+#  
+#  Copyright -- see file named COPYRIGHTNOTICE
+#  
+##################################################################
+### This file contains the following:                          ###
+### Platform-dependent system configuration for an ARCH value  ###
+### containing the following pattern:                          ###
+###    i386-apple
+##################################################################
+#
+# GMSL 1.0.11 function dependencies exist (see $(BASEDIR)/config/gmsl).
+#
+# i386 and MacOS
+
+##################################################################
+# Compiler suite configurations based upon F90                 ###
+##################################################################
+# Default: use the first F90 compiler found from F90_List
+F90_List = f90 pgf90 ifort g95 gfortran nagfor
+F90 = $(firstword $(notdir $(foreach compiler,$(F90_List),$(call pathsearch,$(compiler)))))
+ifeq ($(strip $(F90)),)
+  $(error No supported Fortran compiler was found in your PATH for this machine. (supported: $(F90_List)))
+endif
+
+ifeq ($(strip $(F90)),f90)
+  F77 = f77
+  _F90FLAGS += -p$(INCDIR) -YCFRL=1
+  mflag = -m64
+  _CFLAGS += ${mflag}
+  _CXXFLAGS += ${mflag}
+  _FFLAGS += ${mflag}
+  _F90FLAGS += ${mflag}
+  _LDFLAGS += ${mflag}
+  ALT_SUBDIR := $(shell $(BASEDIR)/scripts/define_module_subdir absoft)
+endif
+
+ifeq ($(strip $(F90)),pgf90)
+  CC = pgcc
+  CXX = pgcpp
+  F77 = pgf77
+  F90 = pgf90
+  ALT_SUBDIR := $(shell $(BASEDIR)/scripts/define_module_subdir pgi)
+endif
+
+ifeq ($(strip $(F90)),ifort)
+  F77 := ifort
+  _F90FLAGS += -I"$(INCDIR)"
+  mflag = -m64
+  _CFLAGS += ${mflag}
+  _CXXFLAGS += ${mflag}
+  _FFLAGS += ${mflag}
+  _F90FLAGS += ${mflag}
+  _LDFLAGS += ${mflag}
+  ALT_SUBDIR := $(shell $(BASEDIR)/scripts/define_module_subdir intel-f)
+endif
+
+ifeq ($(strip $(F90)),g95)
+  G95_MEM_SEGMENTS = 0
+  export G95_MEM_SEGMENTS
+  _CFLAGS += -m64
+  _CXXFLAGS += -m64
+  _FFLAGS += -m64
+  _F90FLAGS += -m64 -I"$(INCDIR)"
+  ALT_SUBDIR := $(shell $(BASEDIR)/scripts/define_module_subdir $(F90))
+endif
+
+ifeq ($(strip $(F90)),gfortran)
+  _CFLAGS += -m64
+  _CXXFLAGS += -m64
+  _FFLAGS += -m64
+  _F90FLAGS += -m64 -I"$(INCDIR)"
+  ALT_SUBDIR := $(shell $(BASEDIR)/scripts/define_module_subdir $(F90))
+endif
+
+ifeq ($(strip $(F90)),nagfor)
+  _F90FLAGS += -I"$(INCDIR)"
+  mflag = -m64
+  _CFLAGS += ${mflag}
+  _CXXFLAGS += ${mflag}
+  _FFLAGS += ${mflag}
+  _F90FLAGS += -dusty -w=all
+  _LDFLAGS += ${mflag}
+  ALT_SUBDIR := $(shell $(BASEDIR)/scripts/define_module_subdir nagfor)
+endif
+
+##################################################################
+### Assign values to associative arrays, which hold various    ###
+### compiler options -- specific to this architecture.         ###
+##################################################################
+#
+### VERSION_FLAG{$CC} = $flag
+#
+### VERSION_FLAG{$CXX} = $flag
+#
+### VERSION_FLAG{$F77} = $flag
+$(call set,VERSION_FLAG,f77,-V)   # Absoft
+#
+### VERSION_FLAG{$F90} = $flag
+$(call set,VERSION_FLAG,f90,-V)   # Absoft
+#
+### _COMP_FLAGS{$CC} = $flag
+#
+### _COMP_FLAGS{$CXX} = $flag
+#
+### _COMP_FLAGS{$F77} = $flag
+#
+### _COMP_FLAGS{$F90} = $flag
+
+# Modify ARCH variable
+ARCH   := $(shell $(BASEDIR)/scripts/config.guess)$(ALT_SUBDIR)
+
+# Set additional compiler-specific options
+_CFLAGS += $(call get,_COMP_FLAGS,$(CC))
+_CXXFLAGS += $(call get,_COMP_FLAGS,$(CXX))
+_FFLAGS += $(call get,_COMP_FLAGS,$(F77))
+_F90FLAGS += $(call get,_COMP_FLAGS,$(F90))

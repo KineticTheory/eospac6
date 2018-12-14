@@ -1,0 +1,167 @@
+eval '(exit $?0)' && eval 'exec perl -S "$0" ${1+"$@"}' #-*-perl-*-
+& eval 'exec perl -S "$0" $argv:q'
+        if 0;
+##################################################################
+#
+#  Copyright -- see file named COPYRIGHTNOTICE
+#
+##################################################################
+#
+# $ARGV[0] shall contain the name of the specific get_sesame_data binary to be
+# used.
+# The remaining values in @ARGV shall contain the input file(s), which define
+# what matids are used by each defined code.
+# This script will determine which codes require data that is not
+# on the current machine, and then display those codes on STDOUT.
+#
+use Data::Dumper;
+use Getopt::Long;		# option parser
+my $options={};
+GetOptions($options,
+	   "included",      # reverse the behavior to list included files instead of excluded files
+	   "noDefaultData", # suppress search of default SESAME data files found in default location(s) and via SESAMEPATH
+	   "verbose+"
+	  );
+
+# Build matid and/or sesame file dependencies
+undef @list;
+undef @sesameFilesDirAddons;
+foreach $f (glob "test*.[fc]*") {
+  $g=`basename $f`;
+  chomp $g;
+  print "file: $g\n" if $options->{"verbose"} > 2;
+  $t = "";
+  undef @s;
+  @a=findMatchingLines("MATIDS TO TEST:", $f); chomp @a; push(@s, @a);
+  @a=findMatchingLines("REQUIRED FILE:", $f);  chomp @a; push(@s, @a);
+  print STDERR "$f: ", '\@s = ', Dumper(\@s) if $options->{"verbose"} > 2;
+  foreach $s (@s) {
+    $s=~s/.*MATIDS TO TEST:\s*//;
+    if ( $s=~s/.*REQUIRED FILE:\s*/FILE=/ ) {
+      $s=~m/FILE=(.+)/;
+      push @sesameFilesDirAddons, $1;
+    }
+    $s=~s/ +/\t/g if $s !~ /FILE=/;
+    chomp $s;
+    $t .= "\t$s";
+  }
+  print STDERR "$f: ", '\@s = ', Dumper(\@s) if $options->{"verbose"} > 2;
+  push(@list, "$g$t");
+}
+
+$get_sesame_data = shift;
+system("$get_sesame_data id > /dev/null 2>&1");
+die "\n$get_sesame_data is not executable\n\n" unless $?==0;
+
+# create backup of sesameFilesDir.txt
+$sesameFilesDir_bak = "sesameFilesDir.txt.bak$$";
+system("cp -p sesameFilesDir.txt $sesameFilesDir_bak > /dev/null 2>&1");
+
+$backup_created=0;
+if (-e "$sesameFilesDir_bak") {
+  $backup_created++;
+  system("cat *.sesameFilesDir.txt >> sesameFilesDir.txt") if glob("*.sesameFilesDir.txt");
+  if ( scalar @sesameFilesDirAddons ) {
+    if ( open(FH, ">> sesameFilesDir.txt") ) {
+      print FH "\n", join("\n", @sesameFilesDirAddons), "\n";
+      close FH;
+    }
+    else {
+      warn "File, sesameFilesDir.txt, was not opened to append sesameFilesDirAddons\n";
+    }
+  }
+  system("echo END >> sesameFilesDir.txt") if $options->{"noDefaultData"};
+
+  system("cat sesameFilesDir.txt") if $options->{"verbose"};
+}
+
+$available_matids = `$get_sesame_data id | grep -v 'materials found' 2>&1`;
+
+system("mv $sesameFilesDir_bak sesameFilesDir.txt > /dev/null 2>&1")
+  if $backup_created;
+
+print "AVAILABLE MATIDS: $available_matids\n"
+  if $options->{"verbose"};
+
+@excluded = ();
+@included = ();
+%excluded = ();
+%included = ();
+
+print STDERR "INTERMEDIATE LIST:\n", Dumper(\@list)
+  if $options->{"verbose"} > 1;
+
+my $i = 0;
+foreach (@list) {
+  s/[\n\r]//g;
+  ($file, @reqs) = split(/\t+/);
+  next if $reqs[0] !~ /\d+/i and $reqs[0] !~ /FILE=/;
+  foreach $m (@reqs) {
+    if ($m !~ /FILE=/ and $available_matids !~ /\b$m\b/) {
+      push(@excluded, $file) if not $excluded{$file};
+      $excluded{$file}++;
+      $i++;
+      print STDERR "$i: Excluding $file because it requires $m\n"
+	if $options->{"verbose"} and not $options->{"included"};
+      last;
+    }
+    elsif ($m =~ /FILE=/) {
+      $m =~ /FILE=(.+)/;
+      my $f = $1;
+      next if $f and -e $f;
+      push(@excluded, $file) if not $excluded{$file};
+      $excluded{$file}++;
+      $i++;
+      print STDERR "$i: Excluding $file because it requires FILE=$f\n"
+	if $options->{"verbose"} and not $options->{"included"};
+      last;
+    }
+  }
+}
+
+foreach (@list) {
+  s/[\n\r]//g;
+  ($file, @reqs) = split(/\t+/);
+  if (not $excluded{$file}) {
+    push(@{$included{$file}}, @reqs);
+  }
+}
+print '%excluded = ', Dumper(\%excluded) if $options->{"verbose"} > 2;
+print '%included = ', Dumper(\%included) if $options->{"verbose"} > 2;
+
+if ( $options->{"included"} ) {
+  my $i = 0;
+  my $tot = scalar keys %included;
+
+  print STDERR "\%included = ", Dumper(\%included)
+    if $options->{"verbose"} > 1;
+
+  for my $f (sort keys %included) {
+    my $m = join(", ", @{$included{$f}});
+    $i++;
+    printf STDERR "Including %3d of %d: %s\n", $i, $tot, "$f because I found $m"
+      if $options->{"verbose"} and $options->{"included"};
+  }
+  push(@included, sort keys %included);
+  print "@included";
+}
+else {
+  print "@excluded";
+}
+
+sub findMatchingLines() {
+
+  my $s = shift;
+  my $f = shift;
+  my @a = ();
+
+  return @a unless open( FH, "<$f" );
+
+  while (<FH>) {
+    push @a, $_ if /$s/;
+  }
+
+  close FH;
+
+  return @a;
+}

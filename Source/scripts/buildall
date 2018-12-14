@@ -1,0 +1,412 @@
+#! /bin/sh
+(shopt -s igncr) 2>/dev/null && eval 'shopt -s igncr';#
+
+# $Date: 2016/12/02 22:04:49 $
+#
+# This script is used to build/test/install EOSPAC 6 using all available
+# F90 compilers, which are currently supported by the EOSPAC 6 build scripts.
+#
+
+loc=`dirname $0`
+me=`basename $0`
+
+# default values
+MAKE=make
+TARGET=examples
+INSTALLED_FILES_TO_MAIL=
+COMPILERS=
+keeplogs=0
+clean=1
+install=0
+check=0
+prefix=
+debug=0
+use_modules=1
+usePrgEnv=0
+list_and_test_modules=0
+list_modules=0
+OPTIMIZE=
+test_summary_file="`pwd`/Makefile.GATHER_COMPARE_DATA.`uname -n`.`uname -s``uname -r`.txt"
+build_summary_file="`pwd`/Makefile.buildall.`uname -n`.`uname -s``uname -r`.txt"
+
+# define default PATT
+PATT='-e ^intel -e ^pgi -e ^pathscale -e ^absoft -e ^fortran -e ^gcc -e ^cce'
+
+# process command line options
+while getopts Ccde:F:I:hikLlMm:Ot: option ; do
+  case "$option"
+  in
+    C)  clean=0
+        ;;
+    c)  TARGET='check send_report'
+        check=1
+        install=0
+        prefix=
+        ;;
+    d)  debug=1
+        ;;
+    e)  INSTALLED_FILES_TO_MAIL=$OPTARG
+        ;;
+    F)  COMPILERS=`echo $OPTARG | tr ',' ' '`
+        use_modules=0
+        ;;
+    I)  if [ $check -eq 0 ]; then
+          TARGET=install
+          prefix="prefix=$OPTARG"
+          install=1
+        fi
+        ;;
+    i)  if [ $check -eq 0 -a $install -eq 0 ]; then
+          TARGET=install
+          install=1
+        fi
+        ;;
+    k)  keeplogs=1
+        ;;
+    L)  list_and_test_modules=1
+        ;;
+    l)  list_modules=1
+        ;;
+    M)  use_modules=0
+        ;;
+    m)  MAKE=$OPTARG
+        which ${MAKE} > /dev/null 2>&1
+        if [ $? -ne 0 ]; then
+          printf >&2 "\nERROR: invalid MAKE=${MAKE}\n\n"
+          exit 1
+        fi
+        ;;
+    O)  OPTIMIZE='DEBUG=-O'
+        ;;
+    t)  TARGET=$OPTARG
+        ;;
+    h)  cat <<EOF >&2
+
+Usage: ${me} [-c -h -i -l] [-e <MAIL>] [-I <DIR>] [-m <MAKE>] [-t <TARGET>] [PATTERN [, ...]]
+   -C        do not execute clean target
+   -c        shortcut option to run 'make check send_report' (overrides -I and -i)
+   -e <MAIL> specify email address to receive list of installed files
+             (ignored unless -i is used)
+   -F <LIST> white space or comma-delimited list of F90 compiler executable names to use;
+             currently, the EOSPAC6 Makefiles use F90 to predefine compiler suites.
+             If <LIST> contains the string "ALL", then the Makefile is queried for all
+             available support compilers.
+   -h        display this help
+   -I <DIR>  shortcut option to run 'make prefix=<DIR> install'
+   -i        shortcut option to run 'make install'
+   -k        do not delete build and testing logs
+   -L        list and test usability of fortran modules available based upon PATTERN
+   -l        list fortran modules available based upon PATTERN
+   -M        do not use modules even if they exist on platform
+   -m <MAKE> specify name of make command
+   -O        enable optimized compilation
+   -t <TARGET> run 'make <TARGET>'
+  PATTERN is used to identify which compiler modules to use.
+          Defaults: ${PATT}
+
+EOF
+        exit 2
+        ;;
+  esac
+done
+
+#shift $(($OPTIND - 1))  # this does not work for sh on sparc-sun-solaris
+shift `expr $OPTIND - 1`
+
+# define PATT
+if [ "x${MODULESHOME}" != "x" -a $use_modules -ne 0 ] ; then
+
+    # define known possible locations for modulecmd
+    . ${loc}/setup_modulecmd
+
+    # define a module function to evaluate the MODULECMD
+    module () {
+	eval `${MODULECMD} sh $*`
+    }
+
+    # initialize module command(s)
+
+    . ${MODULESHOME}/init/sh
+
+    #echo ${MODULECMD}
+
+    # define PATT
+    # ALTPATT and MOREPATT are specific to Cray clusters
+    PATT='-e ^intel -e ^pgi -e ^pathscale -e ^absoft -e ^fortran -e ^gcc -e ^cce'
+    if [ "$#" -gt 0 ]; then
+	# define PATT using all supplied arguments
+	PATT=
+	while [ "$#" -ne 0 ] ; do
+	    PATT="${PATT} -e $1"
+	    shift
+	done
+    fi
+    ALTPATT='-e ^PrgEnv-intel -e ^PrgEnv-pgi -e ^PrgEnv-gnu -e ^PrgEnv-cray'
+    MOREPATT='-e craype-ivybridge -e craype-haswell -e craype-mic-knl'
+
+    _f_modules_=`( module avail -t 2>&1 ) | egrep ${ALTPATT} | egrep -v '(/$)' | egrep default | sed -e 's/(default)//g'`
+    _arch_modules_=`( module avail -t 2>&1 ) | egrep ${MOREPATT}`
+    if [ "x${_f_modules_}" == "x" ] ; then
+	_arch_modules_="_GENERIC_"
+    fi
+
+    if [ "x${_f_modules_}" == "x" ] ; then
+        _f_modules_=`( module avail -t 2>&1 ) | egrep ${PATT} | egrep -v '(/$)' | egrep -v '(pich|mpi|32|_default|mpt|intel-c|intel-daal|-xe/)' | sed -e 's/(default)//g' | sort -u`
+    else
+        PATT=${ALTPATT}
+        usePrgEnv=1
+    fi
+
+    fortranmodules=""
+
+else
+
+    _f_modules_=""
+    _arch_modules_=""
+
+fi
+
+# Determine the processor count on the current machine
+grep_cmd=`which ggrep 2>/dev/null`
+if [ $? ]; then grep_cmd=`which grep 2>/dev/null` ; fi
+case "`uname`"
+in
+  IRIX*)          corecount=`hinv -v | $grep_cmd '^ *CPU  *[0-9]' | wc -l | sed -e 's/^ *//'`;;
+  SunOS*)         corecount=`psrinfo -v | egrep '^ *Status of (virtual )?processor' | wc -l | sed -e 's/^ *//'`;;
+  Linux*|CYGWIN*) corecount=`cat /proc/cpuinfo | $grep_cmd '^ *processor' | wc -l | sed -e 's/^ *//'`;;
+  AIX*)           corecount=`lsdev -C | $grep_cmd Process | wc -l | sed -e 's/^ *//'`;;
+  HPUX*)          corecount=`ioscan -C processor | $grep_cmd processor | wc -l | sed -e 's/^ *//'`;;
+  Darwin*)        corecount=`system_profiler SPHardwareDataType | egrep 'Number Of (CPU|Core)s:' | sed -e 's/[^0-9]*//'`;;
+  *)              corecount=1;;
+esac
+
+#
+# Build package using available compilers
+#
+rm -f ${test_summary_file} ${build_summary_file}
+
+if [ "x${_f_modules_}" != "x" -a $use_modules -ne 0 ] ; then
+
+  # use all available fortran modules matching PATT
+
+  for mod in ${_f_modules_}; do
+    module load $mod > /dev/null 2>&1;
+    if [ $? -ne 0 ]; then
+        continue
+    fi
+
+    fortranmodules="${fortranmodules} ${mod} "
+  done
+  echo
+
+  if [ "x${_arch_modules_}" != "x_GENERIC_" ] ; then
+      c=`echo ${_arch_modules_} | wc -w`
+      echo $c "Available cross-compilation modules:" >&2
+      echo ${_arch_modules_}
+      echo
+  fi
+  c=`echo ${fortranmodules} | wc -w`
+  if [ ${usePrgEnv} -ne 0 ]; then
+      echo $c "Available PrgEnv modules:" >&2
+  else
+      echo $c "Available Fortran modules:" >&2
+  fi
+  echo ${fortranmodules}
+  echo
+
+  if [ $list_modules -ne 0 ]; then
+    exit 0
+  fi
+
+  # build package using all available fortran modules
+
+  for arch_mod in ${_arch_modules_}; do
+
+      if [ "x${arch_mod}" != "x" -a "x${arch_mod}" != "x_GENERIC_" ]; then
+          old_arch=`( module list -t 2>&1 ) | egrep ${MOREPATT}`
+	  if [ "x${old_arch}" != "x" ]; then
+	      echo "module swap ${old_arch} ${arch_mod}"
+	      module swap ${old_arch} ${arch_mod} > /dev/null 2>&1;
+	  else
+	      echo "module load ${arch_mod}"
+	      module load $arch_mod > /dev/null 2>&1;
+	  fi
+      fi
+
+      for mod in ${fortranmodules}; do
+
+          # exclusively load desired modules without gcc conflicts
+	  if [ ${usePrgEnv} -ne 0 ]; then
+	      old_PrgEnv=`( module list -t 2>&1 ) | egrep '^PrgEnv'`
+	      if [ "x${old_PrgEnv}" != "x" ]; then
+		  echo "module swap ${old_PrgEnv} ${mod}"
+		  module swap ${old_PrgEnv} ${mod} > /dev/null 2>&1;
+	      else
+		  echo "module load ${mod}"
+		  module load $mod > /dev/null 2>&1;
+	      fi
+	  else
+	      module purge
+	      configfile=${loc}/../config/${me}.`hostname`
+	      if [ -f ${configfile} ]; then
+		  . ${configfile}
+	      fi
+	      echo "module load ${mod}"
+	      module load $mod > /dev/null 2>&1;
+	  fi
+
+          # define F90 executable based upon module name
+	  case $mod in
+	      gcc*)          COMPILER_SUITE='F90=gfortran';  vopt=--version;;
+	      intel*)        COMPILER_SUITE='F90=ifort';     vopt=-V;;
+	      path*)         COMPILER_SUITE='F90=pathf90';   vopt=-V;;
+	      pgi*)          COMPILER_SUITE='F90=pgfortran'; vopt=-V;;
+	      PrgEnv-gnu*)   COMPILER_SUITE='F90=gfortran';  vopt=--version;;
+	      PrgEnv-intel*) COMPILER_SUITE='F90=ifort';     vopt=-V;;
+	      PrgEnv-cray*)  COMPILER_SUITE='F90=ftn';       vopt=-V;;
+	      PrgEnv-pgi*)   COMPILER_SUITE='F90=pgfortran'; vopt=-V;;
+	      *)             unset COMPILER_SUITE;;
+	  esac
+
+	  module list
+
+	  if [ $list_and_test_modules -ne 0 ]; then
+	      which ${F77} ${FC} ${CC} ${CXX}
+	      which ${FC} 2>&1 >/dev/null
+	      if [ $? -eq 0 ]; then
+		  ${FC} ${vopt}
+	      else
+		  echo '*** No Fortran compiler defined.'
+	      fi
+	      continue
+	  fi
+
+	  touch ${build_summary_file}
+
+	  if [ $install -ne 0 ]; then
+	      dirs=`( ${MAKE} list_installdirs ${COMPILER_SUITE} 2>&1 ) | grep '^ *\/' 2>&1`
+	      founddirs=1
+	      for dir in ${dirs}; do
+		  if [ ! -d ${dir} ]; then
+		      founddirs=0
+		  fi
+	      done
+	      
+	      if [ ${founddirs} -eq 1 ]; then
+		  ( echo "Found pre-existing install directories for ${mod}" 2>&1 ) | tee -a ${build_summary_file}
+		  ( echo "${dirs}" | sed -e 's/^/\t/' 2>&1 )# | tee -a ${build_summary_file}
+		  continue
+	      fi
+	  fi
+
+	  if [ "x${arch_mod}" != "x" -a "x${arch_mod}" != "x_GENERIC_" ]; then
+	      msg=" and ${arch_mod}"
+	  else
+	      msg=""
+	  fi
+
+	  ( echo "*** Do ${TARGET} for module ${mod}${msg} ***" 2>&1 ) | tee -a ${build_summary_file}
+
+	  if [ $debug -eq 0 ]; then
+	      echo '***' ${MAKE} -j${corecount} ${prefix} ${TARGET} ${OPTIMIZE} ${COMPILER_SUITE}
+	      ${MAKE} -j${corecount} ${prefix} ${TARGET} ${OPTIMIZE} ${COMPILER_SUITE}
+	      if [ $install -ne 0 ]; then
+		  ( ${MAKE} list_my_installed_files ${COMPILER_SUITE} 2>&1 ) | tee -a ${build_summary_file}
+	      else
+		  touch ${test_summary_file}
+		  echo "*** ${TARGET} for module ${mod}${msg} ***" >> ${test_summary_file} 2>&1
+		  ${MAKE} -C tests GATHER_COMPARE_DATA ${COMPILER_SUITE} >> ${test_summary_file} 2>&1
+		  if [ "x${INSTALLED_FILES_TO_MAIL}" != "x" ]; then
+		      ${MAKE} list_my_installed_files ${COMPILER_SUITE} | mail -s "`uname -n`: $mod: installed files" `whoami`@lanl.gov 2>&1
+		  fi
+	      fi
+	      if [ $clean -eq 1 ]; then
+		  ${MAKE} -j${corecount} clean ${COMPILER_SUITE}
+	      fi
+	  else
+	      echo '***' ${MAKE} -j${corecount} ${prefix} ${TARGET} ${OPTIMIZE} ${COMPILER_SUITE}
+	      ${MAKE} list_compilers
+	  fi
+
+      done
+
+  done
+
+else
+
+  case "${COMPILERS}" in
+      *ALL*) COMPILERS=`${MAKE} help | awk '/ supported on this architecture:/ {getline;print $0}'`;;
+  esac
+
+  c=`echo ${COMPILERS} | wc -w`
+  echo $c "Available Fortran compilers in PATH:"
+  for c in `echo ${COMPILERS} | tr ',' ' '`; do
+    which $c > /dev/null 2>&1
+    if [ $? -eq 0 ]; then
+      which $c
+      F_list="$F_list F90=$c"
+    fi
+  done
+
+  if [ $list_modules -ne 0 ]; then
+    exit 0
+  fi
+
+  if [ $list_and_test_modules -ne 0 ]; then
+    exit 0
+  fi
+
+  if [ $use_modules -eq 1 ]; then
+    # use available fortran compiler(s) as discovered by Makefile(s)
+    F_list="__USE_DEFAULT_COMPILER__"
+  fi
+
+  for f in $F_list; do
+    c=
+    s=" for $f"
+    if [ "$f" != "__USE_DEFAULT_COMPILER__" ]; then
+      c=$f
+      s=
+    fi
+    echo '***' ${MAKE} -j${corecount} ${prefix} ${TARGET} ${OPTIMIZE} $c
+    if [ $debug -eq 0 ]; then
+      ${MAKE} -j${corecount} ${prefix} ${TARGET} ${OPTIMIZE} $c
+      touch ${test_summary_file}
+      echo "*** ${TARGET}$s ***" >> ${test_summary_file} 2>&1
+      ${MAKE} -C tests GATHER_COMPARE_DATA $c >> ${test_summary_file} 2>&1
+      if [ $install -ne 0 -a "x${INSTALLED_FILES_TO_MAIL}" != "x" ]; then
+        ${MAKE} list_my_installed_files $c | mail -s "`uname -n`: installed files" `whoami`@lanl.gov 2>&1
+      fi
+      if [ $clean -eq 1 ]; then
+        ${MAKE} -j${corecount} clean $c
+      fi
+    else
+        ${MAKE} list_compilers $c
+    fi
+  done
+
+fi
+
+if [ -f ${build_summary_file} ]; then
+
+  echo '----------------'
+  echo 'Build Summary:'
+  echo '----------------'
+  cat ${build_summary_file}
+  if [ $keeplogs -eq 0 ]; then
+    rm -f ${build_summary_file}
+  fi
+
+fi
+
+if [ -f ${test_summary_file} ]; then
+
+  echo '----------------'
+  echo 'Testing Summary:'
+  echo '----------------'
+  cat ${test_summary_file}
+  if [ $keeplogs -eq 0 ]; then
+    rm -f ${test_summary_file}
+  fi
+
+fi

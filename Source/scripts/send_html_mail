@@ -1,0 +1,158 @@
+#-*-perl-*-
+##################################################################
+#
+#  Copyright -- see file named COPYRIGHTNOTICE
+#
+##################################################################
+eval '(exit $?0)' && eval 'exec perl -S "$0" ${1+"$@"}'
+& eval 'exec perl -S "$0" $argv:q'
+        if 0;
+#
+# Send the contents of a file as HTML email to eos_testing@lanl.gov using Net::SMTP.
+#
+use warnings;
+use strict;
+
+use File::Basename;
+use Getopt::Long;
+my $options={};
+GetOptions($options,"--debug","--subject=s","--plaintextfile=s","--mail_server=s");
+
+# define recipient's email address
+my $email_address = 'eospac_testing@lanl.gov';
+
+# define default/custom subject
+my $subject = "EOSPAC 6 Testing Status report";
+$subject = $options->{"subject"}
+  if ($options->{"subject"});
+my $subject_wrapped_html = $subject;
+$subject_wrapped_html =~ s|s*\(|<br><i>(|;
+$subject_wrapped_html .= '</i>';
+
+# define default/custom smtp server name
+my $smtp_server_name = 'mail';
+$smtp_server_name = $options->{"mail_server"}
+  if ($options->{"mail_server"});
+
+my $scriptname = basename($0);
+
+my $msgstr = "";
+# load HTML file in memory
+while (<>) {
+  $msgstr .= $_;
+}
+
+if ($msgstr !~ /<html/mi) {
+  $msgstr = '<html>'.$msgstr;
+  print "inserting <html>\n" if ($options->{"debug"});
+}
+if ($msgstr !~ /<\/html>/mi) {
+  $msgstr .= '</html>';
+  print "appending <\/html>\n" if ($options->{"debug"});
+}
+
+use Net::SMTP;
+
+# use this kind of logic to generate MIME separators
+my $plaintextfile;
+my $textfilestr = "";
+my $boundary1;
+my $boundary2;
+my $lines = 0;
+if ($options->{"plaintextfile"}) {
+  $plaintextfile = $options->{"plaintextfile"};
+  open (FH, "$plaintextfile") || die "Can't open '$plaintextfile'";
+  while(<FH>){
+    $textfilestr .= $_;
+    $lines++;
+  }
+  my $t = time();
+  $boundary1 = "Send_HTML_Mail_" . "$$" . "_$t.$lines.001";
+  $boundary2 = "Send_HTML_Mail_" . "$$" . "_$t.$lines.002";
+  close (FH);
+}
+
+my $header =<<END_HEADER;
+From: $scriptname <$email_address>
+To: $email_address
+Subject: $subject
+MIME-Version: 1.0
+END_HEADER
+
+my $mime_content = "";
+
+if (! $options->{"plaintextfile"}) { # send HTML formatted message only
+
+  $mime_content = $header;
+  $mime_content .=<<END_MIME_CONTENT;
+Content-Type: text/html; charset="iso-8859-1"
+Content-Transfer-Encoding: 7bit
+
+<h2 style='background-color:#FFFFCC;border:thin solid #000000;text-align:center;padding:1em;'>$subject_wrapped_html</h2>
+$msgstr
+END_MIME_CONTENT
+
+}
+else { # send HTML and PLAIN TEXT formatted message
+
+  $mime_content = $header;
+  $mime_content .=<<END_MIME_CONTENT;
+Content-Type: multipart/mixed; boundary="$boundary1";
+Content-Transfer-Encoding: 7bit
+
+This is a multi-part message in MIME format.
+This part of the E-mail should never be seen.
+If you are reading this, consider upgrading to a multipart-MIME-compatible e-mail client.
+
+--$boundary1
+Content-Type: text/html
+Content-Transfer-Encoding: 7bit
+
+<h2 style='background-color:#FFFFCC;border:thin solid #000000;text-align:center;padding:1em;'>$subject_wrapped_html</h2>
+$msgstr
+--$boundary1
+Content-Type: multipart/parallel; boundary="$boundary2"
+
+--$boundary2
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
+Content-Disposition: attachment; filename="$plaintextfile"
+
+$subject
+$textfilestr
+--$boundary2--
+
+--$boundary1
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
+
+$textfilestr
+--$boundary1--
+
+-- End --
+END_MIME_CONTENT
+
+}
+
+# send email
+if (! $options->{"debug"}) {
+
+  my $smtp = Net::SMTP->new($smtp_server_name,
+			    Hello => $smtp_server_name) || die "I can't open SMTP ($smtp_server_name): $@";
+  $smtp->mail("$email_address");
+  $smtp->to("$email_address");
+
+  $smtp->data();
+  $smtp->datasend("$mime_content");
+
+  $smtp->dataend;
+  $smtp->quit;
+
+}
+else {
+
+  print "$mime_content";
+
+}
+
+exit 0;

@@ -1,0 +1,5 @@
+Create Tables error message is:  EOS_OK
+Load Tables error message is:  EOS_OK
+Comment is: 101: material. iron (z=26.0, a=55.850)/source. j. barnes, j. rood/date. aug 73/refs. t-4 notebook, t-4 memo (aug 73)/comp. fe/codes. sesame i, maple, maxwell /Classification. Unclassified /                                                        
+102: the two temperature tables for this material (tables 303-306) are a very rough approximation and were derived from the code twotemp (and not from the original eos calculations, which in most cases are no longer reproducible).  the tables are very noisy due both to noise in the original data (which shows up when the cold curve is subtracted to generate the thermal contribution) and to the constraint that no crossing isotherms are allowed.  if you have any problems using these tables, contact bob albers (t-4).       
+103:  401 tables added from maxwell by t-1 (jul 01)                                  

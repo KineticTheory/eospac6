@@ -1,0 +1,5 @@
+This is a sesame binary with 201 and 301 tables for matl "2141", which is 2140 with free energy, A, obtained from:
+       S = (e-e0)/t +int_{0,t} (e-e0)/t^2 dt
+       A = e-t*s = +e0 -t*int_{0,t} (e-e0)/t^2 dt
+           where e0 is value at t=0, all for given rho value and using 100 points between grid pts to
+           do numerical integral and standard rational function 1-d fit to e(t) at that rho.

@@ -1,0 +1,14 @@
+This is a simple collection of data described by the following:
+
+Independent variable data
+RHO = 0.8 0.9 1.0 1.1 1.2
+T   = 4800 4900 5000 5100 5200
+
+Dependent variable data
+MatID   Pressure                              Internal Energy
+9001    P = 3 everywhere                      I=4 everywhere
+9002    P = 1. + 10.*(RHO - .8)               I=P
+9003    P = 1. + .01*(T - 4800)               I=P
+9004    P = .92*RHO**2 + 1.e-11*T**3          I=P
+9005    P = ideal gas, gamma=1.4, A=1.00797   I=P
+9006    P = ideal gas, gamma=5/3, A=131.3     I=P

@@ -1,0 +1,74 @@
+#! /bin/sh
+#
+# Attempt to guess a modification to the linux canonical system name, which is optionally-supplied in $1.
+# If the guess is successful, then return modified canonical system name. Otherwise return
+# the unmodified canonical system name.
+# The canonical system name is akin to that returned by the config.guess script.
+#
+# If $1 is not provided, then usage of config.guess is attempted (currently assume it's either
+# colocated with $0 or found in the user's PATH).
+
+loc=`dirname $0`
+if [ -n "${loc}" ]; then
+    loc="${loc}/"
+fi
+
+if [ -n "$1" ]; then
+    gnu_canonical_name=$1
+else
+    gnu_canonical_name=`${loc}config.guess`
+fi
+
+#
+# Beware, the order of all of the following conditional tests is important, since
+# often systems satisfy multiple conditions.
+#
+case "${gnu_canonical_name}" in
+
+    *-*-linux-*)
+
+	if   [ -f /etc/redhat-release ]; then
+
+	    major=`sed -rn 's/.*([0-9])\.[0-9].*/\1/p' /etc/redhat-release`
+	    minor=`sed -rn 's/.*[0-9]\.([0-9]).*/\1/p' /etc/redhat-release`
+
+	    if   [ -f /etc/toss-release ]; then
+
+		toss=`sed -rn 's/^ *#.*//;s/^[^0-9]*([0-9].*)/\1/p' /etc/toss-release`
+
+		if [ -n "${toss}" ]; then
+		    : toss
+		    echo "${gnu_canonical_name}" | awk -v toss=${toss} -v major=${major} -F\- '{print $1 "-rhel" major "_toss" toss "-" $3 "-" $4}' | tr '[:upper:]' '[:lower:]'
+		    exit
+		fi
+
+	    fi
+
+	    if [ -n "${major}" ]; then
+		: rhel
+		echo "${gnu_canonical_name}" | awk -v major=${major} -F\- '{print $1 "-rhel" major "-" $3 "-" $4}' | tr '[:upper:]' '[:lower:]'
+		exit
+	    fi
+
+	fi
+
+	if [ -f /etc/os-release ]; then
+
+	    . /etc/os-release
+
+	    name=${ID}
+	    if [ -z "${name}" ]; then name=${NAME}; fi
+
+	    major=`echo ${VERSION_ID} | awk -F\. '{print $1}'`
+	    if [ -z "${major}" ]; then major=`echo ${VERSION} | awk -F\. '{print $1}'`; fi
+
+	    if [ -n "${name}${major}" ]; then
+		echo "${gnu_canonical_name}" | awk -v name=${name} -v major=${major} -F\- '{print $1 "-" name major "-" $3 "-" $4}' | tr '[:upper:]' '[:lower:]'
+		exit
+	    fi
+	fi
+	;;
+
+esac
+
+echo ${gnu_canonical_name}

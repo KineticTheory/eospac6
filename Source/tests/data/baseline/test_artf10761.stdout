@@ -1,0 +1,184 @@
+Mixture for table type EOS_Pt_DT
+	X = 1.230000e+02, Y = 2.345000e+03, F = 1.795020e+05, dFx = 3.252412e+03, dFy = 2.239717e-02	EOS_OK
+	X = 2.460000e+02, Y = 3.456000e+03, F = 7.988315e+05, dFx = 6.821547e+03, dFy = 3.924758e-02	EOS_OK
+	X = 3.690000e+02, Y = 4.567000e+03, F = 1.844323e+06, dFx = 1.020362e+04, dFy = 5.659926e-02	EOS_OK
+	X = 4.920000e+02, Y = 5.678000e+03, F = 3.293439e+06, dFx = 1.342697e+04, dFy = 7.682096e-02	EOS_OK
+
+	Species-specific values for table type EOS_Pt_DT and material 2140 with atomic mass, 5.585000e+01
+		X = 1.254559e+02, Y = 2.345000e+03, F = 0.000000e+00, dFx = 0.000000e+00, dFy = 0.000000e+00, C = 3.333333e-01	EOS_OK
+		X = 2.454638e+02, Y = 3.456000e+03, F = 0.000000e+00, dFx = 0.000000e+00, dFy = 0.000000e+00, C = 3.333333e-01	EOS_OK
+		X = 3.645333e+02, Y = 4.567000e+03, F = 0.000000e+00, dFx = 0.000000e+00, dFy = 0.000000e+00, C = 3.333333e-01	EOS_OK
+		X = 4.827382e+02, Y = 5.678000e+03, F = 0.000000e+00, dFx = 0.000000e+00, dFy = 0.000000e+00, C = 3.333333e-01	EOS_OK
+
+	Species-specific values for table type EOS_Pt_DT and material 2030 with atomic mass, 4.008000e+01
+		X = 0.000000e+00, Y = 0.000000e+00, F = 0.000000e+00, dFx = 0.000000e+00, dFy = 0.000000e+00, C = 0.000000e+00	EOS_OK
+		X = 0.000000e+00, Y = 0.000000e+00, F = 0.000000e+00, dFx = 0.000000e+00, dFy = 0.000000e+00, C = 0.000000e+00	EOS_OK
+		X = 0.000000e+00, Y = 0.000000e+00, F = 0.000000e+00, dFx = 0.000000e+00, dFy = 0.000000e+00, C = 0.000000e+00	EOS_OK
+		X = 0.000000e+00, Y = 0.000000e+00, F = 0.000000e+00, dFx = 0.000000e+00, dFy = 0.000000e+00, C = 0.000000e+00	EOS_OK
+
+	Species-specific values for table type EOS_Pt_DT and material 3720 with atomic mass, 2.698150e+01
+		X = 9.699831e+01, Y = 2.345000e+03, F = 0.000000e+00, dFx = 0.000000e+00, dFy = 0.000000e+00, C = 3.333333e-01	EOS_OK
+		X = 2.083742e+02, Y = 3.456000e+03, F = 0.000000e+00, dFx = 0.000000e+00, dFy = 0.000000e+00, C = 3.333333e-01	EOS_OK
+		X = 3.238359e+02, Y = 4.567000e+03, F = 0.000000e+00, dFx = 0.000000e+00, dFy = 0.000000e+00, C = 3.333333e-01	EOS_OK
+		X = 4.423560e+02, Y = 5.678000e+03, F = 0.000000e+00, dFx = 0.000000e+00, dFy = 0.000000e+00, C = 3.333333e-01	EOS_OK
+
+	Species-specific values for table type EOS_Pt_DT and material 3336 with atomic mass, 6.354600e+01
+		X = 1.361545e+02, Y = 2.345000e+03, F = 0.000000e+00, dFx = 0.000000e+00, dFy = 0.000000e+00, C = 3.333333e-01	EOS_OK
+		X = 2.669818e+02, Y = 3.456000e+03, F = 0.000000e+00, dFx = 0.000000e+00, dFy = 0.000000e+00, C = 3.333333e-01	EOS_OK
+		X = 3.967683e+02, Y = 4.567000e+03, F = 0.000000e+00, dFx = 0.000000e+00, dFy = 0.000000e+00, C = 3.333333e-01	EOS_OK
+		X = 5.259296e+02, Y = 5.678000e+03, F = 0.000000e+00, dFx = 0.000000e+00, dFy = 0.000000e+00, C = 3.333333e-01	EOS_OK
+
+Mixture for table type EOS_Pt_DUt
+	X = 1.230000e+02, Y = 1.026945e+04, F = 8.252199e+05, dFx = 8.181110e+03, dFy = 7.033004e+01	EOS_OK
+	X = 2.460000e+02, Y = 2.138045e+04, F = 3.621829e+06, dFx = 1.739461e+04, dFy = 1.498781e+02	EOS_OK
+	X = 3.690000e+02, Y = 3.249145e+04, F = 8.348894e+06, dFx = 2.623689e+04, dFy = 2.160768e+02	EOS_OK
+	X = 4.920000e+02, Y = 4.360245e+04, F = 1.488701e+07, dFx = 3.430407e+04, dFy = 2.919739e+02	EOS_OK
+
+	Species-specific values for table type EOS_Pt_DUt and material 2140 with atomic mass, 5.585000e+01
+		X = 1.284471e+02, Y = 1.000247e+04, F = 0.000000e+00, dFx = 0.000000e+00, dFy = 0.000000e+00, C = 3.333333e-01	EOS_OK
+		X = 2.532518e+02, Y = 1.969667e+04, F = 0.000000e+00, dFx = 0.000000e+00, dFy = 0.000000e+00, C = 3.333333e-01	EOS_OK
+		X = 3.757739e+02, Y = 3.006023e+04, F = 0.000000e+00, dFx = 0.000000e+00, dFy = 0.000000e+00, C = 3.333333e-01	EOS_OK
+		X = 4.993118e+02, Y = 4.104999e+04, F = 0.000000e+00, dFx = 0.000000e+00, dFy = 0.000000e+00, C = 3.333333e-01	EOS_OK
+
+	Species-specific values for table type EOS_Pt_DUt and material 2030 with atomic mass, 4.008000e+01
+		X = 0.000000e+00, Y = 0.000000e+00, F = 0.000000e+00, dFx = 0.000000e+00, dFy = 0.000000e+00, C = 0.000000e+00	EOS_OK
+		X = 0.000000e+00, Y = 0.000000e+00, F = 0.000000e+00, dFx = 0.000000e+00, dFy = 0.000000e+00, C = 0.000000e+00	EOS_OK
+		X = 0.000000e+00, Y = 0.000000e+00, F = 0.000000e+00, dFx = 0.000000e+00, dFy = 0.000000e+00, C = 0.000000e+00	EOS_OK
+		X = 0.000000e+00, Y = 0.000000e+00, F = 0.000000e+00, dFx = 0.000000e+00, dFy = 0.000000e+00, C = 0.000000e+00	EOS_OK
+
+	Species-specific values for table type EOS_Pt_DUt and material 3720 with atomic mass, 2.698150e+01
+		X = 9.416494e+01, Y = 1.318378e+04, F = 0.000000e+00, dFx = 0.000000e+00, dFy = 0.000000e+00, C = 3.333333e-01	EOS_OK
+		X = 1.969027e+02, Y = 2.729782e+04, F = 0.000000e+00, dFx = 0.000000e+00, dFy = 0.000000e+00, C = 3.333333e-01	EOS_OK
+		X = 3.030763e+02, Y = 4.061897e+04, F = 0.000000e+00, dFx = 0.000000e+00, dFy = 0.000000e+00, C = 3.333333e-01	EOS_OK
+		X = 4.102103e+02, Y = 5.333109e+04, F = 0.000000e+00, dFx = 0.000000e+00, dFy = 0.000000e+00, C = 3.333333e-01	EOS_OK
+
+	Species-specific values for table type EOS_Pt_DUt and material 3336 with atomic mass, 6.354600e+01
+		X = 1.355743e+02, Y = 9.266673e+03, F = 0.000000e+00, dFx = 0.000000e+00, dFy = 0.000000e+00, C = 3.333333e-01	EOS_OK
+		X = 2.675967e+02, Y = 2.034781e+04, F = 0.000000e+00, dFx = 0.000000e+00, dFy = 0.000000e+00, C = 3.333333e-01	EOS_OK
+		X = 3.995726e+02, Y = 3.117729e+04, F = 0.000000e+00, dFx = 0.000000e+00, dFy = 0.000000e+00, C = 3.333333e-01	EOS_OK
+		X = 5.300514e+02, Y = 4.171503e+04, F = 0.000000e+00, dFx = 0.000000e+00, dFy = 0.000000e+00, C = 3.333333e-01	EOS_OK
+
+Mixture for table type EOS_Ut_DT
+	X = 1.230000e+02, Y = 2.345000e+03, F = 1.026945e+03, dFx = 1.190075e+01, dFy = 2.732179e-04	EOS_OK
+	X = 2.460000e+02, Y = 3.456000e+03, F = 2.595551e+03, dFx = 1.327377e+01, dFy = 2.561488e-04	EOS_OK
+	X = 3.690000e+02, Y = 4.567000e+03, F = 4.255993e+03, dFx = 1.363490e+01, dFy = 2.569284e-04	EOS_OK
+	X = 4.920000e+02, Y = 5.678000e+03, F = 5.939754e+03, dFx = 1.369903e+01, dFy = 2.666542e-04	EOS_OK
+
+	Species-specific values for table type EOS_Ut_DT and material 2140 with atomic mass, 5.585000e+01
+		X = 1.298076e+02, Y = 2.345000e+03, F = 0.000000e+00, dFx = 0.000000e+00, dFy = 0.000000e+00, C = 3.333333e-01	EOS_OK
+		X = 2.558209e+02, Y = 3.456000e+03, F = 0.000000e+00, dFx = 0.000000e+00, dFy = 0.000000e+00, C = 3.333333e-01	EOS_OK
+		X = 3.811758e+02, Y = 4.567000e+03, F = 0.000000e+00, dFx = 0.000000e+00, dFy = 0.000000e+00, C = 3.333333e-01	EOS_OK
+		X = 5.061518e+02, Y = 5.678000e+03, F = 0.000000e+00, dFx = 0.000000e+00, dFy = 0.000000e+00, C = 3.333333e-01	EOS_OK
+
+	Species-specific values for table type EOS_Ut_DT and material 2030 with atomic mass, 4.008000e+01
+		X = 0.000000e+00, Y = 0.000000e+00, F = 0.000000e+00, dFx = 0.000000e+00, dFy = 0.000000e+00, C = 0.000000e+00	EOS_OK
+		X = 0.000000e+00, Y = 0.000000e+00, F = 0.000000e+00, dFx = 0.000000e+00, dFy = 0.000000e+00, C = 0.000000e+00	EOS_OK
+		X = 0.000000e+00, Y = 0.000000e+00, F = 0.000000e+00, dFx = 0.000000e+00, dFy = 0.000000e+00, C = 0.000000e+00	EOS_OK
+		X = 0.000000e+00, Y = 0.000000e+00, F = 0.000000e+00, dFx = 0.000000e+00, dFy = 0.000000e+00, C = 0.000000e+00	EOS_OK
+
+	Species-specific values for table type EOS_Ut_DT and material 3720 with atomic mass, 2.698150e+01
+		X = 9.191445e+01, Y = 2.345000e+03, F = 0.000000e+00, dFx = 0.000000e+00, dFy = 0.000000e+00, C = 3.333333e-01	EOS_OK
+		X = 1.931657e+02, Y = 3.456000e+03, F = 0.000000e+00, dFx = 0.000000e+00, dFy = 0.000000e+00, C = 3.333333e-01	EOS_OK
+		X = 2.967925e+02, Y = 4.567000e+03, F = 0.000000e+00, dFx = 0.000000e+00, dFy = 0.000000e+00, C = 3.333333e-01	EOS_OK
+		X = 4.018294e+02, Y = 5.678000e+03, F = 0.000000e+00, dFx = 0.000000e+00, dFy = 0.000000e+00, C = 3.333333e-01	EOS_OK
+
+	Species-specific values for table type EOS_Ut_DT and material 3336 with atomic mass, 6.354600e+01
+		X = 1.362892e+02, Y = 2.345000e+03, F = 0.000000e+00, dFx = 0.000000e+00, dFy = 0.000000e+00, C = 3.333333e-01	EOS_OK
+		X = 2.680891e+02, Y = 3.456000e+03, F = 0.000000e+00, dFx = 0.000000e+00, dFy = 0.000000e+00, C = 3.333333e-01	EOS_OK
+		X = 3.990170e+02, Y = 4.567000e+03, F = 0.000000e+00, dFx = 0.000000e+00, dFy = 0.000000e+00, C = 3.333333e-01	EOS_OK
+		X = 5.294344e+02, Y = 5.678000e+03, F = 0.000000e+00, dFx = 0.000000e+00, dFy = 0.000000e+00, C = 3.333333e-01	EOS_OK
+
+Mixture for table type EOS_Ut_DPt
+eos_Mix ERROR: EOS_INTERP_EXTRAPOLATED: Interpolation caused extrapolation beyond data table boundaries
+
+	X = 1.230000e+02, Y = 1.801801e+06, F = 2.377350e+04, dFx = -2.390581e+02, dFy = 1.415139e-02	EOS_OK
+	X = 2.460000e+02, Y = 1.802912e+06, F = 9.220527e+03, dFx = -6.550516e+01, dFy = 7.117503e-03	EOS_OK
+	X = 3.690000e+02, Y = 1.804023e+06, F = 5.851134e+03, dFx = -2.595845e+01, dFy = 3.615095e-03	EOS_xOk_yLo
+	X = 4.920000e+02, Y = 1.805134e+06, F = 6.562282e+03, dFx = -1.525838e+01, dFy = 2.319270e-03	EOS_xOk_yLo
+
+	Species-specific values for table type EOS_Ut_DPt and material 2140 with atomic mass, 5.585000e+01
+		X = 1.407911e+02, Y = 1.801801e+06, F = 0.000000e+00, dFx = 0.000000e+00, dFy = 0.000000e+00, C = 3.333333e-01	EOS_OK
+		X = 2.815822e+02, Y = 1.802912e+06, F = 0.000000e+00, dFx = 0.000000e+00, dFy = 0.000000e+00, C = 3.333333e-01	EOS_OK
+		X = 4.223733e+02, Y = 1.804023e+06, F = 0.000000e+00, dFx = 0.000000e+00, dFy = 0.000000e+00, C = 3.333333e-01	EOS_xOk_yLo
+		X = 5.631644e+02, Y = 1.805134e+06, F = 0.000000e+00, dFx = 0.000000e+00, dFy = 0.000000e+00, C = 3.333333e-01	EOS_xOk_yLo
+
+	Species-specific values for table type EOS_Ut_DPt and material 2030 with atomic mass, 4.008000e+01
+		X = 0.000000e+00, Y = 0.000000e+00, F = 0.000000e+00, dFx = 0.000000e+00, dFy = 0.000000e+00, C = 0.000000e+00	EOS_OK
+		X = 0.000000e+00, Y = 0.000000e+00, F = 0.000000e+00, dFx = 0.000000e+00, dFy = 0.000000e+00, C = 0.000000e+00	EOS_OK
+		X = 0.000000e+00, Y = 0.000000e+00, F = 0.000000e+00, dFx = 0.000000e+00, dFy = 0.000000e+00, C = 0.000000e+00	EOS_xOk_yLo
+		X = 0.000000e+00, Y = 0.000000e+00, F = 0.000000e+00, dFx = 0.000000e+00, dFy = 0.000000e+00, C = 0.000000e+00	EOS_xOk_yLo
+
+	Species-specific values for table type EOS_Ut_DPt and material 3720 with atomic mass, 2.698150e+01
+		X = 6.801710e+01, Y = 1.801801e+06, F = 0.000000e+00, dFx = 0.000000e+00, dFy = 0.000000e+00, C = 3.333333e-01	EOS_OK
+		X = 1.360342e+02, Y = 1.802912e+06, F = 0.000000e+00, dFx = 0.000000e+00, dFy = 0.000000e+00, C = 3.333333e-01	EOS_OK
+		X = 2.040513e+02, Y = 1.804023e+06, F = 0.000000e+00, dFx = 0.000000e+00, dFy = 0.000000e+00, C = 3.333333e-01	EOS_xOk_yLo
+		X = 2.720684e+02, Y = 1.805134e+06, F = 0.000000e+00, dFx = 0.000000e+00, dFy = 0.000000e+00, C = 3.333333e-01	EOS_xOk_yLo
+
+	Species-specific values for table type EOS_Ut_DPt and material 3336 with atomic mass, 6.354600e+01
+		X = 1.601918e+02, Y = 1.801801e+06, F = 0.000000e+00, dFx = 0.000000e+00, dFy = 0.000000e+00, C = 3.333333e-01	EOS_OK
+		X = 3.203836e+02, Y = 1.802912e+06, F = 0.000000e+00, dFx = 0.000000e+00, dFy = 0.000000e+00, C = 3.333333e-01	EOS_OK
+		X = 4.805754e+02, Y = 1.804023e+06, F = 0.000000e+00, dFx = 0.000000e+00, dFy = 0.000000e+00, C = 3.333333e-01	EOS_xOk_yLo
+		X = 6.407672e+02, Y = 1.805134e+06, F = 0.000000e+00, dFx = 0.000000e+00, dFy = 0.000000e+00, C = 3.333333e-01	EOS_xOk_yLo
+
+Mixture for table type EOS_T_DPt
+eos_Mix ERROR: EOS_INTERP_EXTRAP_TBAL: Temperature balance function extrapolated beyond data table boundaries
+
+	X = 1.230000e+02, Y = 1.801801e+06, F = 5.401147e+06, dFx = -3.950217e+04, dFy = 2.561190e+00	EOS_OK
+	X = 2.460000e+02, Y = 1.802912e+06, F = 2.616923e+06, dFx = -1.852706e+04, dFy = 1.838305e+00	EOS_OK
+	X = 3.690000e+02, Y = 1.804023e+06, F = 2.264406e+06, dFx = -3.328369e+04, dFy = 3.282644e+00	EOS_xOk_yLo
+	X = 4.920000e+02, Y = 1.805134e+06, F = 8.353779e+05, dFx = -4.467797e+04, dFy = 3.926205e+00	EOS_xOk_yLo
+
+	Species-specific values for table type EOS_T_DPt and material 2140 with atomic mass, 5.585000e+01
+		X = 1.407911e+02, Y = 1.801801e+06, F = 0.000000e+00, dFx = 0.000000e+00, dFy = 0.000000e+00, C = 3.333333e-01	EOS_OK
+		X = 2.815822e+02, Y = 1.802912e+06, F = 0.000000e+00, dFx = 0.000000e+00, dFy = 0.000000e+00, C = 3.333333e-01	EOS_OK
+		X = 4.223733e+02, Y = 1.804023e+06, F = 0.000000e+00, dFx = 0.000000e+00, dFy = 0.000000e+00, C = 3.333333e-01	EOS_xOk_yLo
+		X = 5.631644e+02, Y = 1.805134e+06, F = 0.000000e+00, dFx = 0.000000e+00, dFy = 0.000000e+00, C = 3.333333e-01	EOS_xOk_yLo
+
+	Species-specific values for table type EOS_T_DPt and material 2030 with atomic mass, 4.008000e+01
+		X = 0.000000e+00, Y = 0.000000e+00, F = 0.000000e+00, dFx = 0.000000e+00, dFy = 0.000000e+00, C = 0.000000e+00	EOS_OK
+		X = 0.000000e+00, Y = 0.000000e+00, F = 0.000000e+00, dFx = 0.000000e+00, dFy = 0.000000e+00, C = 0.000000e+00	EOS_OK
+		X = 0.000000e+00, Y = 0.000000e+00, F = 0.000000e+00, dFx = 0.000000e+00, dFy = 0.000000e+00, C = 0.000000e+00	EOS_xOk_yLo
+		X = 0.000000e+00, Y = 0.000000e+00, F = 0.000000e+00, dFx = 0.000000e+00, dFy = 0.000000e+00, C = 0.000000e+00	EOS_xOk_yLo
+
+	Species-specific values for table type EOS_T_DPt and material 3720 with atomic mass, 2.698150e+01
+		X = 6.801710e+01, Y = 1.801801e+06, F = 0.000000e+00, dFx = 0.000000e+00, dFy = 0.000000e+00, C = 3.333333e-01	EOS_OK
+		X = 1.360342e+02, Y = 1.802912e+06, F = 0.000000e+00, dFx = 0.000000e+00, dFy = 0.000000e+00, C = 3.333333e-01	EOS_OK
+		X = 2.040513e+02, Y = 1.804023e+06, F = 0.000000e+00, dFx = 0.000000e+00, dFy = 0.000000e+00, C = 3.333333e-01	EOS_xOk_yLo
+		X = 2.720684e+02, Y = 1.805134e+06, F = 0.000000e+00, dFx = 0.000000e+00, dFy = 0.000000e+00, C = 3.333333e-01	EOS_xOk_yLo
+
+	Species-specific values for table type EOS_T_DPt and material 3336 with atomic mass, 6.354600e+01
+		X = 1.601918e+02, Y = 1.801801e+06, F = 0.000000e+00, dFx = 0.000000e+00, dFy = 0.000000e+00, C = 3.333333e-01	EOS_OK
+		X = 3.203836e+02, Y = 1.802912e+06, F = 0.000000e+00, dFx = 0.000000e+00, dFy = 0.000000e+00, C = 3.333333e-01	EOS_OK
+		X = 4.805754e+02, Y = 1.804023e+06, F = 0.000000e+00, dFx = 0.000000e+00, dFy = 0.000000e+00, C = 3.333333e-01	EOS_xOk_yLo
+		X = 6.407672e+02, Y = 1.805134e+06, F = 0.000000e+00, dFx = 0.000000e+00, dFy = 0.000000e+00, C = 3.333333e-01	EOS_xOk_yLo
+
+Mixture for table type EOS_T_DUt
+	X = 1.230000e+02, Y = 1.026945e+04, F = 2.733854e+06, dFx = 9.656102e+02, dFy = 2.175234e+02	EOS_OK
+	X = 2.460000e+02, Y = 2.138045e+04, F = 5.160709e+06, dFx = 8.923598e+02, dFy = 1.997469e+02	EOS_OK
+	X = 3.690000e+02, Y = 3.249145e+04, F = 7.359254e+06, dFx = 6.848629e+02, dFy = 1.805507e+02	EOS_OK
+	X = 4.920000e+02, Y = 4.360245e+04, F = 9.416399e+06, dFx = 5.329287e+02, dFy = 1.779971e+02	EOS_OK
+
+	Species-specific values for table type EOS_T_DUt and material 2140 with atomic mass, 5.585000e+01
+		X = 1.284471e+02, Y = 1.000247e+04, F = 0.000000e+00, dFx = 0.000000e+00, dFy = 0.000000e+00, C = 3.333333e-01	EOS_OK
+		X = 2.532518e+02, Y = 1.969667e+04, F = 0.000000e+00, dFx = 0.000000e+00, dFy = 0.000000e+00, C = 3.333333e-01	EOS_OK
+		X = 3.757739e+02, Y = 3.006023e+04, F = 0.000000e+00, dFx = 0.000000e+00, dFy = 0.000000e+00, C = 3.333333e-01	EOS_OK
+		X = 4.993118e+02, Y = 4.104999e+04, F = 0.000000e+00, dFx = 0.000000e+00, dFy = 0.000000e+00, C = 3.333333e-01	EOS_OK
+
+	Species-specific values for table type EOS_T_DUt and material 2030 with atomic mass, 4.008000e+01
+		X = 0.000000e+00, Y = 0.000000e+00, F = 0.000000e+00, dFx = 0.000000e+00, dFy = 0.000000e+00, C = 0.000000e+00	EOS_OK
+		X = 0.000000e+00, Y = 0.000000e+00, F = 0.000000e+00, dFx = 0.000000e+00, dFy = 0.000000e+00, C = 0.000000e+00	EOS_OK
+		X = 0.000000e+00, Y = 0.000000e+00, F = 0.000000e+00, dFx = 0.000000e+00, dFy = 0.000000e+00, C = 0.000000e+00	EOS_OK
+		X = 0.000000e+00, Y = 0.000000e+00, F = 0.000000e+00, dFx = 0.000000e+00, dFy = 0.000000e+00, C = 0.000000e+00	EOS_OK
+
+	Species-specific values for table type EOS_T_DUt and material 3720 with atomic mass, 2.698150e+01
+		X = 9.416494e+01, Y = 1.318378e+04, F = 0.000000e+00, dFx = 0.000000e+00, dFy = 0.000000e+00, C = 3.333333e-01	EOS_OK
+		X = 1.969027e+02, Y = 2.729782e+04, F = 0.000000e+00, dFx = 0.000000e+00, dFy = 0.000000e+00, C = 3.333333e-01	EOS_OK
+		X = 3.030763e+02, Y = 4.061897e+04, F = 0.000000e+00, dFx = 0.000000e+00, dFy = 0.000000e+00, C = 3.333333e-01	EOS_OK
+		X = 4.102103e+02, Y = 5.333109e+04, F = 0.000000e+00, dFx = 0.000000e+00, dFy = 0.000000e+00, C = 3.333333e-01	EOS_OK
+
+	Species-specific values for table type EOS_T_DUt and material 3336 with atomic mass, 6.354600e+01
+		X = 1.355743e+02, Y = 9.266673e+03, F = 0.000000e+00, dFx = 0.000000e+00, dFy = 0.000000e+00, C = 3.333333e-01	EOS_OK
+		X = 2.675967e+02, Y = 2.034781e+04, F = 0.000000e+00, dFx = 0.000000e+00, dFy = 0.000000e+00, C = 3.333333e-01	EOS_OK
+		X = 3.995726e+02, Y = 3.117729e+04, F = 0.000000e+00, dFx = 0.000000e+00, dFy = 0.000000e+00, C = 3.333333e-01	EOS_OK
+		X = 5.300514e+02, Y = 4.171503e+04, F = 0.000000e+00, dFx = 0.000000e+00, dFy = 0.000000e+00, C = 3.333333e-01	EOS_OK
+

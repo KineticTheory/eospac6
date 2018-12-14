@@ -1,0 +1,31 @@
+#-*-perl-*-
+##################################################################
+#
+#  Copyright -- see file named COPYRIGHTNOTICE
+#
+##################################################################
+eval '(exit $?0)' && eval 'exec perl -S "$0" ${1+"$@"}'
+& eval 'exec perl -S "$0" $argv:q'
+        if 0;
+#
+# Display columnar, formatted list from @ARGV on STDOUT.
+#
+$len = 0;
+foreach $n (@ARGV) {
+  $len = length("  $n") if(length($n) > $len);
+}
+
+$stty = `stty size`;
+@stty = split " ", $stty;
+
+$step = int($stty[1] / $len);
+
+for ($i=0;$i<=$#ARGV;$i=$i+$step) {
+  $s = "";
+  for ($j=0;$j<$step;$j++) {
+    $n = $ARGV[$i+$j];
+    print "$s$n"," "x($len - length("$s$n"));
+    $s = "  ";
+  }
+  print "\n";
+}

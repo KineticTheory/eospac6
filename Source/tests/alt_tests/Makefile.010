@@ -1,0 +1,112 @@
+##################################################################
+#  
+#  Copyright -- see file named COPYRIGHTNOTICE
+#  
+##################################################################
+SHELL = /bin/sh
+##################################################################
+### Useful functions used within this Makefile.                ###
+##################################################################
+match = $(if $(findstring $(1),$(2)),TRUE,)
+
+CC = g++
+
+ARCH   := $(shell ../../scripts/config.guess)$(F_ADDRESS_FLAG)
+EXAMPLEDIR = ../../example/$(ARCH)
+OBJDIR = ../../_OBJ/$(ARCH)
+LIBDIR = ../../lib/$(ARCH)
+INCDIR = ../../include/$(ARCH)
+EXEDIR = ../../tests/$(ARCH)
+MODULE_CMD = /usr/local/modules/$(MODULE_VERSION)/bin/modulecmd sh
+LOAD_MODULES = $(MODULE_CMD) load $(MODULES);
+LIST_MODULES = $(MODULE_CMD) list $(MODULES)
+SHOW_MODULES = $(MODULE_CMD) show $(MODULES)
+MODULES =
+USE_EOSPAC5 = FALSE
+
+ifneq ($(USE_EOSPAC5),FALSE)
+  DEFINES += -DUSE_EOSPAC5
+endif
+
+# Cygwin and MS Windows PC
+ifeq ($(call match,pc-cygwin,$(ARCH)),TRUE)
+  LOAD_MODULES = 
+  LIST_MODULES = 
+  SHOW_MODULES = 
+  EOSPAC6_ARCH = $(ARCH)
+  LIBS += -leospac6 -lm
+endif
+
+# mips SGI and IRIX
+ifeq ($(call match,sgi-irix,$(ARCH)),TRUE)
+  #(DAP)--use MIPSpro f77 compiler since g77 doesn't build correctly for SGI
+  F77 = f77
+  ifneq ($(N64),)
+    C_ADDRESS_FLAG := -mabi=64
+    F_ADDRESS_FLAG := -64
+  else
+    C_ADDRESS_FLAG := 
+    F_ADDRESS_FLAG := 
+  endif
+  ARCH   := $(shell ../../scripts/config.guess)$(F_ADDRESS_FLAG)
+endif
+
+# Compaq Alpha and OSF
+ifeq ($(call match,dec-osf,$(ARCH)),TRUE)
+#  CC = cxx -x cxx -DALPHA
+#  prefix = /usr/projects/data/eos/eospac/default/alpha-tru64
+#  prefix = /users/davidp/FILES/eospac5.35/eos/eospac/default/alpha-tru64
+#  LIBS = -lm
+endif
+
+# PC and Linux
+ifeq ($(call match,pc-linux-gnu,$(ARCH)),TRUE)
+  MODULES = lahey_6.1e
+  prefix = /usr/projects/data/eos/eospac
+#  prefix = $(HOME)/FILES
+  EOSPAC5_ARCH = intel-linux
+  EOSPAC6_ARCH = $(ARCH)
+  EOSPAC6_SUBDIR = lahey
+  MODULE_LD_LIBRARY_PATH = $(shell $(SHOW_MODULES) 2>&1 | grep LD_LIBRARY_PATH )
+  LIBS = -L $(word $(words $(MODULE_LD_LIBRARY_PATH)),$(MODULE_LD_LIBRARY_PATH))
+ifneq ($(USE_EOSPAC5),FALSE)
+  LIBS += -leospac -lfj9i6 -lfj9f6 -lfj9e6 -lfccx86_6a
+endif
+  LIBS += -leospac6 -lm
+endif
+
+# IBM PowerPC and AIX
+ifeq ($(call match,powerpc-ibm-aix,$(ARCH)),TRUE)
+endif
+
+# Sun and Solaris
+ifeq ($(call match,sun-solaris,$(ARCH)),TRUE)
+endif
+
+ifneq ($(USE_EOSPAC5),FALSE)
+  inc5 = $(prefix)/default/$(EOSPAC5_ARCH)/include
+  lib5 = $(prefix)/default/$(EOSPAC5_ARCH)/lib
+else
+  inc5 = .
+  lib5 = .
+endif
+
+inc6 = ../../include/$(EOSPAC6_ARCH)/$(EOSPAC6_SUBDIR)
+lib6 = ../../lib/$(EOSPAC6_ARCH)/$(EOSPAC6_SUBDIR)
+
+ALL_TARGETS := $(patsubst %.c,%,$(wildcard *010*.c))
+
+# compile, link and run target
+% : %.c
+	$(LOAD_MODULES) \
+          $(CC) $(DEFINES) -I"$(inc5)" -I"$(inc6)" -L"$(lib5)" -L"$(lib6)" -o "$(EXEDIR)/$*" "$<" $(LIBS)
+	"$(EXEDIR)/$*" | tee "$(EXEDIR)/$*.stdout" 2>&1
+
+all: MAKEDIRS $(ALL_TARGETS)
+
+list.mod:
+	$(LIST_MODULES)
+
+MAKEDIRS:
+	@-mkdir -p $(OBJDIR)
+	@-mkdir -p $(EXEDIR)

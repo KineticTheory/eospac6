@@ -1,0 +1,237 @@
+eos_SetOption ERROR  52031 (TH= 4): EOS_INVALID_OPTION_FLAG: The option flag passed into eos_SetOption() is invalid and ignored because it is incompatible with the specified data table type
+eos_SetOption ERROR  62031 (TH= 5): EOS_INVALID_OPTION_FLAG: The option flag passed into eos_SetOption() is invalid and ignored because it is incompatible with the specified data table type
+eos_SetOption ERROR  72031 (TH= 6): EOS_INVALID_OPTION_FLAG: The option flag passed into eos_SetOption() is invalid and ignored because it is incompatible with the specified data table type
+eos_SetOption ERROR 122031 (TH=11): EOS_INVALID_OPTION_FLAG: The option flag passed into eos_SetOption() is invalid and ignored because it is incompatible with the specified data table type
+eos_SetOption ERROR 132031 (TH=12): EOS_INVALID_OPTION_FLAG: The option flag passed into eos_SetOption() is invalid and ignored because it is incompatible with the specified data table type
+  
+--- Interpolate using tableType EOS_Ut_DT   ---
+EOS_Ut_DT   Interpolation Results:
+    i= 0    X = 3.000000E+03, Y = 2.000000E+04, F = 3.678413E+04, dFx = 1.158851E+01, dFy = 2.201870E-04, errorCode:      0
+    i= 1    X = 6.000000E+03, Y = 6.200000E+05, F = 6.972269E+04, dFx = 1.028066E+01, dFy = 6.432756E-04, errorCode:      0
+    i= 2    X = 8.200000E+03, Y = 4.000000E+06, F = 9.550554E+04, dFx = 9.956012E+00, dFy = 1.712356E-03, errorCode:      0
+    i= 3    X = 8.300000E+03, Y = 2.000000E+08, F = 1.246782E+06, dFx = 1.499933E+02, dFy = 6.403655E-03, errorCode:      0
+  
+--- Interpolate using tableType EOS_Pt_DUt  ---
+EOS_Pt_DUt  Interpolation Results:
+eos_Interpolate ERROR  22008 (TH= 1): EOS_INTERP_EXTRAPOLATED: Interpolation caused extrapolation beyond data table boundaries
+    i= 0    X = 3.000000E+03, Y = 2.000000E+04, F = 1.042636E+08, dFx = 6.419503E+04, dFy = 4.920811E+00, errorCode:  22008
+    i= 1    X = 6.000000E+03, Y = 6.200000E+05, F = 2.511515E+09, dFx = 4.329750E+05, dFy = 3.911462E+03, errorCode:  22008
+    i= 2    X = 8.200000E+03, Y = 4.000000E+06, F = 2.183123E+10, dFx = 2.698645E+06, dFy = 5.451344E+03, errorCode:  22008
+    i= 3    X = 8.300000E+03, Y = 2.000000E+08, F = 1.106305E+12, dFx = 1.327998E+08, dFy = 5.531758E+03, errorCode:  22008
+  
+--- Interpolate using tableType EOS_Pt_DT   ---
+EOS_Pt_DT   Interpolation Results:
+    i= 0    X = 3.000000E+03, Y = 2.000000E+04, F = 1.042668E+08, dFx = 6.425182E+04, dFy = 4.424943E-01, errorCode:      0
+    i= 1    X = 6.000000E+03, Y = 6.200000E+05, F = 3.717718E+08, dFx = 1.119588E+05, dFy = 2.569260E+00, errorCode:      0
+    i= 2    X = 8.200000E+03, Y = 4.000000E+06, F = 6.713175E+08, dFx = 1.389631E+05, dFy = 9.210418E+00, errorCode:      0
+    i= 3    X = 8.300000E+03, Y = 2.000000E+08, F = 6.639023E+09, dFx = 8.313070E+05, dFy = 3.336579E+01, errorCode:      0
+  
+--- Interpolate using tableType EOS_T_DUt   ---
+EOS_T_DUt   Interpolation Results:
+eos_Interpolate ERROR  42008 (TH= 3): EOS_INTERP_EXTRAPOLATED: Interpolation caused extrapolation beyond data table boundaries
+    i= 0    X = 3.000000E+03, Y = 2.000000E+04, F = 0.000000E+00, dFx =-3.229793E+08, dFy = 2.786911E+07, errorCode:  42008
+    i= 1    X = 6.000000E+03, Y = 6.200000E+05, F = 1.060682E+08, dFx = 6.298476E+01, dFy = 1.648372E+02, errorCode:  42008
+    i= 2    X = 8.200000E+03, Y = 4.000000E+06, F = 6.370044E+08, dFx =-7.716651E+04, dFy = 1.580231E+02, errorCode:  42008
+    i= 3    X = 8.300000E+03, Y = 2.000000E+08, F = 3.131401E+10, dFx =-3.781528E+06, dFy = 1.565582E+02, errorCode:  42008
+  
+--- Interpolate using tableType EOS_Gs_D    ---
+EOS_Gs_D    Interpolation Results:
+    i= 0    X = 3.000000E+03, F = 3.064803E+07, dFx = 1.711802E+04, errorCode:    0
+    i= 1    X = 6.000000E+03, F = 9.778701E+07, dFx = 2.724891E+04, errorCode:    0
+    i= 2    X = 8.200000E+03, F = 1.647559E+08, dFx = 3.350524E+04, errorCode:    0
+    i= 3    X = 8.300000E+03, F = 1.681222E+08, dFx = 3.382082E+04, errorCode:    0
+  
+--- Interpolate using tableType EOS_Comment ---
+EOS_Comment Interpolation Results:
+eos_Interpolate ERROR  62032 (TH= 5): EOS_INVALID_DATA_TYPE: Operation is not defined on this data type
+  
+--- Interpolate using tableType EOS_Info    ---
+EOS_Info    Interpolation Results:
+eos_Interpolate ERROR  72032 (TH= 6): EOS_INVALID_DATA_TYPE: Operation is not defined on this data type
+  
+--- Interpolate using tableType EOS_Ut_DT   ---
+EOS_Ut_DT   Interpolation Results:
+    i= 0    X = 3.000000E+03, Y = 2.000000E+04, F = 3.678413E+04, dFx = 1.158851E+01, dFy = 2.201870E-04, errorCode:      0
+    i= 1    X = 6.000000E+03, Y = 6.200000E+05, F = 6.972269E+04, dFx = 1.028066E+01, dFy = 6.432756E-04, errorCode:      0
+    i= 2    X = 8.200000E+03, Y = 4.000000E+06, F = 9.550554E+04, dFx = 9.956012E+00, dFy = 1.712356E-03, errorCode:      0
+    i= 3    X = 8.300000E+03, Y = 2.000000E+08, F = 1.246782E+06, dFx = 1.499933E+02, dFy = 6.403655E-03, errorCode:      0
+  
+--- Interpolate using tableType EOS_Pt_DUt  ---
+EOS_Pt_DUt  Interpolation Results:
+eos_Interpolate ERROR  92008 (TH= 8): EOS_INTERP_EXTRAPOLATED: Interpolation caused extrapolation beyond data table boundaries
+    i= 0    X = 3.000000E+03, Y = 2.000000E+04, F = 1.042636E+08, dFx = 6.419503E+04, dFy = 4.920811E+00, errorCode:  92008
+    i= 1    X = 6.000000E+03, Y = 6.200000E+05, F = 2.511515E+09, dFx = 4.329750E+05, dFy = 3.911462E+03, errorCode:  92008
+    i= 2    X = 8.200000E+03, Y = 4.000000E+06, F = 2.183123E+10, dFx = 2.698645E+06, dFy = 5.451344E+03, errorCode:  92008
+    i= 3    X = 8.300000E+03, Y = 2.000000E+08, F = 1.106305E+12, dFx = 1.327998E+08, dFy = 5.531758E+03, errorCode:  92008
+  
+--- Interpolate using tableType EOS_Pt_DT   ---
+EOS_Pt_DT   Interpolation Results:
+    i= 0    X = 3.000000E+03, Y = 2.000000E+04, F = 1.042668E+08, dFx = 6.425182E+04, dFy = 4.424943E-01, errorCode:      0
+    i= 1    X = 6.000000E+03, Y = 6.200000E+05, F = 3.717718E+08, dFx = 1.119588E+05, dFy = 2.569260E+00, errorCode:      0
+    i= 2    X = 8.200000E+03, Y = 4.000000E+06, F = 6.713175E+08, dFx = 1.389631E+05, dFy = 9.210418E+00, errorCode:      0
+    i= 3    X = 8.300000E+03, Y = 2.000000E+08, F = 6.639023E+09, dFx = 8.313070E+05, dFy = 3.336579E+01, errorCode:      0
+  
+--- Interpolate using tableType EOS_T_DUt   ---
+EOS_T_DUt   Interpolation Results:
+eos_Interpolate ERROR 112008 (TH=10): EOS_INTERP_EXTRAPOLATED: Interpolation caused extrapolation beyond data table boundaries
+    i= 0    X = 3.000000E+03, Y = 2.000000E+04, F = 0.000000E+00, dFx =-3.229793E+08, dFy = 2.786911E+07, errorCode: 112008
+    i= 1    X = 6.000000E+03, Y = 6.200000E+05, F = 1.060682E+08, dFx = 6.298476E+01, dFy = 1.648372E+02, errorCode: 112008
+    i= 2    X = 8.200000E+03, Y = 4.000000E+06, F = 6.370044E+08, dFx =-7.716651E+04, dFy = 1.580231E+02, errorCode: 112008
+    i= 3    X = 8.300000E+03, Y = 2.000000E+08, F = 3.131401E+10, dFx =-3.781528E+06, dFy = 1.565582E+02, errorCode: 112008
+  
+--- Interpolate using tableType EOS_Comment ---
+EOS_Comment Interpolation Results:
+eos_Interpolate ERROR 122032 (TH=11): EOS_INVALID_DATA_TYPE: Operation is not defined on this data type
+  
+--- Interpolate using tableType EOS_Info    ---
+EOS_Info    Interpolation Results:
+eos_Interpolate ERROR 132032 (TH=12): EOS_INVALID_DATA_TYPE: Operation is not defined on this data type
+  
+--- Table information for tableType EOS_Ut_DT  , tableHandle= 0 ---
+ 2. The exchange coefficient                                                          :      0.000000
+ 3. The conversion factor corresponding to the dependent variable, F(x,y)             :      1.000000
+ 4. Non-zero if the data table is in a log10 format                                   :      0.000000
+ 5. The SESAME material identification number                                         :   4272.000000
+ 6. The mean atomic mass                                                              :     55.367815
+ 7. The mean atomic number                                                            :     25.802865
+ 8. The solid bulk modulus                                                            :      0.000000
+ 9. The normal density                                                                :      7.910000
+10. The type of data table. Corresponds to the parameters in APPENDIX B and APPENDIX C:     12.000000
+11. The conversion factor corresponding to the primary independent variable, x        :      1.000000
+12. The conversion factor corresponding to the secondary independent variable, y      :      1.000000
+  
+--- Table information for tableType EOS_Pt_DUt , tableHandle= 1 ---
+ 2. The exchange coefficient                                                          :      0.000000
+ 3. The conversion factor corresponding to the dependent variable, F(x,y)             :      1.000000
+ 4. Non-zero if the data table is in a log10 format                                   :      0.000000
+ 5. The SESAME material identification number                                         :   4272.000000
+ 6. The mean atomic mass                                                              :     55.367815
+ 7. The mean atomic number                                                            :     25.802865
+ 8. The solid bulk modulus                                                            :      0.000000
+ 9. The normal density                                                                :      7.910000
+10. The type of data table. Corresponds to the parameters in APPENDIX B and APPENDIX C:      6.000000
+11. The conversion factor corresponding to the primary independent variable, x        :      1.000000
+12. The conversion factor corresponding to the secondary independent variable, y      :      1.000000
+  
+--- Table information for tableType EOS_Pt_DT  , tableHandle= 2 ---
+ 2. The exchange coefficient                                                          :      0.000000
+ 3. The conversion factor corresponding to the dependent variable, F(x,y)             :      1.000000
+ 4. Non-zero if the data table is in a log10 format                                   :      0.000000
+ 5. The SESAME material identification number                                         :   4272.000000
+ 6. The mean atomic mass                                                              :     55.367815
+ 7. The mean atomic number                                                            :     25.802865
+ 8. The solid bulk modulus                                                            :      0.000000
+ 9. The normal density                                                                :      7.910000
+10. The type of data table. Corresponds to the parameters in APPENDIX B and APPENDIX C:      3.000000
+11. The conversion factor corresponding to the primary independent variable, x        :      1.000000
+12. The conversion factor corresponding to the secondary independent variable, y      :      1.000000
+  
+--- Table information for tableType EOS_T_DUt  , tableHandle= 3 ---
+ 2. The exchange coefficient                                                          :      0.000000
+ 3. The conversion factor corresponding to the dependent variable, F(x,y)             :      1.000000
+ 4. Non-zero if the data table is in a log10 format                                   :      0.000000
+ 5. The SESAME material identification number                                         :   4272.000000
+ 6. The mean atomic mass                                                              :     55.367815
+ 7. The mean atomic number                                                            :     25.802865
+ 8. The solid bulk modulus                                                            :      0.000000
+ 9. The normal density                                                                :      7.910000
+10. The type of data table. Corresponds to the parameters in APPENDIX B and APPENDIX C:     14.000000
+11. The conversion factor corresponding to the primary independent variable, x        :      1.000000
+12. The conversion factor corresponding to the secondary independent variable, y      :      1.000000
+  
+--- Table information for tableType EOS_Gs_D   , tableHandle= 4 ---
+ 2. The exchange coefficient                                                          :      0.000000
+ 3. The conversion factor corresponding to the dependent variable, F(x,y)             :      1.000000
+ 4. Non-zero if the data table is in a log10 format                                   :      0.000000
+ 5. The SESAME material identification number                                         :  34272.000000
+ 6. The mean atomic mass                                                              :     55.367815
+ 7. The mean atomic number                                                            :     25.802865
+ 8. The solid bulk modulus                                                            :      0.000000
+ 9. The normal density                                                                :      7.910000
+10. The type of data table. Corresponds to the parameters in APPENDIX B and APPENDIX C:    255.000000
+11. The conversion factor corresponding to the primary independent variable, x        :      1.000000
+12. The conversion factor corresponding to the secondary independent variable, y      :      1.000000
+  
+--- Table information for tableType EOS_Comment, tableHandle= 5 ---
+ 1. The length in characters of the comments available for the specified data table   :    572.000000
+ 4. Non-zero if the data table is in a log10 format                                   :      0.000000
+ 5. The SESAME material identification number                                         :   4272.000000
+10. The type of data table. Corresponds to the parameters in APPENDIX B and APPENDIX C:      1.000000
+  
+--- Table information for tableType EOS_Info   , tableHandle= 6 ---
+ 2. The exchange coefficient                                                          :      0.000000
+ 4. Non-zero if the data table is in a log10 format                                   :      0.000000
+ 5. The SESAME material identification number                                         :   4272.000000
+ 6. The mean atomic mass                                                              :     55.367815
+ 7. The mean atomic number                                                            :     25.802865
+ 8. The solid bulk modulus                                                            :      0.000000
+ 9. The normal density                                                                :      7.910000
+10. The type of data table. Corresponds to the parameters in APPENDIX B and APPENDIX C:      2.000000
+  
+--- Table information for tableType EOS_Ut_DT  , tableHandle= 7 ---
+ 2. The exchange coefficient                                                          :      0.000000
+ 3. The conversion factor corresponding to the dependent variable, F(x,y)             :      1.000000
+ 4. Non-zero if the data table is in a log10 format                                   :      0.000000
+ 5. The SESAME material identification number                                         :   4272.000000
+ 6. The mean atomic mass                                                              :     55.367815
+ 7. The mean atomic number                                                            :     25.802865
+ 8. The solid bulk modulus                                                            :      0.000000
+ 9. The normal density                                                                :      7.910000
+10. The type of data table. Corresponds to the parameters in APPENDIX B and APPENDIX C:     12.000000
+11. The conversion factor corresponding to the primary independent variable, x        :      1.000000
+12. The conversion factor corresponding to the secondary independent variable, y      :      1.000000
+  
+--- Table information for tableType EOS_Pt_DUt , tableHandle= 8 ---
+ 2. The exchange coefficient                                                          :      0.000000
+ 3. The conversion factor corresponding to the dependent variable, F(x,y)             :      1.000000
+ 4. Non-zero if the data table is in a log10 format                                   :      0.000000
+ 5. The SESAME material identification number                                         :   4272.000000
+ 6. The mean atomic mass                                                              :     55.367815
+ 7. The mean atomic number                                                            :     25.802865
+ 8. The solid bulk modulus                                                            :      0.000000
+ 9. The normal density                                                                :      7.910000
+10. The type of data table. Corresponds to the parameters in APPENDIX B and APPENDIX C:      6.000000
+11. The conversion factor corresponding to the primary independent variable, x        :      1.000000
+12. The conversion factor corresponding to the secondary independent variable, y      :      1.000000
+  
+--- Table information for tableType EOS_Pt_DT  , tableHandle= 9 ---
+ 2. The exchange coefficient                                                          :      0.000000
+ 3. The conversion factor corresponding to the dependent variable, F(x,y)             :      1.000000
+ 4. Non-zero if the data table is in a log10 format                                   :      0.000000
+ 5. The SESAME material identification number                                         :   4272.000000
+ 6. The mean atomic mass                                                              :     55.367815
+ 7. The mean atomic number                                                            :     25.802865
+ 8. The solid bulk modulus                                                            :      0.000000
+ 9. The normal density                                                                :      7.910000
+10. The type of data table. Corresponds to the parameters in APPENDIX B and APPENDIX C:      3.000000
+11. The conversion factor corresponding to the primary independent variable, x        :      1.000000
+12. The conversion factor corresponding to the secondary independent variable, y      :      1.000000
+  
+--- Table information for tableType EOS_T_DUt  , tableHandle=10 ---
+ 2. The exchange coefficient                                                          :      0.000000
+ 3. The conversion factor corresponding to the dependent variable, F(x,y)             :      1.000000
+ 4. Non-zero if the data table is in a log10 format                                   :      0.000000
+ 5. The SESAME material identification number                                         :   4272.000000
+ 6. The mean atomic mass                                                              :     55.367815
+ 7. The mean atomic number                                                            :     25.802865
+ 8. The solid bulk modulus                                                            :      0.000000
+ 9. The normal density                                                                :      7.910000
+10. The type of data table. Corresponds to the parameters in APPENDIX B and APPENDIX C:     14.000000
+11. The conversion factor corresponding to the primary independent variable, x        :      1.000000
+12. The conversion factor corresponding to the secondary independent variable, y      :      1.000000
+  
+--- Table information for tableType EOS_Comment, tableHandle=11 ---
+ 1. The length in characters of the comments available for the specified data table   :    572.000000
+ 4. Non-zero if the data table is in a log10 format                                   :      0.000000
+ 5. The SESAME material identification number                                         :   4272.000000
+10. The type of data table. Corresponds to the parameters in APPENDIX B and APPENDIX C:      1.000000
+  
+--- Table information for tableType EOS_Info   , tableHandle=12 ---
+ 2. The exchange coefficient                                                          :      0.000000
+ 4. Non-zero if the data table is in a log10 format                                   :      0.000000
+ 5. The SESAME material identification number                                         :   4272.000000
+ 6. The mean atomic mass                                                              :     55.367815
+ 7. The mean atomic number                                                            :     25.802865
+ 8. The solid bulk modulus                                                            :      0.000000
+ 9. The normal density                                                                :      7.910000
+10. The type of data table. Corresponds to the parameters in APPENDIX B and APPENDIX C:      2.000000

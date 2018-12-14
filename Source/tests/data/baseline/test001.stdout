@@ -1,0 +1,58 @@
+
+*** call eos_GetPackedTablesSize from main in test001.c(159) ... fcmp_ignore
+
+*** call eos_GetPackedTables from main in test001.c(162)     ... fcmp_ignore
+
+*** call eos_DestroyTables from main in test001.c(164)       ... fcmp_ignore
+
+*** call eos_DestroyAll from main in test001.c(166)          ... fcmp_ignore
+
+*** call eos_SetPackedTables from main in test001.c(168)     ... fcmp_ignore
+
+--- TEST eos_Interpolate using category 0 tableType: EOS_Pt_DT ---
+	i=0	X = 5.600000e-01, Y = 2.000000e+04, F = 3.055034e+00, dFx = 5.316996e+00, dFy = 1.972951e-04, errorCode: 0
+	i=1	X = 8.420000e+00, Y = 6.200000e+05, F = 6.401079e+03, dFx = 1.609118e+03, dFy = 1.427948e-02, errorCode: 0
+	i=2	X = 1.700000e+01, Y = 4.000000e+06, F = 1.686902e+05, dFx = 9.434149e+03, dFy = 5.846421e-02, errorCode: 0
+	i=3	X = 1.080000e+02, Y = 2.000000e+08, F = 8.641294e+07, dFx = 7.990351e+05, dFy = 4.363162e-01, errorCode: 0
+
+--- TEST eos_Interpolate using category 2 tableType: EOS_T_DPt ---
+	i=0	X = 5.600000e-01, Y = 3.055034e+00, F = 2.000000e+04, dFx = -2.694945e+04, dFy = 5.068549e+03
+	i=1	X = 8.420000e+00, Y = 6.401079e+03, F = 6.200000e+05, dFx = -1.126875e+05, dFy = 7.003056e+01
+	i=2	X = 1.700000e+01, Y = 1.686902e+05, F = 4.000000e+06, dFx = -1.613662e+05, dFy = 1.710448e+01
+	i=3	X = 1.080000e+02, Y = 8.641294e+07, F = 2.000000e+08, dFx = -1.831321e+06, dFy = 2.291916e+00
+
+--- TEST eos_Interpolate using category 1 tableType: EOS_D_PtT ---
+	i=0	X = 3.055034e+00, Y = 2.000000e+04, F = 5.600000e-01, dFx = 1.880761e-01, dFy = -3.710651e-05
+	i=1	X = 6.401079e+03, Y = 6.200000e+05, F = 8.420000e+00, dFx = 6.214584e-04, dFy = -8.874103e-06
+	i=2	X = 1.686902e+05, Y = 4.000000e+06, F = 1.700000e+01, dFx = 1.059979e-04, dFy = -6.197084e-06
+	i=3	X = 8.641294e+07, Y = 2.000000e+08, F = 1.080000e+02, dFx = 1.251510e-06, dFy = -5.460539e-07
+
+--- TEST eos_Interpolate using category 4 tableType: EOS_Pt_DUt ---
+	i=0	X = 1.500000e-01, Y = 1.700000e+01, F = 6.274415e-01, dFx = 5.261254e+00, dFy = 8.626481e-02
+	i=1	X = 6.000000e-01, Y = 5.000000e+01, F = 1.045911e+01, dFx = 2.112940e+01, dFy = 1.768972e-01
+	i=2	X = 8.550000e+00, Y = 9.000000e+02, F = 3.703244e+03, dFx = 1.028463e+03, dFy = 3.687557e+00
+	i=3	X = 1.100000e+01, Y = 2.000000e+05, F = 1.167446e+06, dFx = 1.084848e+05, dFy = 6.781437e+00
+
+--- TEST EOS_LINEAR eos_Interpolate using category 0 tableType: EOS_Pt_DT ---
+	i=0	X = 5.600000e-01, Y = 2.000000e+04, F = 3.085261e+00, dFx = 5.549021e+00, dFy = 1.956657e-04, errorCode: 0
+	i=1	X = 8.420000e+00, Y = 6.200000e+05, F = 6.505376e+03, dFx = 1.502990e+03, dFy = 1.412658e-02, errorCode: 0
+	i=2	X = 1.700000e+01, Y = 4.000000e+06, F = 1.703910e+05, dFx = 9.537390e+03, dFy = 5.638787e-02, errorCode: 0
+	i=3	X = 1.080000e+02, Y = 2.000000e+08, F = 8.637940e+07, dFx = 7.986523e+05, dFy = 4.361056e-01, errorCode: 0
+
+--- TEST EOS_RATIONAL eos_Interpolate using category 0 tableType: EOS_Pt_DT ---
+	i=0	X = 5.600000e-01, Y = 2.000000e+04, F = 3.055034e+00, dFx = 5.316996e+00, dFy = 1.972951e-04, errorCode: 0
+	i=1	X = 8.420000e+00, Y = 6.200000e+05, F = 6.401079e+03, dFx = 1.609118e+03, dFy = 1.427948e-02, errorCode: 0
+	i=2	X = 1.700000e+01, Y = 4.000000e+06, F = 1.686902e+05, dFx = 9.434149e+03, dFy = 5.846421e-02, errorCode: 0
+	i=3	X = 1.080000e+02, Y = 2.000000e+08, F = 8.641294e+07, dFx = 7.990351e+05, dFy = 4.363162e-01, errorCode: 0
+
+--- TEST EOS_LINEAR eos_Interpolate using category 2 tableType: EOS_T_DPt ---
+	i=0	X = 5.600000e-01, Y = 3.085261e+00, F = 2.000000e+04, dFx = -2.835970e+04, dFy = 5.110758e+03, errorCode: 0
+	i=1	X = 8.420000e+00, Y = 6.505376e+03, F = 6.200000e+05, dFx = -1.063944e+05, dFy = 7.078853e+01, errorCode: 0
+	i=2	X = 1.700000e+01, Y = 1.703910e+05, F = 4.000000e+06, dFx = -1.691391e+05, dFy = 1.773431e+01, errorCode: 0
+	i=3	X = 1.080000e+02, Y = 8.637940e+07, F = 2.000000e+08, dFx = -1.831328e+06, dFy = 2.293023e+00, errorCode: 0
+
+--- TEST EOS_RATIONAL eos_Interpolate using category 2 tableType: EOS_T_DPt ---
+	i=0	X = 5.600000e-01, Y = 3.055034e+00, F = 2.000000e+04, dFx = -2.694945e+04, dFy = 5.068549e+03, errorCode: 0
+	i=1	X = 8.420000e+00, Y = 6.401079e+03, F = 6.200000e+05, dFx = -1.126875e+05, dFy = 7.003056e+01, errorCode: 0
+	i=2	X = 1.700000e+01, Y = 1.686902e+05, F = 4.000000e+06, dFx = -1.613662e+05, dFy = 1.710448e+01, errorCode: 0
+	i=3	X = 1.080000e+02, Y = 8.641294e+07, F = 2.000000e+08, dFx = -1.831321e+06, dFy = 2.291916e+00, errorCode: 0

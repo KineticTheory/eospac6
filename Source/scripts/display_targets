@@ -1,0 +1,52 @@
+#-*-perl-*-
+##################################################################
+#
+#  Copyright -- see file named COPYRIGHTNOTICE
+#
+##################################################################
+eval '(exit $?0)' && eval 'exec perl -S "$0" ${1+"$@"}'
+& eval 'exec perl -S "$0" $argv:q'
+        if 0;
+#
+# Filter all valid Makefile targets and comments from @ARGV,
+# and then display them on STDOUT.
+#
+while (<>) {
+  chomp;
+  $max=0;
+  if(m/^([\sa-zA-Z0-9_\.%\$\(\)^=]+)\s*\:[^=]\s*[^\#]*\#+\s*(.*)/) {
+    #@a=split/\s*:\s*/;
+    #$k=shift(@a);
+    $tmp2= $2;
+    @k=split(/\s+/,$1);
+    foreach $k (@k) {
+      $max=(length($k)>$max)?length($k):$max;
+      $tmp1 = $k;
+      if ($k =~ /\$/) {
+	$tmp1 =~ s/[\$\(\)]+//g;
+	$tmp1 = $ENV{$tmp1};
+      }
+      $h{$tmp1}=$tmp2;
+    }
+  }
+}
+
+# define and evaluate report format
+$max=0;
+foreach $k (sort keys %h) { $max=(length($k)>$max)?length($k):$max; }
+$max += 5;
+my $def = "format = \n^" . ('<'x($max+2)) . '~~^' . ('<'x(80-$max-2)) . "~~\n\$target, \$deps\n.";
+#print "\n$def\n\n";
+print "\n";
+eval $def;
+$target = "TARGET";    $deps =   "DESCRIPTION";    write;
+$target = "------";    $deps =   "-----------";    write;
+
+# display report
+foreach $k (sort keys %h) {
+  next if (! $k);
+  $target="$k  "."."x($max-length($k)+1);
+  $deps=$h{$k};
+  write;
+}
+print "\n";

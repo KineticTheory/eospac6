@@ -1,0 +1,72 @@
+#-*-perl-*-
+##################################################################
+#
+#  Copyright -- see file named COPYRIGHTNOTICE
+#
+##################################################################
+eval '(exit $?0)' && eval 'exec perl -S $0 ${1+"$@"}'
+& eval 'exec perl -S $0 $argv:q'
+        if 0;
+
+######### START OF CONFIGURATION SECTION #########
+
+$debug=0;
+$lmax = 0;
+
+@fileList = @ARGV;
+
+# Default indent flags
+$flags = "-nbbo -npsl -nut -npro -br -nce";
+
+# Define the output directory name
+$SRC_GNU = "./src_indent_gnu";
+
+########## END OF CONFIGURATION SECTION ##########
+
+die "\nUsage:\n\t$0 <file(s)>\n\n" if (! @ARGV);
+
+use File::Basename;
+
+#
+# Get all the typedef names in the C souce and header files.
+#
+while (<>) {
+  $start=0;
+  if (m/(typedef)\s+(\w+)\s*(\w*)\s*(\w*)[\;\{]*/i) {
+    print "---\n$ARGV:$.: $_" if $debug;
+    $s = (! $4) ? $3 : $4;
+    $s =~ s/\s+//g;
+    $s = "-T$s";
+    $start++;
+  }
+  close ARGV if(eof);
+  if ($start && ! eof && ! m/\;/) {
+    while (<>) {
+      print " "x(length("$ARGV:$.: ")),$_ if $debug;
+      close ARGV if(eof);
+      if(m/\}\s*(\w+)\s*\;/) {
+	$s = "$s$1";
+	last;
+      }
+    }
+  }
+  $lmax = length($s) if ($lmax < length($s));
+  $flagH{$s} = 1;
+}
+
+$flags = join(" ", keys %flagH) . " $flags";
+
+#
+# Run the indent tool for all the specified source files (@ARGV)
+#
+print "\nUsing flags:\n$flags\n\n";
+
+if (! -d "$SRC_GNU") {
+  mkdir("$SRC_GNU") || die "Can't mkdir $SRC_GNU: $!\n";
+}
+
+foreach $f (@fileList) {
+  $of = basename("$f");
+  print "indent <flags> ./$f -o $SRC_GNU/$of\n";
+  system("indent $flags ./$f -o $SRC_GNU/$of");
+}

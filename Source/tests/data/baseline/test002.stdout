@@ -1,0 +1,179 @@
+
+*********************************************************************
+*** TEST CASE 1: EOS_Pt_DT for material 3716 ***
+Total Pressure
+--- Set splitting options: type=0, forced=0 ---
+--- Load data ---
+--- Interpolate using tableType EOS_Pt_DT for material 3716 ---
+eos_Interpolate ERROR 12008: EOS_INTERP_EXTRAPOLATED: Interpolation caused extrapolation beyond data table boundaries
+	i=0	X = 3.000000e+02, Y = 2.000000e+02, F = 1.842868e+06, dFx = 1.210384e+04, dFy = 1.892428e-01, extrap: 2026 (EOS_xOk_yLo)
+	i=1	X = 6.000000e+02, Y = 6.200000e+04, F = 6.952404e+06, dFx = 2.185182e+04, dFy = 3.532239e-01, extrap: 2030 (EOS_xOk_yHi)
+	i=2	X = 8.200000e+03, Y = 4.000000e+02, F = 2.434860e+08, dFx = 3.127683e+04, dFy = 6.440000e+00, extrap: 2024 (EOS_xHi_yOk)
+	i=3	X = 8.300000e+02, Y = 2.000000e+03, F = 1.297650e+07, dFx = 3.127770e+04, dFy = 4.889000e-01
+
+*********************************************************************
+*** TEST CASE 2: EOS_Ut_DT for material 3716 ***
+Total Internal Energy
+--- Set splitting options: type=0, forced=0 ---
+--- Load data ---
+--- Interpolate using tableType EOS_Ut_DT for material 3716 ---
+eos_Interpolate ERROR 12008: EOS_INTERP_EXTRAPOLATED: Interpolation caused extrapolation beyond data table boundaries
+	i=0	X = 3.000000e+02, Y = 2.000000e+02, F = 5.833369e+03, dFx = 2.045665e+01, dFy = 9.380879e-04, extrap: 2026 (EOS_xOk_yLo)
+	i=1	X = 6.000000e+02, Y = 6.200000e+04, F = 1.187188e+04, dFx = 1.926762e+01, dFy = 9.420612e-04, extrap: 2030 (EOS_xOk_yHi)
+	i=2	X = 8.200000e+03, Y = 4.000000e+02, F = 1.531043e+05, dFx = 1.857983e+01, dFy = 1.700000e-03, extrap: 2024 (EOS_xHi_yOk)
+	i=3	X = 8.300000e+02, Y = 2.000000e+03, F = 1.617245e+04, dFx = 1.857983e+01, dFy = 9.371496e-04
+
+*********************************************************************
+*** TEST CASE 3: EOS_At_DT for material 3716 ***
+Total Free Energy
+--- Set splitting options: type=0, forced=0 ---
+--- Load data ---
+eos_LoadTables ERROR 12011: EOS_NO_DATA_TABLE: Data table, EOS_At_DT, is not in EOS table area and it could not be manufactured for table handle 0
+0: eos_LoadTables ERROR 12021: EOS_INVALID_TABLE_HANDLE: Invalid table handle because EOS_NO_DATA_TABLE: Data table, EOS_At_DT, is not in EOS table area and it could not be manufactured for table handle 0
+
+*********************************************************************
+*** TEST CASE 4: EOS_Pt_DT for material 2140 ***
+Total Pressure
+--- Set splitting options: type=0, forced=0 ---
+--- Load data ---
+--- Interpolate using tableType EOS_Pt_DT for material 2140 ---
+	i=0	X = 3.000000e+02, Y = 2.000000e+02, F = 1.126327e+06, dFx = 7.914291e+03, dFy = -5.401688e-07
+	i=1	X = 6.000000e+02, Y = 6.200000e+04, F = 4.687572e+06, dFx = 1.564355e+04, dFy = 2.467522e-01
+	i=2	X = 8.200000e+03, Y = 4.000000e+02, F = 6.470941e+08, dFx = 1.439629e+05, dFy = 0.000000e+00
+	i=3	X = 8.300000e+02, Y = 2.000000e+03, F = 8.909732e+06, dFx = 2.112739e+04, dFy = 5.430660e-04
+
+*********************************************************************
+*** TEST CASE 5: EOS_Ut_DT for material 2140 ***
+Total Internal Energy
+--- Set splitting options: type=0, forced=0 ---
+--- Load data ---
+--- Interpolate using tableType EOS_Ut_DT for material 2140 ---
+	i=0	X = 3.000000e+02, Y = 2.000000e+02, F = 2.937720e+03, dFx = 1.253872e+01, dFy = 0.000000e+00
+	i=1	X = 6.000000e+02, Y = 6.200000e+04, F = 6.822938e+03, dFx = 1.296740e+01, dFy = 7.078349e-04
+	i=2	X = 8.200000e+03, Y = 4.000000e+02, F = 9.036363e+04, dFx = 9.614239e+00, dFy = 0.000000e+00
+	i=3	X = 8.300000e+02, Y = 2.000000e+03, F = 9.777851e+03, dFx = 1.292955e+01, dFy = 8.107173e-07
+
+*********************************************************************
+*** TEST CASE 6: EOS_At_DT for material 2140 ***
+Total Free Energy
+--- Set splitting options: type=0, forced=0 ---
+--- Load data ---
+--- Interpolate using tableType EOS_At_DT for material 2140 ---
+	i=0	X = 3.000000e+02, Y = 2.000000e+02, F = 2.937720e+03, dFx = 1.253872e+01, dFy = 3.039464e-09
+	i=1	X = 6.000000e+02, Y = 6.200000e+04, F = 6.761033e+03, dFx = 1.300988e+01, dFy = -9.905470e-04
+	i=2	X = 8.200000e+03, Y = 4.000000e+02, F = 9.036363e+04, dFx = 9.614239e+00, dFy = 0.000000e+00
+	i=3	X = 8.300000e+02, Y = 2.000000e+03, F = 9.777850e+03, dFx = 1.292955e+01, dFy = -2.557849e-07
+
+*********************************************************************
+*** TEST CASE 7: EOS_Pic_DT for material 3716 ***
+Cowan Model,  not forced,  data missing
+--- Set splitting options: type=1006, forced=0 ---
+--- Load data ---
+eos_LoadTables ERROR 12048: EOS_SPLIT_FAILED: The data splitting algorithm failed because T[0]>0 and no free energy table exists.
+0: eos_LoadTables ERROR 12048: EOS_SPLIT_FAILED: The data splitting algorithm failed because T[0]>0 and no free energy table exists.
+
+*********************************************************************
+*** TEST CASE 8: EOS_Pe_DT for material 3716 ***
+Cowan Model,  forced,  data missing
+--- Set splitting options: type=1006, forced=1 ---
+--- Load data ---
+eos_LoadTables ERROR 12048: EOS_SPLIT_FAILED: The data splitting algorithm failed because T[0]>0 and no free energy table exists.
+0: eos_LoadTables ERROR 12048: EOS_SPLIT_FAILED: The data splitting algorithm failed because T[0]>0 and no free energy table exists.
+
+*********************************************************************
+*** TEST CASE 9: EOS_Pic_DT for material 2140 ***
+Cowan Model,  not forced,  data exists
+--- Set splitting options: type=1006, forced=0 ---
+--- Load data ---
+--- Interpolate using tableType EOS_Pic_DT for material 2140 ---
+	i=0	X = 3.000000e+02, Y = 2.000000e+02, F = 1.126327e+06, dFx = 7.914291e+03, dFy = 2.412713e-06
+	i=1	X = 6.000000e+02, Y = 6.200000e+04, F = 4.686879e+06, dFx = 1.564252e+04, dFy = 2.258485e-01
+	i=2	X = 8.200000e+03, Y = 4.000000e+02, F = 6.470941e+08, dFx = 1.439629e+05, dFy = 1.493341e-07
+	i=3	X = 8.300000e+02, Y = 2.000000e+03, F = 8.909732e+06, dFx = 2.112739e+04, dFy = 4.693347e-04
+
+*********************************************************************
+*** TEST CASE 10: EOS_Pe_DT for material 2140 ***
+Cowan Model,  forced,  data exists
+--- Set splitting options: type=1006, forced=1 ---
+--- Load data ---
+--- Interpolate using tableType EOS_Pe_DT for material 2140 ---
+	i=0	X = 3.000000e+02, Y = 2.000000e+02, F = 0.000000e+00, dFx = 0.000000e+00, dFy = 0.000000e+00
+	i=1	X = 6.000000e+02, Y = 6.200000e+04, F = 0.000000e+00, dFx = 0.000000e+00, dFy = 0.000000e+00
+	i=2	X = 8.200000e+03, Y = 4.000000e+02, F = 0.000000e+00, dFx = 0.000000e+00, dFy = 0.000000e+00
+	i=3	X = 8.300000e+02, Y = 2.000000e+03, F = 0.000000e+00, dFx = 0.000000e+00, dFy = 0.000000e+00
+
+*********************************************************************
+*** TEST CASE 11: EOS_Pic_DT for material 3716 ***
+Ideal Gas Model,  not forced,  data missing
+--- Set splitting options: type=1008, forced=0 ---
+--- Load data ---
+eos_LoadTables ERROR 12048: EOS_SPLIT_FAILED: The data splitting algorithm failed because T[0]>0 and no free energy table exists.
+0: eos_LoadTables ERROR 12048: EOS_SPLIT_FAILED: The data splitting algorithm failed because T[0]>0 and no free energy table exists.
+
+*********************************************************************
+*** TEST CASE 12: EOS_Pic_DT for material 3716 ***
+Ideal Gas Model,  forced,  data missing
+--- Set splitting options: type=1008, forced=1 ---
+--- Load data ---
+eos_LoadTables ERROR 12048: EOS_SPLIT_FAILED: The data splitting algorithm failed because T[0]>0 and no free energy table exists.
+0: eos_LoadTables ERROR 12048: EOS_SPLIT_FAILED: The data splitting algorithm failed because T[0]>0 and no free energy table exists.
+
+*********************************************************************
+*** TEST CASE 13: EOS_Pic_DT for material 2140 ***
+Ideal Gas Model,  not forced,  data exists
+--- Set splitting options: type=1008, forced=0 ---
+--- Load data ---
+--- Interpolate using tableType EOS_Pic_DT for material 2140 ---
+	i=0	X = 3.000000e+02, Y = 2.000000e+02, F = 1.126327e+06, dFx = 7.914291e+03, dFy = 2.412713e-06
+	i=1	X = 6.000000e+02, Y = 6.200000e+04, F = 4.686879e+06, dFx = 1.564252e+04, dFy = 2.258485e-01
+	i=2	X = 8.200000e+03, Y = 4.000000e+02, F = 6.470941e+08, dFx = 1.439629e+05, dFy = 1.493341e-07
+	i=3	X = 8.300000e+02, Y = 2.000000e+03, F = 8.909732e+06, dFx = 2.112739e+04, dFy = 4.693347e-04
+
+*********************************************************************
+*** TEST CASE 14: EOS_Pic_DT for material 2140 ***
+Ideal Gas Model,  forced,  data exists
+--- Set splitting options: type=1008, forced=1 ---
+--- Load data ---
+--- Interpolate using tableType EOS_Pic_DT for material 2140 ---
+	i=0	X = 3.000000e+02, Y = 2.000000e+02, F = 1.126327e+06, dFx = 7.914291e+03, dFy = -5.401688e-07
+	i=1	X = 6.000000e+02, Y = 6.200000e+04, F = 4.681749e+06, dFx = 1.563900e+04, dFy = 8.932289e-02
+	i=2	X = 8.200000e+03, Y = 4.000000e+02, F = 6.470941e+08, dFx = 1.439629e+05, dFy = 0.000000e+00
+	i=3	X = 8.300000e+02, Y = 2.000000e+03, F = 8.909732e+06, dFx = 2.112739e+04, dFy = 5.430660e-04
+
+*********************************************************************
+*** TEST CASE 15: EOS_Pe_DT for material 3716 ***
+Number Proportional Model,  not forced,  data missing
+--- Set splitting options: type=1009, forced=0 ---
+--- Load data ---
+eos_LoadTables ERROR 12048: EOS_SPLIT_FAILED: The data splitting algorithm failed because T[0]>0 and no free energy table exists.
+0: eos_LoadTables ERROR 12048: EOS_SPLIT_FAILED: The data splitting algorithm failed because T[0]>0 and no free energy table exists.
+
+*********************************************************************
+*** TEST CASE 16: EOS_Pic_DT for material 3716 ***
+Number Proportional Model,  forced,  data missing
+--- Set splitting options: type=1009, forced=1 ---
+--- Load data ---
+eos_LoadTables ERROR 12048: EOS_SPLIT_FAILED: The data splitting algorithm failed because T[0]>0 and no free energy table exists.
+0: eos_LoadTables ERROR 12048: EOS_SPLIT_FAILED: The data splitting algorithm failed because T[0]>0 and no free energy table exists.
+
+*********************************************************************
+*** TEST CASE 17: EOS_Pe_DT for material 2140 ***
+Number Proportional Model,  not forced,  data exists
+--- Set splitting options: type=1009, forced=0 ---
+--- Load data ---
+--- Interpolate using tableType EOS_Pe_DT for material 2140 ---
+	i=0	X = 3.000000e+02, Y = 2.000000e+02, F = 2.027508e-04, dFx = 9.477676e-07, dFy = 1.013754e-06
+	i=1	X = 6.000000e+02, Y = 6.200000e+04, F = 7.030426e+02, dFx = 1.111317e+00, dFy = 2.410262e-02
+	i=2	X = 8.200000e+03, Y = 4.000000e+02, F = 4.200147e-03, dFx = 1.073632e-09, dFy = 3.464020e-05
+	i=3	X = 8.300000e+02, Y = 2.000000e+03, F = 5.225428e-02, dFx = -4.451646e-05, dFy = 6.455049e-05
+
+*********************************************************************
+*** TEST CASE 18: EOS_Pic_DT for material 2140 ***
+Number Proportional Model,  forced,  data exists
+--- Set splitting options: type=1009, forced=1 ---
+--- Load data ---
+--- Interpolate using tableType EOS_Pic_DT for material 2140 ---
+	i=0	X = 3.000000e+02, Y = 2.000000e+02, F = 1.126327e+06, dFx = 7.914291e+03, dFy = -5.401688e-07
+	i=1	X = 6.000000e+02, Y = 6.200000e+04, F = 4.686865e+06, dFx = 1.564419e+04, dFy = 2.070378e-01
+	i=2	X = 8.200000e+03, Y = 4.000000e+02, F = 6.470941e+08, dFx = 1.439629e+05, dFy = 0.000000e+00
+	i=3	X = 8.300000e+02, Y = 2.000000e+03, F = 8.909732e+06, dFx = 2.112739e+04, dFy = 5.430660e-04

@@ -1,0 +1,221 @@
+#-*-perl-*-
+##################################################################
+#
+#  Copyright -- see file named COPYRIGHTNOTICE
+#
+##################################################################
+eval '(exit $?0)' && eval 'exec perl -S "$0" ${1+"$@"}'
+& eval 'exec perl -S "$0" $argv:q'
+        if 0;
+#
+# Convert selected Doxygen comments to README text output, which is sent to STDOUT.
+#
+BEGIN {
+  # Parse all options
+  use Getopt::Long;
+  $options={};
+  GetOptions($options,"--verbose");
+
+  %titles = (BRIEF => "DETAILED DESCRIPTION",
+	     AUTHOR => "AUTHOR",
+	     PRE => "PRECONDITION",
+	     REFERENCES => "REFERENCES",
+	     RETVAL => "RETURN VALUES",
+	    );
+}
+
+foreach $file (@ARGV) {
+
+  #
+  # BEGIN FILE PARSER
+  #
+  die "Cannot open $file\n"
+    if (! open(FH, "$file"));
+
+  print "SOURCE FILE: $file\n";
+
+  $comments_found = 0;
+
+  while (<FH>) {
+    if (/^\s*\/\*!/) {
+      $comments_found++;
+    }
+
+    next if ! $comments_found;
+
+    chomp;
+
+    if (/^[\s\/\*!]+$/) { # reset current $doxytag
+      $comments_found++;
+      $doxytag = "";
+      next;
+    }
+
+    next if ! $comments_found;
+
+    if (/[\\\@](brief|pre|author|arg|verbatim|endverbatim|note|retval)(.*)/) {
+      ($doxytag, $s) = ($1, $2);
+      $doxytag = uc($doxytag);
+
+      next if ($doxytag eq "ENDVERBATIM"); # special case for endverbatim
+
+      if ($doxytag  eq "VERBATIM") { # special case for verbatim
+	$sorted_hashkeys .= ($sorted_hashkeys?"|":"") . "$doxytag";
+	$pad = "";
+      }
+      elsif ($doxytag  eq "RETVAL") { # special case for retval
+	$sorted_hashkeys .= ($sorted_hashkeys?"|":"") . "$doxytag";
+	$pad = "";
+      }
+      elsif ($doxytag  eq "NOTE") { # special case for note
+	$sorted_hashkeys .= ($sorted_hashkeys?"|":"") . "$doxytag";
+	$s =~ s/^\s+//;
+	$s =~ s/\s+$//;
+	$pad = "     ";
+      }
+      else {
+	$sorted_hashkeys .= ($sorted_hashkeys?"|":"") . "$doxytag" if $sorted_hashkeys !~ /$doxytag/;
+	$s =~ s/^\s+//;
+	$s =~ s/\s+$//;
+	$pad = "     ";
+      }
+      $hash{$doxytag} .= "$s\n$pad" if $s ne "";
+
+      print STDERR __LINE__,": $doxytag: $s\n" if $options->{"verbose"};
+      print STDERR __LINE__,": $doxytag: $_" if $options->{"verbose"};
+    }
+    elsif (/[\\\@\$](date):*\s*(.*)\s*\$/i) {
+      ($doxytag, $s) = ($1, $2);
+      $doxytag = uc($doxytag);
+
+      $sorted_hashkeys .= ($sorted_hashkeys?"|":"") . "$doxytag" if $sorted_hashkeys !~ /$doxytag/;
+      $s =~ s/^\s+//;
+      $s =~ s/\s+$//;
+      $pad = "     ";
+
+      $hash{$doxytag} .= "$s\n$pad" if $s ne "";
+
+      print STDERR __LINE__,": $doxytag: $s\n" if $options->{"verbose"};
+      print STDERR __LINE__,": $doxytag: $_" if $options->{"verbose"};
+    }
+    elsif (/[\\\@](par)\s+(\S+)\s*(.*)/) {
+      ($doxytag, $parname, $s) = ($1, $2, $3);
+      #push(@sorted_hashkeys, $parname);
+      $sorted_hashkeys .= ($sorted_hashkeys?"|":"") . "$parname" if $sorted_hashkeys !~ /$parname/;
+      $s =~ s/^\s+//;
+      $s =~ s/\s+$//;
+      $pad = "     ";
+      $hash{$parname} .= "$s\n" if $s ne "";
+
+      print STDERR __LINE__,": $parname: $s\n" if $options->{"verbose"};
+      print STDERR __LINE__,": $parname: $_" if $options->{"verbose"};
+    }
+    elsif ($doxytag && /^\s*\*+(.*)/) {
+      $s = $1;
+      $pad = "";
+      if ($doxytag !~ /(VERBATIM|RETVAL)/) { # exclude verbatim and retval
+	#$s =~ s/^\s+//;
+	$s =~ s/\s+$//;
+	$pad = "     ";
+      }
+      $s =~ s/<br>/ /gi;
+      if ($parname && $doxytag =~ /par/i) {
+	$hash{$parname} .= "$s\n$pad" if $s ne "";
+	print STDERR __LINE__,": $parname: $s\n" if $options->{"verbose"};
+      }
+      else {
+	$hash{$doxytag} .= "$s\n$pad" if $s ne "";
+	print STDERR __LINE__,": $doxytag: $s\n" if $options->{"verbose"};
+      }
+    }
+    elsif (/^\s*\*+(.*)/) {
+      if (! /\\(ingroup|file)/) {
+	$s = $1;
+	$s =~ s/^\s+//;
+	$s =~ s/\s+$//;
+	next if ! $s;
+	$general_cmmt++;
+	$general_cmmt_key = "GENERAL$general_cmmt";
+	$sorted_hashkeys .= ($sorted_hashkeys?"|":"") . "GENERAL$general_cmmt";
+	$pad = "     ";
+	$hash{$general_cmmt_key} .= "$s\n$pad" if $s ne "";
+	print STDERR __LINE__,": $parname: $s\n" if $options->{"verbose"};
+      }
+    }
+
+    if (/\*\//) {
+      $comments_found = 0;
+      $doxytag = "";
+    }
+
+  }
+
+  close FH;
+
+  @sorted_hashkeys = split /\|/, $sorted_hashkeys;
+  #
+  # END FILE PARSER
+  #
+
+  if ($options->{"verbose"}) {
+    print STDERR __LINE__,": --- BEGIN HASH ---\n";
+    foreach ( sort keys %hash ) {
+      print STDERR __LINE__,": \%hash{$_}:$hash{$_}\n";
+    }
+    print STDERR __LINE__,"---- END HASH ----\n";
+    print STDERR __LINE__,"\$sorted_hashkeys:$sorted_hashkeys\n";
+    print STDERR __LINE__,"--- BEGIN \@sorted_hashkeys ---\n";
+    $i=0;
+    foreach ( @sorted_hashkeys ) {
+      print STDERR __LINE__,": \@sorted_hashkeys[$i]:$_\n";
+      $i++;
+    }
+    print STDERR __LINE__,": ---- END \@sorted_hashkeys ----\n";
+  }
+
+  #
+  # Print result to STDOUT
+  #
+  foreach ( @sorted_hashkeys ) {
+
+    next if $_ !~ /\S/ || $used_hashkeys{$_};
+
+    $used_hashkeys{$_} = 1;
+
+    print STDERR __LINE__,": key: $_\n" if $options->{"verbose"};
+
+    $pad = "     ";
+
+    if (defined $titles{uc($_)}) {
+      $title = "\n" . $titles{uc($_)} . "\n";
+      $pad = "" if $_ =~ /RETVAL/i; # special case for retval
+    }
+    elsif ($_ =~ /VERBATIM/i) {
+      $title = "\n";
+      $pad = "";
+    }
+    elsif ($_ =~ /(ARG|GENERAL)/) {
+      $title = "\n";
+    }
+    else {
+      $title = "\n" . uc($_) . "\n";
+    }
+
+    if ($hash{$_} =~ /-#/) {      # convert bullet tags to sequential numbers
+      print "$title";
+      $hash{$_} =~ s/\s*\n\s*/ /g;
+      @a = split /-#/, $hash{$_};
+      foreach $b (@a) {
+	next if $b !~ /\S+/;
+	$bullet_cnt++;
+	print "$pad$bullet_cnt. $b\n";
+      }
+    }
+    else {
+      print "$title$pad$hash{$_}";
+    }
+  }
+
+  print "\n";
+
+}

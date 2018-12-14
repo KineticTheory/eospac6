@@ -1,0 +1,472 @@
+#-*-perl-*-
+##################################################################
+#
+#  Copyright -- see file named COPYRIGHTNOTICE
+#
+##################################################################
+eval '(exit $?0)' && eval 'exec perl -S "$0" ${1+"$@"}'
+& eval 'exec perl -S "$0" $argv:q'
+        if 0;
+#
+# Convert compare target's stdout file to either HTML or XML.
+# Append summary data to stdout file, and send HTML to stdout.
+#
+BEGIN {
+  # Parse all options
+  use Getopt::Long;
+  $options={};
+  GetOptions($options,
+	     "--xml",
+	     "--compiler_info_file=s",
+	     "--test_times_file=s",
+	     "--verbose",
+	     "--totaltests=i",
+	     "--failedonly");
+
+  # open the log file for verbose output
+  use File::Basename;
+  $loc = dirname($ARGV[0]);
+  $me = basename($0,"");
+  if ($options->{"verbose"}) {
+    print STDERR "$0 INFO: opening ${loc}/${me}.log\n";
+    if (! open(LOG, "> ${loc}/${me}.log")) {
+      print STDERR "$0 ERROR 4: cannot open ${loc}/${me}.log\n";
+      exit 4;
+    }
+  }
+
+  $sleep_time = 5; # seconds
+  $max_attempts = 12;
+
+  # Make several attempts, if necessary, to find the END_PASSFAILOUTPUT
+  # label within the specified input files, @ARGV
+  while (1) {
+    $attempt++;
+    $cmd = "grep -c END_PASSFAILOUTPUT @ARGV";
+    print LOG "$0 INFO: executing '$cmd'\n",
+      if ($options->{"verbose"});
+    $cnt = `$cmd`;
+    chomp $cnt;
+    $cnt *= 1;
+    last if ($cnt >= ($#ARGV + 1));
+    if ($attempt >= $max_attempts) {
+      print LOG "$0 ERROR 3: END_PASSFAILOUTPUT not found in input file(s): ",
+	join(", ",@ARGV)," ($attempt attempts made at ${sleep_time}-second intervals)\n",
+	  if ($options->{"verbose"});
+      exit 3;
+    }
+    else {
+      print LOG "$0 INFO: END_PASSFAILOUTPUT not found in input file(s) (attempt $attempt); sleeping for ${sleep_time} seconds\n",
+	if ($options->{"verbose"});
+      sleep $sleep_time; # try again in $sleep_time seconds
+    }
+  };
+}
+
+# Parse the test times file if it exists
+if ($options->{"test_times_file"}) {
+  if (-e $options->{"test_times_file"}) {
+    if (open(FH,$options->{"test_times_file"})) {
+      while (<FH>) {
+	s/^\s+//; s/\s+$//;
+	chomp;
+	if (m/^#+/) { # skip comments
+	  print LOG "$0 INFO: Skipping comment '$_'\n";
+	  next;
+	}
+	my @a = split("\t");
+	$test_times_hash{"$a[0].stdout"} = $a[1];
+	$test_times_hash{"$a[0].TablesLoaded.dat"} = "";
+      }
+    }
+    print LOG "\$test_times_hash:\n";
+    foreach $k (sort keys %test_times_hash) {
+      print LOG "\t$k => ",$test_times_hash{$k},"\n";
+    }
+  }
+  else {
+    print "WARNING: ". $options->{"test_times_file"} . " not found!\n"
+  }
+}
+
+# Choose the desired DOCTYPE (Transitional or Strict)
+$docType = '<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">';
+$docType = '<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">';
+
+$header =<<END_HEADER;
+$docType
+<html>
+<head>
+<title>EOSPAC 6 Testing Status Report</title>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<style type="text/css">
+<!--
+body {
+  background-color: #FFFFCC;
+  background: rgb(222,224,236);
+}
+div#main {
+}
+div#summary_table_style {
+  font-size: large;
+  border-left: thin solid #000000;
+  border-bottom: thin solid #000000;
+  float: right;
+  padding: 0.25em 0.25em 1em 1em;
+  margin: 0 0 0 0;
+  background: rgb(222,224,236);
+}
+div#item_list {
+  background-color: #FFFFFF;
+}
+.red_item {
+  background-color: #FF6666;
+}
+.green_item {
+  background-color: #99FF99;
+}
+.yellow_item {
+  background-color: #FFFF99;
+}
+.gray_item {
+  background-color: #CCCCCC;
+}
+.red_item, .green_item, .yellow_item, .gray_item {
+  border: none;
+  border-bottom-style: solid;
+  border-bottom-color: #8C8C8C;
+  border-bottom-width: 1px;
+}
+.bold_item {
+  font-size: large;
+  font-weight: bold;
+}
+.border_item {
+  border: solid #000000;
+}
+.border_bottom_item {
+  border: none;
+  border-bottom-style: solid;
+  border-bottom-color: #000000;
+  border-bottom-width: thin;
+}
+.extra_pad {
+  padding: 0.25em;
+}
+.logo {
+  background: url('https://sf4.lanl.gov/sf/wiki/do/viewAttachment/projects.eospac6/wiki/\$ProjectHome/project_logo.jpg') no-repeat top right;
+  height: 100px;
+  line-height:33px;
+}
+\@media print {
+  .red_item { color: #FF0000; }
+  .green_item { color: #66FF66; }
+  .yellow_item { color: #FFFF99; }
+  .gray_item { color: gray; }
+  .red_item, .green_item, .yellow_item, .gray_item { background-color: #FFFFFF; }
+  div#summary_table_style { float: none; border: thin solid #000000; padding: 0.25em; text-align: center; }
+  .extra_pad { padding: 0; }
+}
+-->
+</style>
+</head>
+
+<body>
+END_HEADER
+
+$footer =<<END_FOOTER;
+</body>
+</html>
+END_FOOTER
+
+print "$header\n" if (! $options->{"xml"});
+
+$item_cntr=0;
+$items_failed=0;
+$items_passed=0;
+$items_excluded=0;
+$items_ignored=0;
+
+# save file list for later
+@file_list = @ARGV;
+
+# Parse the first 3 rows
+$logo_section = "<div class='logo'><!-- LOGO DIV BLOCK -->\n\n";
+$logo_section .= "<div class='bold_item'>\n";
+while (<>) {
+  chomp;
+  $top3++;
+  $logo_section .= "$_" . (($top3<3) ? "<br>" : "") . "\n";
+
+  $timestamp = $_ if ($. == 1);
+  $eospac_version = $_ if ($. == 2);
+  $machine = $_ if ($. == 3);
+
+  last if ($top3>2);
+}
+$logo_section .= "</div>\n";
+$logo_section .= "</div><!-- LOGO DIV BLOCK -->\n\n";
+
+# Parse the remaining rows
+$item_list_section = ($options->{"xml"})
+  ? ""
+  : "<div id='item_list'><!-- LIST DIV BLOCK -->\n\n";
+
+print LOG "$0 INFO: Begin parsing input files\n" if ($options->{"verbose"});
+
+while (<>) {
+  chomp;
+  print LOG "$0 INFO: $ARGV:$.:$_\n" if ($options->{"verbose"});
+ SWITCH: {
+    /^END_PASSFAILOUTPUT$/ && do { # do nothing and quit file
+      $end_found = 1;
+      close(ARGV);
+      last SWITCH;
+    };
+    /^FAILED\:\s*/ && do {
+      if (! $options->{"xml"}) {
+	$item_list_section .= "<div class='red_item'>$_</div>\n";
+	print LOG " "x(length("$0")),"            :$.:<div class='red_item'>$_</div>\n"
+	  if ($options->{"verbose"});
+      }
+      else {
+	($result, $name, $other) = split(/[\s:,]+/, $_, 3);
+	$fcmp_options = "";
+	$fcmp_options = $1 if ($other =~ s/\(fcmp\s+options:\s+(.+)\)[\s,]*//);
+	$note = $other;
+	$item_list_section .= "\t<test>\n";
+	$item_list_section .= "\t\t<name>$name</name>\n";
+	$item_list_section .= "\t\t<result>$result</result>\n";
+	$item_list_section .= "\t\t<note>$note</note>\n";
+	$item_list_section .= "\t\t<fcmp_options>$fcmp_options</fcmp_options>\n";
+	# $name = basename($name, ".stdout", ".TablesLoaded.dat");
+	$item_list_section .= "\t\t<run_time>".$test_times_hash{$name}."</run_time>\n";
+	$item_list_section .= "\t</test>\n";
+      }
+      $items_failed++;
+      last SWITCH;
+    };
+    /^PASSED\:\s*/ && do {
+      if (! $options->{"failedonly"}) {
+	if (! $options->{"xml"}) {
+	  $item_list_section .= "<div class='green_item'>$_</div>\n";
+	  print LOG " "x(length("$0")),"            :$.:<div class='green_item'>$_</div>\n"
+	    if ($options->{"verbose"});
+	} else {
+	  ($result, $name, $other) = split(/[\s:,]+/, $_, 3);
+	  $fcmp_options = "";
+	  $fcmp_options = $1 if ($other =~ s/\(fcmp\s+options:\s+(.+)\)[\s,]*//);
+	  $note = $other;
+	  $item_list_section .= "\t<test>\n";
+	  $item_list_section .= "\t\t<name>$name</name>\n";
+	  $item_list_section .= "\t\t<result>$result</result>\n";
+	  $item_list_section .= "\t\t<note>$note</note>\n";
+	  $item_list_section .= "\t\t<fcmp_options>$fcmp_options</fcmp_options>\n";
+	  # $name = basename($name, ".stdout", ".TablesLoaded.dat");
+	  $item_list_section .= "\t\t<run_time>".$test_times_hash{$name}."</run_time>\n";
+	  $item_list_section .= "\t</test>\n";
+	}
+      }
+      $items_passed++;
+      last SWITCH;
+    };
+    (/^WARNING\:\s*/ || /^IGNORED\:\s*/) && do {
+      if (! $options->{"failedonly"}) {
+	if (! $options->{"xml"}) {
+	  $item_list_section .= "<div class='yellow_item'>$_</div>\n";
+	  print LOG " "x(length("$0")),"            :$.:<div class='yellow_item'>$_</div>\n"
+	    if ($options->{"verbose"});
+	} else {
+	  ($result, $name, $other) = split(/[\s:,]+/, $_, 3);
+	  $fcmp_options = "";
+	  $fcmp_options = $1 if ($other =~ s/\(fcmp\s+options:\s+(.+)\)[\s,]*//);
+	  $note = $other;
+	  $item_list_section .= "\t<test>\n";
+	  $item_list_section .= "\t\t<name>$name</name>\n";
+	  $item_list_section .= "\t\t<result>$result</result>\n";
+	  $item_list_section .= "\t\t<note>$note</note>\n";
+	  $item_list_section .= "\t\t<fcmp_options>$fcmp_options</fcmp_options>\n";
+	  # $name = basename($name, ".stdout", ".TablesLoaded.dat");
+	  $item_list_section .= "\t\t<run_time>".$test_times_hash{$name}."</run_time>\n";
+	  $item_list_section .= "\t</test>\n";
+	}
+      }
+      $items_ignored++;
+      $items_ignored++ if /^IGNORED\:\s*/; # double count so $tot is correct below
+      last SWITCH;
+    };
+    /^excluded\:\s*/ && do {
+      if (! $options->{"failedonly"}) {
+	if (! $options->{"xml"}) {
+	  $item_list_section .= "<div class='gray_item'>$_</div>\n";
+	  print LOG " "x(length("$0")),"            :$.:<div class='gray_item'>$_</div>\n"
+	    if ($options->{"verbose"});
+	} else {
+	  ($result, $name, $other) = split(/[\s:,]+/, $_, 3);
+	  $fcmp_options = "";
+	  $fcmp_options = $1 if ($other =~ s/\(fcmp\s+options:\s+(.+)\)[\s,]*//);
+	  $note = $other;
+	  $item_list_section .= "\t<test>\n";
+	  $item_list_section .= "\t\t<name>$name</name>\n";
+	  $item_list_section .= "\t\t<result>$result</result>\n";
+	  $item_list_section .= "\t\t<note>$result $note</note>\n";
+	  $item_list_section .= "\t\t<fcmp_options>$fcmp_options</fcmp_options>\n";
+	  # $name = basename($name, ".stdout", ".TablesLoaded.dat");
+	  $item_list_section .= "\t\t<run_time>".$test_times_hash{$name}."</run_time>\n";
+	  $item_list_section .= "\t</test>\n";
+	}
+      }
+      $items_excluded++;
+      last SWITCH;
+    };
+    /^SUMMARY\-\-/ && do { last SWITCH; # ignore previously-existing summary data
+			      };
+    /^\s+$/ && do {
+      print LOG " "x(length("$0")),"            :$.:SUMMARY:$_\n"
+	if ($options->{"verbose"});
+      last SWITCH; # nothing
+    };
+  }
+
+  # close input file so that we can open it again later
+  close (ARGV) if eof;
+
+}
+
+print LOG "$0 INFO: End parsing input files\n" if ($options->{"verbose"});
+
+if (! $options->{"xml"}) {
+
+  my $err = validate();
+  exit($err) if ($err);
+
+  $item_list_section .= "</div><!-- LIST DIV BLOCK -->\n\n";
+
+  print "<div id='main'><!-- MAIN DIV BLOCK -->\n\n";
+
+  print "$logo_section";
+
+  print "$main_section";
+
+  print "<div id='summary_table_style'><!-- SUMMARY DIV BLOCK -->\n\n";
+
+  print "<div class='extra_pad border_bottom_item'><b>SUMMARY</b></div>\n";
+  print "<div class='extra_pad green_item'>Passed: $items_passed</div>\n";
+  print "<div class='extra_pad red_item'>Failed: $items_failed</div>\n";
+  print "<div class='extra_pad yellow_item'>Ignored: $items_ignored</div>\n";
+  print "<div class='extra_pad gray_item'>Excluded: $items_excluded</div>\n";
+  print "<div class='extra_pad'>Total: ",($items_failed + $items_passed + $items_ignored + $items_excluded),"</div>\n\n";
+
+  print "</div><!-- SUMMARY DIV BLOCK -->\n\n";
+
+  print "$item_list_section";
+
+  print "</div><!-- MAIN DIV BLOCK -->\n\n";
+
+  print "$footer";
+
+}
+else {
+
+  my $err = validate();
+  exit($err) if ($err);
+
+  $environment = "";
+  foreach my $var (sort keys %ENV) {
+    next if $var eq "EXE" || $var eq "MAKEFLAGS";
+    $environment .= "${var}=" . $ENV{$var} . "\n";
+  }
+  $environment .= "EXE=" . $ENV{'EXE'} . "\n";
+  $environment .= "MAKEFLAGS=" . $ENV{'MAKEFLAGS'} . "\n";
+  chomp($environment);
+
+  $compiler_info_file = $options->{"compiler_info_file"};
+  @compiler_versions = `cat '$compiler_info_file'` if (-e $compiler_info_file);
+  chomp(@compiler_versions);
+  %compiler_versions = ();
+
+  $compiler_versions = "";
+  foreach (@compiler_versions) {
+    s/^\s+//;
+    s/\s+$//;
+    next if (/^\*+$/);
+    next if (/^g?make/);
+    next if (/^\s*$/);
+    $compiler_versions .= "$_\n";
+    if (/^\-\-\-\s+([CF790\+]+)\s+\-\-\-$/) {
+      $key = $1;
+      $key =~ s/\+/plus/g;
+      $key = lc($key);
+      next;
+    }
+    $compiler_versions{$key} .= "$_\n" if ($key);
+  }
+  chomp($compiler_versions);
+
+  print "<run>\n";
+
+  print "\t<timestamp>$timestamp</timestamp>\n";
+  print "\t<machine>$machine</machine>\n";
+  print "\t<eospac_version>$eospac_version</eospac_version>\n";
+  print "\t<environment>\n<![CDATA[\n$environment\n]]>\n\t</environment>\n";
+  print "\t<compiler_versions>\n<![CDATA[\n$compiler_versions\n]]>\n\t</compiler_versions>\n";
+  foreach $key (sort keys %compiler_versions) {
+    chomp($compiler_versions{$key});
+    print "\t<${key}_compiler_version>\n<![CDATA[\n$compiler_versions{$key}\n]]>\n\t</${key}_compiler_version>\n";
+  }
+
+  print "$item_list_section";
+
+  print "</run>\n\n";
+
+  close LOG if ($options->{"verbose"});
+  exit 0;
+
+}
+
+# append summary data to stdout file if it doesn't already exist
+$total = $items_failed + $items_passed + $items_ignored + $items_excluded;
+$summary_data=<<EOF;
+
+SUMMARY-- Passed:   $items_passed
+SUMMARY-- Failed:   $items_failed
+SUMMARY-- Ignored:  $items_ignored
+SUMMARY-- Excluded: $items_excluded
+SUMMARY-- Total:    $total
+EOF
+
+foreach (@file_list) {
+  if (! `grep 'SUMMARY--' "$_"`) {
+    open (FH, ">> $_");
+    print FH "$summary_data";
+    close (FH);
+  }
+}
+
+#
+# Verify the input data counts are acceptable
+#
+sub validate() {
+  if (! $end_found) {
+    print LOG "$0 ERROR 1: END_PASSFAILOUTPUT marker not found in input\n" if ($options->{"verbose"});
+    return 1;
+  }
+  else {
+    print LOG "$0 INFO: END_PASSFAILOUTPUT marker found in input\n" if ($options->{"verbose"});
+  }
+
+  if (defined $options->{"totaltests"}) {
+    my $tot = $items_failed + $items_passed + $items_ignored + $items_excluded;
+    if ($tot != $options->{"totaltests"}) {
+      print LOG "$0 ERROR 2: $tot test items found, not the required ",$options->{"totaltests"},
+	" (F($items_failed) + P($items_passed) + I($items_ignored) + E($items_excluded))\n"
+	  if ($options->{"verbose"});
+      return 2;
+    }
+    else {
+      print LOG "$0 INFO: $tot of ",$options->{"totaltests"}," test items found\n" if ($options->{"verbose"});
+    }
+  }
+
+  return 0;
+}

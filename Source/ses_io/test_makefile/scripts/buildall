@@ -1,0 +1,218 @@
+#! /bin/sh
+(shopt -s igncr) 2>/dev/null && eval 'shopt -s igncr';#
+
+# $Date: 2015/05/22 23:52:35 $
+#
+# This script is used to build/test/install EOSPAC 6 using all available
+# F90 compilers, which are currently supported by the EOSPAC 6 build scripts.
+#
+
+loc=`dirname $0`
+me=`basename $0`
+
+# default values
+MAKE=make
+TARGET=examples
+PATT='^intel-f ^pgi ^pathscale ^absoft ^fortran ^gcc'
+INSTALLED_FILES_TO_MAIL=
+install=0
+check=0
+prefix=
+debug=0
+list_modules=0
+summary_file="`pwd`/Makefile.GATHER_COMPARE_DATA.txt"
+
+# process command line options
+while getopts cde:I:ilm:t: option ; do
+  case "$option"
+  in
+    c)  TARGET='check send_report'
+        check=1
+        install=0
+        prefix=
+        ;;
+    d)  debug=1;;
+    e)  INSTALLED_FILES_TO_MAIL=$OPTARG
+        ;;
+    I)  if [ $check -eq 0 ]; then
+          TARGET=install
+          prefix="prefix=$OPTARG"
+          install=1
+	fi
+        ;;
+    i)  if [ $check -eq 0 -a $install -eq 0 ]; then
+          TARGET=install
+          install=1
+	fi
+        ;;
+    l)  list_modules=1
+        ;;
+    m)  MAKE=$OPTARG
+        which ${MAKE} > /dev/null 2>&1
+        if [ $? -ne 0 ]; then
+          printf >&2 "\nERROR: invalid MAKE=${MAKE}\n\n"
+          exit 1
+        fi
+        ;;
+    t)  TARGET=$OPTARG;;
+   \?)  cat <<EOF >&2
+
+Usage: ${me} [-i -c] [-m <MAKE>] [-t <TARGET>] [PATTERN [, ...]]
+   -c        shortcut option to run 'make check' (overrides -I and -i)
+   -e <MAIL> specify email address to receive list of installed files
+             (ignored unless -i is used)
+   -I <DIR>  shortcut option to run 'make prefix=<DIR> install'
+   -i        shortcut option to run 'make install'
+   -l        list fortran modules available based upon PATTERN
+   -m <MAKE> specify name of make command
+   -t <TARGET> run 'make <TARGET>'
+  PATTERN is used to identify which compiler modules to use.
+          Defaults: ${PATT}
+
+EOF
+        exit 2
+        ;;
+  esac
+done
+
+shift $(($OPTIND - 1))
+
+# define PATT
+if [ "$#" -gt 0 ]; then
+  # define PATT using all supplied arguments
+  PATT=
+  while [ "$#" -ne 0 ] ; do
+    PATT="${PATT} $1"
+    shift
+  done
+fi
+
+# define known possible locations for modulecmd
+if   [ -x /usr/bin/modulecmd ] ; then
+  MODULECMD=/usr/bin/modulecmd
+elif [ -x /usr/local/modules/$MODULE_VERSION/bin/modulecmd ] ; then
+  MODULECMD=/usr/local/modules/$MODULE_VERSION/bin/modulecmd
+elif [ -x /opt/modules/$MODULE_VERSION/bin/modulecmd ] ; then
+  MODULECMD=/opt/modules/$MODULE_VERSION/bin/modulecmd
+else
+  MODULECMD=
+fi
+export MODULECMD
+
+# define a module function to evaluate the MODULECMD
+module () {
+  eval ` ${MODULECMD} sh $*`
+}
+
+# Determine the processor count on the current machine
+grep_cmd=`which ggrep 2>/dev/null`
+if [ $? ]; then grep_cmd=`which grep 2>/dev/null` ; fi
+case "`uname`"
+in
+  IRIX*)          corecount=`hinv -v | $grep_cmd '^ *CPU  *[0-9]' | wc -l | sed -e 's/^ *//'`;;
+  SunOS*)         corecount=`psrinfo -v | egrep '^ *Status of (virtual )?processor' | wc -l | sed -e 's/^ *//'`;;
+  Linux*|CYGWIN*) corecount=`cat /proc/cpuinfo | $grep_cmd '^ *processor' | wc -l | sed -e 's/^ *//'`;;
+  AIX*)           corecount=`lsdev -C | $grep_cmd Process | wc -l | sed -e 's/^ *//'`;;
+  HPUX*)          corecount=`ioscan -C processor | $grep_cmd processor | wc -l | sed -e 's/^ *//'`;;
+  Darwin*)        corecount=`system_profiler SPHardwareDataType | egrep 'Number Of (CPU|Core)s:' | sed -e 's/[^0-9]*//'`;;
+  *)              corecount=1;;
+esac
+
+# allow multiple compiler modules to be simulataneously loaded
+IGNOREMODULECONFLICTS=
+export IGNOREMODULECONFLICTS
+
+#
+# Build package using available compilers
+#
+if [ "x${MODULESHOME}" != "x" ] ; then
+
+  # use all available fortran modules matching PATT
+
+  . ${MODULESHOME}/init/sh
+
+  if [ -f "${loc}/filter_module_names" ]; then
+    scriptdir=${loc}
+  else
+    scriptdir=scripts
+  fi
+
+  fortranmodules=`( module avail 2>&1 ) | ${scriptdir}/filter_module_names ${PATT} -f '(pich|mpi|32|_default|PrgEnv|mpt)' | sort`
+  echo "Available Fortran modules: " ${fortranmodules}
+
+  if [ $list_modules -ne 0 ]; then
+    exit 0
+  fi
+
+  rm -f ${summary_file}
+
+  # build package using all available fortran modules
+  for mod in ${fortranmodules}; do
+
+    # exclusively load desired modules without gcc conflicts
+    module purge
+    case $mod in
+	gcc*) module load $mod > /dev/null 2>&1;;
+	*)    module load gcc $mod > /dev/null 2>&1;;
+    esac
+    module list
+
+    if [ $install -ne 0 ]; then
+      dirs=`( ${MAKE} list_installdirs 2>&1 ) | grep '^ *\/' 2>&1`
+      founddirs=1
+      for dir in ${dirs}; do
+        if [ ! -d ${dir} ]; then
+          founddirs=0
+        fi
+      done
+  
+      if [ ${founddirs} -eq 1 ]; then
+        echo "Found pre-existing install directories for ${mod}:"
+        echo "${dirs}" | sed -e 's/^/\t/'
+        continue
+      fi
+    fi
+
+    echo "*** Do ${TARGET} for module ${mod} ***"
+
+    if [ $debug -eq 0 ]; then
+      echo '***' ${MAKE} -j${corecount} ${prefix} ${TARGET}
+      ${MAKE} -j${corecount} ${prefix} ${TARGET}
+      touch ${summary_file}
+      echo "*** ${TARGET} for module ${mod} ***" >> ${summary_file} 2>&1
+      cd tests
+      ${MAKE} GATHER_COMPARE_DATA >> ${summary_file} 2>&1
+      cd ..
+      if [ $install -ne 0 -a "x${INSTALLED_FILES_TO_MAIL}" != "x" ]; then
+        ${MAKE} list_my_installed_files | mail -s "`uname -n`: $mod: installed files" `whoami`@lanl.gov 2>&1
+      fi
+      ${MAKE} clean
+    fi
+
+  done
+
+else
+
+  # use available fortran compiler
+
+  rm -f ${summary_file}
+
+  echo '***' ${MAKE} -j${corecount} ${prefix} ${TARGET}
+  ${MAKE} -j${corecount} ${prefix} ${TARGET}
+  touch ${summary_file}
+  echo "*** ${TARGET} for module ${mod} ***" >> ${summary_file} 2>&1
+  cd tests
+  ${MAKE} GATHER_COMPARE_DATA >> ${summary_file} 2>&1
+  cd ..
+  if [ $install -ne 0 -a "x${INSTALLED_FILES_TO_MAIL}" != "x" ]; then
+    ${MAKE} list_my_installed_files | mail -s "`uname -n`: installed files" `whoami`@lanl.gov 2>&1
+  fi
+  ${MAKE} clean
+
+fi
+
+echo '----------------'
+echo 'Testing Summary:'
+echo '----------------'
+cat ${summary_file}
+rm -f ${summary_file}

@@ -1,0 +1,73 @@
+*
+* Copyright -- see file named COPYRIGHTNOTICE
+*
+******************************************************************************
+***** PURPOSE
+
+The purpose of this code is to provide an example of how to use eospac 6 in
+parallel. It also provides an example problem that can be used for debugging.
+
+
+******************************************************************************
+***** FILES
+
+The files for this test problem are:
+
+matptest.cc - main function for the test. This just calls Ptest.
+Ptest.cc, Ptest.hh - source code for the test. This has the bulk of the code.
+Comm.cc, Comm.hh - simple wrappers for MPI.
+Makefile - to build the code
+sesame3 - sesame file for fake materials, 9001, 9002, ...
+eos_Interface.h, eos_wrappers.h, libeospac.a - eospac 6
+VERSION - 1 line giving the version of eospac being used.
+
+
+******************************************************************************
+***** BUILDING THE TEST CODE
+
+The Makefile is set up for running on one of the back end nodes of lambda.
+To build the code do the following:
+
+1. Load in the right modules. I currently use
+
+Currently Loaded Modulefiles:
+  1) gcc_3.2.3                            3) mpich_1.2.5-LaheyFortran95Pro-6.1e
+  2) LaheyFortran95Pro_6.1                4) totalview_5.0.0_5
+
+I think that for this test code, the gcc and mpich modules are the
+important ones.
+
+2. Type "make". This should build the code and produce an executable
+called matptest.
+
+
+******************************************************************************
+***** RUNNING THE TEST CODE
+
+To run the test code, type
+
+    mpirun -np 1 ./matptest
+
+for running on one processor and
+
+    mpirun -np 2 ./matptest
+
+for running on two processors. If you do a "which mpirun", it should be
+coming from the mpich module loaded above. If not, then maybe you need to
+do a rehash or load the mpich module in again.
+
+
+******************************************************************************
+***** SYMPTOMS
+
+The test code works fine on one processor and gives expected results.
+
+On two processors, however, it gets to the eos_SetPackedTables() call
+(on processor 1) and bombs. I have verified that the inputs to that
+call are correct, i.e., that the packed table size is correct and the
+number of tables is correct. I have also printed out a few elements of
+the packed tables array and they are the same on processor 0 and
+processor 1. So it appears that getting the information from processor
+0 to processor 1 is working ok. I have checked memory allocation and
+that appears to be ok.  It is a mystery why it would bomb in
+eos_SetPackedTables.

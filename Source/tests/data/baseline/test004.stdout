@@ -1,0 +1,8 @@
+&&&&& Before eos_CreateTables
+&&&&& Before eos_LoadTables
+&&&&& Interpolation 1:
+      before eos_Interpolate, Pout=1e+08, RHO_EP=2000, T_EP=4e+08
+      after eos_Interpolate, Pout=1.33155e+10
+&&&&& Interpolation 2:
+      before eos_Interpolate, Pout=2e+08, RHO_EP=2000, T_EP=4e+08
+      after eos_Interpolate, Pout=1.33155e+10

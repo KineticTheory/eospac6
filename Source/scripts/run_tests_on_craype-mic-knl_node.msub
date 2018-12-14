@@ -1,0 +1,60 @@
+#!/bin/tcsh
+#
+# USAGE:
+#
+#  setenv F90 ifort
+#  setenv STARTDIR /usr/projects/packages/davidp/eospac6/Source
+#  setenv NPROC 32
+#  make -j`corecount` F90=${F90} XCOMPILE=1
+#  msub -d ${STARTDIR} -K scripts/run_tests_on_craype-mic-knl_node.msub
+#
+#  predict the duration of the job
+#MSUB -l walltime=1:00:00
+#
+#  request resources
+#MSUB -l nodes=1:knl:ppn=68
+#
+#  specify the pathname for output
+#MSUB -o run_tests_on_craype-mic-knl_node.msub.out
+#
+#  combine stdout and stdin
+#MSUB -j oe
+#
+#  forward current environment variables to the job
+#MSUB -V
+
+if ( ${?PrgEnv} ) then
+    set old_PrgEnv = `(module list -t) |& cat | grep PrgEnv`
+    echo "module swap ${old_PrgEnv} ${PrgEnv}"
+    module swap ${old_PrgEnv} ${PrgEnv}
+endif
+
+set start=`date`
+echo
+
+if ( ${?STARTDIR} ) then
+  if ( -d "${STARTDIR}" ) cd "${STARTDIR}"
+endif
+
+set echo
+
+pwd
+
+: START TIME: ${start}
+: -----------------------------------------------------
+#set | sort
+#printenv | sort
+pwd
+set APRUN_OPTS = "-d 64 -r 4"
+#set APRUN_OPTS = ""
+if ( ${?F90} && -d "${BASEDIR}/tests" ) then
+    aprun ${APRUN_OPTS} "${BASEDIR}/scripts/parallel" --joblog parallel.job.log -j 64 -t < parallel.job.list
+else
+    : Do nothing
+endif
+
+set end=`date`
+
+: -----------------------------------------------------
+: START TIME: ${start}
+:   END TIME: ${end}

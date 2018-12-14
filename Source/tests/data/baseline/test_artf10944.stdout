@@ -1,0 +1,79 @@
+EOS_Pt_DT: record type 1, subtable 1
+     EOS_Material_ID: 2140
+ EOS_Mean_Atomic_Num:  2.600000000000000e+01
+EOS_Mean_Atomic_Mass:  5.584999999999991e+01
+  EOS_Normal_Density:  7.849999999999994e+00
+         EOS_Log_Val: 0
+      EOS_Table_Type: 3
+  EOS_Exchange_Coeff:  7.385587800000017e-01
+         EOS_Modulus:  1.656999999999996e+00
+
+EOS_Uls_T: record type 2, subtable 5
+     EOS_Material_ID: 2030
+ EOS_Mean_Atomic_Num:  1.999999999999989e+01
+EOS_Mean_Atomic_Mass:  4.007999999999970e+01
+  EOS_Normal_Density:  1.546999999999976e+00
+         EOS_Log_Val: 0
+      EOS_Table_Type: 191
+  EOS_Exchange_Coeff:  0.000000000000000e+00
+         EOS_Modulus:  0.000000000000000e+00
+
+EOS_Ogb: record type 3
+     EOS_Material_ID: 13718
+ EOS_Mean_Atomic_Num:  1.300000000000000e+01
+EOS_Mean_Atomic_Mass:  2.698000000000000e+01
+  EOS_Normal_Density:  2.698000000000000e+00
+         EOS_Log_Val: 1
+      EOS_Table_Type: 257
+  EOS_Exchange_Coeff:  0.000000000000000e+00
+         EOS_Modulus:  0.000000000000000e+00
+
+EOS_M_DT: record type 6
+     EOS_Material_ID: 2161
+ EOS_Mean_Atomic_Num:  5.000000000000000e+01
+EOS_Mean_Atomic_Mass:  1.187100000000000e+02
+  EOS_Normal_Density:  7.287290000000000e+00
+         EOS_Log_Val: 0
+      EOS_Table_Type: 305
+  EOS_Exchange_Coeff:  0.000000000000000e+00
+         EOS_Modulus:  0.000000000000000e+00
+
+EOS_Info: record type 5
+     EOS_Material_ID: 2140
+ EOS_Mean_Atomic_Num:  2.600000000000000e+01
+EOS_Mean_Atomic_Mass:  5.584999999999991e+01
+  EOS_Normal_Density:  7.849999999999994e+00
+         EOS_Log_Val: 0
+      EOS_Table_Type: 2
+  EOS_Exchange_Coeff:  7.385587800000017e-01
+         EOS_Modulus:  1.656999999999996e+00
+
+EOS_Info: record type 5
+     EOS_Material_ID: 2030
+ EOS_Mean_Atomic_Num:  1.999999999999989e+01
+EOS_Mean_Atomic_Mass:  4.007999999999970e+01
+  EOS_Normal_Density:  1.546999999999976e+00
+         EOS_Log_Val: 0
+      EOS_Table_Type: 2
+  EOS_Exchange_Coeff:  0.000000000000000e+00
+         EOS_Modulus:  0.000000000000000e+00
+
+EOS_Info: record type 5
+     EOS_Material_ID: 13718
+ EOS_Mean_Atomic_Num:  1.300000000000000e+01
+EOS_Mean_Atomic_Mass:  2.698000000000000e+01
+  EOS_Normal_Density:  2.698000000000000e+00
+         EOS_Log_Val: 0
+      EOS_Table_Type: 2
+  EOS_Exchange_Coeff:  0.000000000000000e+00
+         EOS_Modulus:  0.000000000000000e+00
+
+EOS_Info: record type 5
+     EOS_Material_ID: 2161
+ EOS_Mean_Atomic_Num:  5.000000000000000e+01
+EOS_Mean_Atomic_Mass:  1.187100000000000e+02
+  EOS_Normal_Density:  7.287290000000000e+00
+         EOS_Log_Val: 0
+      EOS_Table_Type: 2
+  EOS_Exchange_Coeff:  0.000000000000000e+00
+         EOS_Modulus:  0.000000000000000e+00

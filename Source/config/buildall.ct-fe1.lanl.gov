@@ -1,0 +1,5 @@
+#
+# Additional environment requirements for this machine
+#
+module load modules
+module load xtpe-network-gemini

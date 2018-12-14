@@ -1,0 +1,33 @@
+Comprehensive file list:
+  0. <...>/tests/data/sesame3
+  1. <...>/tests/data/sesame1
+  2. <...>/tests/data/sesame.tin.withmassfracdata
+  3. <...>/tests/data/ses2141_2140A.dat
+  4. <...>/tests/data/ses2161_2160PU.dat
+  5. <...>/tests/data/93270littlebin
+  6. /opt/local/codes/data/eos/sesame	fcmp_ignore
+  7. /opt/local/codes/data/eos/sesou	fcmp_ignore
+  8. /opt/local/codes/data/eos/sescu	fcmp_ignore
+  9. /opt/local/codes/data/eos/sescu1	fcmp_ignore
+ 10. /opt/local/codes/data/eos/sescu9	fcmp_ignore
+ 11. /opt/local/codes/data/eos/export-controlled/ieee64/sesame	fcmp_ignore
+ 12. /opt/local/codes/data/eos/export-controlled/ieee64/sesou	fcmp_ignore
+
+Limited file list:
+  0. <...>/tests/data/sesame3
+  1. <...>/tests/data/sesame1
+  2. <...>/tests/data/sesame.tin.withmassfracdata
+  3. <...>/tests/data/ses2141_2140A.dat
+  4. <...>/tests/data/ses2161_2160PU.dat
+  5. <...>/tests/data/93270littlebin
+eos_LoadTables (matid=999999) ERROR 22009: EOS_MATERIAL_NOT_FOUND: Material ID specified for table handle 1 is not in library (fcmp_ignore)
+
+Extended file list:
+  0. <...>/tests/data/sesame3
+  1. <...>/tests/data/sesame1
+  2. <...>/tests/data/sesame.tin.withmassfracdata
+  3. <...>/tests/data/ses2141_2140A.dat
+  4. <...>/tests/data/ses2161_2160PU.dat
+  5. <...>/tests/data/93270littlebin
+  6. <...>/sesame3.copy
+eos_LoadTables (matid=3720) ERROR 42009: EOS_MATERIAL_NOT_FOUND: Material ID specified for table handle 3 is not in library (fcmp_ignore)

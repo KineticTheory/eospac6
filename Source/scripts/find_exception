@@ -1,0 +1,164 @@
+#-*-perl-*-
+##################################################################
+#
+#  Copyright -- see file named COPYRIGHTNOTICE
+#
+##################################################################
+eval '(exit $?0)' && eval 'exec perl -S "$0" ${1+"$@"}'
+  & eval 'exec perl -S "$0" $argv:q'
+  if 0;
+#
+# USAGE:
+#     find_exception [-a] [-d] [-r DIR] [-v] DIR1 [, DIR2 [, DIR3 [, ...]]] [ FILE ]
+#
+# Given the specified directory(ies) ($ARGV[0..($#ARGV-1)]), find the most
+# specific instance of the baseline exception applicable to the specified FILE
+# ($ARGV[$#ARGV]). At least one directory, DIR1, is required.
+# If the "--all" option is specified, then all arguments are assumed to be
+# specified directory(ies).
+# If multiple directoryies are specified, then priority is in order of appearance
+# (i.e., $ARGV[0] priority is higher than $ARGV[1], etc.).
+# If FILE, $ARGV[$#ARGV], is specified without a file name with the pattern *.{ed,diff},
+# then use it as a root name and populate the @baseline_exception_files list with the
+# following extensions, which are listed priority order: .ndiff  .udiff  .cdiff  .ed
+# Return either a list of the baseline exception file(s) or a directory name if the
+# "--directory" option is specified.
+#
+
+#
+# Parse all options
+use Getopt::Long;
+$options={};
+GetOptions($options,
+	   "--all",
+	   "--directory",
+	   "--rootdir=s",
+	   "--verbose"
+	  );
+
+use File::Basename;
+use Data::Dumper;
+
+if ( not $options->{"all"} ) {
+  my $f = pop;
+
+  if ($f =~ /\.(ed|.diff)$/) {
+    push (@_baseline_exception_files, $f);
+  }
+  else {
+    for my $e ( qw(ndiff udiff cdiff ed) ) {
+      push (@_baseline_exception_files, "${f}.${e}") if not $baseline_exception_files{$f};
+      $baseline_exception_files{$f} = "${f}.${e}";
+    }
+  }
+}
+
+print STDERR __LINE__, ": \@ARGV = [ @ARGV ]\n" if $options->{"verbose"};
+print STDERR __LINE__, ": \@_baseline_exception_files = [ @_baseline_exception_files ]\n" if $options->{"verbose"};
+
+OUTER: while ( $REGRESSION_DATA_EXCEPTIONS_DIR = shift ) {
+
+  $REGRESSION_DATA_EXCEPTIONS_DIR2 = $REGRESSION_DATA_EXCEPTIONS_DIR;
+  $REGRESSION_DATA_EXCEPTIONS_DIR2 =~ s/[0-9\.]+$//;
+
+  print STDERR __LINE__, ": \$REGRESSION_DATA_EXCEPTIONS_DIR = $REGRESSION_DATA_EXCEPTIONS_DIR\n" if $options->{"verbose"};
+  print STDERR __LINE__, ": \$REGRESSION_DATA_EXCEPTIONS_DIR2 = $REGRESSION_DATA_EXCEPTIONS_DIR2\n" if $options->{"verbose"};
+
+  unless (-d $REGRESSION_DATA_EXCEPTIONS_DIR or -d $REGRESSION_DATA_EXCEPTIONS_DIR2) {
+    print STDERR __LINE__, ": directory missing $REGRESSION_DATA_EXCEPTIONS_DIR\n" if $options->{"verbose"};
+    print STDERR __LINE__, ": directory missing $REGRESSION_DATA_EXCEPTIONS_DIR2\n" if $options->{"verbose"};
+    next;
+  }
+
+  if ( $options->{"all"} ) {
+    push( @baseline_exception_files, glob($REGRESSION_DATA_EXCEPTIONS_DIR . '/*.{ed,?diff}') );
+    push( @baseline_exception_files, glob($REGRESSION_DATA_EXCEPTIONS_DIR2 . '/*.{ed,?diff}') );
+    my $d = dirname $REGRESSION_DATA_EXCEPTIONS_DIR;
+    while ( $d !~ m|/data$| ) {
+      print STDERR __LINE__, ": \$d = $d\n" if $options->{"verbose"};
+      my $d2 = $d;
+      $d2 =~ s/([^\/])[0-9\.]+$/$1/;
+      push( @baseline_exception_files, glob($d . '/*.{ed,?diff}') );
+      push( @baseline_exception_files, glob($d2 . '/*.{ed,?diff}') );
+      $d = dirname $d;
+    }
+  }
+  else {
+    @baseline_exception_files = @_baseline_exception_files;
+  }
+
+  print STDERR __LINE__, ": \@baseline_exception_files = [ @baseline_exception_files ]\n" if $options->{"verbose"};
+
+ BASELINE_EXCEPTION_FILES: for $file (@baseline_exception_files) {
+
+    if ($seen{$file}) {
+      print STDERR __LINE__, ": BTDT! skipping $file\n" if $options->{"verbose"};
+      next;
+    }
+
+    $seen{$file}++;
+
+    $baseline_exception_file = basename($file);
+
+    print STDERR __LINE__, ": \$baseline_exception_file = $baseline_exception_file\n" if $options->{"verbose"};
+
+    $baseline_dir = "";
+
+    $dir_ = $REGRESSION_DATA_EXCEPTIONS_DIR;
+    $cwd = `pwd`;
+    chomp $cwd;
+
+    print STDERR __LINE__, ": \$cwd = $cwd\n" if $options->{"verbose"};
+
+    my $min_length = 1;
+    $min_length = length($options->{"rootdir"}) if $options->{"rootdir"};
+
+  SUBDIRS: while (length($dir_) > $min_length) {	# ignore "/" or $options->{"rootdir"}
+
+      print STDERR __LINE__, ": \$dir_ = $dir_\n" if $options->{"verbose"};
+
+      # check specific platform directory
+      if (-s "$dir_/$baseline_exception_file") {
+	$baseline_dir=$dir_;
+	push @list, "$dir_/$baseline_exception_file";
+	print STDERR __LINE__, ": \$baseline_dir = $baseline_dir\n" if $options->{"verbose"};
+	last BASELINE_EXCEPTION_FILES if not $options->{"all"};
+	last SUBDIRS;
+      }
+
+      if (-z "$dir_/$baseline_exception_file") {
+	$baseline_dir="";
+	print STDERR __LINE__, ": \$baseline_dir = $baseline_dir\n" if $options->{"verbose"};
+	last BASELINE_EXCEPTION_FILES if not $options->{"all"};
+	last SUBDIRS;
+      }
+
+      # check generic platform directory (i.e., i386-apple-darwin instead of i386-apple-darwin9.8.0)
+      $dir2 = $dir_;
+      $dir2 =~ s/([^\/])[0-9\.]+$/$1/;
+      print STDERR __LINE__, ": \$dir2 = $dir2\n" if $options->{"verbose"};
+      if (-s "$dir2/$baseline_exception_file") {
+	$baseline_dir=$dir2;
+	push @list, "$dir2/$baseline_exception_file";
+	print STDERR __LINE__, ": \$baseline_dir = $baseline_dir\n" if $options->{"verbose"};
+	last BASELINE_EXCEPTION_FILES if not $options->{"all"};
+	last SUBDIRS;
+      }
+
+      $dir_ = dirname $dir_;
+
+    }
+
+  }
+
+}
+
+if ( not $options->{"directory"} ) {
+  $rval = join " ", @list;
+}
+else {
+  $rval = $baseline_dir;
+}
+
+$rval =~ s:/+:/:g;
+print $rval;

@@ -1,0 +1,7 @@
+# This file contains alternative '../scripts/fcmp' options that are specific to
+# any specified test case output file. Use a TAB character as the delimiter
+# between the hashkey and the option(s).
+#
+# hashkey	option(s)
+# -------	---------
+test_getopt.py.stdout	-e getopt

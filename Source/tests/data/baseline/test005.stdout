@@ -1,0 +1,14 @@
+
+eos_CreateTables - Create the tables.
+eos_LoadTables - Load the tables.
+
+        X         Y         F        Fexp
+      0.93      2000       -27       -27
+         2      2000       -27       -27
+         2      5000         3         3
+         2      6000        13        13
+      1.15      6000        13        13
+       0.2      6000        13        13
+       0.2      4975      2.75      2.75
+       0.2      1050     -36.5     -36.5
+

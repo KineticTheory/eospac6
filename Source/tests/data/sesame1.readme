@@ -1,0 +1,85 @@
+File contents summary:
+
+     9981    Unclassified    TABLES: 201, 301, 303, 305
+     9982    Unclassified    TABLES: 201, 301, 303, 305
+     9983    Unclassified    TABLES: 201, 301, 303, 305
+     9984    Unclassified    TABLES: 201, 301, 303, 305
+     9985    Unclassified    TABLES: 201, 301, 303, 305
+     9991    Unclassified    TABLES: 201, 301, 303, 305, 306
+     9992    Unclassified    TABLES: 201, 301, 303, 305, 306
+     9993    Unclassified    TABLES: 201, 301, 303, 305, 306
+     9994    Unclassified    TABLES: 201, 301, 303, 305, 306
+     9995    Unclassified    TABLES: 201, 301, 303, 305, 306
+
+Summary of GRIZZLY Input Used to Generate Sesame EOS Data
+
+MatID	General Material Description
+		GRIZZLY Variable Name	Value			Variable Description
+		---------------------   -----   		--------------------
+9991	Diatomic ideal gas similar to hydrogen
+		zbar					1.0			Material atomic number,
+		abar					1.00797			Material average atomic mass,
+		rhoref					8.83850556x10-2		Material reference density,
+		idgas								Implement ideal gas nuclear model
+		gascon					1.4			Material specific heat ratio,
+		chug idgas							Implement ideal gas cold curve model
+9992	Monatomic ideal gas similar to helium
+		zbar					1.0			Material atomic number,
+		abar					4.0026			Material average atomic mass,
+		rhoref					0.4			Material reference density,
+		idgas								Implement ideal gas nuclear model
+		gascon					1.66666667		Material specific heat ratio,
+		chug					idgas			Implement ideal gas cold curve model
+9993	Diatomic ideal gas similar to oxygen
+		zbar					8.0			Material atomic number,
+		abar					15.9994			Material average atomic mass,
+		rhoref					1.30619017		Material reference density,
+		idgas								Implement ideal gas nuclear model
+		gascon					1.4			Material specific heat ratio,
+		chug					idgas			Implement ideal gas cold curve model
+9994	Monatomic ideal gas similar to Neon
+		zbar					10.0			Material atomic number,
+		abar					20.1830000		Material average atomic mass,
+		rhoref					1.24025887		Material reference density,
+		idgas								Implement ideal gas nuclear model
+		gascon					1.66666667		Material specific heat ratio,
+		chug					idgas			Implement ideal gas cold curve model
+
+9995	Monatomic ideal gas similar to Xenon
+		zbar					54.0			Material atomic number,
+		abar					131.3			Material average atomic mass,
+		rhoref					3.05512951		Material reference density,
+		idgas								Implement ideal gas nuclear model
+		gascon					1.66666667		Material specific heat ratio,
+		chug					idgas			Implement ideal gas cold curve model
+
+9981	Diatomic ideal gas similar to hydrogen
+		zbar					1.0			Material atomic number,
+		abar					1.00797			Material average atomic mass,
+		rhoref					8.83850556x10-2		Material reference density,
+		idgas								Implement ideal gas nuclear model
+		gascon					1.4			Material specific heat ratio,
+9982	Monatomic ideal gas similar to helium
+		zbar					1.0			Material atomic number,
+		abar					4.0026			Material average atomic mass,
+		rhoref					0.4			Material reference density,
+		idgas								Implement ideal gas nuclear model
+		gascon					1.66666667		Material specific heat ratio,
+9983	Diatomic ideal gas similar to oxygen
+		zbar					8.0			Material atomic number,
+		abar					15.9994			Material average atomic mass,
+		rhoref					1.30619017		Material reference density,
+		idgas								Implement ideal gas nuclear model
+		gascon					1.4			Material specific heat ratio,
+9984	Monatomic ideal gas similar to Neon
+		zbar					10.0			Material atomic number,
+		abar					20.1830000		Material average atomic mass,
+		rhoref					1.24025887		Material reference density,
+		idgas								Implement ideal gas nuclear model
+		gascon					1.66666667		Material specific heat ratio,
+9985	Monatomic ideal gas similar to Xenon
+		zbar					54.0			Material atomic number,
+		abar					131.3			Material average atomic mass,
+		rhoref					3.05512951		Material reference density,
+		idgas								Implement ideal gas nuclear model
+		gascon					1.66666667		Material specific heat ratio,

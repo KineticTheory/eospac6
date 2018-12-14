@@ -1,0 +1,41 @@
+#-*-perl-*-
+##################################################################
+#
+#  Copyright -- see file named COPYRIGHTNOTICE
+#
+##################################################################
+eval '(exit $?0)' && eval 'exec perl -S "$0" ${1+"$@"}'
+& eval 'exec perl -S "$0" $argv:q'
+        if 0;
+#
+# $ARGV[0] shall contain the name of the specific get_sesame_data binary to be
+# used.
+# The remaining values in @ARGV shall contain the input file(s), which define
+# what matids are used by each defined code.
+# This script will determine which codes require data that is not
+# on the current machine, and then display those codes on STDOUT.
+#
+$get_sesame_data = shift;
+system("$get_sesame_data id > /dev/null 2>&1");
+die "\n$get_sesame_data is not executable\n\n" unless $?==0;
+
+$available_matids = `$get_sesame_data id | grep -v 'materials found' 2>&1`;
+
+@excluded = ();
+
+if ($#ARGV > -1) {
+  while (<>) {
+    chomp;
+    ($file, @matids) = split(/\t+/);
+    next if $matids[0] !~ /\d+/i;
+    foreach $m (@matids) {
+      if ($available_matids !~ /\b$m\b/) {
+	push(@excluded, $file);
+	print STDERR "Excluding $file because it requires $m\n";
+	last;
+      }
+    }
+  }
+}
+
+print "@excluded";

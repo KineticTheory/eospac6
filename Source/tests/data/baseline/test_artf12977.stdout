@@ -1,0 +1,287 @@
+
+====== LOAD AND PACK ALL TABLES SIMULTANEOUSLY ======
+*** main::BEFORE PACKING: nTables0=3, nHandles0=4, nAlloc0=4
+*** main::AFTER PACKING: nTables0=3, nHandles0=4, nAlloc0=4
+*** main::DESTROY ALL
+*** main::BEFORE UNPACKING: nTables0=3, nHandles0=4, nAlloc0=4
+*** main::AFTER UNPACKING: nTables0=4, nHandles0=4, nAlloc0=4
+
+--- TEST eos_Interpolate using category 0 tableType: EOS_Pt_DT ---
+EOS_Pt_DT Interpolation Results:
+	i=0	X = 9.300000e-01, Y = 2.000000e+03, F = -1.014014e+01, dFx = -4.548345e+00, dFy = 2.522064e-03, errorCode: 0
+	i=1	X = 2.000000e+00, Y = 2.000000e+03, F = 2.195711e+01, dFx = 7.792252e+01, dFy = 9.040441e-03, errorCode: 0
+	i=2	X = 2.000000e+00, Y = 5.000000e+03, F = 4.184913e+01, dFx = 8.312238e+01, dFy = 5.557023e-03, errorCode: 0
+	i=3	X = 2.000000e+00, Y = 6.000000e+03, F = 4.738232e+01, dFx = 8.498448e+01, dFy = 5.497731e-03, errorCode: 0
+	i=4	X = 1.150000e+00, Y = 6.000000e+03, F = 2.314727e+00, dFx = 2.206294e+01, dFy = 2.901535e-03, errorCode: 0
+	i=5	X = 2.000000e-01, Y = 6.000000e+03, F = 4.386693e-01, dFx = -1.906678e+00, dFy = 2.996472e-04, errorCode: 0
+	i=6	X = 2.000000e-01, Y = 4.975000e+03, F = 1.358087e-01, dFx = -3.801310e+00, dFy = 2.910645e-04, errorCode: 0
+	i=7	X = 2.000000e-01, Y = 1.050000e+03, F = -1.041868e+00, dFx = -1.113997e+01, dFy = 3.327708e-04, errorCode: 0
+
+--- TEST eos_Interpolate using category 0 tableType: EOS_Ut_DT ---
+EOS_Ut_DT Interpolation Results:
+	i=0	X = 9.300000e-01, Y = 2.000000e+03, F = 1.342183e+01, dFx = -1.743395e+01, dFy = 2.388725e-03, errorCode: 0
+	i=1	X = 2.000000e+00, Y = 2.000000e+03, F = 5.214833e+00, dFx = 2.451287e+00, dFy = 3.784566e-03, errorCode: 0
+	i=2	X = 2.000000e+00, Y = 5.000000e+03, F = 1.437614e+01, dFx = 3.311960e+00, dFy = 2.782137e-03, errorCode: 0
+	i=3	X = 2.000000e+00, Y = 6.000000e+03, F = 1.715722e+01, dFx = 3.597420e+00, dFy = 2.779476e-03, errorCode: 0
+	i=4	X = 1.150000e+00, Y = 6.000000e+03, F = 1.987598e+01, dFx = -1.128064e+01, dFy = 2.483148e-03, errorCode: 0
+	i=5	X = 2.000000e-01, Y = 6.000000e+03, F = 4.164581e+01, dFx = -3.252669e+01, dFy = 2.545160e-03, errorCode: 0
+	i=6	X = 2.000000e-01, Y = 4.975000e+03, F = 3.909068e+01, dFx = -3.242105e+01, dFy = 2.442049e-03, errorCode: 0
+	i=7	X = 2.000000e-01, Y = 1.050000e+03, F = 3.053552e+01, dFx = -3.474030e+01, dFy = 1.981417e-03, errorCode: 0
+
+--- TEST eos_Interpolate using category 0 tableType: EOS_Tm_D ---
+EOS_Tm_D Interpolation Results:
+	i=0	X = 9.300000e-01, Y = 2.000000e+03, F = 4.801826e+02, dFx = 1.078307e+03, dFy = 0.000000e+00, errorCode: 0
+	i=1	X = 2.000000e+00, Y = 2.000000e+03, F = 2.152290e+03, dFx = 1.645310e+03, dFy = 0.000000e+00, errorCode: 0
+	i=2	X = 2.000000e+00, Y = 5.000000e+03, F = 2.152290e+03, dFx = 1.645310e+03, dFy = 0.000000e+00, errorCode: 0
+	i=3	X = 2.000000e+00, Y = 6.000000e+03, F = 2.152290e+03, dFx = 1.645310e+03, dFy = 0.000000e+00, errorCode: 0
+	i=4	X = 1.150000e+00, Y = 6.000000e+03, F = 7.495826e+02, dFx = 1.368268e+03, dFy = 0.000000e+00, errorCode: 0
+	i=5	X = 2.000000e-01, Y = 6.000000e+03, F = 2.848993e+01, dFx = 2.272034e+02, dFy = 0.000000e+00, errorCode: 0
+	i=6	X = 2.000000e-01, Y = 4.975000e+03, F = 2.848993e+01, dFx = 2.272034e+02, dFy = 0.000000e+00, errorCode: 0
+	i=7	X = 2.000000e-01, Y = 1.050000e+03, F = 2.848993e+01, dFx = 2.272034e+02, dFy = 0.000000e+00, errorCode: 0
+
+--- TEST eos_Interpolate using category 0 tableType: EOS_Tf_D ---
+EOS_Tf_D Interpolation Results:
+	i=0	X = 9.300000e-01, Y = 2.000000e+03, F = 5.762192e+02, dFx = 1.293968e+03, dFy = 0.000000e+00, errorCode: 0
+	i=1	X = 2.000000e+00, Y = 2.000000e+03, F = 2.582747e+03, dFx = 1.974372e+03, dFy = 0.000000e+00, errorCode: 0
+	i=2	X = 2.000000e+00, Y = 5.000000e+03, F = 2.582747e+03, dFx = 1.974372e+03, dFy = 0.000000e+00, errorCode: 0
+	i=3	X = 2.000000e+00, Y = 6.000000e+03, F = 2.582747e+03, dFx = 1.974372e+03, dFy = 0.000000e+00, errorCode: 0
+	i=4	X = 1.150000e+00, Y = 6.000000e+03, F = 8.994991e+02, dFx = 1.641922e+03, dFy = 0.000000e+00, errorCode: 0
+	i=5	X = 2.000000e-01, Y = 6.000000e+03, F = 3.418792e+01, dFx = 2.726440e+02, dFy = 0.000000e+00, errorCode: 0
+	i=6	X = 2.000000e-01, Y = 4.975000e+03, F = 3.418792e+01, dFx = 2.726440e+02, dFy = 0.000000e+00, errorCode: 0
+	i=7	X = 2.000000e-01, Y = 1.050000e+03, F = 3.418792e+01, dFx = 2.726440e+02, dFy = 0.000000e+00, errorCode: 0
+*** main::DESTROY ALL
+
+====== LOAD AND PACK ALL TABLES SEQUENTIALLY (use eos_DestroyAll in loop) ======
+
+--- i=0 ------------------------------------------
+*** main::BEFORE PACKING: i=0, nTables0=1, nHandles0=1, nAlloc0=1
+*** main::AFTER PACKING: i=0, nTables0=1, nHandles0=1, nAlloc0=1
+*** main::DESTROY ALL
+*** main::BEFORE UNPACKING: i=0, nTables0=1, nHandles0=1, nAlloc0=1
+*** main::AFTER UNPACKING: i=0, nTables0=1, nHandles0=1, nAlloc0=1
+
+--- i=1 ------------------------------------------
+*** main::BEFORE PACKING: i=1, nTables0=1, nHandles0=2, nAlloc0=2
+*** main::AFTER PACKING: i=1, nTables0=1, nHandles0=2, nAlloc0=2
+*** main::DESTROY ALL
+*** main::BEFORE UNPACKING: i=1, nTables0=1, nHandles0=2, nAlloc0=2
+*** main::AFTER UNPACKING: i=1, nTables0=2, nHandles0=2, nAlloc0=2
+
+--- i=2 ------------------------------------------
+*** main::BEFORE PACKING: i=2, nTables0=2, nHandles0=3, nAlloc0=3
+*** main::AFTER PACKING: i=2, nTables0=2, nHandles0=3, nAlloc0=3
+*** main::DESTROY ALL
+*** main::BEFORE UNPACKING: i=2, nTables0=2, nHandles0=3, nAlloc0=3
+*** main::AFTER UNPACKING: i=2, nTables0=3, nHandles0=3, nAlloc0=3
+
+--- i=3 ------------------------------------------
+*** main::BEFORE PACKING: i=3, nTables0=3, nHandles0=4, nAlloc0=4
+*** main::AFTER PACKING: i=3, nTables0=3, nHandles0=4, nAlloc0=4
+*** main::DESTROY ALL
+*** main::BEFORE UNPACKING: i=3, nTables0=3, nHandles0=4, nAlloc0=4
+*** main::AFTER UNPACKING: i=3, nTables0=4, nHandles0=4, nAlloc0=4
+
+--- TEST eos_Interpolate using category 0 tableType: EOS_Pt_DT ---
+EOS_Pt_DT Interpolation Results:
+	i=0	X = 9.300000e-01, Y = 2.000000e+03, F = -1.014014e+01, dFx = -4.548345e+00, dFy = 2.522064e-03, errorCode: 0
+	i=1	X = 2.000000e+00, Y = 2.000000e+03, F = 2.195711e+01, dFx = 7.792252e+01, dFy = 9.040441e-03, errorCode: 0
+	i=2	X = 2.000000e+00, Y = 5.000000e+03, F = 4.184913e+01, dFx = 8.312238e+01, dFy = 5.557023e-03, errorCode: 0
+	i=3	X = 2.000000e+00, Y = 6.000000e+03, F = 4.738232e+01, dFx = 8.498448e+01, dFy = 5.497731e-03, errorCode: 0
+	i=4	X = 1.150000e+00, Y = 6.000000e+03, F = 2.314727e+00, dFx = 2.206294e+01, dFy = 2.901535e-03, errorCode: 0
+	i=5	X = 2.000000e-01, Y = 6.000000e+03, F = 4.386693e-01, dFx = -1.906678e+00, dFy = 2.996472e-04, errorCode: 0
+	i=6	X = 2.000000e-01, Y = 4.975000e+03, F = 1.358087e-01, dFx = -3.801310e+00, dFy = 2.910645e-04, errorCode: 0
+	i=7	X = 2.000000e-01, Y = 1.050000e+03, F = -1.041868e+00, dFx = -1.113997e+01, dFy = 3.327708e-04, errorCode: 0
+
+--- TEST eos_Interpolate using category 0 tableType: EOS_Ut_DT ---
+EOS_Ut_DT Interpolation Results:
+	i=0	X = 9.300000e-01, Y = 2.000000e+03, F = 1.342183e+01, dFx = -1.743395e+01, dFy = 2.388725e-03, errorCode: 0
+	i=1	X = 2.000000e+00, Y = 2.000000e+03, F = 5.214833e+00, dFx = 2.451287e+00, dFy = 3.784566e-03, errorCode: 0
+	i=2	X = 2.000000e+00, Y = 5.000000e+03, F = 1.437614e+01, dFx = 3.311960e+00, dFy = 2.782137e-03, errorCode: 0
+	i=3	X = 2.000000e+00, Y = 6.000000e+03, F = 1.715722e+01, dFx = 3.597420e+00, dFy = 2.779476e-03, errorCode: 0
+	i=4	X = 1.150000e+00, Y = 6.000000e+03, F = 1.987598e+01, dFx = -1.128064e+01, dFy = 2.483148e-03, errorCode: 0
+	i=5	X = 2.000000e-01, Y = 6.000000e+03, F = 4.164581e+01, dFx = -3.252669e+01, dFy = 2.545160e-03, errorCode: 0
+	i=6	X = 2.000000e-01, Y = 4.975000e+03, F = 3.909068e+01, dFx = -3.242105e+01, dFy = 2.442049e-03, errorCode: 0
+	i=7	X = 2.000000e-01, Y = 1.050000e+03, F = 3.053552e+01, dFx = -3.474030e+01, dFy = 1.981417e-03, errorCode: 0
+
+--- TEST eos_Interpolate using category 0 tableType: EOS_Tm_D ---
+EOS_Tm_D Interpolation Results:
+	i=0	X = 9.300000e-01, Y = 2.000000e+03, F = 4.801826e+02, dFx = 1.078307e+03, dFy = 0.000000e+00, errorCode: 0
+	i=1	X = 2.000000e+00, Y = 2.000000e+03, F = 2.152290e+03, dFx = 1.645310e+03, dFy = 0.000000e+00, errorCode: 0
+	i=2	X = 2.000000e+00, Y = 5.000000e+03, F = 2.152290e+03, dFx = 1.645310e+03, dFy = 0.000000e+00, errorCode: 0
+	i=3	X = 2.000000e+00, Y = 6.000000e+03, F = 2.152290e+03, dFx = 1.645310e+03, dFy = 0.000000e+00, errorCode: 0
+	i=4	X = 1.150000e+00, Y = 6.000000e+03, F = 7.495826e+02, dFx = 1.368268e+03, dFy = 0.000000e+00, errorCode: 0
+	i=5	X = 2.000000e-01, Y = 6.000000e+03, F = 2.848993e+01, dFx = 2.272034e+02, dFy = 0.000000e+00, errorCode: 0
+	i=6	X = 2.000000e-01, Y = 4.975000e+03, F = 2.848993e+01, dFx = 2.272034e+02, dFy = 0.000000e+00, errorCode: 0
+	i=7	X = 2.000000e-01, Y = 1.050000e+03, F = 2.848993e+01, dFx = 2.272034e+02, dFy = 0.000000e+00, errorCode: 0
+
+--- TEST eos_Interpolate using category 0 tableType: EOS_Tf_D ---
+EOS_Tf_D Interpolation Results:
+	i=0	X = 9.300000e-01, Y = 2.000000e+03, F = 5.762192e+02, dFx = 1.293968e+03, dFy = 0.000000e+00, errorCode: 0
+	i=1	X = 2.000000e+00, Y = 2.000000e+03, F = 2.582747e+03, dFx = 1.974372e+03, dFy = 0.000000e+00, errorCode: 0
+	i=2	X = 2.000000e+00, Y = 5.000000e+03, F = 2.582747e+03, dFx = 1.974372e+03, dFy = 0.000000e+00, errorCode: 0
+	i=3	X = 2.000000e+00, Y = 6.000000e+03, F = 2.582747e+03, dFx = 1.974372e+03, dFy = 0.000000e+00, errorCode: 0
+	i=4	X = 1.150000e+00, Y = 6.000000e+03, F = 8.994991e+02, dFx = 1.641922e+03, dFy = 0.000000e+00, errorCode: 0
+	i=5	X = 2.000000e-01, Y = 6.000000e+03, F = 3.418792e+01, dFx = 2.726440e+02, dFy = 0.000000e+00, errorCode: 0
+	i=6	X = 2.000000e-01, Y = 4.975000e+03, F = 3.418792e+01, dFx = 2.726440e+02, dFy = 0.000000e+00, errorCode: 0
+	i=7	X = 2.000000e-01, Y = 1.050000e+03, F = 3.418792e+01, dFx = 2.726440e+02, dFy = 0.000000e+00, errorCode: 0
+*** main::DESTROY ALL
+
+====== LOAD AND PACK ALL TABLES INDIVIDUALLY (store in packedData[i]) ======
+
+--- i=0 ------------------------------------------
+*** main::BEFORE PACKING: i=0, nTables0=1, nHandles0=1, nAlloc0=1
+*** main::AFTER PACKING: i=0, nTables0=1, nHandles0=1, nAlloc0=1
+
+--- i=1 ------------------------------------------
+*** main::BEFORE PACKING: i=1, nTables0=1, nHandles0=2, nAlloc0=2
+*** main::AFTER PACKING: i=1, nTables0=1, nHandles0=2, nAlloc0=2
+
+--- i=2 ------------------------------------------
+*** main::BEFORE PACKING: i=2, nTables0=1, nHandles0=3, nAlloc0=3
+*** main::AFTER PACKING: i=2, nTables0=1, nHandles0=3, nAlloc0=3
+
+--- i=3 ------------------------------------------
+*** main::BEFORE PACKING: i=3, nTables0=1, nHandles0=4, nAlloc0=4
+*** main::AFTER PACKING: i=3, nTables0=1, nHandles0=4, nAlloc0=4
+*** main::DESTROY ALL
+
+====== UNPACK PACK ALL TABLES INDIVIDUALLY (use stored packedData[i]) ======
+====== This emulates a child processor receiving an MPI broadcast.    ======
+
+--- i=0 ------------------------------------------
+*** main::BEFORE UNPACKING: i=0, nTables0=0, nHandles0=0, nAlloc0=0
+*** main::AFTER UNPACKING: i=0, nTables0=1, nHandles0=1, nAlloc0=1
+
+--- i=1 ------------------------------------------
+*** main::BEFORE UNPACKING: i=1, nTables0=1, nHandles0=1, nAlloc0=1
+*** main::AFTER UNPACKING: i=1, nTables0=2, nHandles0=2, nAlloc0=2
+
+--- i=2 ------------------------------------------
+*** main::BEFORE UNPACKING: i=2, nTables0=2, nHandles0=2, nAlloc0=2
+*** main::AFTER UNPACKING: i=2, nTables0=3, nHandles0=3, nAlloc0=3
+
+--- i=3 ------------------------------------------
+*** main::BEFORE UNPACKING: i=3, nTables0=3, nHandles0=3, nAlloc0=3
+*** main::AFTER UNPACKING: i=3, nTables0=4, nHandles0=4, nAlloc0=4
+
+--- TEST eos_Interpolate using category 0 tableType: EOS_Pt_DT ---
+EOS_Pt_DT Interpolation Results:
+	i=0	X = 9.300000e-01, Y = 2.000000e+03, F = -1.014014e+01, dFx = -4.548345e+00, dFy = 2.522064e-03, errorCode: 0
+	i=1	X = 2.000000e+00, Y = 2.000000e+03, F = 2.195711e+01, dFx = 7.792252e+01, dFy = 9.040441e-03, errorCode: 0
+	i=2	X = 2.000000e+00, Y = 5.000000e+03, F = 4.184913e+01, dFx = 8.312238e+01, dFy = 5.557023e-03, errorCode: 0
+	i=3	X = 2.000000e+00, Y = 6.000000e+03, F = 4.738232e+01, dFx = 8.498448e+01, dFy = 5.497731e-03, errorCode: 0
+	i=4	X = 1.150000e+00, Y = 6.000000e+03, F = 2.314727e+00, dFx = 2.206294e+01, dFy = 2.901535e-03, errorCode: 0
+	i=5	X = 2.000000e-01, Y = 6.000000e+03, F = 4.386693e-01, dFx = -1.906678e+00, dFy = 2.996472e-04, errorCode: 0
+	i=6	X = 2.000000e-01, Y = 4.975000e+03, F = 1.358087e-01, dFx = -3.801310e+00, dFy = 2.910645e-04, errorCode: 0
+	i=7	X = 2.000000e-01, Y = 1.050000e+03, F = -1.041868e+00, dFx = -1.113997e+01, dFy = 3.327708e-04, errorCode: 0
+
+--- TEST eos_Interpolate using category 0 tableType: EOS_Ut_DT ---
+EOS_Ut_DT Interpolation Results:
+	i=0	X = 9.300000e-01, Y = 2.000000e+03, F = 1.342183e+01, dFx = -1.743395e+01, dFy = 2.388725e-03, errorCode: 0
+	i=1	X = 2.000000e+00, Y = 2.000000e+03, F = 5.214833e+00, dFx = 2.451287e+00, dFy = 3.784566e-03, errorCode: 0
+	i=2	X = 2.000000e+00, Y = 5.000000e+03, F = 1.437614e+01, dFx = 3.311960e+00, dFy = 2.782137e-03, errorCode: 0
+	i=3	X = 2.000000e+00, Y = 6.000000e+03, F = 1.715722e+01, dFx = 3.597420e+00, dFy = 2.779476e-03, errorCode: 0
+	i=4	X = 1.150000e+00, Y = 6.000000e+03, F = 1.987598e+01, dFx = -1.128064e+01, dFy = 2.483148e-03, errorCode: 0
+	i=5	X = 2.000000e-01, Y = 6.000000e+03, F = 4.164581e+01, dFx = -3.252669e+01, dFy = 2.545160e-03, errorCode: 0
+	i=6	X = 2.000000e-01, Y = 4.975000e+03, F = 3.909068e+01, dFx = -3.242105e+01, dFy = 2.442049e-03, errorCode: 0
+	i=7	X = 2.000000e-01, Y = 1.050000e+03, F = 3.053552e+01, dFx = -3.474030e+01, dFy = 1.981417e-03, errorCode: 0
+
+--- TEST eos_Interpolate using category 0 tableType: EOS_Tm_D ---
+EOS_Tm_D Interpolation Results:
+	i=0	X = 9.300000e-01, Y = 2.000000e+03, F = 4.801826e+02, dFx = 1.078307e+03, dFy = 0.000000e+00, errorCode: 0
+	i=1	X = 2.000000e+00, Y = 2.000000e+03, F = 2.152290e+03, dFx = 1.645310e+03, dFy = 0.000000e+00, errorCode: 0
+	i=2	X = 2.000000e+00, Y = 5.000000e+03, F = 2.152290e+03, dFx = 1.645310e+03, dFy = 0.000000e+00, errorCode: 0
+	i=3	X = 2.000000e+00, Y = 6.000000e+03, F = 2.152290e+03, dFx = 1.645310e+03, dFy = 0.000000e+00, errorCode: 0
+	i=4	X = 1.150000e+00, Y = 6.000000e+03, F = 7.495826e+02, dFx = 1.368268e+03, dFy = 0.000000e+00, errorCode: 0
+	i=5	X = 2.000000e-01, Y = 6.000000e+03, F = 2.848993e+01, dFx = 2.272034e+02, dFy = 0.000000e+00, errorCode: 0
+	i=6	X = 2.000000e-01, Y = 4.975000e+03, F = 2.848993e+01, dFx = 2.272034e+02, dFy = 0.000000e+00, errorCode: 0
+	i=7	X = 2.000000e-01, Y = 1.050000e+03, F = 2.848993e+01, dFx = 2.272034e+02, dFy = 0.000000e+00, errorCode: 0
+
+--- TEST eos_Interpolate using category 0 tableType: EOS_Tf_D ---
+EOS_Tf_D Interpolation Results:
+	i=0	X = 9.300000e-01, Y = 2.000000e+03, F = 5.762192e+02, dFx = 1.293968e+03, dFy = 0.000000e+00, errorCode: 0
+	i=1	X = 2.000000e+00, Y = 2.000000e+03, F = 2.582747e+03, dFx = 1.974372e+03, dFy = 0.000000e+00, errorCode: 0
+	i=2	X = 2.000000e+00, Y = 5.000000e+03, F = 2.582747e+03, dFx = 1.974372e+03, dFy = 0.000000e+00, errorCode: 0
+	i=3	X = 2.000000e+00, Y = 6.000000e+03, F = 2.582747e+03, dFx = 1.974372e+03, dFy = 0.000000e+00, errorCode: 0
+	i=4	X = 1.150000e+00, Y = 6.000000e+03, F = 8.994991e+02, dFx = 1.641922e+03, dFy = 0.000000e+00, errorCode: 0
+	i=5	X = 2.000000e-01, Y = 6.000000e+03, F = 3.418792e+01, dFx = 2.726440e+02, dFy = 0.000000e+00, errorCode: 0
+	i=6	X = 2.000000e-01, Y = 4.975000e+03, F = 3.418792e+01, dFx = 2.726440e+02, dFy = 0.000000e+00, errorCode: 0
+	i=7	X = 2.000000e-01, Y = 1.050000e+03, F = 3.418792e+01, dFx = 2.726440e+02, dFy = 0.000000e+00, errorCode: 0
+*** main::DESTROY ALL
+
+====== LOAD AND PACK ALL TABLES INDIVIDUALLY (use eos_DestroyTables in loop) ======
+
+--- i=0 ------------------------------------------
+*** main::BEFORE PACKING: i=0, nTables0=1, nHandles0=1, nAlloc0=1
+
+--- i=1 ------------------------------------------
+*** main::BEFORE PACKING: i=1, nTables0=1, nHandles0=1, nAlloc0=2
+
+--- i=2 ------------------------------------------
+*** main::BEFORE PACKING: i=2, nTables0=1, nHandles0=1, nAlloc0=3
+
+--- i=3 ------------------------------------------
+*** main::BEFORE PACKING: i=3, nTables0=1, nHandles0=1, nAlloc0=4
+
+====== UNPACK ALL TABLES INDIVIDUALLY ======
+
+--- i=0 ------------------------------------------
+*** main::BEFORE UNPACKING: i=0, nTables0=1, nHandles0=1, nAlloc0=4
+*** main::AFTER UNPACKING: i=0, nTables0=1, nHandles0=1, nAlloc0=5
+
+--- i=1 ------------------------------------------
+*** main::BEFORE UNPACKING: i=1, nTables0=1, nHandles0=1, nAlloc0=5
+*** main::AFTER UNPACKING: i=1, nTables0=1, nHandles0=2, nAlloc0=6
+
+--- i=2 ------------------------------------------
+*** main::BEFORE UNPACKING: i=2, nTables0=1, nHandles0=2, nAlloc0=6
+*** main::AFTER UNPACKING: i=2, nTables0=2, nHandles0=3, nAlloc0=7
+
+--- i=3 ------------------------------------------
+*** main::BEFORE UNPACKING: i=3, nTables0=2, nHandles0=3, nAlloc0=7
+*** main::AFTER UNPACKING: i=3, nTables0=3, nHandles0=4, nAlloc0=8
+
+--- TEST eos_Interpolate using category 0 tableType: EOS_Pt_DT ---
+EOS_Pt_DT Interpolation Results:
+	i=0	X = 9.300000e-01, Y = 2.000000e+03, F = -1.014014e+01, dFx = -4.548345e+00, dFy = 2.522064e-03, errorCode: 0
+	i=1	X = 2.000000e+00, Y = 2.000000e+03, F = 2.195711e+01, dFx = 7.792252e+01, dFy = 9.040441e-03, errorCode: 0
+	i=2	X = 2.000000e+00, Y = 5.000000e+03, F = 4.184913e+01, dFx = 8.312238e+01, dFy = 5.557023e-03, errorCode: 0
+	i=3	X = 2.000000e+00, Y = 6.000000e+03, F = 4.738232e+01, dFx = 8.498448e+01, dFy = 5.497731e-03, errorCode: 0
+	i=4	X = 1.150000e+00, Y = 6.000000e+03, F = 2.314727e+00, dFx = 2.206294e+01, dFy = 2.901535e-03, errorCode: 0
+	i=5	X = 2.000000e-01, Y = 6.000000e+03, F = 4.386693e-01, dFx = -1.906678e+00, dFy = 2.996472e-04, errorCode: 0
+	i=6	X = 2.000000e-01, Y = 4.975000e+03, F = 1.358087e-01, dFx = -3.801310e+00, dFy = 2.910645e-04, errorCode: 0
+	i=7	X = 2.000000e-01, Y = 1.050000e+03, F = -1.041868e+00, dFx = -1.113997e+01, dFy = 3.327708e-04, errorCode: 0
+
+--- TEST eos_Interpolate using category 0 tableType: EOS_Ut_DT ---
+EOS_Ut_DT Interpolation Results:
+	i=0	X = 9.300000e-01, Y = 2.000000e+03, F = 1.342183e+01, dFx = -1.743395e+01, dFy = 2.388725e-03, errorCode: 0
+	i=1	X = 2.000000e+00, Y = 2.000000e+03, F = 5.214833e+00, dFx = 2.451287e+00, dFy = 3.784566e-03, errorCode: 0
+	i=2	X = 2.000000e+00, Y = 5.000000e+03, F = 1.437614e+01, dFx = 3.311960e+00, dFy = 2.782137e-03, errorCode: 0
+	i=3	X = 2.000000e+00, Y = 6.000000e+03, F = 1.715722e+01, dFx = 3.597420e+00, dFy = 2.779476e-03, errorCode: 0
+	i=4	X = 1.150000e+00, Y = 6.000000e+03, F = 1.987598e+01, dFx = -1.128064e+01, dFy = 2.483148e-03, errorCode: 0
+	i=5	X = 2.000000e-01, Y = 6.000000e+03, F = 4.164581e+01, dFx = -3.252669e+01, dFy = 2.545160e-03, errorCode: 0
+	i=6	X = 2.000000e-01, Y = 4.975000e+03, F = 3.909068e+01, dFx = -3.242105e+01, dFy = 2.442049e-03, errorCode: 0
+	i=7	X = 2.000000e-01, Y = 1.050000e+03, F = 3.053552e+01, dFx = -3.474030e+01, dFy = 1.981417e-03, errorCode: 0
+
+--- TEST eos_Interpolate using category 0 tableType: EOS_Tm_D ---
+EOS_Tm_D Interpolation Results:
+	i=0	X = 9.300000e-01, Y = 2.000000e+03, F = 4.801826e+02, dFx = 1.078307e+03, dFy = 0.000000e+00, errorCode: 0
+	i=1	X = 2.000000e+00, Y = 2.000000e+03, F = 2.152290e+03, dFx = 1.645310e+03, dFy = 0.000000e+00, errorCode: 0
+	i=2	X = 2.000000e+00, Y = 5.000000e+03, F = 2.152290e+03, dFx = 1.645310e+03, dFy = 0.000000e+00, errorCode: 0
+	i=3	X = 2.000000e+00, Y = 6.000000e+03, F = 2.152290e+03, dFx = 1.645310e+03, dFy = 0.000000e+00, errorCode: 0
+	i=4	X = 1.150000e+00, Y = 6.000000e+03, F = 7.495826e+02, dFx = 1.368268e+03, dFy = 0.000000e+00, errorCode: 0
+	i=5	X = 2.000000e-01, Y = 6.000000e+03, F = 2.848993e+01, dFx = 2.272034e+02, dFy = 0.000000e+00, errorCode: 0
+	i=6	X = 2.000000e-01, Y = 4.975000e+03, F = 2.848993e+01, dFx = 2.272034e+02, dFy = 0.000000e+00, errorCode: 0
+	i=7	X = 2.000000e-01, Y = 1.050000e+03, F = 2.848993e+01, dFx = 2.272034e+02, dFy = 0.000000e+00, errorCode: 0
+
+--- TEST eos_Interpolate using category 0 tableType: EOS_Tf_D ---
+EOS_Tf_D Interpolation Results:
+	i=0	X = 9.300000e-01, Y = 2.000000e+03, F = 5.762192e+02, dFx = 1.293968e+03, dFy = 0.000000e+00, errorCode: 0
+	i=1	X = 2.000000e+00, Y = 2.000000e+03, F = 2.582747e+03, dFx = 1.974372e+03, dFy = 0.000000e+00, errorCode: 0
+	i=2	X = 2.000000e+00, Y = 5.000000e+03, F = 2.582747e+03, dFx = 1.974372e+03, dFy = 0.000000e+00, errorCode: 0
+	i=3	X = 2.000000e+00, Y = 6.000000e+03, F = 2.582747e+03, dFx = 1.974372e+03, dFy = 0.000000e+00, errorCode: 0
+	i=4	X = 1.150000e+00, Y = 6.000000e+03, F = 8.994991e+02, dFx = 1.641922e+03, dFy = 0.000000e+00, errorCode: 0
+	i=5	X = 2.000000e-01, Y = 6.000000e+03, F = 3.418792e+01, dFx = 2.726440e+02, dFy = 0.000000e+00, errorCode: 0
+	i=6	X = 2.000000e-01, Y = 4.975000e+03, F = 3.418792e+01, dFx = 2.726440e+02, dFy = 0.000000e+00, errorCode: 0
+	i=7	X = 2.000000e-01, Y = 1.050000e+03, F = 3.418792e+01, dFx = 2.726440e+02, dFy = 0.000000e+00, errorCode: 0
+*** main::DESTROY ALL

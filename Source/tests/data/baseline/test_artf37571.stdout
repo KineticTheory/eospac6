@@ -1,0 +1,223 @@
+eos_CreateTables ERROR 2006: EOS_DATA_TYPE_NOT_FOUND: Data table type is not in library
+     TH 7   ERROR 82021: EOS_INVALID_TABLE_HANDLE: Invalid table handle because EOS_DATA_TYPE_NOT_FOUND: Data table type is not in library
+     TH 12  ERROR 132021: EOS_INVALID_TABLE_HANDLE: Invalid table handle because EOS_DATA_TYPE_NOT_FOUND: Data table type is not in library
+***  0 of 1 tests passed
+eos_LoadTables ERROR 222011: EOS_NO_DATA_TABLE: Data table, EOS_Kc_DT, is not in EOS table area and it could not be manufactured for table handle 21
+     TH 7   ERROR 82021: EOS_INVALID_TABLE_HANDLE: Invalid table handle because EOS_INVALID_TABLE_HANDLE: Invalid table handle
+     TH 9   ERROR 102021: EOS_INVALID_TABLE_HANDLE: Invalid table handle because EOS_NO_DATA_TABLE: Data table, EOS_Pm_D, is not in EOS table area and it could not be manufactured for table handle 9
+     TH 10  ERROR 112021: EOS_INVALID_TABLE_HANDLE: Invalid table handle because EOS_NO_DATA_TABLE: Data table, EOS_Pf_D, is not in EOS table area and it could not be manufactured for table handle 10
+     TH 11  ERROR 122021: EOS_INVALID_TABLE_HANDLE: Invalid table handle because EOS_NO_DATA_TABLE: Data table, EOS_Gs_D, is not in EOS table area and it could not be manufactured for table handle 11
+     TH 12  ERROR 132021: EOS_INVALID_TABLE_HANDLE: Invalid table handle because EOS_INVALID_TABLE_HANDLE: Invalid table handle
+     TH 13  ERROR 142021: EOS_INVALID_TABLE_HANDLE: Invalid table handle because EOS_NO_DATA_TABLE: Data table, EOS_Kr_DT, is not in EOS table area and it could not be manufactured for table handle 13
+     TH 14  ERROR 152021: EOS_INVALID_TABLE_HANDLE: Invalid table handle because EOS_NO_DATA_TABLE: Data table, EOS_Keo_DT, is not in EOS table area and it could not be manufactured for table handle 14
+     TH 15  ERROR 162021: EOS_INVALID_TABLE_HANDLE: Invalid table handle because EOS_NO_DATA_TABLE: Data table, EOS_Zfo_DT, is not in EOS table area and it could not be manufactured for table handle 15
+     TH 16  ERROR 172021: EOS_INVALID_TABLE_HANDLE: Invalid table handle because EOS_NO_DATA_TABLE: Data table, EOS_Kp_DT, is not in EOS table area and it could not be manufactured for table handle 16
+     TH 17  ERROR 182021: EOS_INVALID_TABLE_HANDLE: Invalid table handle because EOS_NO_DATA_TABLE: Data table, EOS_Zfc_DT, is not in EOS table area and it could not be manufactured for table handle 17
+     TH 18  ERROR 192021: EOS_INVALID_TABLE_HANDLE: Invalid table handle because EOS_NO_DATA_TABLE: Data table, EOS_Kec_DT, is not in EOS table area and it could not be manufactured for table handle 18
+     TH 19  ERROR 202021: EOS_INVALID_TABLE_HANDLE: Invalid table handle because EOS_NO_DATA_TABLE: Data table, EOS_Ktc_DT, is not in EOS table area and it could not be manufactured for table handle 19
+     TH 20  ERROR 212021: EOS_INVALID_TABLE_HANDLE: Invalid table handle because EOS_NO_DATA_TABLE: Data table, EOS_B_DT, is not in EOS table area and it could not be manufactured for table handle 20
+     TH 21  ERROR 222021: EOS_INVALID_TABLE_HANDLE: Invalid table handle because EOS_NO_DATA_TABLE: Data table, EOS_Kc_DT, is not in EOS table area and it could not be manufactured for table handle 21
+***  0 of 2 tests passed
+
+ Test eos_GetTableMetaData using material id 3720
+
+     --- EOS_Comment ---
+     EOS_Material_Name       : aluminum (z=13.0, a=26.9815)
+     EOS_Material_Source     : S. D. Crockett, T-1
+     EOS_Material_Date       : Aug.28
+     EOS_Material_Ref        : LAUR-04-6442
+     EOS_Material_Composition: Al
+     EOS_Material_Codes      : GRIZZLY (ver. 030603)
+     EOS_Material_Phases     : 
+
+     --- EOS_Info ---
+     EOS_Material_Name       : EOS_INVALID_DATA_TYPE: Operation is not defined on this data type
+     EOS_Material_Source     : EOS_INVALID_DATA_TYPE: Operation is not defined on this data type
+     EOS_Material_Date       : EOS_INVALID_DATA_TYPE: Operation is not defined on this data type
+     EOS_Material_Ref        : EOS_INVALID_DATA_TYPE: Operation is not defined on this data type
+     EOS_Material_Composition: EOS_INVALID_DATA_TYPE: Operation is not defined on this data type
+     EOS_Material_Codes      : EOS_INVALID_DATA_TYPE: Operation is not defined on this data type
+     EOS_Material_Phases     : EOS_INVALID_DATA_TYPE: Operation is not defined on this data type
+
+     --- EOS_Pt_DT ---
+     EOS_Material_Name       : EOS_INVALID_DATA_TYPE: Operation is not defined on this data type
+     EOS_Material_Source     : EOS_INVALID_DATA_TYPE: Operation is not defined on this data type
+     EOS_Material_Date       : EOS_INVALID_DATA_TYPE: Operation is not defined on this data type
+     EOS_Material_Ref        : EOS_INVALID_DATA_TYPE: Operation is not defined on this data type
+     EOS_Material_Composition: EOS_INVALID_DATA_TYPE: Operation is not defined on this data type
+     EOS_Material_Codes      : EOS_INVALID_DATA_TYPE: Operation is not defined on this data type
+     EOS_Material_Phases     : EOS_INVALID_DATA_TYPE: Operation is not defined on this data type
+
+     --- EOS_Pic_DT ---
+     EOS_Material_Name       : EOS_INVALID_DATA_TYPE: Operation is not defined on this data type
+     EOS_Material_Source     : EOS_INVALID_DATA_TYPE: Operation is not defined on this data type
+     EOS_Material_Date       : EOS_INVALID_DATA_TYPE: Operation is not defined on this data type
+     EOS_Material_Ref        : EOS_INVALID_DATA_TYPE: Operation is not defined on this data type
+     EOS_Material_Composition: EOS_INVALID_DATA_TYPE: Operation is not defined on this data type
+     EOS_Material_Codes      : EOS_INVALID_DATA_TYPE: Operation is not defined on this data type
+     EOS_Material_Phases     : EOS_INVALID_DATA_TYPE: Operation is not defined on this data type
+
+     --- EOS_Pe_DT ---
+     EOS_Material_Name       : EOS_INVALID_DATA_TYPE: Operation is not defined on this data type
+     EOS_Material_Source     : EOS_INVALID_DATA_TYPE: Operation is not defined on this data type
+     EOS_Material_Date       : EOS_INVALID_DATA_TYPE: Operation is not defined on this data type
+     EOS_Material_Ref        : EOS_INVALID_DATA_TYPE: Operation is not defined on this data type
+     EOS_Material_Composition: EOS_INVALID_DATA_TYPE: Operation is not defined on this data type
+     EOS_Material_Codes      : EOS_INVALID_DATA_TYPE: Operation is not defined on this data type
+     EOS_Material_Phases     : EOS_INVALID_DATA_TYPE: Operation is not defined on this data type
+
+     --- EOS_Piz_DT ---
+     EOS_Material_Name       : EOS_INVALID_DATA_TYPE: Operation is not defined on this data type
+     EOS_Material_Source     : EOS_INVALID_DATA_TYPE: Operation is not defined on this data type
+     EOS_Material_Date       : EOS_INVALID_DATA_TYPE: Operation is not defined on this data type
+     EOS_Material_Ref        : EOS_INVALID_DATA_TYPE: Operation is not defined on this data type
+     EOS_Material_Composition: EOS_INVALID_DATA_TYPE: Operation is not defined on this data type
+     EOS_Material_Codes      : EOS_INVALID_DATA_TYPE: Operation is not defined on this data type
+     EOS_Material_Phases     : EOS_INVALID_DATA_TYPE: Operation is not defined on this data type
+
+     --- EOS_Pc_D ---
+     EOS_Material_Name       : EOS_INVALID_DATA_TYPE: Operation is not defined on this data type
+     EOS_Material_Source     : EOS_INVALID_DATA_TYPE: Operation is not defined on this data type
+     EOS_Material_Date       : EOS_INVALID_DATA_TYPE: Operation is not defined on this data type
+     EOS_Material_Ref        : EOS_INVALID_DATA_TYPE: Operation is not defined on this data type
+     EOS_Material_Composition: EOS_INVALID_DATA_TYPE: Operation is not defined on this data type
+     EOS_Material_Codes      : EOS_INVALID_DATA_TYPE: Operation is not defined on this data type
+     EOS_Material_Phases     : EOS_INVALID_DATA_TYPE: Operation is not defined on this data type
+
+     --- EOS_M_DT ---
+     EOS_Material_Name       : EOS_INVALID_TABLE_HANDLE: Invalid table handle
+     EOS_Material_Source     : EOS_INVALID_TABLE_HANDLE: Invalid table handle
+     EOS_Material_Date       : EOS_INVALID_TABLE_HANDLE: Invalid table handle
+     EOS_Material_Ref        : EOS_INVALID_TABLE_HANDLE: Invalid table handle
+     EOS_Material_Composition: EOS_INVALID_TABLE_HANDLE: Invalid table handle
+     EOS_Material_Codes      : EOS_INVALID_TABLE_HANDLE: Invalid table handle
+     EOS_Material_Phases     : EOS_INVALID_TABLE_HANDLE: Invalid table handle
+
+     --- EOS_Pv_T ---
+     EOS_Material_Name       : EOS_INVALID_DATA_TYPE: Operation is not defined on this data type
+     EOS_Material_Source     : EOS_INVALID_DATA_TYPE: Operation is not defined on this data type
+     EOS_Material_Date       : EOS_INVALID_DATA_TYPE: Operation is not defined on this data type
+     EOS_Material_Ref        : EOS_INVALID_DATA_TYPE: Operation is not defined on this data type
+     EOS_Material_Composition: EOS_INVALID_DATA_TYPE: Operation is not defined on this data type
+     EOS_Material_Codes      : EOS_INVALID_DATA_TYPE: Operation is not defined on this data type
+     EOS_Material_Phases     : EOS_INVALID_DATA_TYPE: Operation is not defined on this data type
+
+     --- EOS_Pm_D ---
+     EOS_Material_Name       : EOS_INVALID_TABLE_HANDLE: Invalid table handle
+     EOS_Material_Source     : EOS_INVALID_TABLE_HANDLE: Invalid table handle
+     EOS_Material_Date       : EOS_INVALID_TABLE_HANDLE: Invalid table handle
+     EOS_Material_Ref        : EOS_INVALID_TABLE_HANDLE: Invalid table handle
+     EOS_Material_Composition: EOS_INVALID_TABLE_HANDLE: Invalid table handle
+     EOS_Material_Codes      : EOS_INVALID_TABLE_HANDLE: Invalid table handle
+     EOS_Material_Phases     : EOS_INVALID_TABLE_HANDLE: Invalid table handle
+
+     --- EOS_Pf_D ---
+     EOS_Material_Name       : EOS_INVALID_TABLE_HANDLE: Invalid table handle
+     EOS_Material_Source     : EOS_INVALID_TABLE_HANDLE: Invalid table handle
+     EOS_Material_Date       : EOS_INVALID_TABLE_HANDLE: Invalid table handle
+     EOS_Material_Ref        : EOS_INVALID_TABLE_HANDLE: Invalid table handle
+     EOS_Material_Composition: EOS_INVALID_TABLE_HANDLE: Invalid table handle
+     EOS_Material_Codes      : EOS_INVALID_TABLE_HANDLE: Invalid table handle
+     EOS_Material_Phases     : EOS_INVALID_TABLE_HANDLE: Invalid table handle
+
+     --- EOS_Gs_D ---
+     EOS_Material_Name       : EOS_INVALID_TABLE_HANDLE: Invalid table handle
+     EOS_Material_Source     : EOS_INVALID_TABLE_HANDLE: Invalid table handle
+     EOS_Material_Date       : EOS_INVALID_TABLE_HANDLE: Invalid table handle
+     EOS_Material_Ref        : EOS_INVALID_TABLE_HANDLE: Invalid table handle
+     EOS_Material_Composition: EOS_INVALID_TABLE_HANDLE: Invalid table handle
+     EOS_Material_Codes      : EOS_INVALID_TABLE_HANDLE: Invalid table handle
+     EOS_Material_Phases     : EOS_INVALID_TABLE_HANDLE: Invalid table handle
+
+     --- EOS_Ogb ---
+     EOS_Material_Name       : EOS_INVALID_TABLE_HANDLE: Invalid table handle
+     EOS_Material_Source     : EOS_INVALID_TABLE_HANDLE: Invalid table handle
+     EOS_Material_Date       : EOS_INVALID_TABLE_HANDLE: Invalid table handle
+     EOS_Material_Ref        : EOS_INVALID_TABLE_HANDLE: Invalid table handle
+     EOS_Material_Composition: EOS_INVALID_TABLE_HANDLE: Invalid table handle
+     EOS_Material_Codes      : EOS_INVALID_TABLE_HANDLE: Invalid table handle
+     EOS_Material_Phases     : EOS_INVALID_TABLE_HANDLE: Invalid table handle
+
+     --- EOS_Kr_DT ---
+     EOS_Material_Name       : EOS_INVALID_TABLE_HANDLE: Invalid table handle
+     EOS_Material_Source     : EOS_INVALID_TABLE_HANDLE: Invalid table handle
+     EOS_Material_Date       : EOS_INVALID_TABLE_HANDLE: Invalid table handle
+     EOS_Material_Ref        : EOS_INVALID_TABLE_HANDLE: Invalid table handle
+     EOS_Material_Composition: EOS_INVALID_TABLE_HANDLE: Invalid table handle
+     EOS_Material_Codes      : EOS_INVALID_TABLE_HANDLE: Invalid table handle
+     EOS_Material_Phases     : EOS_INVALID_TABLE_HANDLE: Invalid table handle
+
+     --- EOS_Keo_DT ---
+     EOS_Material_Name       : EOS_INVALID_TABLE_HANDLE: Invalid table handle
+     EOS_Material_Source     : EOS_INVALID_TABLE_HANDLE: Invalid table handle
+     EOS_Material_Date       : EOS_INVALID_TABLE_HANDLE: Invalid table handle
+     EOS_Material_Ref        : EOS_INVALID_TABLE_HANDLE: Invalid table handle
+     EOS_Material_Composition: EOS_INVALID_TABLE_HANDLE: Invalid table handle
+     EOS_Material_Codes      : EOS_INVALID_TABLE_HANDLE: Invalid table handle
+     EOS_Material_Phases     : EOS_INVALID_TABLE_HANDLE: Invalid table handle
+
+     --- EOS_Zfo_DT ---
+     EOS_Material_Name       : EOS_INVALID_TABLE_HANDLE: Invalid table handle
+     EOS_Material_Source     : EOS_INVALID_TABLE_HANDLE: Invalid table handle
+     EOS_Material_Date       : EOS_INVALID_TABLE_HANDLE: Invalid table handle
+     EOS_Material_Ref        : EOS_INVALID_TABLE_HANDLE: Invalid table handle
+     EOS_Material_Composition: EOS_INVALID_TABLE_HANDLE: Invalid table handle
+     EOS_Material_Codes      : EOS_INVALID_TABLE_HANDLE: Invalid table handle
+     EOS_Material_Phases     : EOS_INVALID_TABLE_HANDLE: Invalid table handle
+
+     --- EOS_Kp_DT ---
+     EOS_Material_Name       : EOS_INVALID_TABLE_HANDLE: Invalid table handle
+     EOS_Material_Source     : EOS_INVALID_TABLE_HANDLE: Invalid table handle
+     EOS_Material_Date       : EOS_INVALID_TABLE_HANDLE: Invalid table handle
+     EOS_Material_Ref        : EOS_INVALID_TABLE_HANDLE: Invalid table handle
+     EOS_Material_Composition: EOS_INVALID_TABLE_HANDLE: Invalid table handle
+     EOS_Material_Codes      : EOS_INVALID_TABLE_HANDLE: Invalid table handle
+     EOS_Material_Phases     : EOS_INVALID_TABLE_HANDLE: Invalid table handle
+
+     --- EOS_Zfc_DT ---
+     EOS_Material_Name       : EOS_INVALID_TABLE_HANDLE: Invalid table handle
+     EOS_Material_Source     : EOS_INVALID_TABLE_HANDLE: Invalid table handle
+     EOS_Material_Date       : EOS_INVALID_TABLE_HANDLE: Invalid table handle
+     EOS_Material_Ref        : EOS_INVALID_TABLE_HANDLE: Invalid table handle
+     EOS_Material_Composition: EOS_INVALID_TABLE_HANDLE: Invalid table handle
+     EOS_Material_Codes      : EOS_INVALID_TABLE_HANDLE: Invalid table handle
+     EOS_Material_Phases     : EOS_INVALID_TABLE_HANDLE: Invalid table handle
+
+     --- EOS_Kec_DT ---
+     EOS_Material_Name       : EOS_INVALID_TABLE_HANDLE: Invalid table handle
+     EOS_Material_Source     : EOS_INVALID_TABLE_HANDLE: Invalid table handle
+     EOS_Material_Date       : EOS_INVALID_TABLE_HANDLE: Invalid table handle
+     EOS_Material_Ref        : EOS_INVALID_TABLE_HANDLE: Invalid table handle
+     EOS_Material_Composition: EOS_INVALID_TABLE_HANDLE: Invalid table handle
+     EOS_Material_Codes      : EOS_INVALID_TABLE_HANDLE: Invalid table handle
+     EOS_Material_Phases     : EOS_INVALID_TABLE_HANDLE: Invalid table handle
+
+     --- EOS_Ktc_DT ---
+     EOS_Material_Name       : EOS_INVALID_TABLE_HANDLE: Invalid table handle
+     EOS_Material_Source     : EOS_INVALID_TABLE_HANDLE: Invalid table handle
+     EOS_Material_Date       : EOS_INVALID_TABLE_HANDLE: Invalid table handle
+     EOS_Material_Ref        : EOS_INVALID_TABLE_HANDLE: Invalid table handle
+     EOS_Material_Composition: EOS_INVALID_TABLE_HANDLE: Invalid table handle
+     EOS_Material_Codes      : EOS_INVALID_TABLE_HANDLE: Invalid table handle
+     EOS_Material_Phases     : EOS_INVALID_TABLE_HANDLE: Invalid table handle
+
+     --- EOS_B_DT ---
+     EOS_Material_Name       : EOS_INVALID_TABLE_HANDLE: Invalid table handle
+     EOS_Material_Source     : EOS_INVALID_TABLE_HANDLE: Invalid table handle
+     EOS_Material_Date       : EOS_INVALID_TABLE_HANDLE: Invalid table handle
+     EOS_Material_Ref        : EOS_INVALID_TABLE_HANDLE: Invalid table handle
+     EOS_Material_Composition: EOS_INVALID_TABLE_HANDLE: Invalid table handle
+     EOS_Material_Codes      : EOS_INVALID_TABLE_HANDLE: Invalid table handle
+     EOS_Material_Phases     : EOS_INVALID_TABLE_HANDLE: Invalid table handle
+
+     --- EOS_Kc_DT ---
+     EOS_Material_Name       : EOS_INVALID_TABLE_HANDLE: Invalid table handle
+     EOS_Material_Source     : EOS_INVALID_TABLE_HANDLE: Invalid table handle
+     EOS_Material_Date       : EOS_INVALID_TABLE_HANDLE: Invalid table handle
+     EOS_Material_Ref        : EOS_INVALID_TABLE_HANDLE: Invalid table handle
+     EOS_Material_Composition: EOS_INVALID_TABLE_HANDLE: Invalid table handle
+     EOS_Material_Codes      : EOS_INVALID_TABLE_HANDLE: Invalid table handle
+     EOS_Material_Phases     : EOS_INVALID_TABLE_HANDLE: Invalid table handle
+     ---
+
+***  7 tests passed, 149 tests failed ***

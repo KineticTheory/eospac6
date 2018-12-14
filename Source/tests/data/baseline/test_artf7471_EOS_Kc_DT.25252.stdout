@@ -1,0 +1,12 @@
+material ID: 25252
+-------------------
+eos_CreateTables ... EOS_OK
+th 0: NR = 90 and NT = 60	NR changed from 0	NT changed from 0
+eos_SetOption ... EOS_OK (EOS_DUMP_DATA)
+th 0: NR = 90 and NT = 60
+eos_SetOption ... EOS_OK (EOS_SPLIT_FORCED)
+th 0: NR = 90 and NT = 60
+eos_SetOption ... EOS_OK (EOS_SPLIT_NUM_PROP)
+th 0: NR = 90 and NT = 60
+eos_LoadTables ... EOS_OK
+th 0: NR = 90 and NT = 60

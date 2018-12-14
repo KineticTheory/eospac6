@@ -1,0 +1,32 @@
+Ordered list of Sesame files searched:
+    ./../../../../../tests/data/sesame3
+    ./../../../../../tests/data/sesame1
+    ./../../../../../tests/data/sesame.tin.withmassfracdata
+    ./../../../../../tests/data/ses2141_2140A.dat
+    ./../../../../../tests/data/ses2161_2160PU.dat
+    ./../../../../../tests/data/93270littlebin
+
+
+TableHandle=0 matid =  9001 source = ./../../../../../tests/data/sesame3
+Data Type = EOS_Info
+Description = Atomic Number, Atomic Mass, Normal Density, Solid Bulk Modulus, Exchange Coefficient
+ZBAR:                 1.000000
+ABAR:                 1.000000
+RHO0:                 1.000000
+BO:                   0.000000
+CEX:                  0.000000
+
+TableHandle=1 matid =999999 Data Type = EOS_Info	NOT LOADED
+Description = Atomic Number, Atomic Mass, Normal Density, Solid Bulk Modulus, Exchange Coefficient
+
+TableHandle=2 matid =  9001 source = ./sesame3.copy      
+Data Type = EOS_Info
+Description = Atomic Number, Atomic Mass, Normal Density, Solid Bulk Modulus, Exchange Coefficient
+ZBAR:                 1.000000
+ABAR:                 1.000000
+RHO0:                 1.000000
+BO:                   0.000000
+CEX:                  0.000000
+
+TableHandle=3 matid =  3720 Data Type = EOS_Info	NOT LOADED
+Description = Atomic Number, Atomic Mass, Normal Density, Solid Bulk Modulus, Exchange Coefficient

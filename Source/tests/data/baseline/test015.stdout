@@ -1,0 +1,14 @@
+versionInfoLength = '68'
+versionInfo = 'No version information has been defined for this build of EOSPAC 6.'
+
+Forced interpolation error
+eos_Interpolate ERROR: EOS_INVALID_NXYPAIRS: Invalid nXYPairs value
+
+
+Forced checkExtrap error
+eos_CheckExtrap ERROR: EOS_INVALID_NXYPAIRS: Invalid nXYPairs value
+
+
+Forced mixing error
+eos_Mix ERROR: EOS_INVALID_NXYPAIRS: Invalid nXYPairs value
+

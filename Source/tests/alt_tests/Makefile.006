@@ -1,0 +1,19 @@
+##################################################################
+#  
+#  Copyright -- see file named COPYRIGHTNOTICE
+#  
+##################################################################
+prefix = /usr/projects/data/eos/eospac/default/intel-linux
+
+# compile, link and run target
+%.o: %.f90
+	@-ln -s ../data/sesame1 ./sesame
+	lf95 -g -I"../../include/i686-pc-linux-gnu/lahey" -L"../../lib/i686-pc-linux-gnu/lahey" \
+                -I$(prefix)/include -L$(prefix)/lib \
+                -c "$<" -o "../../_OBJ/i686-pc-linux-gnu/lahey/$@"
+	lf95 -I"../../include/i686-pc-linux-gnu/lahey" -L"../../lib/i686-pc-linux-gnu/lahey" \
+             -I$(prefix)/include -L$(prefix)/lib \
+             -L/usr/local/gnu/packages/gcc-3.2.3/lib \
+             -o ../../tests/i686-pc-linux-gnu/lahey/$* ../../_OBJ/i686-pc-linux-gnu/lahey/$@ -leospac6 -leospac \
+             -l stdc++ -lgcc_s -lm
+	../i686-pc-linux-gnu/lahey/$* | tee ../i686-pc-linux-gnu/lahey/$*.stdout 2>&1

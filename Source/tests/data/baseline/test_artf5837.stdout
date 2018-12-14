@@ -1,0 +1,117 @@
+----- TEST #0 using EOS_Info, EOS_D_PtT, EOS_Ut_DT, and EOS_Pt_DUt -----
+
+
+AFTER EOS_LOADTABLES
+no. tables:         4
+no. handles:        4
+no. alloc:          4
+no. generalOptions: 8
+no. tableOptions:   15
+
+tableHandlesMap[0] = 0 tableTypes[0] = 2 errorCodes[0] = 0
+	generalOptions[0] -> {EOS_DUMP_DATA -> 1,
+	                      EOS_APPEND_DATA -> 0,
+	                      EOS_CHECK_ARGS -> 0,
+	                      EOS_X_CONVERT -> 1.000000,
+	                      EOS_Y_CONVERT -> 1.000000,
+	                      EOS_F_CONVERT -> 1.000000,
+	                      EOS_DISABLE_GHOST_NODES -> 0,
+	                      EOS_ALLOW_ALL_INFO_ITEMS -> 0
+	                     }
+	  tableOptions[0] -> {EOS_INSERT_DATA -> 0,
+	                      EOS_MONOTONIC_IN_X -> 0,
+	                      EOS_MONOTONIC_IN_Y -> 0,
+	                      EOS_SMOOTH -> 0,
+	                      EOS_SPLIT_COWAN -> 0,
+	                      EOS_SPLIT_FORCED -> 0,
+	                      EOS_SPLIT_IDEAL_GAS -> 0,
+	                      EOS_SPLIT_NUM_PROP -> 0,
+	                      EOS_PT_SMOOTHING -> 0,
+	                      EOS_ADJUST_VAP_PRES -> 0.000000,
+	                      EOS_CALC_FREE_ENERGY -> 0,
+	                      EOS_CREATE_TZERO -> 0,
+	                      EOS_USE_TAYLOR_FIT -> 0,
+	                      EOS_USE_MAXWELL_TABLE -> 0,
+	                      EOS_INVERT_AT_SETUP -> 0
+	                     }
+
+tableHandlesMap[1] = 1 tableTypes[1] = 4 errorCodes[1] = 0
+	generalOptions[1] -> {EOS_DUMP_DATA -> 0,
+	                      EOS_APPEND_DATA -> 1,
+	                      EOS_CHECK_ARGS -> 0,
+	                      EOS_X_CONVERT -> 1.000000,
+	                      EOS_Y_CONVERT -> 1.000000,
+	                      EOS_F_CONVERT -> 1.000000,
+	                      EOS_DISABLE_GHOST_NODES -> 0,
+	                      EOS_ALLOW_ALL_INFO_ITEMS -> 0
+	                     }
+	  tableOptions[1] -> {EOS_INSERT_DATA -> 0,
+	                      EOS_MONOTONIC_IN_X -> 0,
+	                      EOS_MONOTONIC_IN_Y -> 1,
+	                      EOS_SMOOTH -> 0,
+	                      EOS_SPLIT_COWAN -> 0,
+	                      EOS_SPLIT_FORCED -> 0,
+	                      EOS_SPLIT_IDEAL_GAS -> 0,
+	                      EOS_SPLIT_NUM_PROP -> 0,
+	                      EOS_PT_SMOOTHING -> 0,
+	                      EOS_ADJUST_VAP_PRES -> 0.000000,
+	                      EOS_CALC_FREE_ENERGY -> 0,
+	                      EOS_CREATE_TZERO -> 0,
+	                      EOS_USE_TAYLOR_FIT -> 0,
+	                      EOS_USE_MAXWELL_TABLE -> 0,
+	                      EOS_INVERT_AT_SETUP -> 0
+	                     }
+
+tableHandlesMap[2] = 2 tableTypes[2] = 12 errorCodes[2] = 0
+	generalOptions[2] -> {EOS_DUMP_DATA -> 0,
+	                      EOS_APPEND_DATA -> 1,
+	                      EOS_CHECK_ARGS -> 0,
+	                      EOS_X_CONVERT -> 1.000000,
+	                      EOS_Y_CONVERT -> 1.000000,
+	                      EOS_F_CONVERT -> 1.000000,
+	                      EOS_DISABLE_GHOST_NODES -> 0,
+	                      EOS_ALLOW_ALL_INFO_ITEMS -> 0
+	                     }
+	  tableOptions[2] -> {EOS_INSERT_DATA -> 0,
+	                      EOS_MONOTONIC_IN_X -> 0,
+	                      EOS_MONOTONIC_IN_Y -> 1,
+	                      EOS_SMOOTH -> 0,
+	                      EOS_SPLIT_COWAN -> 0,
+	                      EOS_SPLIT_FORCED -> 0,
+	                      EOS_SPLIT_IDEAL_GAS -> 0,
+	                      EOS_SPLIT_NUM_PROP -> 0,
+	                      EOS_PT_SMOOTHING -> 0,
+	                      EOS_ADJUST_VAP_PRES -> 0.000000,
+	                      EOS_CALC_FREE_ENERGY -> 0,
+	                      EOS_CREATE_TZERO -> 0,
+	                      EOS_USE_TAYLOR_FIT -> 0,
+	                      EOS_USE_MAXWELL_TABLE -> 0,
+	                      EOS_INVERT_AT_SETUP -> 0
+	                     }
+
+tableHandlesMap[3] = 3 tableTypes[3] = 6 errorCodes[3] = 0
+	generalOptions[3] -> {EOS_DUMP_DATA -> 0,
+	                      EOS_APPEND_DATA -> 1,
+	                      EOS_CHECK_ARGS -> 0,
+	                      EOS_X_CONVERT -> 1.000000,
+	                      EOS_Y_CONVERT -> 1.000000,
+	                      EOS_F_CONVERT -> 1.000000,
+	                      EOS_DISABLE_GHOST_NODES -> 0,
+	                      EOS_ALLOW_ALL_INFO_ITEMS -> 0
+	                     }
+	  tableOptions[3] -> {EOS_INSERT_DATA -> 0,
+	                      EOS_MONOTONIC_IN_X -> 0,
+	                      EOS_MONOTONIC_IN_Y -> 1,
+	                      EOS_SMOOTH -> 0,
+	                      EOS_SPLIT_COWAN -> 0,
+	                      EOS_SPLIT_FORCED -> 0,
+	                      EOS_SPLIT_IDEAL_GAS -> 0,
+	                      EOS_SPLIT_NUM_PROP -> 0,
+	                      EOS_PT_SMOOTHING -> 0,
+	                      EOS_ADJUST_VAP_PRES -> 0.000000,
+	                      EOS_CALC_FREE_ENERGY -> 0,
+	                      EOS_CREATE_TZERO -> 0,
+	                      EOS_USE_TAYLOR_FIT -> 0,
+	                      EOS_USE_MAXWELL_TABLE -> 0,
+	                      EOS_INVERT_AT_SETUP -> 0
+	                     }

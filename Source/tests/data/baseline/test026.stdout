@@ -1,0 +1,16 @@
+eos_CreateTables error EOS_OK
+eos_SetOption error EOS_OK
+eos_LoadTables error EOS_OK
+eos_SetOption error EOS_OK
+eos_Interpolate error EOS_OK
+interpolated value is -0.957731, derivative x is -2.78521, derivative y is 0.000325578 
+interpolated value is -7.6573e-07, derivative x is -8.55157e-06, derivative y is 4.65314e-09 
+interpolated value is 36091, derivative x is 1.20296e+06, derivative y is 0.000120386 
+interpolated value is 6.03028e+10, derivative x is 927027, derivative y is 0 
+interpolated value is 1.72112e+11, derivative x is 2.03282e+06, derivative y is 388.794 
+interpolated value is 2.61867e+06, derivative x is 479636, derivative y is 0.0219967 
+interpolated value is 76.5576, derivative x is 34.7187, derivative y is 0.00772219 
+interpolated value is 76.5582, derivative x is 34.7188, derivative y is 0.0077222 
+interpolated value is 76.5576, derivative x is 34.7187, derivative y is 0.00772219 
+interpolated value is 76.5583, derivative x is 34.7188, derivative y is 0.0077222 
+interpolated value is -0.492878, derivative x is -2.00668, derivative y is 0.000243128 

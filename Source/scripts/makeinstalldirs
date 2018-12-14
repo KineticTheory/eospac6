@@ -1,0 +1,42 @@
+#! /bin/sh
+(shopt -s igncr) 2>/dev/null && eval 'shopt -s igncr';#
+# makeinstalldirs --- make directory hierarchy
+# Renamed by David A. Pimentel
+# Originally named mkinstalldirs
+# Original Author: Noah Friedman <friedman@prep.ai.mit.edu>
+# Originally Created: 1993-05-16
+# Public domain
+
+errstatus=0
+umask 2
+cntr=0
+
+for file
+do
+   set fnord `echo ":$file" | sed -ne 's/^:\//#/;s/^://;s/\// /g;s/^#/\//;p'`
+   shift
+
+   pathcomp=
+   for d in ${1+"$@"} ; do
+     pathcomp="$pathcomp$d"
+     case "$pathcomp" in
+       -* ) pathcomp=./$pathcomp ;;
+     esac
+
+     if test ! -d "$pathcomp"; then
+        echo "  mkdir $pathcomp" 1>&2
+        mkdir "$pathcomp" || errstatus=$?
+        cntr=${cntr}+1
+     fi
+
+     pathcomp="$pathcomp/"
+   done
+done
+
+if test ${cntr} -eq 0; then
+   echo "  directory exists: $pathcomp" 1>&2
+fi
+
+exit $errstatus
+
+# mkinstalldirs ends here

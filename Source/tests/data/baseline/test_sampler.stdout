@@ -1,0 +1,9 @@
+set key outside
+set logscale xy
+set terminal x11 1 title 'positive data'
+plot  'test_sampler.TablesLoaded.dat' i 0:0 t 'TEST #1 for 301, N=78' w lp, 'test_sampler.TablesLoaded.dat' i 1:1 t 'TEST #2 for 303, N=78' w lp, 'test_sampler.TablesLoaded.dat' i 2:2 t 'TEST #3 for 304, N=78' w lp
+set nologscale
+set xrange [1:10]
+set yrange [-7:0]
+set terminal x11 2 title 'negative data'
+plot  'test_sampler.TablesLoaded.dat' i 0:0 t 'TEST #1 for 301, N=78' w lp, 'test_sampler.TablesLoaded.dat' i 1:1 t 'TEST #2 for 303, N=78' w lp, 'test_sampler.TablesLoaded.dat' i 2:2 t 'TEST #3 for 304, N=78' w lp

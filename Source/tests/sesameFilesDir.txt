@@ -1,0 +1,37 @@
+##################################################################
+#  
+#  Copyright -- see file named COPYRIGHTNOTICE
+#  
+##################################################################
+#
+# This file is used by get_sesame_data when executed within tests/Makefile
+# to determine what tests to exclude.
+#
+# Sesame3 test data file list
+../tests/data/sesame3
+
+# Sesame1 test data file list
+../tests/data/sesame1
+
+# Sesame test data file containing mass fraction data for tin (Sn)
+../tests/data/sesame.tin.withmassfracdata
+
+# Sesame test data file containing custom 2141 material for comparison to 2140
+../tests/data/ses2141_2140A.dat
+
+# Sesame test data file containing custom 2161 material for comparison to 2160
+../tests/data/ses2161_2160PU.dat
+
+# Sesame test data file containing little endian version of material 3720
+../tests/data/93270littlebin
+
+# ses003721 test data file list
+../tests/data/ses003721
+
+# ses003722 test data file list
+../tests/data/ses003722
+
+data/ses3720_taylor
+data/sesame.993716.bin
+data/sesame.993716.bin
+data/zr_bin.2.mod

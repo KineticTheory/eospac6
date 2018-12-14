@@ -1,0 +1,366 @@
+#-*-perl-*-#######################################################
+#
+#  Copyright -- see file named COPYRIGHTNOTICE
+#
+##################################################################
+eval '(exit $?0)' && eval 'exec perl -S "$0" ${1+"$@"}'
+& eval 'exec perl -S "$0" $argv:q'
+        if 0;
+
+use vars qw($usage $help $exit_status);
+$usage=<<EOU;
+Usage:
+  fcmp [option(s)] file1 file2
+EOU
+
+$help=<<EOH;
+=head1 NAME
+
+fcmp - compare two ascii files with approximate numerical comparison
+
+=head1 SYNOPSIS
+
+B<fcmp> [option(s)] I<file1> I<file2>
+
+=head1 DESCRIPTION
+
+The I<fcmp> utility compares two ascii files token by token, using an approximate comparison for numeric values, and writes the results to the standard output. By default, I<fcmp> is silent if the files are the same; if they differ, the first difference is reported.
+
+The following options are available:
+
+     -a <tol>, --absolute=<tol>
+                     Set absolute error tolerance, <tol>, for numeric comparison.
+                     The default <tol> value is 1.0e-36 if -d option is not used.
+                     The default <tol> value is 1.0e-306 if -d option is used.
+
+     -C <num>, --Context=<num>
+                     Print <num> lines of output context. Places a line containing ---
+                     between contiguous groups of matches.
+
+     -c, --continue
+                     Continue comparison even if differences are found.
+
+     -d, --double-precision
+                     Enable double-precision defaults for <tol> as used by -a and
+                     -r options.
+
+     -e <regexp>, --exclude=<regexp>
+                     Ignore lines containing <regexp>.
+
+     -h, --help
+                     Print this help.
+
+     -i, --ignore-non-numeric
+                     Ignore non-numeric tokens.
+
+     -k <key>, --key-option=<key>
+                     Specify a hash key to find in <file> provided by -o <file>.
+
+     -o <file>, --options-file=<file>
+                     Specify a file to parse for this script's execution options.
+                     (-k option is required)
+
+     -p, --print-options
+                     Print options associated with hash key specified by -k <key>
+                     and found in <file> provided by -o <file>.
+                     (-k option is required)
+
+     -q, --quiet
+                     Suppress most output for differing files; usefile with -c.
+
+     -r <tol>, --relative=<tol>
+                     Set relative error tolerance, <tol>, for numeric comparison.
+                     The default <tol> value is 1.0e-5 if -d option is not used.
+                     The default <tol> value is 1.0e-14 if -d option is used.
+
+     -s, --silent
+                     Print nothing for differing files; return exit status only.
+
+     -v, --verbose
+                     Enable verbose output.
+
+     -Q, --Quit
+                     No file comparison performed. Return exit status 255.
+
+The I<fcmp> utility exits with one of the following values:
+
+0    The files are identical.
+
+1    The files are different.
+
+>1   An error occurred.
+
+=head1 AUTHOR
+
+ Mark G. Gray        Los Alamos National Laboratory
+ David A. Pimentel   Los Alamos National Laboratory
+
+=head1 SEE ALSO
+
+cmp(1)
+
+=cut
+EOH
+
+# Store original arguments before parsing options
+my $orig_opts = "@ARGV";
+
+use Getopt::Long;		# option parser
+Getopt::Long::Configure("no_ignore_case");
+use strict;
+
+# declare options and defaults
+my $options={};
+GetOptions($options,
+	   "absolute=f",
+	   "Context:i",
+	   "continue",
+	   "double-precision",
+	   "exclude=s@",
+	   "help",
+	   "ignore-non-numeric",
+	   "key-option=s",
+	   "options-file=s",
+	   "print-options",
+           "quiet",
+	   "relative=f",
+	   "silent",
+	   "verbose+",
+	   "Quit"
+	  );
+
+# Remove remaining arguments from $orig_opts
+for my $o ( @ARGV ) {
+  $orig_opts =~ s|$o||g;
+}
+
+exit 255 if ($options->{"Quit"}); # do nothing
+
+# Define default Context diff parameter
+$options->{"Context"} = -1 if ! defined $options->{"Context"};
+
+# Define the default $options->{"relative"} and $options->{"absolute"} values
+if ($options->{"double-precision"}) {
+  $options->{"relative"} = 1.0e-14 if (! $options->{"relative"});  # double-precision default
+  $options->{"absolute"} = 1.0e-306 if (! $options->{"absolute"}); # double-precision default
+}
+else { # single precision
+  $options->{"relative"} = 1.0e-5 if (! $options->{"relative"});  # double-precision default
+  $options->{"absolute"} = 1.0e-36 if (! $options->{"absolute"}); # double-precision default
+}
+
+# Define the default $options->{"options-file"} values
+if ($options->{"key-option"} && ! $options->{"options-file"}) {
+  $options->{"options-file"} = "fcmp.opt";
+}
+
+$help =~ s/^=\w+\s+//mg;
+$help =~ s/[A-Z]\<(\w+)\>/$1/mg;
+if ($options->{"help"}) {
+  if (`which pod2man`) {
+    system("pod2man $0 | nroff -man | more");
+  }
+  else { # just print the raw POD document
+    system("echo \"$help\" | more");
+  }
+  exit 0;
+}
+
+my %opt_hash = ();
+
+if ($options->{"options-file"}) {
+  if ($options->{"key-option"}) {
+    use vars qw($key $opt $line);
+    open(OFH,$options->{"options-file"}) || die "Cannot open '". $options->{"options-file"} . "'\n";
+    while ($line = <OFH>) {
+      chomp($line);
+      $line =~ s/^\s+//;
+      $line =~ s/\s+$//;
+      next if($line =~ /^\#/ || $line eq '');
+      $line =~ s/\s*\#.*$//;
+      ($key,$opt) = split("\t+",$line);
+      $opt_hash{$key} = $opt;
+      print "\$opt_hash{$key} = '".$opt_hash{$key}."'\n" if ($options->{"verbose"});
+    }
+    close(OFH);
+    exit 255 if ($options->{"Quit"}); # do nothing
+    if ($options->{"print-options"}) {
+      print $opt_hash{$options->{"key-option"}};
+      exit 0;
+    }
+    if ($opt_hash{$options->{"key-option"}}) {
+      $orig_opts =~ s|\s*\-+k[^\s=]*[\s=]+[\"\']*[^\"\']+[\"\']*\s*||; # remove key-option from new command line
+      my $cmd = "$0 $orig_opts " . $opt_hash{$options->{"key-option"}} . " @ARGV";
+      print "$cmd\n" if ($options->{"verbose"});
+      exec "$cmd";
+    }
+    print "$usage\nERROR: options not specified in '" . $options->{"options-file"} . "' for '" . $options->{"key-option"} . "'.\n"
+      if (! $options->{"silent"});
+    exit 3;
+  }
+  else {
+    print "$usage\nERROR: -k <key> option is required when -o <file> is specified.\n"
+      if (! $options->{"silent"});
+    exit 2;
+  }
+}
+if (scalar(@ARGV) != 2) { die("$usage\n"); }
+
+use vars qw($file1 $file2);		# declare filenames
+$file1 = $ARGV[0];
+$file2 = $ARGV[1];
+
+use vars qw($number $numberalt);	# declare number format regexp
+$number = "[+-]?[0-9]+[.]?[0-9]*[eE]?[+-]?[0-9]*";
+$numberalt = "[+-]?[0-9]*[.]?[0-9]+[eE]?[+-]?[0-9]*";
+
+use vars qw($filterCmd $regExp);	# declare filter command strings
+
+$regExp = 1;
+$regExp = "! /(" . join("|", @{$options->{"exclude"}}) .")/" if(defined $options->{"exclude"});
+$filterCmd = "perl -ne 'if(/\\S+/ && $regExp)".
+             "{s/\\#.*//g;s/^\\s+//;s/\\s*\$/\\t/;s/[\\,\\;\\=\\)\\(\\]\\[]/ /g;s/([^ \\t\\r]*)[ \\t\\r]+/\$.\\t\$1\\n/g;print;}'";
+print "$filterCmd\n" if($options->{"verbose"});
+
+open(FILE1, "$filterCmd < '$file1' |") or
+  die "Cannot open file: '$file1'\n";
+
+open(FILE2, "$filterCmd < '$file2' |") or
+  die "Cannot open file: '$file2'\n";
+
+#while(1) {
+#  my $w1 = <FILE1>;
+#  my $w2 = <FILE2>;
+#  chomp($w1); chomp($w2);
+#  printf("%-60s\t|\t%s\n", $w1, $w2);
+#  last if eof(FILE1) && eof(FILE2);
+#}
+#exit;
+
+use vars qw($word1 $word2 $token $line1 $line2);  # declare word variables
+$token = 0;
+$line1 = 0;
+$line2 = 0;
+
+use vars qw($EOF);
+$EOF = 0;
+
+use vars qw($last_delta $last_diff $total_diffs $max_delta $max_diff $max_reldiff);
+$max_reldiff = undef;
+$max_delta = undef;
+$max_diff = undef;
+$last_delta = 1000000000;
+$last_diff = 0;
+$total_diffs = 0;
+
+while(! $EOF) {
+     $token++;
+     while(chop($word1 = <FILE1>)) {
+       print "FETCHED '$word1' from $file1" if($options->{"verbose"});
+       ($line1,$word1) = split(/\t/,$word1);
+       if($options->{"ignore-non-numeric"} && ($word1 !~ /^$number$/o && $word1 !~ /^$numberalt$/o)) {print " ... discarding token\n" if($options->{"verbose"});next;}
+       print "\n" if($options->{"verbose"});
+       last;
+     }
+     while(chop($word2 = <FILE2>)) {
+       print "FETCHED '$word2' from $file2" if($options->{"verbose"});
+       ($line2,$word2) = split(/\t/,$word2);
+       if($options->{"ignore-non-numeric"} && ($word2 !~ /^$number$/o && $word2 !~ /^$numberalt$/o)) {print " ... discarding token\n" if($options->{"verbose"});next;}
+       print "\n" if($options->{"verbose"});
+       last;
+     }
+
+     if (eof(FILE1)) {$EOF  = 1; print "At EOF: $file1\n" if($options->{"verbose"});;}
+     if (eof(FILE2)) {$EOF += 2; print "At EOF: $file2\n" if($options->{"verbose"});;}
+     if ($EOF && $EOF <= 2) {
+       print "ERROR $EOF: File sizes are different! $file1 is ",
+	 (($EOF==2)?"bigger":"smaller")," than $file2\n";
+       exit $EOF;
+     }
+
+     if (($word1 =~ /^$number$/o || $word1 =~ /^$numberalt$/o) && ($word2 =~ /^$number$/o || $word2 =~ /^$numberalt$/o)){
+        printf("NUMBERS (lines %d:%d): comparing TOKEN #%d: '$word1' versus '$word2'\n",
+	       $line1, $line2, $token) if($options->{"verbose"});
+	if (&fcmp($word1, $word2, $options->{"relative"}, $options->{"absolute"}) != 0) {
+	    my $reldiff = ($last_diff / (($word2!=0) ? abs($word2) : abs($word1)));
+	    $max_reldiff = (abs($reldiff) > abs($max_reldiff) or not defined($max_reldiff)) ? $reldiff : $max_reldiff;
+	    if (! $options->{"silent"} and ! $options->{"quiet"}) {
+		printf("\nTOKEN #%d: $file1 $file2 differ on lines %d & %d:\n  %s !~ %s\n",
+		       $token, $line1, $line2, $word1, $word2);
+		print "  (relative diff = $reldiff, absolute diff = $last_diff)\n" if($options->{"continue"});
+	    }
+	    if ($options->{"Context"} > -1) {
+		&contextDiff($line1,$file1,$options->{"Context"});
+		print "---\n";
+		&contextDiff($line2,$file2,$options->{"Context"});
+	    }
+	    exit 1 if(! $options->{"continue"});
+	    $total_diffs++;
+	}
+     }
+     elsif (! $options->{"ignore-non-numeric"}) {
+        printf("STRINGS (lines %d:%d): comparing TOKEN #%d: '$word1' versus '$word2'\n",
+	       $line1, $line2, $token) if($options->{"verbose"});
+	if ($word1 ne $word2) {
+	    if (! $options->{"silent"} and ! $options->{"quiet"}) {
+		printf("\nTOKEN #%d: $file1 $file2 differ on lines %d & %d:\n  %s ne %s\n",
+		       $token, $line1, $line2, $word1, $word2);
+	    }
+	    exit 1 if(! $options->{"continue"});
+	    $total_diffs++;
+	}
+     }
+}
+
+print "\n$total_diffs diffs for $token total tokens compared. (",
+       "max_reldiff=", sprintf("%g",$max_reldiff),
+       ", max_delta=", sprintf("%g",$max_delta),
+       ", max_diff=", sprintf("%g",$max_diff),
+       ")\n\n"
+       if($options->{"continue"} && ! $options->{"silent"});
+
+exit 0;
+
+sub fcmp {			# approximately equal
+     # See Knuth V2 pg. 234
+     my ($u, $v, $e1, $e2) = @_;	# get parameters
+
+     my $diff = $u - $v;		# difference
+     my $delta = $e1 * (abs($u) > abs($v) ? abs($u) : abs($v)) + $e2;
+     $last_delta = $delta;
+     $last_diff = $diff;
+     $max_delta = (abs($delta) > abs($max_delta) or not defined($max_delta)) ? $delta : $max_delta;
+     $max_diff = (abs($diff) > abs($max_diff) or not defined($max_diff)) ? $diff : $max_diff;
+
+     if ($diff > $delta) {
+       print "diff > delta: $diff, $delta, $e1, $e2, $u, $v\n" if($options->{"verbose"} > 1) ;
+       return +1;		# u > v
+     }
+     elsif ($diff < -$delta) {
+       print "diff < -delta: $diff, $delta, $e1, $e2, $u, $v\n" if($options->{"verbose"} > 1);
+       return -1;		# u < v
+     }
+     else {			# -delta <= diff <= delta
+       print "NODIFF: $diff, $delta, $e1, $e2, $u, $v\n" if($options->{"verbose"} > 1);
+       return 0;		# u ~ v
+     }
+}
+
+sub contextDiff {
+  my $line = @_[0] * 1;
+  my $file = @_[1];
+  my $opt = @_[2] * 1;
+
+  #print "line=$line\tfile='$file'\topt=$opt\n";
+  open(H1,"$file");
+  while (<H1>) {
+    if (($. >= ($line - $opt)) &&
+	($. <= ($line + $opt))) {
+      my $c = (($. == $line && $opt > 0) ? ">" : " ");
+      print "$c$.:$_";
+      last if ($. > ($line + $opt));
+    }
+  }
+  close(H1);
+  return;
+}

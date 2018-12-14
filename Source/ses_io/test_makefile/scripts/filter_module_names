@@ -1,0 +1,32 @@
+#-*-perl-*-
+eval '(exit $?0)' && eval 'exec perl -S $0 ${1+"$@"}'
+& eval 'exec perl -S $0 $argv:q'
+        if 0;
+
+# Get command line options
+use Getopt::Long;
+my $options={};
+GetOptions($options,"--debug","--help","--filter=s");
+
+$regexFilter = $options->{"filter"};
+print "DEBUG:\$regexFilter = $regexFilter\n" if ($options->{"debug"});
+
+while (<STDIN>) {
+  print "$.: $_" if ($options->{"debug"});
+  chomp;
+  @m=split(/[\s]+/);
+  print "DEBUG:\@m = @m\n" if ($options->{"debug"});
+  @list=@ARGV;
+  print "DEBUG:\@list = @list\n" if ($options->{"debug"});
+  foreach $m (@m) {
+    $m=~s/\(default\)//g;
+    foreach $s (@list) {
+      if (! $options->{"filter"}) {
+	print "$m\n" if ($m=~/$s/i);
+      }
+      else {
+	print "$m\n" if ($m=~/$s/i && $m!~/$regexFilter/oi);
+      }
+    }
+  }
+}

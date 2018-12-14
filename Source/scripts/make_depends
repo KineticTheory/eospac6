@@ -1,0 +1,240 @@
+#-*-perl-*-
+##################################################################
+#
+#  Copyright -- see file named COPYRIGHTNOTICE
+#
+##################################################################
+eval '(exit $?0)' && eval 'exec perl -S $0 ${1+"$@"}'
+& eval 'exec perl -S $0 $argv:q'
+        if 0;
+#
+# perl script to generate dependencies for a Makefile
+#
+# Usage: make_depends [options] [files]
+#
+
+@include_dirs = (".");
+
+# Process Switches
+use Getopt::Long qw(:config no_ignore_case);		# option parser
+my $options={};
+GetOptions($options,
+	   "DEFINES=s",
+	   "Includedirs=s@",
+	   "objdir=s",
+	   "depdir=s",
+	   "verbose+"
+	  );
+
+use File::Basename;
+
+if ($options->{verbose} > 1) {
+  eval 'use diagnostics -verbose';
+  enable  diagnostics;
+}
+
+$defines = $options->{DEFINES} ? $options->{DEFINES} : "";
+@include_dirs = @{$options->{Includedirs}} ? @{$options->{Includedirs}} : ();
+$dir = $options->{objdir} ? $options->{objdir} : "";
+$depdir = $options->{depdir} ? $options->{depdir} : "";
+
+if ($options->{verbose}) {
+  print "\nInclude Directories:\n";
+  print join("\n",@include_dirs), "\n";
+
+  print "Defines          : $defines \n";
+  print "Object Directory : $dir \n\n";
+  print "Depends Directory: $depdir \n\n";
+}
+
+# first find include files in list of arguments
+mkdir(".depends",0777) if (! -d ".depends");
+foreach $file (@ARGV) {
+  $rootname = basename($file);
+  $basename = $rootname;
+  $rootname =~ s/\.\w+$//;
+  $dirname = $options->{depdir} ? $options->{depdir} : dirname($file) . "/.depends";
+  my $depend_file = "${dirname}/${rootname}.d";
+
+  create_depend_file($file, $depend_file, $basename);
+
+}
+
+#
+################################################################################
+#
+
+sub create_depend_file {
+  my ($file, $ofile, $bname) = @_;
+  my $DEPEND_FH;
+
+  open($DEPEND_FH,"> $ofile") or die "ERROR: Can't open file, $ofile";
+
+  print "$file dependencies listed in\n\t$ofile\n\n"
+    if $options->{verbose};
+  my @ilist1 = &find_includes($file);
+  my @ilist2 = &remove_dups(@ilist1);
+  # print join("\n",@ilist2), "\n"
+  #   if $options->{verbose};
+
+  # now find include files brought in by header files
+
+  while (1) {
+    my @t2_list = ();
+    foreach $ifile (@ilist1) {
+      # print "   $ifile \n\n"
+      #   if $options->{verbose};
+      my @t1_list = &find_includes($ifile);
+      @t2_list = (@t2_list, @t1_list);
+    }
+    if (@t2_list == 0) {
+      last;
+    }
+    @ilist1 = &remove_dups(@t2_list);
+    @ilist2 = (@ilist2, @ilist1);
+  }
+  @ilist1 = &remove_dups(@ilist2);
+  print join("\n",@ilist1), "\n"
+    if $options->{verbose};
+
+  # now create dependency lists
+  $i = rindex($file,'.');
+  $rootname = $bname;
+  $rootname =~ s/\.\w+$//;
+  $obj_name = "${rootname}.o";
+  $obj_name =~ s#.*/##;
+  $obj_name = "$dir/$obj_name" if $dir;
+
+  $ilist1_cntr=0;
+  print $DEPEND_FH "# ", scalar(@ilist1)+1," file dependencies found for $obj_name\n";
+  print $DEPEND_FH "\n$obj_name: \\\n";
+  print $DEPEND_FH "         $file", ((scalar(@ilist1)<=0)?"":" \\"), "\n";
+  print $DEPEND_FH "         ",join(" \\\n         ",@ilist1), "\n";
+
+  close($DEPEND_FH);
+}
+
+sub find_includes {
+  local($filename)=@_;
+  local(@list);
+  @list=();
+  my $FH;
+  open($FH,"$filename");
+  while (<$FH>) {
+    if (/^m4_include[(]<</) {
+      s/m4_include[(]<<//;
+      s/>>[)]m4_dnl//;
+      s/>>[)]//;
+      s/[ ]*$//;
+      # print $_
+      #   if $options->{verbose};
+      $a = $_;
+      chomp($a);
+      $a =~ s/\r+$//; # remove any trailing carriage returns; for Windows OS
+      $sdir='';
+      foreach $idir (@include_dirs) {
+        $full_name = $idir.'/'.$a;
+	if (-e $full_name) {
+	  # print "Found $full_name\n"
+	  #   if $options->{verbose};
+          $sdir = $idir;
+          last;
+        }
+      }
+      if ($sdir ne '') {
+        if (! /<(.*)>/) {
+	  push(@list, $full_name);
+        }
+      } else {
+        if (! /<(.*)>/) {
+          print "Warning 1: Could not find file: $a in $filename (",__LINE__,")\n"
+	    if $options->{verbose};
+        }
+      }
+    }
+
+    if (/^m4_include[(]`/) {
+      s/m4_include[(]`//;
+      s/'[)]m4_dnl//;
+      s/'[)]//;
+      s/[ ]*$//;
+      # print $_
+      #   if $options->{verbose};
+      $a = $_;
+      chomp($a);
+      $a =~ s/\r+$//; # remove any trailing carriage returns; for Windows OS
+      $sdir='';
+      foreach $idir (@include_dirs) {
+        $full_name = $idir.'/'.$a;
+	if (-e $full_name) {
+	  # print "Found $full_name\n"
+	  #   if $options->{verbose};
+          $sdir = $idir;
+          last;
+        }
+      }
+      if ($sdir ne '') {
+        if (! /<(.*)>/) {
+	  push(@list, $full_name);
+        }
+      } else {
+        if (! /<(.*)>/) {
+          print "Warning 2: Could not find file: $a in $filename (",__LINE__,")\n"
+	    if $options->{verbose};
+        }
+      }
+    }
+
+    if (/^#include/ or ($filename =~ m/\.f.?.?$/i and (/^\s*include / or /^\s*use /))) {
+      s/#include //;
+      s/\s*include //;
+      my $iamfortran=0;
+      s/\s*use // and $iamfortran++;
+      s/["']//g;
+      s/[ ]*$//;
+      # print $_
+      #   if $options->{verbose};
+      $a = $_;
+      chomp($a);
+      $a =~ s/\r+$//; # remove any trailing carriage returns; for Windows OS
+      $sdir='';
+      foreach $idir (@include_dirs) {
+        $full_name = $idir.'/'.$a;
+	$full_name = glob "$idir/$a.[fF]*" if $iamfortran;
+	if (-e $full_name) {
+	  # print "Found $full_name\n"
+	  #   if $options->{verbose};
+          $sdir = $idir;
+          last;
+        }
+      }
+      if ($sdir ne '') {
+        if (! /<(.*)>/) {
+	  push(@list, $full_name);
+        }
+      } else {
+        if (! /<(.*)>/) {
+          print "Warning 3: Could not find file: $a in $filename (",__LINE__,")\n"
+	    if $options->{verbose};
+        }
+      }
+    }
+  }
+  close($FH);
+  @list;
+}
+
+sub remove_dups {
+  local(@list1,@list2);
+  (@list2) = @_;
+  @list1 = sort(@list2);
+  @list2 = ();
+  $oldname = " ";
+  foreach $name (@list1) {
+    if (($name ne $oldname) && ($name ne "param")) {
+      push(@list2,$name);
+      $oldname = $name;
+    }
+  }
+  @list2;
+}

@@ -1,0 +1,213 @@
+#-*-perl-*-
+##################################################################
+#
+#  Copyright -- see file named COPYRIGHTNOTICE
+#
+##################################################################
+eval '(exit $?0)' && eval 'exec perl -S $0 ${1+"$@"}'
+& eval 'exec perl -S $0 $argv:q'
+        if 0;
+#
+# perl script to generate dependencies for a Makefile
+#
+# Usage: make_depends [options] [files]
+#
+
+@include_dirs = (".");
+
+# Process Switches
+
+while ( $ARGV[0] =~ /^-/ ) {
+  $_ = shift;
+  if (/^-D(.*)/) {
+    $defines .= " -D" . ($1 ? $1 : shift);
+  } elsif (/^-I(.*)/) {
+    push(@include_dirs,($1 ? $1 : shift));
+  } elsif (/^-d(.*)/) {
+    $dir = ($1 ? $1 : shift);
+  } else {
+    die "Unrecognized switch: $_\n";
+  }
+}
+
+print "\nInclude Directories:\n";
+&print_list(@include_dirs);
+
+print "Defines:   $defines \n";
+print "Directory: $dir \n\n";
+
+# first find include files in list of arguments
+mkdir(".depends",0777) if (! -d ".depends");
+foreach $file (@ARGV) {
+  $rootname = $file;
+  $rootname =~ s/\.\w+$//;
+  open(DEPEND_FILE,"> .depends/${rootname}.d");
+  print "$file \n\n";
+  @ilist1 = &find_includes($file);
+  @ilist2 = &remove_dups(@ilist1);
+  #  &print_list(@ilist2);
+
+  # now find include files brought in by header files
+
+  while (1) {
+    @t2_list = ();
+    foreach $ifile (@ilist1) {
+      #      print "   $ifile \n\n";
+      @t1_list = &find_includes($ifile);
+      @t2_list = (@t2_list, @t1_list);
+    }
+    if (@t2_list == 0) {
+      last;
+    }
+    @ilist1 = &remove_dups(@t2_list);
+    @ilist2 = (@ilist2, @ilist1);
+  }
+  @ilist1 = &remove_dups(@ilist2);
+  &print_list(@ilist1);
+
+  # now create dependency lists
+  $i = rindex($file,'.');
+  $base_name = substr($file,0,$i);
+  $obj_name = $base_name.'.o';
+  $obj_name =~ s#.*/##;
+  $obj_name = "$dir/$obj_name" if $dir;
+
+  $ilist1_cntr=0;
+  print DEPEND_FILE "# ", scalar(@ilist1)+1," file dependencies found for $obj_name\n";
+  print DEPEND_FILE "\n$obj_name: \\\n";
+    print DEPEND_FILE "         $file",
+      ((scalar(@ilist1)<=0)?"":" \\"), "\n";
+  foreach $dep (@ilist1) {
+    $ilist1_cntr++;
+    print DEPEND_FILE "         $dep",
+      (($ilist1_cntr>=scalar(@ilist1))?"":" \\"), "\n";
+  }
+#  $ilist1_cntr=0;
+#  print DEPEND_FILE "\n$file: \\\n";
+#  foreach $dep (@ilist1) {
+#    $ilist1_cntr++;
+#    print DEPEND_FILE "         $dep",
+#      (($ilist1_cntr>=scalar(@ilist1))?"":" \\"), "\n";
+#  }
+
+  close(DEPEND_FILE);
+}
+
+sub find_includes {
+  local($filename)=@_;
+  local(@list);
+  @list=();
+  open(FILE,"$filename");
+  while (<FILE>) {
+    if (/^m4_include[(]<</) {
+      s/m4_include[(]<<//;
+      s/>>[)]m4_dnl//;
+      s/>>[)]//;
+      s/[ ]*$//;
+      #      print $_;
+      $a = $_;
+      chomp($a);
+      $a =~ s/\r+$//; # remove any trailing carriage returns; for Windows OS
+      $sdir='';
+      foreach $idir (@include_dirs) {
+        $full_name = $idir.'/'.$a;
+	if (-e $full_name) {
+	  #          print "Found $full_name\n";
+          $sdir = $idir;
+          last;
+        }
+      }
+      if ($sdir ne '') {
+        if (! /<(.*)>/) {
+	  push(@list, $full_name);
+        }
+      } else {
+        if (! /<(.*)>/) {
+          print "Warning 1: Could not find file: $a in $filename (",__LINE__,")\n";
+        }
+      }
+    }
+
+    if (/^m4_include[(]`/) {
+      s/m4_include[(]`//;
+      s/'[)]m4_dnl//;
+      s/'[)]//;
+      s/[ ]*$//;
+      #      print $_;
+      $a = $_;
+      chomp($a);
+      $a =~ s/\r+$//; # remove any trailing carriage returns; for Windows OS
+      $sdir='';
+      foreach $idir (@include_dirs) {
+        $full_name = $idir.'/'.$a;
+	if (-e $full_name) {
+	  #          print "Found $full_name\n";
+          $sdir = $idir;
+          last;
+        }
+      }
+      if ($sdir ne '') {
+        if (! /<(.*)>/) {
+	  push(@list, $full_name);
+        }
+      } else {
+        if (! /<(.*)>/) {
+          print "Warning 2: Could not find file: $a in $filename (",__LINE__,")\n";
+        }
+      }
+    }
+
+    if (/^#include/) {
+      s/#include //;
+      s/"//g;
+      s/[ ]*$//;
+      #      print $_;
+      $a = $_;
+      chomp($a);
+      $a =~ s/\r+$//; # remove any trailing carriage returns; for Windows OS
+      $sdir='';
+      foreach $idir (@include_dirs) {
+        $full_name = $idir.'/'.$a;
+	if (-e $full_name) {
+	  #          print "Found $full_name\n";
+          $sdir = $idir;
+          last;
+        }
+      }
+      if ($sdir ne '') {
+        if (! /<(.*)>/) {
+	  push(@list, $full_name);
+        }
+      } else {
+        if (! /<(.*)>/) {
+          print "Warning 3: Could not find file: $a in $filename (",__LINE__,")\n";
+        }
+      }
+    }
+  }
+  close(FILE);
+  @list;
+}
+
+sub print_list {
+  local(@list) = @_;
+  foreach $name (@list) {
+    print "$name\n";
+  }
+}
+
+
+sub remove_dups {
+  local(@list1,@list2);
+  (@list2) = @_;
+  @list1 = sort(@list2);
+  @list2 = ();
+  $oldname = " ";
+  foreach $name (@list1) {
+    if (($name ne $oldname) && ($name ne "param")) {
+      push(@list2,$name);
+      $oldname = $name;
+    }
+  }
+  @list2;
+}

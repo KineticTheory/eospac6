@@ -1,0 +1,53 @@
+#-*-perl-*-
+##################################################################
+#
+#  Copyright -- see file named COPYRIGHTNOTICE
+#
+##################################################################
+eval '(exit $?0)' && eval 'exec perl -S "$0" ${1+"$@"}'
+& eval 'exec perl -S "$0" $argv:q'
+        if 0;
+#
+# Given the default REGRESSION_DATA_EXCEPTIONS_DIR ($ARGV[0]), find the most
+# specific instance of the specified baseline exception file ($ARGV[1]).
+#
+# Parse all options
+use Getopt::Long;
+$options={};
+GetOptions($options,
+	   "--verbose"
+	  );
+
+$REGRESSION_DATA_EXCEPTIONS_DIR = shift;
+$baseline_exception_file = shift;
+
+print __LINE__, ": \$REGRESSION_DATA_EXCEPTIONS_DIR = $REGRESSION_DATA_EXCEPTIONS_DIR\n" if $options->{"verbose"};
+print __LINE__, ": \$baseline_exception_file = $baseline_exception_file\n" if $options->{"verbose"};
+
+$baseline_dir = "";
+
+($dir_, @dirs) = split /\/+/, $REGRESSION_DATA_EXCEPTIONS_DIR;
+
+foreach $d (@dirs) {
+
+  $dir2 = $dir_;
+  $dir2 =~ s/[0-9\.]+$//;
+
+  print __LINE__, ": \$dir_ = $dir_\t\$dir2 = $dir2\n" if $options->{"verbose"};
+
+  # check generic platform directory (i.e., i386-apple-darwin instead of i386-apple-darwin9.8.0)
+  if (-s "$dir2/$baseline_exception_file") {
+    $baseline_dir=$dir2;
+    print __LINE__, ": \$baseline_dir = $baseline_dir\n" if $options->{"verbose"};
+  }
+
+  if (-s "$dir_/$baseline_exception_file") {
+    $baseline_dir=$dir_;
+    print __LINE__, ": \$baseline_dir = $baseline_dir\n" if $options->{"verbose"};
+  }
+
+  $dir_ .= "/$d";
+
+}
+
+print $baseline_dir;

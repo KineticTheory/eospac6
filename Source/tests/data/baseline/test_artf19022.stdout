@@ -1,0 +1,262 @@
+valid data type 3, EOS_Pt_DT
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 4, EOS_D_PtT
+valid data type 5, EOS_T_DPt
+valid data type 6, EOS_Pt_DUt
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 7, EOS_Pt_DAt
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 8, EOS_Pt_DSt
+valid data type 12, EOS_Ut_DT
+valid data type 14, EOS_T_DUt
+valid data type 15, EOS_Ut_DPt
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 16, EOS_Ut_DAt
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 17, EOS_Ut_DSt
+eos_LoadTables ERROR 12032: EOS_INVALID_DATA_TYPE: Cannot load data for EOS_Ut_PtT unless EOS_PT_SMOOTHING option is set for this table handle, 0 for type 18, EOS_Ut_PtT (fcmp_ignore)
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 18, EOS_Ut_PtT
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 21, EOS_At_DT
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 23, EOS_T_DAt
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 24, EOS_At_DPt
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 25, EOS_At_DUt
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 26, EOS_At_DSt
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 30, EOS_St_DT
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 32, EOS_T_DSt
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 33, EOS_St_DPt
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 34, EOS_St_DUt
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 35, EOS_St_DAt
+valid data type 39, EOS_Pic_DT
+valid data type 41, EOS_T_DPic
+valid data type 42, EOS_Pic_DUic
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 43, EOS_Pic_DAic
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 44, EOS_Pic_DSic
+valid data type 48, EOS_Uic_DT
+valid data type 50, EOS_T_DUic
+valid data type 51, EOS_Uic_DPic
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 52, EOS_Uic_DAic
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 53, EOS_Uic_DSic
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 57, EOS_Aic_DT
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 59, EOS_T_DAic
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 60, EOS_Aic_DPic
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 61, EOS_Aic_DUic
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 62, EOS_Aic_DSic
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 66, EOS_Sic_DT
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 68, EOS_T_DSic
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 69, EOS_Sic_DPic
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 70, EOS_Sic_DUic
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 71, EOS_Sic_DAic
+valid data type 75, EOS_Pe_DT
+valid data type 77, EOS_T_DPe
+valid data type 78, EOS_Pe_DUe
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 79, EOS_Pe_DAe
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 80, EOS_Pe_DSe
+valid data type 84, EOS_Ue_DT
+valid data type 86, EOS_T_DUe
+valid data type 87, EOS_Ue_DPe
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 88, EOS_Ue_DAe
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 89, EOS_Ue_DSe
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 93, EOS_Ae_DT
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 95, EOS_T_DAe
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 96, EOS_Ae_DPe
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 97, EOS_Ae_DUe
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 98, EOS_Ae_DSe
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 102, EOS_Se_DT
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 104, EOS_T_DSe
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 105, EOS_Se_DPe
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 106, EOS_Se_DUe
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 107, EOS_Se_DAe
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 111, EOS_Piz_DT
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 113, EOS_T_DPiz
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 114, EOS_Piz_DUiz
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 115, EOS_Piz_DAiz
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 116, EOS_Piz_DSiz
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 120, EOS_Uiz_DT
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 122, EOS_T_DUiz
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 123, EOS_Uiz_DPiz
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 124, EOS_Uiz_DAiz
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 125, EOS_Uiz_DSiz
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 129, EOS_Aiz_DT
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 131, EOS_T_DAiz
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 132, EOS_Aiz_DPiz
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 133, EOS_Aiz_DUiz
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 134, EOS_Aiz_DSiz
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 138, EOS_Siz_DT
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 140, EOS_T_DSiz
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 141, EOS_Siz_DPiz
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 142, EOS_Siz_DUiz
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 143, EOS_Siz_DAiz
+valid data type 147, EOS_Pc_D
+valid data type 151, EOS_Uc_D
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 155, EOS_Ac_D
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 159, EOS_Pv_T
+eos_LoadTables ERROR 2042: EOS_CANT_MAKE_MONOTONIC: Can't make data monotonic in X for type 160, EOS_T_Pv (fcmp_ignore)
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 160, EOS_T_Pv
+eos_LoadTables ERROR 2042: EOS_CANT_MAKE_MONOTONIC: Can't make data monotonic in X for type 161, EOS_Pv_Dv (fcmp_ignore)
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 161, EOS_Pv_Dv
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 162, EOS_Pv_Dls
+eos_LoadTables ERROR 2042: EOS_CANT_MAKE_MONOTONIC: Can't make data monotonic in X for type 163, EOS_Pv_Uv (fcmp_ignore)
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 163, EOS_Pv_Uv
+eos_LoadTables ERROR 2042: EOS_CANT_MAKE_MONOTONIC: Can't make data monotonic in X for type 164, EOS_Pv_Uls (fcmp_ignore)
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 164, EOS_Pv_Uls
+eos_LoadTables ERROR 2042: EOS_CANT_MAKE_MONOTONIC: Can't make data monotonic in X for type 165, EOS_Pv_Av (fcmp_ignore)
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 165, EOS_Pv_Av
+eos_LoadTables ERROR 2042: EOS_CANT_MAKE_MONOTONIC: Can't make data monotonic in X for type 166, EOS_Pv_Als (fcmp_ignore)
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 166, EOS_Pv_Als
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 167, EOS_Dv_T
+eos_LoadTables ERROR 2042: EOS_CANT_MAKE_MONOTONIC: Can't make data monotonic in X for type 168, EOS_T_Dv (fcmp_ignore)
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 168, EOS_T_Dv
+eos_LoadTables ERROR 2042: EOS_CANT_MAKE_MONOTONIC: Can't make data monotonic in X for type 169, EOS_Dv_Pv (fcmp_ignore)
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 169, EOS_Dv_Pv
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 170, EOS_Dv_Dls
+eos_LoadTables ERROR 2042: EOS_CANT_MAKE_MONOTONIC: Can't make data monotonic in X for type 171, EOS_Dv_Uv (fcmp_ignore)
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 171, EOS_Dv_Uv
+eos_LoadTables ERROR 2042: EOS_CANT_MAKE_MONOTONIC: Can't make data monotonic in X for type 172, EOS_Dv_Uls (fcmp_ignore)
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 172, EOS_Dv_Uls
+eos_LoadTables ERROR 2042: EOS_CANT_MAKE_MONOTONIC: Can't make data monotonic in X for type 173, EOS_Dv_Av (fcmp_ignore)
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 173, EOS_Dv_Av
+eos_LoadTables ERROR 2042: EOS_CANT_MAKE_MONOTONIC: Can't make data monotonic in X for type 174, EOS_Dv_Als (fcmp_ignore)
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 174, EOS_Dv_Als
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 175, EOS_Dls_T
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 176, EOS_T_Dls
+eos_LoadTables ERROR 2042: EOS_CANT_MAKE_MONOTONIC: Can't make data monotonic in X for type 177, EOS_Dls_Pv (fcmp_ignore)
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 177, EOS_Dls_Pv
+eos_LoadTables ERROR 2042: EOS_CANT_MAKE_MONOTONIC: Can't make data monotonic in X for type 178, EOS_Dls_Dv (fcmp_ignore)
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 178, EOS_Dls_Dv
+eos_LoadTables ERROR 2042: EOS_CANT_MAKE_MONOTONIC: Can't make data monotonic in X for type 179, EOS_Dls_Uv (fcmp_ignore)
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 179, EOS_Dls_Uv
+eos_LoadTables ERROR 2042: EOS_CANT_MAKE_MONOTONIC: Can't make data monotonic in X for type 180, EOS_Dls_Uls (fcmp_ignore)
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 180, EOS_Dls_Uls
+eos_LoadTables ERROR 2042: EOS_CANT_MAKE_MONOTONIC: Can't make data monotonic in X for type 181, EOS_Dls_Av (fcmp_ignore)
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 181, EOS_Dls_Av
+eos_LoadTables ERROR 2042: EOS_CANT_MAKE_MONOTONIC: Can't make data monotonic in X for type 182, EOS_Dls_Als (fcmp_ignore)
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 182, EOS_Dls_Als
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 183, EOS_Uv_T
+eos_LoadTables ERROR 2042: EOS_CANT_MAKE_MONOTONIC: Can't make data monotonic in X for type 184, EOS_T_Uv (fcmp_ignore)
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 184, EOS_T_Uv
+eos_LoadTables ERROR 2042: EOS_CANT_MAKE_MONOTONIC: Can't make data monotonic in X for type 185, EOS_Uv_Pv (fcmp_ignore)
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 185, EOS_Uv_Pv
+eos_LoadTables ERROR 2042: EOS_CANT_MAKE_MONOTONIC: Can't make data monotonic in X for type 186, EOS_Uv_Dv (fcmp_ignore)
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 186, EOS_Uv_Dv
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 187, EOS_Uv_Dls
+eos_LoadTables ERROR 2042: EOS_CANT_MAKE_MONOTONIC: Can't make data monotonic in X for type 188, EOS_Uv_Uls (fcmp_ignore)
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 188, EOS_Uv_Uls
+eos_LoadTables ERROR 2042: EOS_CANT_MAKE_MONOTONIC: Can't make data monotonic in X for type 189, EOS_Uv_Av (fcmp_ignore)
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 189, EOS_Uv_Av
+eos_LoadTables ERROR 2042: EOS_CANT_MAKE_MONOTONIC: Can't make data monotonic in X for type 190, EOS_Uv_Als (fcmp_ignore)
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 190, EOS_Uv_Als
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 191, EOS_Uls_T
+eos_LoadTables ERROR 2042: EOS_CANT_MAKE_MONOTONIC: Can't make data monotonic in X for type 192, EOS_T_Uls (fcmp_ignore)
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 192, EOS_T_Uls
+eos_LoadTables ERROR 2042: EOS_CANT_MAKE_MONOTONIC: Can't make data monotonic in X for type 193, EOS_Uls_Pv (fcmp_ignore)
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 193, EOS_Uls_Pv
+eos_LoadTables ERROR 2042: EOS_CANT_MAKE_MONOTONIC: Can't make data monotonic in X for type 194, EOS_Uls_Dv (fcmp_ignore)
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 194, EOS_Uls_Dv
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 195, EOS_Uls_Dls
+eos_LoadTables ERROR 2042: EOS_CANT_MAKE_MONOTONIC: Can't make data monotonic in X for type 196, EOS_Uls_Uv (fcmp_ignore)
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 196, EOS_Uls_Uv
+eos_LoadTables ERROR 2042: EOS_CANT_MAKE_MONOTONIC: Can't make data monotonic in X for type 197, EOS_Uls_Av (fcmp_ignore)
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 197, EOS_Uls_Av
+eos_LoadTables ERROR 2042: EOS_CANT_MAKE_MONOTONIC: Can't make data monotonic in X for type 198, EOS_Uls_Als (fcmp_ignore)
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 198, EOS_Uls_Als
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 199, EOS_Av_T
+eos_LoadTables ERROR 2042: EOS_CANT_MAKE_MONOTONIC: Can't make data monotonic in X for type 200, EOS_T_Av (fcmp_ignore)
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 200, EOS_T_Av
+eos_LoadTables ERROR 2042: EOS_CANT_MAKE_MONOTONIC: Can't make data monotonic in X for type 201, EOS_Av_Pv (fcmp_ignore)
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 201, EOS_Av_Pv
+eos_LoadTables ERROR 2042: EOS_CANT_MAKE_MONOTONIC: Can't make data monotonic in X for type 202, EOS_Av_Dv (fcmp_ignore)
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 202, EOS_Av_Dv
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 203, EOS_Av_Dls
+eos_LoadTables ERROR 2042: EOS_CANT_MAKE_MONOTONIC: Can't make data monotonic in X for type 204, EOS_Av_Uv (fcmp_ignore)
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 204, EOS_Av_Uv
+eos_LoadTables ERROR 2042: EOS_CANT_MAKE_MONOTONIC: Can't make data monotonic in X for type 205, EOS_Av_Uls (fcmp_ignore)
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 205, EOS_Av_Uls
+eos_LoadTables ERROR 2042: EOS_CANT_MAKE_MONOTONIC: Can't make data monotonic in X for type 206, EOS_Av_Als (fcmp_ignore)
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 206, EOS_Av_Als
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 207, EOS_Als_T
+eos_LoadTables ERROR 2042: EOS_CANT_MAKE_MONOTONIC: Can't make data monotonic in X for type 208, EOS_T_Als (fcmp_ignore)
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 208, EOS_T_Als
+eos_LoadTables ERROR 2042: EOS_CANT_MAKE_MONOTONIC: Can't make data monotonic in X for type 209, EOS_Als_Pv (fcmp_ignore)
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 209, EOS_Als_Pv
+eos_LoadTables ERROR 2042: EOS_CANT_MAKE_MONOTONIC: Can't make data monotonic in X for type 210, EOS_Als_Dv (fcmp_ignore)
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 210, EOS_Als_Dv
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 211, EOS_Als_Dls
+eos_LoadTables ERROR 2042: EOS_CANT_MAKE_MONOTONIC: Can't make data monotonic in X for type 212, EOS_Als_Uv (fcmp_ignore)
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 212, EOS_Als_Uv
+eos_LoadTables ERROR 2042: EOS_CANT_MAKE_MONOTONIC: Can't make data monotonic in X for type 213, EOS_Als_Uls (fcmp_ignore)
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 213, EOS_Als_Uls
+eos_LoadTables ERROR 2042: EOS_CANT_MAKE_MONOTONIC: Can't make data monotonic in X for type 214, EOS_Als_Av (fcmp_ignore)
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 214, EOS_Als_Av
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 215, EOS_Tm_D
+eos_LoadTables ERROR 2043: EOS_CANT_INVERT_DATA: Can't invert wrt first independent variable for type 216, EOS_D_Tm (fcmp_ignore)
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 216, EOS_D_Tm
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 217, EOS_Tm_Pm
+eos_LoadTables ERROR 2043: EOS_CANT_INVERT_DATA: Can't invert wrt first independent variable for type 218, EOS_Tm_Um (fcmp_ignore)
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 218, EOS_Tm_Um
+eos_LoadTables ERROR 2043: EOS_CANT_INVERT_DATA: Can't invert wrt first independent variable for type 219, EOS_Tm_Am (fcmp_ignore)
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 219, EOS_Tm_Am
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 220, EOS_Pm_D
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 221, EOS_D_Pm
+eos_LoadTables ERROR 2043: EOS_CANT_INVERT_DATA: Can't invert wrt first independent variable for type 222, EOS_Pm_Tm (fcmp_ignore)
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 222, EOS_Pm_Tm
+eos_LoadTables ERROR 2043: EOS_CANT_INVERT_DATA: Can't invert wrt first independent variable for type 223, EOS_Pm_Um (fcmp_ignore)
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 223, EOS_Pm_Um
+eos_LoadTables ERROR 2043: EOS_CANT_INVERT_DATA: Can't invert wrt first independent variable for type 224, EOS_Pm_Am (fcmp_ignore)
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 224, EOS_Pm_Am
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 225, EOS_Um_D
+eos_LoadTables ERROR 2043: EOS_CANT_INVERT_DATA: Can't invert wrt first independent variable for type 226, EOS_D_Um (fcmp_ignore)
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 226, EOS_D_Um
+eos_LoadTables ERROR 2043: EOS_CANT_INVERT_DATA: Can't invert wrt first independent variable for type 227, EOS_Um_Tm (fcmp_ignore)
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 227, EOS_Um_Tm
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 228, EOS_Um_Pm
+eos_LoadTables ERROR 2043: EOS_CANT_INVERT_DATA: Can't invert wrt first independent variable for type 229, EOS_Um_Am (fcmp_ignore)
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 229, EOS_Um_Am
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 230, EOS_Am_D
+eos_LoadTables ERROR 2043: EOS_CANT_INVERT_DATA: Can't invert wrt first independent variable for type 231, EOS_D_Am (fcmp_ignore)
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 231, EOS_D_Am
+eos_LoadTables ERROR 2043: EOS_CANT_INVERT_DATA: Can't invert wrt first independent variable for type 232, EOS_Am_Tm (fcmp_ignore)
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 232, EOS_Am_Tm
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 233, EOS_Am_Pm
+eos_LoadTables ERROR 2043: EOS_CANT_INVERT_DATA: Can't invert wrt first independent variable for type 234, EOS_Am_Um (fcmp_ignore)
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 234, EOS_Am_Um
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 235, EOS_Tf_D
+eos_LoadTables ERROR 2043: EOS_CANT_INVERT_DATA: Can't invert wrt first independent variable for type 236, EOS_D_Tf (fcmp_ignore)
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 236, EOS_D_Tf
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 237, EOS_Tf_Pf
+eos_LoadTables ERROR 2043: EOS_CANT_INVERT_DATA: Can't invert wrt first independent variable for type 238, EOS_Tf_Uf (fcmp_ignore)
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 238, EOS_Tf_Uf
+eos_LoadTables ERROR 2043: EOS_CANT_INVERT_DATA: Can't invert wrt first independent variable for type 239, EOS_Tf_Af (fcmp_ignore)
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 239, EOS_Tf_Af
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 240, EOS_Pf_D
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 241, EOS_D_Pf
+eos_LoadTables ERROR 2043: EOS_CANT_INVERT_DATA: Can't invert wrt first independent variable for type 242, EOS_Pf_Tf (fcmp_ignore)
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 242, EOS_Pf_Tf
+eos_LoadTables ERROR 2043: EOS_CANT_INVERT_DATA: Can't invert wrt first independent variable for type 243, EOS_Pf_Uf (fcmp_ignore)
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 243, EOS_Pf_Uf
+eos_LoadTables ERROR 2043: EOS_CANT_INVERT_DATA: Can't invert wrt first independent variable for type 244, EOS_Pf_Af (fcmp_ignore)
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 244, EOS_Pf_Af
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 245, EOS_Uf_D
+eos_LoadTables ERROR 2043: EOS_CANT_INVERT_DATA: Can't invert wrt first independent variable for type 246, EOS_D_Uf (fcmp_ignore)
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 246, EOS_D_Uf
+eos_LoadTables ERROR 2043: EOS_CANT_INVERT_DATA: Can't invert wrt first independent variable for type 247, EOS_Uf_Tf (fcmp_ignore)
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 247, EOS_Uf_Tf
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 248, EOS_Uf_Pf
+eos_LoadTables ERROR 2043: EOS_CANT_INVERT_DATA: Can't invert wrt first independent variable for type 249, EOS_Uf_Af (fcmp_ignore)
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 249, EOS_Uf_Af
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 250, EOS_Af_D
+eos_LoadTables ERROR 2043: EOS_CANT_INVERT_DATA: Can't invert wrt first independent variable for type 251, EOS_D_Af (fcmp_ignore)
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 251, EOS_D_Af
+eos_LoadTables ERROR 2043: EOS_CANT_INVERT_DATA: Can't invert wrt first independent variable for type 252, EOS_Af_Tf (fcmp_ignore)
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 252, EOS_Af_Tf
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 253, EOS_Af_Pf
+eos_LoadTables ERROR 2043: EOS_CANT_INVERT_DATA: Can't invert wrt first independent variable for type 254, EOS_Af_Uf (fcmp_ignore)
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 254, EOS_Af_Uf
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 255, EOS_Gs_D
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 256, EOS_D_Gs
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 257, EOS_Ogb
+valid data type 258, EOS_Kr_DT
+valid data type 261, EOS_Keo_DT
+valid data type 264, EOS_Zfo_DT
+valid data type 267, EOS_Kp_DT
+valid data type 270, EOS_Zfc_DT
+valid data type 273, EOS_Kec_DT
+valid data type 276, EOS_Ktc_DT
+valid data type 279, EOS_B_DT
+valid data type 282, EOS_Kc_DT
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 285, EOS_V_PtT
+eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 305, EOS_M_DT

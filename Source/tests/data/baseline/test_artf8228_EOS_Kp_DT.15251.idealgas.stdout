@@ -1,0 +1,12 @@
+material ID: 15251
+-------------------
+eos_CreateTables ... EOS_OK
+th 0: NR = 31 and NT = 46	NR changed from 0	NT changed from 0
+eos_SetOption ... EOS_OK (EOS_DUMP_DATA)
+th 0: NR = 31 and NT = 46
+eos_SetOption ... EOS_OK (EOS_SPLIT_FORCED)
+th 0: NR = 31 and NT = 46
+eos_SetOption ... EOS_OK (EOS_SPLIT_IDEAL_GAS)
+th 0: NR = 31 and NT = 46
+eos_LoadTables ... EOS_OK
+th 0: NR = 31 and NT = 46

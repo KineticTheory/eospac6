@@ -1,0 +1,96 @@
+#-*-makefile-*-###################################################
+#  
+#  Copyright -- see file named COPYRIGHTNOTICE
+#  
+##################################################################
+### This file contains the following:                          ###
+### Platform-dependent system configuration for an ARCH value  ###
+### containing the following pattern:                          ###
+###    powerpc*-*-linux-gnu
+##################################################################
+#
+# GMSL 1.0.11 function dependencies exist (see $(BASEDIR)/config/gmsl).
+#
+# IBM PowerPC and Linux
+
+##################################################################
+# Compiler suite configurations based upon F90                 ###
+##################################################################
+# Default: use the first F90 compiler found from F90_List
+
+F90_List = xlf90 mpixlf90 mpif90 ppu-gfortran 
+F90 = $(firstword $(notdir $(foreach compiler,$(F90_List),$(call pathsearch,$(compiler)))))
+ifeq ($(strip $(F90)),)
+  $(error No supported Fortran compiler was found in your PATH for this machine. (supported: $(F90_List)))
+endif
+
+ifeq ($(strip $(F90)),xlf90)
+  CC  = xlc
+  CXX = xlC
+  F77 = f77
+  ALT_SUBDIR := $(shell $(BASEDIR)/scripts/define_module_subdir $(F90))
+endif
+
+ifeq ($(strip $(F90)),mpixlf90)
+  CC  = mpixlc
+  CXX = mpixlcxx
+  F77 = mpixlf77
+  ALT_SUBDIR := $(shell $(BASEDIR)/scripts/define_module_subdir $(F90))
+endif
+
+ifeq ($(strip $(F90)),mpif90)
+  CC  = mpicc
+  CXX = mpicxx
+  F77 = mpif77
+  ALT_SUBDIR := $(shell $(BASEDIR)/scripts/define_module_subdir $(F90))
+endif
+
+ifeq ($(strip $(F90)),ppu-gfortran)
+  CC  := ppu-gcc
+  CXX := ppu-g++
+  F77 := ppu-gfortran
+  ALT_SUBDIR := $(shell $(BASEDIR)/scripts/define_module_subdir $(F90))
+endif
+
+##################################################################
+### Assign values to associative arrays, which hold various    ###
+### compiler options -- specific to this architecture.         ###
+##################################################################
+#
+### VERSION_FLAG{$CC} = $flag
+$(call set,VERSION_FLAG,xlc,-qversion)   # XL C
+$(call set,VERSION_FLAG,mpixlc,-qversion)   # Backend cross-compiler XL C
+$(call set,VERSION_FLAG,mpicc,--version)   # Backend cross-compiler GNU C
+#
+### VERSION_FLAG{$CXX} = $flag
+$(call set,VERSION_FLAG,xlC,-qversion)   # XL C++
+$(call set,VERSION_FLAG,mpixlC,-qversion)   # Backend cross-compiler XL C++
+$(call set,VERSION_FLAG,mpicxx,--version)   # Backend cross-compiler GNU C++
+#
+### VERSION_FLAG{$F77} = $flag
+$(call set,VERSION_FLAG,f77,-qversion)   # XLF F77
+$(call set,VERSION_FLAG,mpixlf77,-qversion)   # Backend cross-compiler XLF F77
+#
+### VERSION_FLAG{$F90} = $flag
+$(call set,VERSION_FLAG,xlf90,-qversion)   # XLF F90
+$(call set,VERSION_FLAG,mpixlf90,-qversion)   # Backend cross-compiler XLF F90
+$(call set,VERSION_FLAG,mpif90,--version)   # Backend cross-compiler GNU F77 and/or F90
+#
+### _COMP_FLAGS{$CC} = $flag
+#
+### _COMP_FLAGS{$CXX} = $flag
+#
+### _COMP_FLAGS{$F77} = $flag
+#
+### _COMP_FLAGS{$F90} = $flag
+$(call set,_COMP_FLAGS,xlf90,-qfloat=nomaf -qsuffix=f=f90)   # XLF F90
+$(call set,_COMP_FLAGS,mpixlf90,-qfloat=nomaf -qsuffix=f=f90)   # Backend cross-compiler XLF F90
+
+# Modify ARCH variable
+ARCH   := $(shell $(BASEDIR)/scripts/config.guess)$(ALT_SUBDIR)
+
+# Set additional compiler-specific options
+_CFLAGS += $(call get,_COMP_FLAGS,$(CC))
+_CXXFLAGS += $(call get,_COMP_FLAGS,$(CXX))
+_FFLAGS += $(call get,_COMP_FLAGS,$(F77))
+_F90FLAGS += $(call get,_COMP_FLAGS,$(F90))

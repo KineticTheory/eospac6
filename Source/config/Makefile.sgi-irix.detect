@@ -1,0 +1,46 @@
+#-*-makefile-*-###################################################
+#  
+#  Copyright -- see file named COPYRIGHTNOTICE
+#  
+##################################################################
+### This file contains the following:                          ###
+### Platform-dependent system configuration for an ARCH value  ###
+### containing the following pattern:                          ###
+###    *sgi-irix
+###                                                            ###
+### The purpose of this file is                                ###
+###    - detect F90                                            ###
+###    - define ALT_SUBDIR                                     ###
+###    - optionally redefine ARCH                              ###
+##################################################################
+#
+# mips SGI and IRIX
+
+##################################################################
+# Compiler suite configurations based upon F90                 ###
+##################################################################
+# Default: use the first F90 compiler found from F90_List
+F90_List = f90
+F90_Found_List = $(foreach compiler,$(F90_List),$(call pathsearch,$(compiler)))
+F90 = $(firstword $(notdir $(F90_Found_List)))
+ifeq ($(strip $(F90))$(strip $(F90_Found_List)),)
+  $(error No supported Fortran compiler was found in your PATH for this machine. (supported: $(F90_List)))
+endif
+
+##################################################################
+### Define selected variable values according to $(F90).       ###
+##################################################################
+ifeq ($(strip $(F90)),f90)
+  ifeq ($(strip $(N32)),)
+    C_ADDRESS_FLAG := -mabi=64
+    F_ADDRESS_FLAG := -64
+    ALT_SUBDIR := 
+  else
+    C_ADDRESS_FLAG := 
+    F_ADDRESS_FLAG := 
+    ALT_SUBDIR := /n32
+  endif
+endif
+
+# Modify ARCH variable
+ARCH   := $(shell $(BASEDIR)/scripts/config.guess)$(ALT_SUBDIR)

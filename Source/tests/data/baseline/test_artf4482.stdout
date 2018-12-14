@@ -1,0 +1,37 @@
+
+
+BEFORE UNPACKING: 
+
+--- TEST eos_Interpolate using category 0 tableType: EOS_Pt_DT ---
+12008: EOS_INTERP_EXTRAPOLATED: Interpolation caused extrapolation beyond data table boundaries
+	i=0	X = 9.300000e-01, Y = 2.000000e+03, F = -2.700000e+01, dFx = 0.000000e+00, dFy = 1.000000e-02, errorCode: 12008
+	i=1	X = 2.000000e+00, Y = 2.000000e+03, F = -2.700000e+01, dFx = 0.000000e+00, dFy = 1.000000e-02, errorCode: 12008
+	i=2	X = 2.000000e+00, Y = 5.000000e+03, F = 3.000000e+00, dFx = 0.000000e+00, dFy = 1.000000e-02, errorCode: 12008
+	i=3	X = 2.000000e+00, Y = 6.000000e+03, F = 1.300000e+01, dFx = 0.000000e+00, dFy = 1.000000e-02, errorCode: 12008
+	i=4	X = 1.150000e+00, Y = 6.000000e+03, F = 1.300000e+01, dFx = 0.000000e+00, dFy = 1.000000e-02, errorCode: 12008
+	i=5	X = 2.000000e-01, Y = 6.000000e+03, F = 1.300000e+01, dFx = 0.000000e+00, dFy = 1.000000e-02, errorCode: 12008
+	i=6	X = 2.000000e-01, Y = 4.975000e+03, F = 2.750000e+00, dFx = 0.000000e+00, dFy = 1.000000e-02, errorCode: 12008
+	i=7	X = 2.000000e-01, Y = 1.050000e+03, F = -3.650000e+01, dFx = 0.000000e+00, dFy = 1.000000e-02, errorCode: 12008
+
+--- TEST eos_Interpolate using category 2 tableType: EOS_T_DPt ---
+	i=0	X = 9.300000e-01, Y = 2.000000e+03, F = 1.202715e+06, dFx = -8.117474e+05, dFy = 4.056020e+02, errorCode: 0
+	i=1	X = 2.000000e+00, Y = 2.000000e+03, F = 7.399290e+05, dFx = -2.383214e+05, dFy = 2.466097e+02, errorCode: 0
+	i=2	X = 2.000000e+00, Y = 5.000000e+03, F = 1.375267e+06, dFx = -4.320226e+05, dFy = 1.834010e+02, errorCode: 0
+	i=3	X = 2.000000e+00, Y = 6.000000e+03, F = 1.553352e+06, dFx = -4.885521e+05, dFy = 1.737556e+02, errorCode: 0
+	i=4	X = 1.150000e+00, Y = 6.000000e+03, F = 2.220540e+06, dFx = -1.303363e+06, dFy = 2.691801e+02, errorCode: 0
+	i=5	X = 2.000000e-01, Y = 6.000000e+03, F = 8.151403e+06, dFx = -3.568015e+07, dFy = 1.213719e+03, errorCode: 0
+	i=6	X = 2.000000e-01, Y = 4.975000e+03, F = 6.909002e+06, dFx = -2.930858e+07, dFy = 1.209886e+03, errorCode: 0
+	i=7	X = 2.000000e-01, Y = 1.050000e+03, F = 2.035912e+06, dFx = -6.933858e+06, dFy = 1.418111e+03, errorCode: 0
+
+
+AFTER UNPACKING: 
+
+--- TEST eos_Interpolate using category 0 tableType: EOS_T_DPt ---
+	i=0	X = 9.300000e-01, Y = 2.000000e+03, F = 1.202715e+06, dFx = -8.117474e+05, dFy = 4.056020e+02, errorCode: 0
+	i=1	X = 2.000000e+00, Y = 2.000000e+03, F = 7.399290e+05, dFx = -2.383214e+05, dFy = 2.466097e+02, errorCode: 0
+	i=2	X = 2.000000e+00, Y = 5.000000e+03, F = 1.375267e+06, dFx = -4.320226e+05, dFy = 1.834010e+02, errorCode: 0
+	i=3	X = 2.000000e+00, Y = 6.000000e+03, F = 1.553352e+06, dFx = -4.885521e+05, dFy = 1.737556e+02, errorCode: 0
+	i=4	X = 1.150000e+00, Y = 6.000000e+03, F = 2.220540e+06, dFx = -1.303363e+06, dFy = 2.691801e+02, errorCode: 0
+	i=5	X = 2.000000e-01, Y = 6.000000e+03, F = 8.151403e+06, dFx = -3.568015e+07, dFy = 1.213719e+03, errorCode: 0
+	i=6	X = 2.000000e-01, Y = 4.975000e+03, F = 6.909002e+06, dFx = -2.930858e+07, dFy = 1.209886e+03, errorCode: 0
+	i=7	X = 2.000000e-01, Y = 1.050000e+03, F = 2.035912e+06, dFx = -6.933858e+06, dFy = 1.418111e+03, errorCode: 0

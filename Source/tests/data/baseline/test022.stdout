@@ -1,0 +1,4 @@
+eos_CreateTables EOS_OK
+eos_LoadTables ERROR 22009: EOS_MATERIAL_NOT_FOUND: Material ID specified for table handle 1 is not in library
+Table handle 0: eos_LoadTables error code EOS_OK
+Table handle 1: eos_LoadTables ERROR 22009: EOS_MATERIAL_NOT_FOUND: Material ID specified for table handle 1 is not in library

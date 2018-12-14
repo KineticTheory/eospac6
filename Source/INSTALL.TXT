@@ -1,0 +1,114 @@
+*********************************************************************
+* 
+* Copyright -- see file named COPYRIGHTNOTICE
+* 
+********************************************************************/
+CONTENTS
+
+1. INTRODUCTION
+2. INSTALLATION DETAILS
+3. COMPILERS
+
+----
+
+
+1. INTRODUCTION
+
+The installation of EOSPAC 6 is fairly straight-forward. The basic directory structure of this package requires multiple Makefiles:
+
+Source/Makefile
+  - This is the master Makefile that drives the others, and it is further described below.
+
+Source/src/Makefile
+  - This Makefile will build libeospac6.a and other related files.
+
+Source/tests/Makefile
+  - This Makefile will build and excute the test suite(s).
+
+NOTES:
+  - All of the Makefiles require gmake (gmake version 3.78 or later is recommended, but no testing has been performed to determine the actual requirement). 
+  - Perl is required for successful usage of the existing Makefiles' targets.
+
+
+The Source/src/Makefile contains a target named 'help' that produces output like the following:
+
+./Makefile contains the following valid targets:
+
+TARGET                             DESCRIPTION
+------                             -----------
+Test%  ..........................  Compile the library, and the example named
+                                   Test%, given %=C, CXX, F, or F77
+all  ............................  Compile the library, all examples, and all
+                                   test codes
+check  ..........................  Compile and execute the library, all
+                                   examples, and all test codes
+clean  ..........................  Delete the files created for the current
+                                   platform/compiler configuration
+compare  ........................  Compare existing test code output files to
+                                   the baseline
+distclean  ......................  Delete files created for all
+                                   platform/compiler configurations
+help  ...........................  Print this help
+install  ........................  Install the library, examples and
+                                   documentation for the current
+                                   platform/compiler configuration
+list_installed_files  ...........  List all of the installed files for the
+                                   current network
+list_my_installed_files  ........  List the installed files for the current
+                                   platform/compiler configuration
+test%  ..........................  Compile the library, and the test code named
+                                   test%, given % is a 3-digit number like 001
+uninstall  ......................  Uninstall the library, examples and
+                                   documentation for the current
+                                   platform/compiler configuration
+version  ........................  Generate the src/eos_version.c file that
+                                   contains the version information for the
+                                   current source files (REQUIRES CVS repository
+                                   access)
+
+
+2. INSTALLATION DETAILS
+
+Make the 'Source' directory your current working directory, and then type the following commands:
+
+make
+make check
+make install
+
+The first command (make) builds all of the binary files, including all example and test executables.
+The second command (make check) builds all of the binary files if the first command was not run, and then all of the executables are run.
+The third command will install the package in the default location that is defined as the first of the following locations that found on the current machine:
+
+/usr/projects/data/eos/eospac/$(CVS_BASE_TAG_NAME)
+/usr/local/codes/data/eos/eospac/$(CVS_BASE_TAG_NAME)
+/usr/gapps/lanl-data/eos/eospac/$(CVS_BASE_TAG_NAME)
+/usr/local/eos/eospac/$(CVS_BASE_TAG_NAME)
+
+where $(CVS_BASE_TAG_NAME) is a variation of the CVS tag, $Name, that is assigned to the current release of EOSPAC 6 (see Makefile.compile_opts for details).
+
+If you want to specify an alternative installation directory, the prefix variable may be overridden on the command line as follows:
+
+make install prefix=/your/custom/path
+
+which will create the following directories containing the installed files:
+
+/your/custom/path/docs
+/your/custom/path/example
+/your/custom/path/include
+/your/custom/path/lib
+
+
+3. COMPILERS
+
+The 'Source/Makefile.compile_opts' file contains the platform-specific definitions of the F77, F90, C and C++ compilers. Any of the default compilers may be redefined on the command line by overriding the values of the F77, F90, CC and CXX variables (i.e., 'make CXX=g++'). This overriding is especially necessary on the various Linux machines due to the fact that so many different compilers are available. The contents of libeospac6.a are typically compiled using gcc; however, some exceptions exist (see Makefile.compile_opts for details).
+
+The currently-supported platform/OS configurations are defined as follows:
+
+alphaev68-dec-osf
+i686-pc-cygwin
+i686-pc-linux-gnu
+mips-sgi-irix
+powerpc-apple-darwin
+powerpc-ibm-aix
+sparc-sun-solaris
+x86_64-unknown-linux-gnu

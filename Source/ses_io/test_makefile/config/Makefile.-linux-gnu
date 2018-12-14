@@ -1,0 +1,84 @@
+#-*-makefile-*-###################################################
+#  
+#  Copyright -- see file named COPYRIGHTNOTICE
+#  
+##################################################################
+### This file contains the following:                          ###
+### Platform-dependent system configuration for an ARCH value  ###
+### containing the following pattern:                          ###
+###    *-linux-gnu
+##################################################################
+#
+# GMSL 1.0.11 function dependencies exist (see $(BASEDIR)/config/gmsl).
+#
+# x86 and Linux
+
+##################################################################
+# Compiler suite configurations based upon F90                 ###
+##################################################################
+# Default: use the first F90 compiler found from F90_List
+F90_List = gfortran pgf90 lf95 f90 pathf90 ifort g95 ftn
+
+F90 = $(firstword $(notdir $(foreach compiler,$(F90_List),$(call pathsearch,$(compiler)))))
+ifeq ($(strip $(F90)),)
+  $(error No supported Fortran compiler was found in your PATH for this machine. (supported: $(F90_List)))
+endif
+
+ifeq ($(strip $(F90)),lf95)
+  ALT_SUBDIR := $(shell $(BASEDIR)/scripts/define_module_subdir lahey)
+endif
+
+ifeq ($(strip $(F90)),pgf90)
+  F77 := pgf77
+  ALT_SUBDIR := $(shell $(BASEDIR)/scripts/define_module_subdir pgi)
+endif
+
+ifeq ($(strip $(F90)),f90)
+  F77 := f77
+  ALT_SUBDIR := $(shell $(BASEDIR)/scripts/define_module_subdir absoft)
+endif
+
+ifeq ($(strip $(F90)),pathf90)
+  ALT_SUBDIR := $(shell $(BASEDIR)/scripts/define_module_subdir pathscale)
+endif
+
+ifeq ($(strip $(F90)),ifort)
+  ALT_SUBDIR := $(shell $(BASEDIR)/scripts/define_module_subdir intel-f)
+endif
+
+ifeq ($(strip $(F90)),g95)
+  G95_MEM_SEGMENTS = 0
+  export G95_MEM_SEGMENTS
+  ALT_SUBDIR := $(shell $(BASEDIR)/scripts/define_module_subdir $(F90))
+endif
+
+ifeq ($(strip $(F90)),gfortran)
+  ALT_SUBDIR := $(shell $(BASEDIR)/scripts/define_module_subdir gcc)
+endif
+
+##################################################################
+### Assign values to associative arrays, which hold various    ###
+### compiler options -- specific to this architecture.         ###
+##################################################################
+#
+### VERSION_FLAG{$CC} = $flag
+#
+### VERSION_FLAG{$F90} = $flag
+#
+### _COMP_FLAGS{$CC} = $flag
+#
+### _COMP_FLAGS{$F90} = $flag
+$(call set,_COMP_FLAGS,f90,-p"$(INCDIR)" -YCFRL=1)   # Absoft f90
+$(call set,_COMP_FLAGS,pathf90,-I"$(INCDIR)")   # Pathscale f90
+$(call set,_COMP_FLAGS,ifort,-I"$(INCDIR)")   # Intel f90
+$(call set,_COMP_FLAGS,g95,-I"$(INCDIR)")   # G95
+$(call set,_COMP_FLAGS,gfortran,-I"$(INCDIR)")   # gfortran
+$(call set,_COMP_FLAGS,ppu-gfortran,-I"$(INCDIR)")   # ppu-gfortran
+
+
+# Modify ARCH variable
+ARCH   := $(shell $(BASEDIR)/scripts/config.guess)$(ALT_SUBDIR)
+
+# Set additional compiler-specific options
+_CFLAGS += $(call get,_COMP_FLAGS,$(CC))
+_F90FLAGS += $(call get,_COMP_FLAGS,$(F90))

@@ -1,0 +1,10 @@
+ AFTER FIRST create tables err1=     0: 
+  firsthandle =           0
+ AFTER FIRST SetDataFilename err1=     0 itabletype=    14: 
+               fcmp_ignore filename = ./../../../../../tests/data/ses003721
+ AFTER FIRST load tables err1=     0: 
+ AFTER SECOND create tables err1=     0: 
+  secondhandle =           2
+ AFTER SECOND SetDataFilename err1=     0 itabletype=     6: 
+               fcmp_ignore filename = ./../../../../../tests/data/ses003722
+ AFTER SECOND load tables err1=     0: 

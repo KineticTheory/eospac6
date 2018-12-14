@@ -1,0 +1,7 @@
+eos_CreateTables error EOS_OK
+eos_SetOption error EOS_OK
+eos_LoadTables error EOS_OK
+eos_SetOption error EOS_OK
+after interp dfx, dfy = 0.0336562, -0.000169057
+eos_Interpolate error EOS_OK
+interpolated value is 9.137450

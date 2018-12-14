@@ -1,0 +1,75 @@
+#! /bin/sh
+(shopt -s igncr) 2>/dev/null && eval 'shopt -s igncr';#
+
+# $Date: 2015/05/22 23:52:35 $
+#
+# This script is used to define a subdirectory name specific
+# to the currently-loaded fortran compiler module. If modulecmd is not found
+# on the current machine, then the first argument is returned with a
+# prepended "/".
+#
+
+if [ $# -le 0 ]; then
+    cat <<EOF
+
+ Usage:
+   define_module_subdir <PATT> [<LOC>]
+
+   <PATT>  is the specific F90 compiler module name pattern (i.e., absoft,
+           pgi, pathscale, intel-f, ...)
+
+   <LOC>   is the optional location of prerequisite script(s)
+
+EOF
+    exit 1
+fi
+
+if [ $# -le 1 ]; then
+  loc=`dirname $0`
+else
+  loc=$2
+fi
+
+# define PATT using first supplied argument
+PATT=$1
+shift
+
+# define known possible locations for modulecmd
+if   [ -x /usr/bin/modulecmd ] ; then
+  MODULECMD=/usr/bin/modulecmd
+
+elif [ -x /usr/local/modules/$MODULE_VERSION/bin/modulecmd ] ; then
+  MODULECMD=/usr/local/modules/$MODULE_VERSION/bin/modulecmd
+
+elif [ -x /opt/modules/$MODULE_VERSION/bin/modulecmd ] ; then
+  MODULECMD=/opt/modules/$MODULE_VERSION/bin/modulecmd
+
+else
+  MODULECMD=modulecmd_does_not_exist
+
+fi
+export MODULECMD
+
+# return name of the loaded fortran module matching PATT
+if [ -x ${MODULECMD} ]; then
+
+   export MODULECMD
+   if [ "x${MODULESHOME}" != "x" ] ; then
+     . ${MODULESHOME}/init/sh
+   fi
+   fortranmodules=`( ${MODULECMD} sh avail 2>&1 ) | ${loc}/filter_module_names ${PATT} -f '(mpi|32|_default|PrgEnv)'`
+   loadedfortranmodules=`( ${MODULECMD} sh list 2>&1 ) | ${loc}/filter_module_names ${PATT} -f '(mpi|32|_default|PrgEnv)'`
+   #echo "Available Fortran modules: " ${fortranmodules}
+   #echo "Loaded Fortran module(s): " ${loadedfortranmodules}
+   #echo "Modules to keep loaded: " ${modulestokeeploaded}
+   if [ "x${loadedfortranmodules}" != "x" ]; then
+      echo "/${loadedfortranmodules}"
+   else
+      echo "/${PATT}"
+   fi
+
+else
+
+   echo "/${PATT}"
+
+fi

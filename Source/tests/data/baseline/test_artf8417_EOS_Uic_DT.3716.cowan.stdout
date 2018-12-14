@@ -1,0 +1,13 @@
+material ID: 3716
+-------------------
+eos_CreateTables ... EOS_OK
+th 0: NR = 0 and NT = 0
+eos_SetOption ... EOS_OK (EOS_DUMP_DATA)
+th 0: NR = 0 and NT = 0
+eos_SetOption ... EOS_OK (EOS_SPLIT_FORCED)
+th 0: NR = 0 and NT = 0
+eos_SetOption ... EOS_OK (EOS_SPLIT_COWAN)
+th 0: NR = 0 and NT = 0
+eos_LoadTables ERROR 12048: EOS_SPLIT_FAILED: The data splitting algorithm failed because T[0]>0 and no free energy table exists.
+Table handle 0: eos_LoadTables ERROR 12048: EOS_SPLIT_FAILED: The data splitting algorithm failed because T[0]>0 and no free energy table exists.
+th 0: NR = 86 and NT = 23	NR changed from 0	NT changed from 0

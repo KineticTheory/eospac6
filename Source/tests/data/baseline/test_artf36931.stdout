@@ -1,0 +1,13 @@
+ AFTER FIRST create tables err1=     0: 
+ firsthandle =      0
+ AFTER FIRST SetDataFileName err1=     0 itabletype=    14: 
+               fcmp_ignore filename = ./../../../../../tests/data/special_sesame1
+ AFTER SECOND create tables err1=     0: 
+ secondhandle =      2
+ AFTER load tables err1=     0: 
+ AFTER FIRST eos_GetTableMetaData filename: .../tests/data/special_sesame1
+ AFTER FIRST eos_GetTableMetaData filename == infoString 1
+ AFTER SECOND eos_GetTableMetaData filename: .../tests/data/sesame1
+ AFTER SECOND eos_GetTableMetaData filename != infoString 0
+
+ 9 tests passed

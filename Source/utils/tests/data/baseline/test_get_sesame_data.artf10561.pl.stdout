@@ -1,0 +1,28 @@
+
+*** /cygdrive/d/Users/120181/cyghome/Source/utils/../bin/i686-pc-cygwin/g95/get_sesame_data 2140 101
+
+Material Number:       2140
+Table Number:          101
+Data file name:        /cygdrive/d/Users/120181/MYDOCU~1/export-controlled/ieee64/sesame
+Creation date:         8/23/1973
+Latest update date:    7/3/2001
+
+Comments: 101: material. iron (z=26.0, a=55.850)/source. j. barnes, j. rood/date. aug 73/refs. t-4 notebook, t-4 memo (aug 73)/comp. fe/codes. sesame i, maple, maxwell /Classification. Unclassified /                                                        
+102: the two temperature tables for this material (tables 303-306) are a very rough approximation and were derived from the code twotemp (and not from the original eos calculations, which in most cases are no longer reproducible).  the tables are very noisy due both to noise in the original data (which shows up when the cold curve is subtracted to generate the thermal contribution) and to the constraint that no crossing isotherms are allowed.  if you have any problems using these tables, contact bob albers (t-4).       
+103:  401 tables added from maxwell by t-1 (jul 01)                                  
+
+
+*** /cygdrive/d/Users/120181/cyghome/Source/utils/../bin/i686-pc-cygwin/g95/get_sesame_data 2140 201
+
+Material Number:       2140
+Table Number:          201
+Data file name:        /cygdrive/d/Users/120181/MYDOCU~1/export-controlled/ieee64/sesame
+Creation date:         8/23/1973
+Latest update date:    7/3/2001
+
+Mean atomic number:    2.600000000000000E+01
+Mean atomic mass:      5.584999999999991E+01
+Normal density:        7.849999999999994E+00
+Solid bulk modulus:    1.656999999999996E+00
+Exchange coefficient:  7.385587800000017E-01
+

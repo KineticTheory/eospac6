@@ -1,0 +1,27 @@
+##################################################################
+#  
+#  Copyright -- see file named COPYRIGHTNOTICE
+#  
+##################################################################
+#
+# The <BASEDIR_PATTERN> is automatically replaced when this file is
+# copied into the test working directories: tests/*/*.workdir
+#
+
+# Sesame3 test data file list
+<BASEDIR_PATTERN>/tests/data/sesame3
+
+# Sesame1 test data file list
+<BASEDIR_PATTERN>/tests/data/sesame1
+
+# Sesame test data file containing mass fraction data for tin (Sn)
+<BASEDIR_PATTERN>/tests/data/sesame.tin.withmassfracdata
+
+# Sesame test data file containing custom 2141 material for comparison to 2140
+<BASEDIR_PATTERN>/tests/data/ses2141_2140A.dat
+
+# Sesame test data file containing custom 2161 material for comparison to 2160
+<BASEDIR_PATTERN>/tests/data/ses2161_2160PU.dat
+
+# Sesame test data file containing little endian version of material 3720
+<BASEDIR_PATTERN>/tests/data/93270littlebin

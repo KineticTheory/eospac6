@@ -1,0 +1,100 @@
+#
+###################################
+#   my local environment variable #
+###################################
+ARCHIVE := ar
+ARFLAGS := rc
+
+DYNAMIC_LIBRARY=libsesj.so
+SHARED_FLAG=-shared
+
+LDFLAGS  = $(BITFLAG)
+
+JAVA=java
+IPATH1=$(ROOT)/include
+IPATH2=$(ROOT)/src/internals
+IPATH3=$(ROOT)/src/internals/json_parser
+IPATH5=$(ROOT)/src/internals/binary
+IPATH6=$(ROOT)/src/internals/ascii
+IPATH7=$(ROOT)/src/internals/xml
+IPATH8=$(ROOT)/src/internals/llnl_xml
+
+LOC_INCLUDES_LIBXML2=/usr/include/libxml2
+
+#  test for the existence of libxml2
+
+
+
+ifeq ($(wildcard $(LOC_INCLUDES_LIBXML2)),)
+	#  doesnt exist
+	IPATH4=/usr/include
+	MYDEFINES=NO_LIBXML2
+else
+	#  does exist
+	IPATH4=$(LOC_INCLUDES_LIBXML2)
+	MYDEFINES=USE_LIBXML2
+endif
+JC=javac
+
+######
+# Machine specific
+######
+
+ifeq ($(MACHINE),)
+MACHINE=$(shell uname -n)
+endif
+
+ifeq ($(BITFLAG),)
+BITFLAG = -m32
+JBITFLAG = -m32
+JRUNFLAG = -d32
+DEBUG_BITFLAG=
+endif
+
+
+# for the machines I've tested on
+ifeq ($(call match,i686,$(ARCH)),TRUE)
+BITFLAG= -m32
+JBITFLAG = -m32
+JRUNFLAG = -d32
+DEBUG_BITFLAG=-D DEBUG_32BIT
+endif
+ifeq ($(call match,i386,$(ARCH)),TRUE)
+BITFLAG= -m32
+JBITFLAG = -m32
+JRUNFLAG = -d32
+DEBUG_BITFLAG=
+endif
+ifeq ($(call match,x86_64,$(ARCH)),TRUE)
+BITFLAG= -m64
+JBITFLAG = -m64
+JRUNFLAG = -d64
+DEBUG_BITFLAG=
+endif
+
+ifeq ($(OS),Darwin)
+JNI_H_LOC=/System/Library/Frameworks/JavaVM.framework/Headers
+JVM_INCLUDE=/System/Library/Frameworks/JavaVM.framework/Headers
+DYNAMIC_LIBRARY=libsesj.dylib
+SHARED_FLAG=-dynamiclib
+BITFLAG=-m64
+JBITFLAG=-m64
+JRUNFLAG=-d64
+DEBUG_BITFLAG=
+endif
+
+#####################################33
+
+WALL = -Wall
+DEBUG  = -g -DDEBUG_PRINT 
+CFLAGS   = -c -Wall -fPIC $(BITFLAG) $(DEBUG_BITFLAG) -I$(IPATH1) -I$(IPATH2)  -I$(IPATH3) -I$(IPATH4) -I$(IPATH5) -I$(IPATH6) -I$(IPATH7) -I$(IPATH8) $(DEBUG) -D$(MYDEFINES)
+F90FLAGS = -c -x f95-cpp-input $(BITFLAG) $(DEBUG_BITFLAG)
+JFLAGS=$(JBITFLAG)
+
+FLAGS=CC="$(CC)" F90="$(F90)" JC="$(JC)" CFLAGS="$(CFLAGS)" F90FLAGS="$(F90FLAGS)" JFLAGS="$(JFLAGS)" IPATH1="$(IPATH1)" IPATH2="$(IPATH2)" DEBUG="$(DEBUG)"
+
+JNI_H_LOC=/usr/lib/jvm/java/include
+JVM_INCLUDE=/usr/lib/jvm/java/include/linux
+
+
+

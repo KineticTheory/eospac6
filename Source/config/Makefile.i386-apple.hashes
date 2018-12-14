@@ -1,0 +1,107 @@
+#-*-makefile-*-###################################################
+#  
+#  Copyright -- see file named COPYRIGHTNOTICE
+#  
+##################################################################
+### This file contains the following:                          ###
+### Platform-dependent system configuration for an ARCH value  ###
+### containing the following pattern:                          ###
+###    i386-apple
+##################################################################
+#
+# GMSL function dependencies exist (see $(BASEDIR)/config/gmsl).
+#
+# i386 and MacOS
+
+##################################################################
+### Assign values to associative arrays, which hold C, C++ and ###
+### F77 compiler names in preferential order according to      ###
+### the possible values of $(F90).                             ###
+##################################################################
+$(call set,_CC,f90,     gcc            )   # Absoft
+$(call set,_CC,pgf90,   pgcc     gcc   )   # PGI
+$(call set,_CC,ifort,   icc      gcc   )   # Intel
+$(call set,_CC,g95,     gcc            )   # G95
+$(call set,_CC,gfortran,gcc            )   # gfortran
+$(call set,_CC,nagfor,  gcc            )   # NAG
+
+$(call set,_CXX,f90,     g++           )   # Absoft
+$(call set,_CXX,pgf90,   pgcpp   g++   )   # PGI
+$(call set,_CXX,ifort,   icpc    g++   )   # Intel
+$(call set,_CXX,g95,     g++           )   # G95
+$(call set,_CXX,gfortran,g++           )   # gfortran
+$(call set,_CXX,nagfor,  g++           )   # NAG
+
+$(call set,_F77,f90,     f77     $(F90))   # Absoft
+$(call set,_F77,pgf90,   pgf77   $(F90))   # PGI
+$(call set,_F77,ifort,   $(F90)        )   # Intel
+$(call set,_F77,g95,     $(F90)        )   # G95
+$(call set,_F77,gfortran,$(F90)        )   # gfortran
+$(call set,_F77,nagfor,  $(F90)        )   # NAG
+
+##################################################################
+### Define CC, CXX and  F77 according to $(F90).               ###
+##################################################################
+CC  = $(firstword $(foreach compiler,$(call get,_CC,$(F90_Key)),$(call pathsearch,$(compiler))))
+CXX = $(firstword $(foreach compiler,$(call get,_CXX,$(F90_Key)),$(call pathsearch,$(compiler))))
+F77 = $(firstword $(foreach compiler,$(call get,_F77,$(F90_Key)),$(call pathsearch,$(compiler))))
+
+##################################################################
+### Assign values to associative arrays, which hold various    ###
+### compiler options -- specific to this architecture.         ###
+##################################################################
+#
+### VERSION_FLAG{$CC} = $flag
+#
+### VERSION_FLAG{$CXX} = $flag
+#
+### VERSION_FLAG{$F77} = $flag
+#
+### VERSION_FLAG{$F90_Key} = $flag
+#
+### _COMP_FLAGS{$CC} = $flag
+$(call set,_COMP_FLAGS,gcc,-m64)
+$(call set,_COMP_FLAGS,icc,-m64 -fp-model precise)
+#
+### _COMP_FLAGS{$CXX} = $flag
+$(call set,_COMP_FLAGS,g++,-m64)
+$(call set,_COMP_FLAGS,icpc,-m64 -fp-model precise)
+#
+### _COMP_FLAGS{$F77} = $flag
+$(call set,_COMP_FLAGS,f77,-m64)
+#
+### _COMP_FLAGS{$F90_Key} = $flag
+$(call set,_COMP_FLAGS,f90,-p$(INCDIR) -YCFRL=1 -m64)
+$(call set,_COMP_FLAGS,ifort,-fp-model precise -m64)
+$(call set,_COMP_FLAGS,g95,-I"$(INCDIR)" -m64)
+$(call set,_COMP_FLAGS,gfortran,-I"$(INCDIR)" -m64)
+$(call set,_COMP_FLAGS,nagfor,-dusty -w=all -m64)
+
+#
+### _LD_FLAGS{$F90_Key} = $flag
+$(call set,_LD_FLAGS,f90,-m64)
+$(call set,_LD_FLAGS,pgf90,-m64)
+$(call set,_LD_FLAGS,ifort,-m64)
+$(call set,_LD_FLAGS,gfortran,-m64)
+$(call set,_LD_FLAGS,nagfor,-m64)
+
+# define define_module_subdir script options
+$(call set,_DEFINE_MODULE_SUBDIR_FLAGS,f90,absoft)
+$(call set,_DEFINE_MODULE_SUBDIR_FLAGS,pgf90,pgi)
+$(call set,_DEFINE_MODULE_SUBDIR_FLAGS,ifort,intel)
+$(call set,_DEFINE_MODULE_SUBDIR_FLAGS,g95,$(F90_Key))
+$(call set,_DEFINE_MODULE_SUBDIR_FLAGS,gfortran,gcc)
+$(call set,_DEFINE_MODULE_SUBDIR_FLAGS,nagfor,$(F90_Key))
+
+# define selected variable values according to $(F90_Key).
+ALT_SUBDIR := $(shell $(BASEDIR)/scripts/define_module_subdir $(call get,_DEFINE_MODULE_SUBDIR_FLAGS,$(F90_Key)))
+
+# Modify ARCH variable
+ARCH   := $(shell $(BASEDIR)/scripts/config.guess)$(ALT_SUBDIR)
+
+# Set additional compiler-specific options
+_CFLAGS += $(call get,_COMP_FLAGS,$(notdir $(CC)))
+_CXXFLAGS += $(call get,_COMP_FLAGS,$(notdir $(CXX)))
+_FFLAGS += $(call get,_COMP_FLAGS,$(notdir $(F77)))
+_F90FLAGS += $(call get,_COMP_FLAGS,$(F90_Key))
+_LDFLAGS += $(call get,_LD_FLAGS,$(F90_Key))
