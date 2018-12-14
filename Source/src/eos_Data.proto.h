@@ -7,9 +7,11 @@
  * Copyright -- see file named COPYRIGHTNOTICE
  * 
  *********************************************************************/
-#ifndef EOS_DATA_PROTOTYPES
 
+#ifndef EOS_DATA_PROTOTYPES
 #define EOS_DATA_PROTOTYPES
+
+/* #include "eos_Data.h" */
 
 /*
  * ---------------------------------------------

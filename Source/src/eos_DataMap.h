@@ -8,11 +8,12 @@
  *********************************************************************/
 #ifndef  EOS_DATAMAP_H
 #define  EOS_DATAMAP_H
+
 #include "eos_Data.h"
 
 typedef struct
 {
-  eos_ErrorHandler eosErrorHandler;     // must be the FIRST, DO NOT MOVE!
+  eos_ErrorHandler eosErrorHandler;     /* must be the FIRST, DO NOT MOVE! */
   eos_Data **dataObjects;       /* eos_Data instances, zero or 1 for each table handle */
   EOS_INTEGER *tableHandlesMap; /* maps table handles to dataObjects array index */
   EOS_INTEGER *tableTypes;      /* for example EOS_Zfc_DT */
@@ -24,7 +25,7 @@ typedef struct
   EOS_INTEGER nTables;          /* number of non-NULL entries in the dataObjects array */
   EOS_INTEGER nHandles;         /* number of valid tableHandles in use */
   EOS_INTEGER nAlloc;           /* allocated size of the dataObjects array; never decreases so a
-				   tableHandle value is never re-used during execution */
+                                   tableHandle value is never re-used during execution */
 } eos_DataMap;
 
 #include "eos_DataMap.proto.h"

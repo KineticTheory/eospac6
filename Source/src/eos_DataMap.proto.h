@@ -8,8 +8,9 @@
  * 
  *********************************************************************/
 #ifndef EOS_DATAMAP_PROTOTYPES
-
 #define EOS_DATAMAP_PROTOTYPES
+
+/* #include "eos_Data.h" */
 
 /*
  * ------------------------------------------------
