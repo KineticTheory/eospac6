@@ -388,7 +388,11 @@ long _read_long_pFILE_xml(FILE* pFILE) {
 
   long return_value = 0;
   const int BUFFER_LENGTH = 100;
+#ifdef _MSC_VER
+  char buffer[100];
+#else
   char buffer[BUFFER_LENGTH];
+#endif
 
   /*  read a string in from the current file handle into the buffer (ending delimiter is blank space)*/
 
@@ -568,7 +572,12 @@ double            _read_double_pFILE_xml(FILE* pFILE) {
   /*  read the double as chars from the file */
   
   const int BUFFER_LENGTH = 15;
+#ifndef _MSC_VER
   char myBuffer[BUFFER_LENGTH];  
+#else
+  char myBuffer[15];  
+#endif
+
   char cbuffer = ' ';
 
   /*  peel off leading blanks */
@@ -742,7 +751,11 @@ ses_word _read_word_pFILE_xml(FILE* pFILE) {
 
   ses_word return_value = 0;
   const int BUFFER_LENGTH = 100;
+#ifndef _MSC_VER
   char buffer[BUFFER_LENGTH];
+#else
+  char buffer[100];
+#endif
 
   /* from the current c file handle (pFILE), read a ses_word in text, convert to ses_word,
      and return it */

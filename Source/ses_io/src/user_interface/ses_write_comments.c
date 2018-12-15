@@ -82,7 +82,11 @@ ses_error_flag ses_write_comments(ses_file_handle the_handle, ses_string the_com
   }
 #endif
 
-  ses_word the_buffer[dim/div];
+  /* added by KT (malloc and free) */
+  ses_word *the_buffer;
+  the_buffer = (ses_word *)malloc(sizeof(ses_word) * dim / div);
+
+  /* ses_word the_buffer[dim/div]; */
   int j2 = 0;
   for (j2=0; j2 < dim/div; j2++) {
 	the_buffer[j2] = 0.0;
@@ -140,6 +144,7 @@ ses_error_flag ses_write_comments(ses_file_handle the_handle, ses_string the_com
 
   didit_write = ses_write_next(the_handle, the_wbuffer, (dim)/div, "no_label");
 
+  free(the_buffer);
 
   return return_value;
 }

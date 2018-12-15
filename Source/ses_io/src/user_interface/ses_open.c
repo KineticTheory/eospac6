@@ -11,8 +11,10 @@
 #include <string.h>
 #include <ctype.h>
 
+#ifndef WIN32
 #include <sys/time.h>
 #include <sys/resource.h>
+#endif
 
 //////  defines /////////////////////
 //  BIG_END - 1 for testing byte order
@@ -219,11 +221,14 @@ ses_file_handle my_construct_file(ses_string filename,
   /*  put the file handle on the file handle list */
 
   /*  check to see if the C file handle limit has been reached */
+#ifndef WIN32
 
   struct rlimit rlim;
   getrlimit(RLIMIT_NOFILE, &rlim);
   int process_open_files = rlim.rlim_cur;
-
+#else
+  int process_open_files = INT_MAX;
+#endif
   
   if (pFILE == NULL || _next_empty_file >= process_open_files) {
     if (pFILE == NULL) { 
