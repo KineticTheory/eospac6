@@ -14,7 +14,9 @@
 #include <ctype.h>
 #include <assert.h>
 #include <math.h>
+#ifndef WIN32
 #include <unistd.h>
+#endif
 #include "eos_types_internal.h"
 #include "eos_DataMap.h"
 #include "eos_RecordType1.h"

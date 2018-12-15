@@ -14,10 +14,11 @@
 
 #define _EOS_INTERPOLATION_INTERNAL_PROTOTYPES
 #include "eos_types_internal.h"
+#include "eos_Data.h"
+#include "eos_Utils.h"
+
 #include "eos_Interpolation.h"
 
-#include "eos_Utils.h"
-#include "eos_Data.h"
 #include "eos_DataMap.h"
 #include "eos_RecordType1.h"
 #include "eos_RecordType2.h"

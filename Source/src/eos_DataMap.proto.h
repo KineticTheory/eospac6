@@ -8,8 +8,9 @@
  * 
  *********************************************************************/
 #ifndef EOS_DATAMAP_PROTOTYPES
-
 #define EOS_DATAMAP_PROTOTYPES
+
+/* #include "eos_Data.h" */
 
 /*
  * ------------------------------------------------
@@ -39,9 +40,14 @@ void eos_GetPackedTablesEosDataMap (eos_DataMap * me, EOS_INTEGER nTables, EOS_I
 				    EOS_INTEGER * errorCode);
 void eos_GetTableCmntsEosDataMap (eos_DataMap * me, EOS_INTEGER tableHandle, EOS_CHAR * cmntStr,
 				  EOS_INTEGER * errorCode);
-void eos_GetTableInfoEosDataMap (eos_DataMap * me, EOS_INTEGER tableHandle, EOS_INTEGER numInfoItems,
-				 EOS_INTEGER * infoItems, EOS_REAL * infoVals, EOS_INTEGER * errorCode);
-void eos_GetTableMetaDataEosDataMap (eos_DataMap *me, EOS_INTEGER tableHandle, EOS_INTEGER infoItem, EOS_CHAR *infoStr, EOS_INTEGER *errorCode);
+void FUNC_INTER eos_GetTableInfoEosDataMap(
+    eos_DataMap *me, EOS_INTEGER tableHandle, EOS_INTEGER numInfoItems,
+    EOS_INTEGER *infoItems, EOS_REAL *infoVals, EOS_INTEGER *errorCode);
+void FUNC_INTER eos_GetTableMetaDataEosDataMap(eos_DataMap *me,
+                                               EOS_INTEGER tableHandle,
+                                               EOS_INTEGER infoItem,
+                                               EOS_CHAR *infoStr,
+                                               EOS_INTEGER *errorCode);
 void eos_HandleErrorEosDataMap (void *ptr, EOS_INTEGER th, EOS_INTEGER errorCode);
 EOS_INTEGER eos_IsHandleValidEosDataMap (eos_DataMap * me, EOS_INTEGER tableHandle);
 void eos_LoadTablesEosDataMap (eos_DataMap * me, EOS_INTEGER nTables, EOS_INTEGER tableHandles[],

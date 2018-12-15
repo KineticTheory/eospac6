@@ -7,27 +7,27 @@
  * 
  *********************************************************************/
 
-
-
 #ifndef  EOS_DATA_H
 #define  EOS_DATA_H
+
 #include "eos_types.h"
 #include "eos_ErrorHandler.h"
 #include "eos_universal_types.h"
 #include "ses_defines.h"
+/* #include "eos_types_internal.h" */
 
 #define _MIN_FIELD_WIDTH 23     /* Define the minimum field width of real numbers written to the output file.
                                    This is used by Print functions for all data objects. */
 
 typedef struct
 {
-  eos_ErrorHandler eosErrorHandler;     // must be the FIRST, DO NOT MOVE!
-  EOS_INTEGER tableHandle;      // This is a unique handle associated with a specific data table object.
-  EOS_INTEGER materialID;       // This is the specific Sesame material ID associated with the data stored in an instantiation of this container.
+  eos_ErrorHandler eosErrorHandler;     /* must be the FIRST, DO NOT MOVE */
+  EOS_INTEGER tableHandle;      /* This is a unique handle associated with a specific data table object. */
+  EOS_INTEGER materialID;       /* This is the specific Sesame material ID associated with the data stored in an instantiation of this container. */
   EOS_INTEGER creationDate;
   EOS_INTEGER modificationDate;
   EOS_REAL latestVersion;
-  EOS_INTEGER recordType;       // 1, 2, 3, 4, 5, 6
+  EOS_INTEGER recordType;       /* 1, 2, 3, 4, 5, 6 */
   long dataFileOffset;          
   EOS_INTEGER dataFileIndex;    /* index of the sesame file for reading the data */
   EOS_BOOLEAN userDefinedDataFile;    /* is the associated sesame file specified by the user? */

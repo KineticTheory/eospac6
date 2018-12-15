@@ -16,7 +16,6 @@
 #include "eos_types_internal.h"
 #include "eos_Data.h"
 #include "eos_DataMap.h"
-
 #include "eos_Utils.h"
 #include "eos_SesUtils.h"
 
@@ -76,17 +75,22 @@
  ************************************************************************/
 #if defined(_WIN32)
 # include <float.h>
-# ifdef SINGLE
-#  define _CW_PREC PC_24
-# else
-#  define _CW_PREC PC_53
-# endif
-# define x86_SetPrecision \
+#  ifdef _PC_64
+#    define x86_SetPrecision
+#    define x86_RestorePrecision
+#  else
+#   ifdef SINGLE
+#    define _CW_PREC PC_24
+#   else
+#    define _CW_PREC PC_53
+#   endif
+#   define x86_SetPrecision \
   unsigned int _oldcw_pc; \
   _oldcw_pc = _control87(0,0) & MCW_PC; \
   _control87(_CW_PREC,MCW_PC)
-# define x86_RestorePrecision \
+#   define x86_RestorePrecision \
   _control87(_oldcw_pc,MCW_PC)
+#  endif
 
 #elif defined(i386) && defined(__FreeBSD__)
 # include <floatingpoint.h>

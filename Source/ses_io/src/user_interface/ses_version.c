@@ -63,28 +63,20 @@ ses_string ses_version(ses_file_handle the_handle) {
       FILE_LIST[the_handle]->_directory = (struct _ses_directory*)NULL;
       ptDIR = (struct _ses_directory*)NULL;
     }
- 
-  
-
-
-
   _releasePFILE(pSFH);
-
-
   return return_value;
 }
 
 ses_string _make_into_string(long the_long) {
-  /*  make  a long into a string */
-
- 
-  void itoa(long n, char s[]);
-
   ses_string return_value = malloc(sizeof(char)*8);
+
+  /*  make  a long into a string */
+#ifndef _MSC_VER
+  void itoa(long n, char s[]);
   itoa(the_long, return_value);
-
-
-
+#else
+  int radix = 10;
+  itoa(the_long, return_value, radix);
+#endif
   return return_value;
-
 }
