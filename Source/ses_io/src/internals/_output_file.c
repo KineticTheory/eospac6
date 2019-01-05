@@ -640,7 +640,7 @@ struct _ses_output_file*  _read_into_output_file(ses_file_handle the_handle) {
   /*  open the file for reading */
 
   if (pFILE == (FILE*)NULL) {
-    pFILE = fopen(filename, "r");  /*  Note file not exist returns 0 */
+    pFILE = fopen(filename, "rb");  /*  Note file not exist returns 0 */
     if (pFILE == (FILE*)NULL) {
 
       /*  destroy constructed output file on error */

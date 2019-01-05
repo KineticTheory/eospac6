@@ -214,7 +214,7 @@ EOS_INTEGER parseInput (EOS_CHAR *fName, EOS_INTEGER *N, EOS_REAL **x, EOS_REAL 
     }
 
     if (! strstr(fName, ","))
-      fp = fopen(fName, "r");
+      fp = fopen(fName, "rb");
     else
     { /* comma-delimited list */
       int i;
