@@ -182,7 +182,7 @@ ses_file_handle my_construct_file(ses_string filename,
   switch(open_flags) {
   case 'R':
   
-    pFILE = fopen(filename, "r");  //  Note file not exist returns 0 
+    pFILE = fopen(filename, "rb");  //  Note file not exist returns 0 
     break;
   
   case 'A':
@@ -227,7 +227,7 @@ ses_file_handle my_construct_file(ses_string filename,
   getrlimit(RLIMIT_NOFILE, &rlim);
   int process_open_files = rlim.rlim_cur;
 #else
-  int process_open_files = INT_MAX;
+  int process_open_files = 1024;
 #endif
   
   if (pFILE == NULL || _next_empty_file >= process_open_files) {
@@ -356,7 +356,7 @@ ses_file_type my_determine_file_type(ses_string filename, ses_open_type the_flag
 
   return_value = 'Q';
   FILE* pFILE = (FILE*)NULL;
-  pFILE = fopen(filename, "r");  /*  Note file not exist returns 0 */
+  pFILE = fopen(filename, "rb");  /*  Note file not exist returns 0 */
 
 
   if (pFILE == (FILE*)NULL) {
