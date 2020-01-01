@@ -1,7 +1,0 @@
-11,12c
-eos_LoadTables ERROR 2006: EOS_DATA_TYPE_NOT_FOUND: Data table type is not in library
-Table handle 0: eos_LoadTables ERROR 2021: EOS_INVALID_TABLE_HANDLE: Invalid table handle because EOS_DATA_TYPE_NOT_FOUND: Data table type is not in library
-2021: EOS_INVALID_TABLE_HANDLE: Invalid table handle because EOS_DATA_TYPE_NOT_FOUND: Data table type is not in library
-2021: EOS_INVALID_TABLE_HANDLE: Invalid table handle because EOS_DATA_TYPE_NOT_FOUND: Data table type is not in library
-th 0: NR = -1 and NT = -1	NR changed from 50	NT changed from 22
-.
