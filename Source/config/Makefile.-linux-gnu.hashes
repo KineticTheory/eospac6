@@ -32,9 +32,10 @@ $(call set,_CC,ifort,      icc       gcc             )   # Intel
 $(call set,_CC,g95,        gcc                       )   # G95
 $(call set,_CC,gfortran,   gcc                       )   # gfortran
 $(call set,_CC,ftn,        cc        gcc             )   # Cray Computing Environment (cce)
+$(call set,_CC,flang,      clang     gcc             )   # flang/clang
 
-$(call set,_CXX,pgfortran, pgCC      g++             )   # PGI
-$(call set,_CXX,pgf90,     pgCC      g++             )   # PGI
+$(call set,_CXX,pgfortran, pgCC      pgc++     g++   )   # PGI
+$(call set,_CXX,pgf90,     pgCC      pgc++     g++   )   # PGI
 $(call set,_CXX,lf95,      g++                       )   # Lahey
 $(call set,_CXX,f90,       g++                       )   # Absoft
 $(call set,_CXX,pathf90,   pathCC    g++             )   # Pathscale
@@ -42,6 +43,7 @@ $(call set,_CXX,ifort,     icpc      g++             )   # Intel
 $(call set,_CXX,g95,       g++                       )   # G95
 $(call set,_CXX,gfortran,  g++                       )   # gfortran
 $(call set,_CXX,ftn,       CC        g++             )   # Cray Computing Environment (cce)
+$(call set,_CXX,flang,     clang++   g++             )   # flang/clang++
 
 $(call set,_F77,pgfortran, pgfortran pgf77     pgf90 )   # PGI
 $(call set,_F77,pgf90,     pgfortran pgf77     pgf90 )   # PGI
@@ -52,6 +54,7 @@ $(call set,_F77,ifort,     $(F90)                    )   # Intel
 $(call set,_F77,g95,       $(F90)                    )   # G95
 $(call set,_F77,gfortran,  $(F90)                    )   # gfortran
 $(call set,_F77,ftn,       $(F90)                    )   # Cray Computing Environment (cce)
+$(call set,_F77,flang,     flang                     )   # flang
 
 ##################################################################
 ### Define CC, CXX and  F77 according to $(F90_Key).           ###
@@ -59,6 +62,9 @@ $(call set,_F77,ftn,       $(F90)                    )   # Cray Computing Enviro
 CC  = $(firstword $(foreach compiler,$(call get,_CC,$(F90_Key)),$(call pathsearch,$(compiler))))
 CXX = $(firstword $(foreach compiler,$(call get,_CXX,$(F90_Key)),$(call pathsearch,$(compiler))))
 F77 = $(firstword $(foreach compiler,$(call get,_F77,$(F90_Key)),$(call pathsearch,$(compiler))))
+
+# compiler check for CC, CXX, F90 and F77
+include $(BASEDIR)/config/Makefile.check_compilers
 
 ##################################################################
 ### Assign values to associative arrays, which hold various    ###
@@ -74,11 +80,11 @@ F77 = $(firstword $(foreach compiler,$(call get,_F77,$(F90_Key)),$(call pathsear
 ### VERSION_FLAG{$F90_Key} = $flag
 #
 ### _COMP_FLAGS{$CC} = $flag
-$(call set,_COMP_FLAGS,icc,-fp-model precise)   # Intel C
+$(call set,_COMP_FLAGS,icc,-fp-model=precise)   # Intel C
 $(call set,_COMP_FLAGS,cc,-hfp0)            # Cray Computing Environment (cce)
 #
 ### _COMP_FLAGS{$CXX} = $flag
-$(call set,_COMP_FLAGS,icpc,-fp-model precise)   # Intel C++
+$(call set,_COMP_FLAGS,icpc,-fp-model=precise)   # Intel C++
 $(call set,_COMP_FLAGS,CC,-hfp0)             # Cray Computing Environment (cce)
 #
 ### _COMP_FLAGS{$F77} = $flag
@@ -89,11 +95,12 @@ $(call set,_COMP_FLAGS,lf95,         -I"$(INCDIR)"                    )   # Lahe
 $(call set,_COMP_FLAGS,pgf90,        -I"$(INCDIR)"                    )   # PGI f90
 $(call set,_COMP_FLAGS,pgfortran,    -I"$(INCDIR)"                    )   # PGI Fortran
 $(call set,_COMP_FLAGS,pathf90,      -I"$(INCDIR)"                    )   # Pathscale f90
-$(call set,_COMP_FLAGS,ifort,        -I"$(INCDIR) -fp-model precise"  )   # Intel f90
+$(call set,_COMP_FLAGS,ifort,        -I"$(INCDIR) -fp-model=precise"  )   # Intel f90
 $(call set,_COMP_FLAGS,g95,          -I"$(INCDIR)"                    )   # G95
 $(call set,_COMP_FLAGS,gfortran,     -I"$(INCDIR)" -Wno-c-binding-type)   # gfortran
 $(call set,_COMP_FLAGS,ppu-gfortran, -I"$(INCDIR)"                    )   # ppu-gfortran
 $(call set,_COMP_FLAGS,ftn,          -e m -I"$(INCDIR)" -hfp0         )   # Cray Computing Environment (cce)
+$(call set,_COMP_FLAGS,flang,        -I"$(INCDIR)"                    )   # flang
 
 # define define_module_subdir script options
 $(call set,_DEFINE_MODULE_SUBDIR_FLAGS,f90,)           # Absoft f90
@@ -105,6 +112,7 @@ $(call set,_DEFINE_MODULE_SUBDIR_FLAGS,ifort,-d intel) # Intel f90
 $(call set,_DEFINE_MODULE_SUBDIR_FLAGS,g95,)           # G95
 $(call set,_DEFINE_MODULE_SUBDIR_FLAGS,gfortran,)      # gfortran
 $(call set,_DEFINE_MODULE_SUBDIR_FLAGS,ftn,)           # Cray Computing Environment (cce)
+$(call set,_DEFINE_MODULE_SUBDIR_FLAGS,flang,)         # flang
 
 # define define_module_subdir script patterns
 $(call set,_DEFINE_MODULE_SUBDIR_PATTS,f90,absoft)           # Absoft f90
@@ -116,21 +124,184 @@ $(call set,_DEFINE_MODULE_SUBDIR_PATTS,ifort,'^intel(-f)?/') # Intel f90
 $(call set,_DEFINE_MODULE_SUBDIR_PATTS,g95,$(F90_Key))       # G95
 $(call set,_DEFINE_MODULE_SUBDIR_PATTS,gfortran,gcc)         # gfortran
 $(call set,_DEFINE_MODULE_SUBDIR_PATTS,ftn,cce)              # Cray Computing Environment (cce)
+$(call set,_DEFINE_MODULE_SUBDIR_PATTS,flang,flang)          # flang
 
 # define optional modules for cross-compiling
 X_Compile_Module_List = craype-haswell craype-mic-knl
 
 # define selected variable values according to $(F90_Key).
-#$(info $(shell . $(BASEDIR)/scripts/setup_modulecmd;echo 'MODULECMD:' $${MODULECMD} ) )
+# $(info $(shell . $(BASEDIR)/scripts/setup_modulecmd;echo 'MODULECMD:' $${MODULECMD} ) )
 ALT_SUBDIR_Key1 := $(firstword $(shell . $(BASEDIR)/scripts/setup_modulecmd;( $${MODULECMD} sh list -t 2>&1 ) | $(BASEDIR)/scripts/filter_module_names $(X_Compile_Module_List) ))
 ALT_SUBDIR_Key2 := $(call get,_DEFINE_MODULE_SUBDIR_PATTS,$(F90_Key))
 ALT_SUBDIR_Opts := $(call get,_DEFINE_MODULE_SUBDIR_FLAGS,$(F90_Key))
 ALT_SUBDIR := $(shell $(BASEDIR)/scripts/define_module_subdir $(ALT_SUBDIR_Opts) $(ALT_SUBDIR_Key1) $(ALT_SUBDIR_Key2))
 export XCOMPILE = $(ALT_SUBDIR_Key1)
-#$(info ALT_SUBDIR_Key1 = $(ALT_SUBDIR_Key1))
-#$(info ALT_SUBDIR_Key2 = $(ALT_SUBDIR_Key2))
-#$(info ALT_SUBDIR_Opts = $(ALT_SUBDIR_Opts))
-#$(info ALT_SUBDIR = $(ALT_SUBDIR))
+# $(warning ----------------------------------------------------)
+# $(warning ALT_SUBDIR_Key1 = firstword (shell . $(BASEDIR)/scripts/setup_modulecmd;( $${MODULECMD} sh list -t 2>&1 ) | $(BASEDIR)/scripts/filter_module_names $(X_Compile_Module_List) ) = $(firstword $(shell . $(BASEDIR)/scripts/setup_modulecmd;( $${MODULECMD} sh list -t 2>&1 ) | $(BASEDIR)/scripts/filter_module_names $(X_Compile_Module_List) )))
+# $(warning ALT_SUBDIR_Key2 = (call get,_DEFINE_MODULE_SUBDIR_PATTS,$(F90_Key)) = $(call get,_DEFINE_MODULE_SUBDIR_PATTS,$(F90_Key)))
+# $(warning ALT_SUBDIR_Opts= (call get,_DEFINE_MODULE_SUBDIR_FLAGS,$(F90_Key)) = $(call get,_DEFINE_MODULE_SUBDIR_FLAGS,$(F90_Key)))
+# $(warning $(shell set -x; $(BASEDIR)/scripts/define_module_subdir $(ALT_SUBDIR_Opts) $(ALT_SUBDIR_Key1) $(ALT_SUBDIR_Key2)))
+# $(info ALT_SUBDIR_Key1 = $(ALT_SUBDIR_Key1))
+# $(info ALT_SUBDIR_Key2 = $(ALT_SUBDIR_Key2))
+# $(info ALT_SUBDIR_Opts = $(ALT_SUBDIR_Opts))
+# $(info ALT_SUBDIR = $(ALT_SUBDIR))
+# $(warning ----------------------------------------------------)
+
+ifeq ($(strip $(NOVECT)),)
+
+# define optional performance enhancement options based upon the cpuinfo flags
+_SUPPORTED_CPUINFO_FLAGS = $(shell $(BASEDIR)/scripts/config.guess.wrapper -a)
+# $(warning _SUPPORTED_CPUINFO_FLAGS = $(_SUPPORTED_CPUINFO_FLAGS))
+
+_F90_MAJOR_VERSION = $(shell $(F90_VERSION) | perl -ne 'if(/(IFORT|GNU Fortran|pgf90)/ and /\s(\d+)/){print $$1;exit}')
+# $(warning _F90_MAJOR_VERSION = $(_F90_MAJOR_VERSION))
+
+### _F90-CPUINFO_COMP_FLAGS{Key} = $flag
+#   Key === $(F90)-$(_F90_MAJOR_VERSION)-$(lastword $(_SUPPORTED_CPUINFO_FLAGS))
+#   This provides a map between specific compilation options and a unique combination of a compiler and CPU flag
+#
+###  Intel Fortran:
+INTEL_DIAG_OPTIONS = -qopt-report=5
+$(call set,_F90-CPUINFO_COMP_FLAGS,ifort-11-avx,           -xAVX -DDISABLE_OMP_SIMD_PRAGMA)
+$(call set,_F90-CPUINFO_COMP_FLAGS,ifort-11-avx2,          -xAVX -DDISABLE_OMP_SIMD_PRAGMA)
+
+$(call set,_F90-CPUINFO_COMP_FLAGS,ifort-12-avx,           -xAVX -no-fma -DDISABLE_OMP_SIMD_PRAGMA)
+$(call set,_F90-CPUINFO_COMP_FLAGS,ifort-12-avx2,          -xCORE-AVX2 -no-fma -DDISABLE_OMP_SIMD_PRAGMA)
+
+$(call set,_F90-CPUINFO_COMP_FLAGS,ifort-13-avx,           -xAVX -no-fma -DDISABLE_OMP_SIMD_PRAGMA)
+$(call set,_F90-CPUINFO_COMP_FLAGS,ifort-13-avx2,          -xCORE-AVX2 -no-fma -DDISABLE_OMP_SIMD_PRAGMA)
+
+$(call set,_F90-CPUINFO_COMP_FLAGS,ifort-14-avx,           -xAVX -no-fma -DDISABLE_OMP_SIMD_PRAGMA)
+$(call set,_F90-CPUINFO_COMP_FLAGS,ifort-14-avx2,          -xCORE-AVX2 -no-fma -DDISABLE_OMP_SIMD_PRAGMA)
+
+$(call set,_F90-CPUINFO_COMP_FLAGS,ifort-15-avx,           -xAVX -no-fma -DDISABLE_OMP_SIMD_PRAGMA $(INTEL_DIAG_OPTIONS))
+$(call set,_F90-CPUINFO_COMP_FLAGS,ifort-15-avx2,          -xCORE-AVX2 -no-fma -DDISABLE_OMP_SIMD_PRAGMA $(INTEL_DIAG_OPTIONS))
+$(call set,_F90-CPUINFO_COMP_FLAGS,ifort-15-avx512,        -xCOMMON-AVX512 -no-fma -DDISABLE_OMP_SIMD_PRAGMA $(INTEL_DIAG_OPTIONS))
+$(call set,_F90-CPUINFO_COMP_FLAGS,ifort-15-avx512f,       -xCOMMON-AVX512 -no-fma -DDISABLE_OMP_SIMD_PRAGMA $(INTEL_DIAG_OPTIONS))
+$(call set,_F90-CPUINFO_COMP_FLAGS,ifort-15-avx512pf,      -xMIC-AVX512 -no-fma -DDISABLE_OMP_SIMD_PRAGMA $(INTEL_DIAG_OPTIONS))
+$(call set,_F90-CPUINFO_COMP_FLAGS,ifort-15-haswell,       -xCORE-AVX2 -no-fma -DDISABLE_OMP_SIMD_PRAGMA $(INTEL_DIAG_OPTIONS))
+$(call set,_F90-CPUINFO_COMP_FLAGS,ifort-15-knl,           -xMIC-AVX512 -no-fma -DDISABLE_OMP_SIMD_PRAGMA $(INTEL_DIAG_OPTIONS))
+
+$(call set,_F90-CPUINFO_COMP_FLAGS,ifort-16-avx,           -qopenmp-simd -fp-speculation=safe -xAVX -no-fma $(INTEL_DIAG_OPTIONS))
+$(call set,_F90-CPUINFO_COMP_FLAGS,ifort-16-avx2,          -qopenmp-simd -fp-speculation=safe -xCORE-AVX2 -no-fma $(INTEL_DIAG_OPTIONS))
+$(call set,_F90-CPUINFO_COMP_FLAGS,ifort-16-avx512,        -qopenmp-simd -fp-speculation=safe -xCOMMON-AVX512 -no-fma $(INTEL_DIAG_OPTIONS))
+$(call set,_F90-CPUINFO_COMP_FLAGS,ifort-16-avx512f,       -qopenmp-simd -fp-speculation=safe -xCOMMON-AVX512 -no-fma $(INTEL_DIAG_OPTIONS))
+$(call set,_F90-CPUINFO_COMP_FLAGS,ifort-16-avx512pf,      -qopenmp-simd -fp-speculation=safe -xMIC-AVX512 -no-fma $(INTEL_DIAG_OPTIONS))
+$(call set,_F90-CPUINFO_COMP_FLAGS,ifort-16-haswell,       -qopenmp-simd -fp-speculation=safe -xCORE-AVX2 -no-fma $(INTEL_DIAG_OPTIONS))
+$(call set,_F90-CPUINFO_COMP_FLAGS,ifort-16-knl,           -qopenmp-simd -fp-speculation=safe -xMIC-AVX512 -no-fma $(INTEL_DIAG_OPTIONS))
+
+$(call set,_F90-CPUINFO_COMP_FLAGS,ifort-17-avx,           -qopenmp-simd -fp-speculation=safe -xAVX -no-fma $(INTEL_DIAG_OPTIONS))
+$(call set,_F90-CPUINFO_COMP_FLAGS,ifort-17-avx2,          -qopenmp-simd -fp-speculation=safe -xCORE-AVX2 -no-fma $(INTEL_DIAG_OPTIONS))
+$(call set,_F90-CPUINFO_COMP_FLAGS,ifort-17-avx512,        -qopenmp-simd -fp-speculation=safe -xCOMMON-AVX512 -no-fma $(INTEL_DIAG_OPTIONS))
+$(call set,_F90-CPUINFO_COMP_FLAGS,ifort-17-avx512f,       -qopenmp-simd -fp-speculation=safe -xCOMMON-AVX512 -no-fma $(INTEL_DIAG_OPTIONS))
+$(call set,_F90-CPUINFO_COMP_FLAGS,ifort-17-avx512pf,      -qopenmp-simd -fp-speculation=safe -xMIC-AVX512 -no-fma $(INTEL_DIAG_OPTIONS))
+$(call set,_F90-CPUINFO_COMP_FLAGS,ifort-17-haswell,       -qopenmp-simd -fp-speculation=safe -xCORE-AVX2 -no-fma $(INTEL_DIAG_OPTIONS))
+$(call set,_F90-CPUINFO_COMP_FLAGS,ifort-17-knl,           -qopenmp-simd -fp-speculation=safe -xMIC-AVX512 -no-fma $(INTEL_DIAG_OPTIONS))
+
+$(call set,_F90-CPUINFO_COMP_FLAGS,ifort-18-avx,           -qopenmp-simd -fp-speculation=safe -xAVX -no-fma $(INTEL_DIAG_OPTIONS))
+$(call set,_F90-CPUINFO_COMP_FLAGS,ifort-18-avx2,          -qopenmp-simd -fp-speculation=safe -xCORE-AVX2 -no-fma $(INTEL_DIAG_OPTIONS))
+$(call set,_F90-CPUINFO_COMP_FLAGS,ifort-18-avx512,        -qopenmp-simd -fp-speculation=safe -xCOMMON-AVX512 -no-fma $(INTEL_DIAG_OPTIONS))
+$(call set,_F90-CPUINFO_COMP_FLAGS,ifort-18-avx512f,       -qopenmp-simd -fp-speculation=safe -xCOMMON-AVX512 -no-fma $(INTEL_DIAG_OPTIONS))
+$(call set,_F90-CPUINFO_COMP_FLAGS,ifort-18-avx512pf,      -qopenmp-simd -fp-speculation=safe -xMIC-AVX512 -no-fma $(INTEL_DIAG_OPTIONS))
+$(call set,_F90-CPUINFO_COMP_FLAGS,ifort-18-haswell,       -qopenmp-simd -fp-speculation=safe -xCORE-AVX2 -no-fma $(INTEL_DIAG_OPTIONS))
+$(call set,_F90-CPUINFO_COMP_FLAGS,ifort-18-knl,           -qopenmp-simd -fp-speculation=safe -xMIC-AVX512 -no-fma $(INTEL_DIAG_OPTIONS))
+
+$(call set,_F90-CPUINFO_COMP_FLAGS,ifort-19-avx,           -qopenmp-simd -fp-speculation=safe -xAVX -no-fma $(INTEL_DIAG_OPTIONS))
+$(call set,_F90-CPUINFO_COMP_FLAGS,ifort-19-avx2,          -qopenmp-simd -fp-speculation=safe -xCORE-AVX2 -no-fma $(INTEL_DIAG_OPTIONS))
+$(call set,_F90-CPUINFO_COMP_FLAGS,ifort-19-avx512,        -qopenmp-simd -fp-speculation=safe -xCOMMON-AVX512 -no-fma $(INTEL_DIAG_OPTIONS))
+$(call set,_F90-CPUINFO_COMP_FLAGS,ifort-19-avx512f,       -qopenmp-simd -fp-speculation=safe -xCOMMON-AVX512 -no-fma $(INTEL_DIAG_OPTIONS))
+$(call set,_F90-CPUINFO_COMP_FLAGS,ifort-19-avx512pf,      -qopenmp-simd -fp-speculation=safe -xMIC-AVX512 -no-fma $(INTEL_DIAG_OPTIONS))
+$(call set,_F90-CPUINFO_COMP_FLAGS,ifort-19-haswell,       -qopenmp-simd -fp-speculation=safe -xCORE-AVX2 -no-fma $(INTEL_DIAG_OPTIONS))
+$(call set,_F90-CPUINFO_COMP_FLAGS,ifort-19-knl,           -qopenmp-simd -fp-speculation=safe -xMIC-AVX512 -no-fma $(INTEL_DIAG_OPTIONS))
+
+###  GNU Fortran:
+GNU_DIAG_OPTIONS = -fopt-info-vec
+$(call set,_F90-CPUINFO_COMP_FLAGS,gfortran-4-avx,         -ftree-vectorize -mavx -mno-fma -DDISABLE_OMP_SIMD_PRAGMA)
+$(call set,_F90-CPUINFO_COMP_FLAGS,gfortran-4-avx2,        -ftree-vectorize -mavx -mno-fma -DDISABLE_OMP_SIMD_PRAGMA)
+$(call set,_F90-CPUINFO_COMP_FLAGS,gfortran-4-avx512,      -ftree-vectorize -mavx -mno-fma -DDISABLE_OMP_SIMD_PRAGMA)
+$(call set,_F90-CPUINFO_COMP_FLAGS,gfortran-4-avx512f,     -ftree-vectorize -mavx -mno-fma -DDISABLE_OMP_SIMD_PRAGMA)
+$(call set,_F90-CPUINFO_COMP_FLAGS,gfortran-4-avx512pf,    -ftree-vectorize -mavx -mno-fma -DDISABLE_OMP_SIMD_PRAGMA)
+
+$(call set,_F90-CPUINFO_COMP_FLAGS,gfortran-5-avx,         -ftree-vectorize -fopenmp-simd -mavx -mno-fma $(GNU_DIAG_OPTIONS))
+$(call set,_F90-CPUINFO_COMP_FLAGS,gfortran-5-avx2,        -ftree-vectorize -fopenmp-simd -mavx2 -mno-fma $(GNU_DIAG_OPTIONS))
+$(call set,_F90-CPUINFO_COMP_FLAGS,gfortran-5-avx512,      -ftree-vectorize -fopenmp-simd -mavx512f -mno-fma $(GNU_DIAG_OPTIONS))
+$(call set,_F90-CPUINFO_COMP_FLAGS,gfortran-5-avx512f,     -ftree-vectorize -fopenmp-simd -mavx512f -mno-fma $(GNU_DIAG_OPTIONS))
+$(call set,_F90-CPUINFO_COMP_FLAGS,gfortran-5-avx512pf,    -ftree-vectorize -fopenmp-simd -mavx512f -mavx512pf -mno-fma $(GNU_DIAG_OPTIONS))
+
+$(call set,_F90-CPUINFO_COMP_FLAGS,gfortran-6-avx,         -ftree-vectorize -fopenmp-simd -mavx -mno-fma $(GNU_DIAG_OPTIONS))
+$(call set,_F90-CPUINFO_COMP_FLAGS,gfortran-6-avx2,        -ftree-vectorize -fopenmp-simd -mavx2 -mno-fma $(GNU_DIAG_OPTIONS))
+$(call set,_F90-CPUINFO_COMP_FLAGS,gfortran-6-avx512,      -ftree-vectorize -fopenmp-simd -mavx512f -mno-fma $(GNU_DIAG_OPTIONS))
+$(call set,_F90-CPUINFO_COMP_FLAGS,gfortran-6-avx512f,     -ftree-vectorize -fopenmp-simd -mavx512f -mno-fma $(GNU_DIAG_OPTIONS))
+$(call set,_F90-CPUINFO_COMP_FLAGS,gfortran-6-avx512pf,    -ftree-vectorize -fopenmp-simd -mavx512f -mavx512pf -mno-fma $(GNU_DIAG_OPTIONS))
+
+$(call set,_F90-CPUINFO_COMP_FLAGS,gfortran-7-avx,         -ftree-vectorize -fopenmp-simd -mavx -mno-fma $(GNU_DIAG_OPTIONS))
+$(call set,_F90-CPUINFO_COMP_FLAGS,gfortran-7-avx2,        -ftree-vectorize -fopenmp-simd -mavx2 -mno-fma $(GNU_DIAG_OPTIONS))
+$(call set,_F90-CPUINFO_COMP_FLAGS,gfortran-7-avx512,      -ftree-vectorize -fopenmp-simd -mavx512f -mno-fma $(GNU_DIAG_OPTIONS))
+$(call set,_F90-CPUINFO_COMP_FLAGS,gfortran-7-avx512f,     -ftree-vectorize -fopenmp-simd -mavx512f -mno-fma $(GNU_DIAG_OPTIONS))
+$(call set,_F90-CPUINFO_COMP_FLAGS,gfortran-7-avx512pf,    -ftree-vectorize -fopenmp-simd -mavx512f -mavx512pf -mno-fma $(GNU_DIAG_OPTIONS))
+
+$(call set,_F90-CPUINFO_COMP_FLAGS,gfortran-8-avx,         -ftree-vectorize -fopenmp-simd -mavx -mno-fma $(GNU_DIAG_OPTIONS))
+$(call set,_F90-CPUINFO_COMP_FLAGS,gfortran-8-avx2,        -ftree-vectorize -fopenmp-simd -mavx2 -mno-fma $(GNU_DIAG_OPTIONS))
+$(call set,_F90-CPUINFO_COMP_FLAGS,gfortran-8-avx512,      -ftree-vectorize -fopenmp-simd -mavx512f -mno-fma $(GNU_DIAG_OPTIONS))
+$(call set,_F90-CPUINFO_COMP_FLAGS,gfortran-8-avx512f,     -ftree-vectorize -fopenmp-simd -mavx512f -mno-fma $(GNU_DIAG_OPTIONS))
+$(call set,_F90-CPUINFO_COMP_FLAGS,gfortran-8-avx512pf,    -ftree-vectorize -fopenmp-simd -mavx512f -mavx512pf -mno-fma $(GNU_DIAG_OPTIONS))
+
+# Initialize _CPUINFO_FLAGS based upon $(F90) and its major version number
+ifeq ($(and $(filter $(strip $(notdir $(F90))),ifort),$(call gte,$(_F90_MAJOR_VERSION),16)),$(true))
+
+  # $(warning $$(filter $(strip $(notdir $(F90))),ifort) = $(filter $(strip $(notdir $(F90))),ifort))
+  # $(warning $$(call gte,$(_F90_MAJOR_VERSION),16) = $(call gte,$(_F90_MAJOR_VERSION),16))
+
+  # using ifort version 17 or later
+  _CPUINFO_FLAGS +=
+
+else ifeq ($(and $(filter $(strip $(notdir $(F90))),gfortran),$(call gte,$(_F90_MAJOR_VERSION),4)),$(true))
+
+  # $(warning $$(filter $(strip $(notdir $(F90))),gfortran) = $(filter $(strip $(notdir $(F90))),gfortran))
+  # $(warning $$(call gte,$(_F90_MAJOR_VERSION),4) = $(call gte,$(_F90_MAJOR_VERSION),4))
+
+  # using gfortran version 4 or later
+  _CPUINFO_FLAGS +=
+
+endif
+
+ifneq ($(strip $(CPUFLAGS)),)
+
+  KEYLIST = $(call keys,_F90-CPUINFO_COMP_FLAGS)
+  MYKEYS = $(addprefix $(F90)-$(_F90_MAJOR_VERSION)-,$(CPUFLAGS))
+  SHORTCUT = $(filter $(MYKEYS),$(KEYLIST))
+  OTHER = $(subst $(F90)-$(_F90_MAJOR_VERSION)-,,$(filter-out $(SHORTCUT),$(MYKEYS)))
+  # $(warning CPUFLAGS : "$(CPUFLAGS)")
+  # $(warning KEYLIST : $(KEYLIST))
+  # $(warning MYKEYS : $(MYKEYS))
+  # $(warning SHORTCUT : $(SHORTCUT))
+  # $(warning OTHER : $(OTHER))
+
+  # define the _CPUINFO_FLAGS
+  _CPUINFO_FLAGS += $(call get,_F90-CPUINFO_COMP_FLAGS,$(SHORTCUT))
+  _CPUINFO_FLAGS += $(OTHER)
+
+else
+
+  ifeq ($(ALT_SUBDIR_Key1),craype-mic-knl)
+    # define the default _CPUINFO_FLAGS for the craype-mic-knl
+    _CPUINFO_FLAGS += $(call get,_F90-CPUINFO_COMP_FLAGS,$(F90)-$(_F90_MAJOR_VERSION)-knl)
+  else
+    # define the default _CPUINFO_FLAGS
+    _CPUINFO_FLAGS += $(call get,_F90-CPUINFO_COMP_FLAGS,$(notdir $(F90)-$(_F90_MAJOR_VERSION)-$(lastword $(_SUPPORTED_CPUINFO_FLAGS))))
+    # $(warning Key: $(notdir $(F90)-$(_F90_MAJOR_VERSION)-$(lastword $(_SUPPORTED_CPUINFO_FLAGS))))
+    # $(warning _CPUINFO_FLAGS = $(_CPUINFO_FLAGS))
+  endif
+
+endif
+
+endif # NOVECT
+
+ifeq ($(strip $(_CPUINFO_FLAGS)),)
+
+  _CPUINFO_FLAGS += -DDISABLE_OMP_SIMD_PRAGMA
+
+endif
 
 # Define option(s) special condition(s)
 _DEBUG := $(DEBUG)

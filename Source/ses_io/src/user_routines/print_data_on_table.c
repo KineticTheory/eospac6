@@ -4,14 +4,11 @@
 #define print_data_on_table HEADER(print_data_on_table)
 #define get_data_on_table HEADER(get_data_on_table)
 
+#undef DEBUG_PRINT
+
 ses_string get_data_on_table(ses_string sesame_file, ses_material_id mid, ses_table_id tid) {
 
-#define FIX_BUG
-#ifdef FIX_BUG
-  int MAX_CHAR_LENGTH = 1000000;
-#else
-  int MAX_CHAR_LENGTH = 100000;
-#endif
+  int MAX_CHAR_LENGTH = 10000000;
   ses_string return_value = (char*)NULL;
   return_value = malloc(sizeof(char)*MAX_CHAR_LENGTH);
   char* buffer = (char*)NULL;
@@ -30,9 +27,15 @@ ses_string get_data_on_table(ses_string sesame_file, ses_material_id mid, ses_ta
 	}
 
         ses_file_handle the_handle = ses_open(sesame_file, 'R');
+#ifdef DEBUG_GET_DATA
+	printf("get_data_on_table:  after ses_open handle is %d\n", the_handle);
+#endif
 	if (ses_is_valid(the_handle) == SES_TRUE) {
 
 		ses_error_flag didit_setup = ses_setup(the_handle, mid, tid);
+#ifdef DEBUG_GET_DATA
+	printf("get_data_on_table:  after ses_setup with mid = %d and %d and didit_setup is %d\n", mid, tid, didit_setup);
+#endif
 		if (didit_setup == SES_NO_ERROR) {
 
 			  //  read the file with the iterator interface 
@@ -48,6 +51,9 @@ ses_string get_data_on_table(ses_string sesame_file, ses_material_id mid, ses_ta
 
 			    myLabel = ses_get_label(the_handle);
 			    array_size = ses_array_size_next(the_handle);
+#ifdef DEBUG_GET_DATA
+	printf("get_data_on_table:  array_size is %d\n", array_size);
+#endif
         
 			    //  get the data 
 
@@ -154,8 +160,14 @@ ses_string get_data_on_table(ses_string sesame_file, ses_material_id mid, ses_ta
 
 			    }
 			    else {
-    
+
+#ifdef DEBUG_GET_DATA
+				printf("get_data_on_table:  about to read data\n");
+#endif    
 			    	ptBuffer = ses_read_next(the_handle);
+#ifdef DEBUG_GET_DATA
+				printf("get_data_on_table:  read ptBuffer -- ptBuffer[0] is %e\n", ptBuffer[0]);
+#endif    
 			    
 			        if (ptBuffer != (ses_word_reference)NULL) {
     
@@ -166,12 +178,21 @@ ses_string get_data_on_table(ses_string sesame_file, ses_material_id mid, ses_ta
 				  }
 			          for (i=0;  i<array_size; i++) {
 			            sprintf(buffer, "%E, ", ptBuffer[i]);
+#ifdef DEBUG_GET_DATA
+				    printf("in copy ptBuffer comes out as %s at i = %d\n", buffer, i);
+#endif
  				    strcat(return_value, buffer);
+#ifdef DEBUG_GET_DATA
+				    //printf("after strcat return value comes out as %s at i = %d\n", return_value, i);
+#endif
+
 				    for (i2=0; i2 < MAX_CHAR_LENGTH; i2++) {
 				 	buffer[i2] = ' ';
 				    }
 			          }
-			          printf("\n");
+#ifdef DEBUG_GET_DATA
+			          printf("Got past copy ptBuffer into return_value\n");
+#endif
 			          free(ptBuffer);
 			          ptBuffer = (ses_word_reference)NULL;
 			        }
@@ -222,6 +243,10 @@ ses_string get_data_on_table(ses_string sesame_file, ses_material_id mid, ses_ta
 		buffer[i2] = ' ';
 	}
   }
+
+#ifdef DEBUG_GET_DATA
+	printf("get_data_on_table -- return string is %s\n", return_value);
+#endif
 
   free(buffer);
   buffer = (ses_string)NULL;

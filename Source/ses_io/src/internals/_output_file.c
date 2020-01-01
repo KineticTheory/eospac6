@@ -640,7 +640,7 @@ struct _ses_output_file*  _read_into_output_file(ses_file_handle the_handle) {
   /*  open the file for reading */
 
   if (pFILE == (FILE*)NULL) {
-    pFILE = fopen(filename, "rb");  /*  Note file not exist returns 0 */
+    pFILE = fopen(filename, "r");  /*  Note file not exist returns 0 */
     if (pFILE == (FILE*)NULL) {
 
       /*  destroy constructed output file on error */
@@ -833,8 +833,8 @@ ses_boolean _ses_write(struct _ses_output_file* the_file, struct _ses_file_handl
   /*  place file handle at beginning of file */
 
   FILE* pFILE = pSFH->_c_file_handle;
-  int fseek_return = 0;
-  fseek_return = fseek(pFILE, 0, SEEK_SET);
+  /* int fseek_return = 0; */
+  /* fseek_return = */ fseek(pFILE, 0, SEEK_SET);
 
 
   ses_boolean didit_write_dir = _write_directory(
@@ -859,9 +859,9 @@ ses_boolean _ses_write(struct _ses_output_file* the_file, struct _ses_file_handl
     return SES_FALSE;
   }
 
-  if (pSFH->_filetype == 'A') {
-	ses_error_flag  the_error_flag =   SES_NO_ERROR;
-	the_error_flag =     _write_eof_ascii(pSFH);
+  if (pSFH->_filetype == ASCII_TYPE) {
+	/* ses_error_flag  the_error_flag =   SES_NO_ERROR; */
+	/* the_error_flag = */     _write_eof_ascii(pSFH);
 
   }	
 

@@ -17,6 +17,9 @@
 #define _initialize_ses_iterator HEADER(_initialize_ses_iterator)
 #define _fill_iterator_size_and_label_arrays HEADER(_fill_iterator_size_and_label_arrays)
 
+#define my_adjust_num_arrays HEADER(my_adjust_num_arrays)
+#define my_adjust_size_and_address_arrays HEADER(my_adjust_size_and_address_arrays)
+
 struct _ses_iterator* _construct_ses_iterator(long maddress, long nr, long nt, long ntab, ses_table_id the_tid);
 struct _ses_iterator* _copy_ses_iterator(struct _ses_iterator* pIT);
 ses_boolean           _destruct_ses_iterator(struct _ses_iterator* pIT);

@@ -44,6 +44,9 @@ pwd
 : -----------------------------------------------------
 #set | sort
 #printenv | sort
+#
+# https://hpc.lanl.gov/files/aprun.txt
+#
 pwd
 set APRUN_OPTS = "-d 64 -r 4"
 #set APRUN_OPTS = ""

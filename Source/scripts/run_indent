@@ -1,12 +1,12 @@
-#-*-perl-*-
+eval '(exit $?0)' && eval 'exec perl -S $0 ${1+"$@"}' #-*-perl-*-
+& eval 'exec perl -S $0 $argv:q'
+        if 0;
+
 ##################################################################
 #
 #  Copyright -- see file named COPYRIGHTNOTICE
 #
 ##################################################################
-eval '(exit $?0)' && eval 'exec perl -S $0 ${1+"$@"}'
-& eval 'exec perl -S $0 $argv:q'
-        if 0;
 
 ######### START OF CONFIGURATION SECTION #########
 
@@ -16,7 +16,7 @@ $lmax = 0;
 @fileList = @ARGV;
 
 # Default indent flags
-$flags = "-nbbo -npsl -nut -npro -br -nce";
+$flags = "-nbbo -npsl -nut -npro -br -brs -nce";
 
 # Define the output directory name
 $SRC_GNU = "./src_indent_gnu";
@@ -28,7 +28,7 @@ die "\nUsage:\n\t$0 <file(s)>\n\n" if (! @ARGV);
 use File::Basename;
 
 #
-# Get all the typedef names in the C souce and header files.
+# Get all the typedef names in the C source and header files.
 #
 while (<>) {
   $start=0;

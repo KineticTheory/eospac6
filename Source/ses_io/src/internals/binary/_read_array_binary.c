@@ -20,8 +20,10 @@ ses_error_flag _read_array_binary(struct _ses_file_handle* pSFH, ses_word_refere
     _set_latest_error(SES_READ_ERROR);
     return SES_NULL_OBJECT_ERROR;
   }
-
-  
+    
+    /****************************
+     * The following is always false. Unsigned int's can never be less than 0.
+     *  Commenting out code: April 20, 2016
 
   if (nsig < 0) {
 #ifdef DEBUG_PRINT
@@ -30,6 +32,7 @@ ses_error_flag _read_array_binary(struct _ses_file_handle* pSFH, ses_word_refere
     _set_latest_error(SES_OBJECT_OUT_OF_RANGE);
     return SES_OBJECT_OUT_OF_RANGE;
   }
+     ******************************/
 
   if (size < 0) {
 #ifdef DEBUG_PRINT

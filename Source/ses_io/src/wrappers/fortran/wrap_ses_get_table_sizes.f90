@@ -1,5 +1,5 @@
 
-!#define DEBUG_WRAP
+#define DEBUG_WRAP
 
 function ses_get_table_sizes_f90(the_handle, mid, the_buffer, the_size)
 
@@ -33,7 +33,7 @@ function ses_get_table_sizes_f90(the_handle, mid, the_buffer, the_size)
    print *, "ses_get_table_sizes.f90:  mid is ", mid
 #endif
 
-   didit_getit = ses_get_table_sizes(the_handle, mid, my_buffer, pt_size)
+   return_value = ses_get_table_sizes(the_handle, mid, my_buffer, pt_size)
 #ifdef DEBUG_WRAP
    print *, "ses_get_table_sizes.f90:  got past function call"
 #endif
@@ -45,13 +45,12 @@ function ses_get_table_sizes_f90(the_handle, mid, the_buffer, the_size)
    enddo
 #endif
 
-   return_value = SES_TRUE
 
    do i = 1, the_size
 	the_buffer(i) = buffer1(i)
    enddo
 
-   ses_get_table_sizes_f90 = didit_getit
+   ses_get_table_sizes_f90 = return_value
 
  
 end function ses_get_table_sizes_f90

@@ -1,0 +1,58 @@
+#-*-makefile-*-###################################################
+#  
+#  Copyright -- see file named COPYRIGHTNOTICE
+#  
+##################################################################
+### This file contains the following:                          ###
+### Platform-dependent system configuration for an ARCH value  ###
+### containing the following pattern:                          ###
+###    powerpc-apple
+###                                                            ###
+### The purpose of this file is                                ###
+###    - detect F90                                            ###
+###    - define ALT_SUBDIR                                     ###
+###    - optionally redefine ARCH                              ###
+##################################################################
+#
+# IBM PowerPC and MacOS
+
+##################################################################
+# Compiler suite configurations based upon F90                 ###
+##################################################################
+# Default: use the first F90 compiler found from F90_List
+F90_List = f90 xlf90 gfortran
+F90_Found_List = $(foreach compiler,$(F90_List),$(call pathsearch,$(compiler)))
+F90 = $(firstword $(notdir $(F90_Found_List)))
+ifeq ($(strip $(F90))$(strip $(F90_Found_List)),)
+  $(error No supported Fortran compiler was found in your PATH for this machine. (supported: $(F90_List)))
+endif
+
+##################################################################
+### Define selected variable values according to $(F90).       ###
+##################################################################
+ifeq ($(strip $(F90)),f90)
+  F77 = $(ABSOFT)/bin/$(F77)
+  F90 = $(ABSOFT)/bin/$(F90)
+  ALT_SUBDIR := /$(notdir $(F90))
+  _F90FLAGS += -p$(INCDIR) -YCFRL=1
+endif
+
+ifeq ($(strip $(F90)),xlf90)
+###
+### This is a very specific configuration for a PowerPC with gcc, xlf and xlf90
+###
+  _F90FLAGS += -qfloat=nomaf -qsuffix=f=f90
+  _FFLAGS += -qfloat=nomaf -qfixed -qsuffix=f=f
+  ALT_SUBDIR := /$(notdir $(F90))
+  F77_LIBS += -lSystemStubs
+  F90_LIBS += -lSystemStubs
+  XLFINSTALL_LOC = $(shell dirname $(dir $(call pathsearch,$(F90))))
+  XLFENTRY_LOC = $(shell find $(XLFINSTALL_LOC) -name xlfentry)
+  ### The VERSION_FLAG hash not used for xlf compilers' version options
+  _F90_VERSION = what $(XLFENTRY_LOC) | grep 'ersion [0-9]'
+  _F77_VERSION = what $(XLFENTRY_LOC) | grep 'ersion [0-9]'
+endif
+
+ifeq ($(strip $(F90)),gfortran)
+  ALT_SUBDIR := /$(notdir $(F90))
+endif

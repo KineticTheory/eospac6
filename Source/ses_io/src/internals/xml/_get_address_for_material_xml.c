@@ -50,11 +50,11 @@ long _get_address_for_material_xml(struct _ses_directory* ptDIR, ses_material_id
 
   int i=0;
 
-  ses_boolean seen_address = SES_FALSE;
+  /* ses_boolean seen_address = SES_FALSE; */
   for (i=0; i< ptDIR->_nfiles; i++) {
       if (the_mid == ptDIR->_matid[i]){
         return_value = ptDIR->_iadr[i];
-	seen_address = SES_TRUE;
+	/* seen_address = SES_TRUE; */
       }
       
 

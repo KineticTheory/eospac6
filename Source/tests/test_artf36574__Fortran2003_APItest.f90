@@ -8,7 +8,7 @@
 !*********************************************************************
 
 !>  \file
-!!  \ingroup tests
+!!  \ingroup Fortran2003 tests
 !!  \brief Verify the filename length issue is resolved when calling the
 !!         eos_SetDataFileName routine from Fortran with a filename character
 !!         string variable's fixed-length declared to be less than the
@@ -20,6 +20,8 @@
 !!
 !! \note
 !! MATIDS TO TEST: 3721 3722
+!! REQUIRED FILE: data/ses003721
+!! REQUIRED FILE: data/ses003722
 
 program main
 
@@ -38,7 +40,7 @@ program main
   integer i, count
 
   logical lexist
-  logical equal
+  logical(EOS_BOOLEAN) :: equal
 
   ntables = 1
   count = 0
@@ -180,5 +182,7 @@ program main
 
   write(*,*)
   write(*,'(i2,1x,a)') count, 'tests passed'
+
+  call eos_DestroyAll (err1)
 
 end program main

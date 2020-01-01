@@ -21,6 +21,7 @@ endif
 #####################################
 ifeq ($(BASEDIR),)
 match = $(if $(findstring $(1),$(2)),TRUE,)
+match_r1 = $(if $(findstring x$(notdir $(1)),x$(notdir $(2))),$(1),)
 _realpath = $(shell perl -e 'use Cwd "abs_path"; print abs_path(shift)," ";' $(1))
 whichloc = $(shell type $(1) 2>&1 | grep -iv 'not found' | cut -d' ' -f3 2> /dev/null)
 pathsearch = $(strip $(call whichloc,$(1)))
@@ -45,12 +46,9 @@ REL_BASEDIR :=$(strip \
                             without fixing the value assignment of REL_BASEDIR in Makefile.compile_opts))))))))))))
 BASEDIR := $(strip $(call _realpath,$(strip $(shell pwd))/$(REL_BASEDIR)))
 
-
-
-#####################################
-#  include the config file         ##
-#####################################
-
+##################################################################
+### Define BASE_* variables                                    ###
+##################################################################
 ifeq (0,${MAKELEVEL})
   _BASE_ARCH = $(shell $(BASEDIR)/scripts/config.guess)
   ifneq ($(strip $(BASE_ARCH)),)
@@ -69,85 +67,158 @@ ifeq (0,${MAKELEVEL})
   export BASE_ARCH ARCH
 endif
 
+##################################################################
+### Use the gmsl (gnu standard library) from                   ###
+### http://sourceforge.net/projects/gmsl/                      ###
+##################################################################
+ifeq ($(MAKEFILE_LIST),)
+  __gmsl_root := $(BASEDIR)/config/
+endif
+include $(BASEDIR)/config/gmsl
 
-ifeq ($(call match,pc-cygwin,$(ARCH)),TRUE)
+##################################################################
+### Platform-dependent system configuration section tests for  ###
+### MANUFACTURER and OPERATING_SYSTEM.                         ###
+### Given an ARCH value containing the machine specification   ###
+### into a single specification in the form:                   ###
+###   CPU_TYPE-MANUFACTURER-OPERATING_SYSTEM                   ###
+### or in some cases, the newer four-part form:                ###
+###   CPU_TYPE-MANUFACTURER-KERNEL-OPERATING_SYSTEM            ###
+##################################################################
+
+ifeq ($(call match,pc-cygwin,$(BASE_ARCH)),TRUE)
   # Cygwin and MS Windows PC
-  $(warning include $(BASEDIR)/config/Makefile.pc-cygwin)
-  include $(BASEDIR)/config/Makefile.pc-cygwin
+  CONFIG_INC := $(BASEDIR)/config/Makefile.pc-cygwin
 
 else
-ifeq ($(call match,sgi-irix,$(ARCH)),TRUE)
+ifeq ($(call match,sgi-irix,$(BASE_ARCH)),TRUE)
   # mips SGI and IRIX
-  $(warning include $(BASEDIR)/config/Makefile.sgi-irix)
-  include $(BASEDIR)/config/Makefile.sgi-irix
+  CONFIG_INC := $(BASEDIR)/config/Makefile.sgi-irix
 
 else
-ifeq ($(call match,dec-osf,$(ARCH)),TRUE)
+ifeq ($(call match,dec-osf,$(BASE_ARCH)),TRUE)
   # Compaq Alpha and OSF
-  $(warning include $(BASEDIR)/config/Makefile.dec-osf)
-  include $(BASEDIR)/config/Makefile.dec-osf
+  CONFIG_INC := $(BASEDIR)/config/Makefile.dec-osf
 
 else
-ifeq ($(call match,powerpc64-,$(ARCH))$(call match,-linux-gnu,$(ARCH)),TRUETRUE)
+#ifeq ($(or $(call match,powerpc64-,$(BASE_ARCH)),$(call match,powerpc-,$(BASE_ARCH)))$(call match,-linux-gnu,$(BASE_ARCH)),TRUETRUE)
+ifeq ($(call match,powerpc64-,$(BASE_ARCH))$(call match,-linux-gnu,$(BASE_ARCH)),TRUETRUE)
   # IBM PowerPC-64 and Linux
-  $(warning include $(BASEDIR)/config/Makefile.powerpc-linux-gnu)
-  include $(BASEDIR)/config/Makefile.powerpc-linux-gnu
+  CONFIG_INC := $(BASEDIR)/config/Makefile.powerpc-linux-gnu
 
 else
-ifeq ($(call match,powerpc-,$(ARCH))$(call match,-linux-gnu,$(ARCH)),TRUETRUE)
+ifeq ($(call match,powerpc-,$(BASE_ARCH))$(call match,-linux-gnu,$(BASE_ARCH)),TRUETRUE)
   # IBM PowerPC and Linux
-  $(warning include $(BASEDIR)/config/Makefile.powerpc-linux-gnu)
-  include $(BASEDIR)/config/Makefile.powerpc-linux-gnu
+  CONFIG_INC := $(BASEDIR)/config/Makefile.powerpc-linux-gnu
 
 else
-ifeq ($(call match,powerpc-ibm-aix,$(ARCH)),TRUE)
+ifeq ($(call match,powerpc-ibm-aix,$(BASE_ARCH)),TRUE)
   # IBM PowerPC and AIX
-  $(warning include $(BASEDIR)/config/Makefile.powerpc-ibm-aix)
-  include $(BASEDIR)/config/Makefile.powerpc-ibm-aix
+  CONFIG_INC := $(BASEDIR)/config/Makefile.powerpc-ibm-aix
 
 else
-ifeq ($(call match,powerpc-apple,$(ARCH)),TRUE)
+ifeq ($(call match,powerpc-apple,$(BASE_ARCH)),TRUE)
   # IBM PowerPC and MacOS
-  $(warning include $(BASEDIR)/config/Makefile.powerpc-apple)
-  include $(BASEDIR)/config/Makefile.powerpc-apple
+  CONFIG_INC := $(BASEDIR)/config/Makefile.powerpc-apple
 
 else
-ifeq ($(call match,i386-apple,$(ARCH)),TRUE)
+ifeq ($(call match,i386-apple,$(BASE_ARCH)),TRUE)
   # Intel and MacOS
-  $(warning include $(BASEDIR)/config/Makefile.i386-apple)
-  include $(BASEDIR)/config/Makefile.i386-apple
+  CONFIG_INC := $(BASEDIR)/config/Makefile.i386-apple
 
 else
-ifeq ($(call match,sun-solaris,$(ARCH)),TRUE)
+ifeq ($(call match,sun-solaris,$(BASE_ARCH)),TRUE)
   # Sun and Solaris
-  $(warning include $(BASEDIR)/config/Makefile.sun-solaris)
-  include $(BASEDIR)/config/Makefile.sun-solaris
+  CONFIG_INC := $(BASEDIR)/config/Makefile.sun-solaris
 
 else
-ifeq ($(call match,-linux-gnu,$(ARCH)),TRUE)
+ifeq ($(call match,-linux-gnu,$(BASE_ARCH)),TRUE)
   # PC or IBM PowerPC, and Linux
-  $(warning include $(BASEDIR)/config/Makefile.-linux-gnu)
-  include $(BASEDIR)/config/Makefile.-linux-gnu
+  CONFIG_INC := $(BASEDIR)/config/Makefile.-linux-gnu
 
 else
 
-# Default
+  # Default
+  CONFIG_INC :=
+
+endif
+endif
+endif
+endif
+endif
+endif
+endif
+endif
+endif
+endif
+
+##################################################################
+### Define ARCH                                                ###
+##################################################################
+ifeq (0,${MAKELEVEL})
+  _ARCH = $(_BASE_ARCH)$(ALT_SUBDIR)
+  ifneq ($(strip $(ARCH)),)
+    ifneq ($(strip $(ARCH)),$(strip $(_ARCH)))
+      $(warning *** You cannot override ARCH on the command line! ***)
+    endif
+  endif
+  override ARCH       = $(_ARCH)
+  export ARCH
+endif
+
+##################################################################
+###    - detect F90                                            ###
+###    - define ALT_SUBDIR                                     ###
+###    - optionally redefine ARCH                              ###
+##################################################################
+
+CONFIG_INC_DETECT = $(strip $(wildcard $(CONFIG_INC).detect))
+ifeq ($(strip $(wildcard $(CONFIG_INC_DETECT))),)
+  CONFIG_INC_DETECT = $(wildcard $(CONFIG_INC))
+endif
+ifeq ($(strip $(wildcard $(CONFIG_INC_DETECT))),)
+
+  # Default
   ifeq (0,${MAKELEVEL})
     $(warning **************************************************************************************)
     $(warning WARNING: This is an unsupported platform. Attempting to compile using generic options.)
     $(warning **************************************************************************************)
   endif
 
-endif
-endif
-endif
-endif
-endif
-endif 
-endif 
-endif 
-endif 
-endif 
+else
 
+  #$(warning include $(CONFIG_INC_DETECT))
+  include $(CONFIG_INC_DETECT)
 
+endif
+
+##################################################################
+### Platform-dependent system configuration section tests for  ###
+### MANUFACTURER and OPERATING_SYSTEM.                         ###
+### Given an BASE_ARCH value containing the machine            ###
+### specification into a single specification in the form:     ###
+###   CPU_TYPE-MANUFACTURER-OPERATING_SYSTEM                   ###
+### or in some cases, the newer four-part form:                ###
+###   CPU_TYPE-MANUFACTURER-KERNEL-OPERATING_SYSTEM            ###
+##################################################################
+
+CONFIG_INC_HASHES = $(strip $(wildcard $(CONFIG_INC).hashes))
+ifeq ($(strip $(wildcard $(CONFIG_INC_HASHES))),)
+  CONFIG_INC_DETECT = $(wildcard $(CONFIG_INC))
+endif
+ifeq ($(strip $(wildcard $(CONFIG_INC_HASHES))),)
+
+  # Default
+  ifeq (0,${MAKELEVEL})
+    $(warning **************************************************************************************)
+    $(warning WARNING: This is an unsupported platform. Attempting to compile using generic options.)
+    $(warning **************************************************************************************)
+  endif
+
+else
+
+  #$(warning include $(CONFIG_INC_HASHES))
+  include $(CONFIG_INC_HASHES)
+
+endif
 

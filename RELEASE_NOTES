@@ -1,0 +1,26 @@
+SUBJECT: EOSPAC 6.4.0 is released
+DATE:    February 25, 2019
+SYMBOL:  WRS-19-008(U)
+
+Various changes have been implemented, but one is of particular interest to the user community
+(Fix floating point exception errors on KNL), which responds to a specific user request and is the
+primary motivation of this release. EOSPAC 6.4.0 has been released for general use as both the
+default and the latest versions (i.e., eospac6-default and eospac6-latest). The following changes
+have been implemented since the release of EOSPAC 6.4.0beta.4:
+
+High Priority:
+* Fix floating point exception errors on KNL
+* New Makefile logic required
+
+Normal Priority:
+* config.guess.wrapper returns unwanted gcc error on powerpc
+* Index file parser fails when lines end with white space
+* Fix trinitite test environment
+* Fix user manual
+* Fix build to accommodate differences between avx2 and avx512 instructions
+* Rewrite user manual
+* Fix some build script logic to accommodate new QoS requirements
+* Import new script, Tools/query_gitlab_issues.pl
+
+See section 3 for more details regarding all of these changes.
+See section 6 for a list of issues that are known to cause usage problems.

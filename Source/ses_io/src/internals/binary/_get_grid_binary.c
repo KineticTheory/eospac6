@@ -23,7 +23,7 @@ ses_boolean _get_grid_binary(ses_file_handle the_handle, ses_material_id the_mid
 #endif
 
   ses_boolean return_value = SES_TRUE;
-  int i;
+  /* int i; */
  
   /*  read nr and nt directly from the file */
 
@@ -70,7 +70,7 @@ ses_boolean _get_grid_binary(ses_file_handle the_handle, ses_material_id the_mid
   struct _ses_index_record* current_index_record = FILE_LIST[the_handle]->_current_index_record;
   switch(the_tid) {
 
-    ses_boolean didit_go;
+    /* ses_boolean didit_go; */
 
 
   case 100:
@@ -199,7 +199,7 @@ ses_boolean _get_grid_binary(ses_file_handle the_handle, ses_material_id the_mid
   case 604:
   case 605:
 
-    didit_go = _go_to_data_record_binary(the_handle, the_mid, the_tid);
+    /* didit_go = */ _go_to_data_record_binary(the_handle, the_mid, the_tid);
 #ifdef DEBUG_GET_GRID_BINARY
     printf("_get_grid_binary -- calling read-long.... to get my_nr and my_nt\n");
 #endif
@@ -225,14 +225,14 @@ ses_boolean _get_grid_binary(ses_file_handle the_handle, ses_material_id the_mid
     break;
     
   case 306:
-    didit_go = _go_to_data_record_binary(the_handle, the_mid, the_tid);
+    /* didit_go = */ _go_to_data_record_binary(the_handle, the_mid, the_tid);
     my_nr = _read_long_pFILE_binary(pFILE, needs_flip);
     my_nt = 1;
     
     break;
 
   case 401:
-    didit_go = _go_to_data_record_binary(the_handle, the_mid, the_tid);
+    /* didit_go = */ _go_to_data_record_binary(the_handle, the_mid, the_tid);
     my_nr = 1;
     my_nt = _read_long_pFILE_binary(pFILE, needs_flip);
     //  find ntab for the table
@@ -254,7 +254,7 @@ ses_boolean _get_grid_binary(ses_file_handle the_handle, ses_material_id the_mid
   case 412:
   case 431:
   case 501:
-    didit_go = _go_to_data_record_binary(the_handle, the_mid, the_tid);
+    /* didit_go = */ _go_to_data_record_binary(the_handle, the_mid, the_tid);
     my_nr = _read_long_pFILE_binary(pFILE, needs_flip);
     my_nt = 1;
 
@@ -302,9 +302,9 @@ ses_boolean _get_grid_binary(ses_file_handle the_handle, ses_material_id the_mid
  
    
   default:
-    i = my_get_index(the_tid);
+    /* i = */ my_get_index(the_tid);
     /*  guess that nr and nt are right at the start, get them there */
-    didit_go = _go_to_data_record_binary(the_handle, the_mid, the_tid);
+    /* didit_go = */ _go_to_data_record_binary(the_handle, the_mid, the_tid);
     my_nr = _read_long_pFILE_binary(pFILE, needs_flip);
     my_nt = _read_long_pFILE_binary(pFILE, needs_flip);
     if (my_nr == 0)my_nr = 1;

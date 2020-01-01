@@ -605,7 +605,8 @@ c     Table handle specific meta data information constants
       integer EOS_Material_Composition
       integer EOS_Material_Codes
       integer EOS_Material_Phases
-      parameter( EOS_NUM_TABLE_META_DATA_CONSTANTS  = 8 )
+      integer EOS_Material_Classification
+      parameter( EOS_NUM_TABLE_META_DATA_CONSTANTS  = 9 )
       parameter( EOS_File_Name                      = 4001 )
       parameter( EOS_Material_Name                  = 4002 )
       parameter( EOS_Material_Source                = 4003 )
@@ -614,6 +615,7 @@ c     Table handle specific meta data information constants
       parameter( EOS_Material_Composition           = 4006 )
       parameter( EOS_Material_Codes                 = 4007 )
       parameter( EOS_Material_Phases                = 4008 )
+      parameter( EOS_Material_Classification        = 4009 )
 
 c     Error code constants
 

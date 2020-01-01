@@ -1057,7 +1057,7 @@ int main ()
     printf ("a[%i] = b[%i] = %.15e\n", i, i, a[i]);
   }
 
-  max_recursion_level = _eos_QuickSort (N, a, 0, &err, &errorMessage);
+  max_recursion_level = _eos_QuickSort (N, a, 0, &err, &errorMessage, NULL);
   printf ("\nAFTER SORT: (err=%i)\n", err);
   if (err != EOS_OK) {
     printf ("_eos_QuickSort ERROR %i: %s\n", err, errorMessage);
@@ -1099,7 +1099,7 @@ int main ()
     a[i] = 0;                   //-a[N-1-i];
   for (i = 0; i < N; i++)
     b[i] = a[i];
-  _eos_CompressArray (&(a[0]), &N, 10, NULL);
+  _eos_CompressArray (&(a[0]), &N, 10, NULL, NULL);
 
   printf ("\nAFTER COMPRESSION:\n");
   for (i = 0; i < N; i++) {

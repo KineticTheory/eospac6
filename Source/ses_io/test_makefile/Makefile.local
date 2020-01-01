@@ -73,28 +73,40 @@ DEBUG_BITFLAG=
 endif
 
 ifeq ($(OS),Darwin)
-JNI_H_LOC=/System/Library/Frameworks/JavaVM.framework/Headers
-JVM_INCLUDE=/System/Library/Frameworks/JavaVM.framework/Headers
+# Artifact: artf38499 Changed to get Darwin's java paths correct.
+#JNI_H_LOC=/System/Library/Frameworks/JavaVM.framework/Headers
+#JVM_INCLUDE=/System/Library/Frameworks/JavaVM.framework/Headers
+JNI_H_LOC=/System/Library/Frameworks/JavaVM.framework/Versions/Current/Headers
+JVM_INCLUDE=/System/Library/Frameworks/JavaVM.framework/Versions/Current/Headers
 DYNAMIC_LIBRARY=libsesj.dylib
 SHARED_FLAG=-dynamiclib
 BITFLAG=-m64
 JBITFLAG=-m64
 JRUNFLAG=-d64
 DEBUG_BITFLAG=
+else
+JNI_H_LOC=/usr/lib/jvm/java/include
+JVM_INCLUDE=/usr/lib/jvm/java/include/linux
 endif
+
+# Being a cray, things are always in weird locales:
+ifeq ($(call match,ct-fe,$(MACHINE)),TRUE)
+JAVA=/opt/java/default/bin/java
+JC=/opt/java/default/bin/javac
+JAVAH=/opt/java/default/bin/javah
+JNI_H_LOC=/opt/java/default/include
+JVM_INCLUDE=/opt/java/default/include/linux
+endif
+
 
 #####################################33
 
 WALL = -Wall
 DEBUG  = -g -DDEBUG_PRINT 
 CFLAGS   = -c -Wall -fPIC $(BITFLAG) $(DEBUG_BITFLAG) -I$(IPATH1) -I$(IPATH2)  -I$(IPATH3) -I$(IPATH4) -I$(IPATH5) -I$(IPATH6) -I$(IPATH7) -I$(IPATH8) $(DEBUG) -D$(MYDEFINES)
+# only works on Darwin: CFLAGS   = -c -Werror -pedantic -std=c99 -fPIC $(BITFLAG) $(DEBUG_BITFLAG) -I$(IPATH1) -I$(IPATH2)  -I$(IPATH3) -I$(IPATH4) -I$(IPATH5) -I$(IPATH6) -I$(IPATH7) -I$(IPATH8) $(DEBUG) -D$(MYDEFINES)
 F90FLAGS = -c -x f95-cpp-input $(BITFLAG) $(DEBUG_BITFLAG)
 JFLAGS=$(JBITFLAG)
 
 FLAGS=CC="$(CC)" F90="$(F90)" JC="$(JC)" CFLAGS="$(CFLAGS)" F90FLAGS="$(F90FLAGS)" JFLAGS="$(JFLAGS)" IPATH1="$(IPATH1)" IPATH2="$(IPATH2)" DEBUG="$(DEBUG)"
-
-JNI_H_LOC=/usr/lib/jvm/java/include
-JVM_INCLUDE=/usr/lib/jvm/java/include/linux
-
-
 

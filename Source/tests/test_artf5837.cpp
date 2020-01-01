@@ -80,13 +80,13 @@ int main ()
     cout << "----- TEST #" << j << " using ";
     for (k = 0; k < nTables; k++)
       cout << ((k > 0 && k < nTables-1)
-	       ? ", "
-	       : ((k == 0)
-		  ? ""
-		  : ", and "
-		  )
-	       )
-	   << get_tableType_str(tableType[k]);
+               ? ", "
+               : ((k == 0)
+                  ? ""
+                  : ", and "
+                  )
+               )
+           << get_tableType_str(tableType[k]);
     cout << " -----" << endl << endl;
 
     for (i = 0; i < nTables; i++)
@@ -98,37 +98,37 @@ int main ()
       eos_GetErrorMessage (&errorCode, errorMessage);
       printf ("eos_CreateTables ERROR %i: %s\n", errorCode, errorMessage);
       for (int i = 0; i < nTables; i++) {
-	tableHandleErrorCode = EOS_OK;
-	eos_GetErrorCode (&tableHandle[i], &tableHandleErrorCode);
-	eos_GetErrorMessage (&tableHandleErrorCode, errorMessage);
-	printf ("           TH %i ERROR %i: %s\n",
-		tableHandle[i], tableHandleErrorCode, errorMessage);
+        tableHandleErrorCode = EOS_OK;
+        eos_GetErrorCode (&tableHandle[i], &tableHandleErrorCode);
+        eos_GetErrorMessage (&tableHandleErrorCode, errorMessage);
+        printf ("           TH %i ERROR %i: %s\n",
+                tableHandle[i], tableHandleErrorCode, errorMessage);
       }
     }
 
     /* Enable data dump to file */
     for (i = 0; i < nTables; i++) {
       if (i == 0 && j == 0)
-	eos_SetOption (&tableHandle[i], &EOS_DUMP_DATA, EOS_NullPtr,
-		       &errorCode);
+        eos_SetOption (&tableHandle[i], &EOS_DUMP_DATA, EOS_NullPtr,
+                       &errorCode);
       else
-	eos_SetOption (&tableHandle[i], &EOS_APPEND_DATA, EOS_NullPtr,
-		       &errorCode);
+        eos_SetOption (&tableHandle[i], &EOS_APPEND_DATA, EOS_NullPtr,
+                       &errorCode);
       if (errorCode != EOS_OK) {
-	eos_GetErrorMessage (&errorCode, errorMessage);
-	printf ("eos_SetOption ERROR %i: %s\n", errorCode, errorMessage);
+        eos_GetErrorMessage (&errorCode, errorMessage);
+        printf ("eos_SetOption ERROR %i: %s\n", errorCode, errorMessage);
       }
     }
 
-    for(i = 1; i<nTables;i++){
+    for(i = 1; i<nTables;i++) {
       eos_SetOption(&tableHandle[i], &EOS_MONOTONIC_IN_Y, EOS_NullPtr, &errorCode);
       if(errorCode != EOS_OK)
-	printf ("eos_SetOption ERROR %i: %s\n", errorCode, errorMessage);
+        printf ("eos_SetOption ERROR %i: %s\n", errorCode, errorMessage);
     }
 
     // Display gEosDataMap.tableHandlesMap details before calling eos_LoadTables
-//     cout << "BEFORE EOS_LOADTABLES" << endl;
-//     display_gEosDataMap_tableHandlesMap_details();
+    //     cout << "BEFORE EOS_LOADTABLES" << endl;
+    //     display_gEosDataMap_tableHandlesMap_details();
 
     // load data into table data objects
     eos_LoadTables (&nTables, tableHandle, &errorCode);
@@ -136,11 +136,11 @@ int main ()
       eos_GetErrorMessage (&errorCode, errorMessage);
       printf ("eos_LoadTables ERROR %i: %s\n", errorCode, errorMessage);
       for (int i = 0; i < nTables; i++) {
-	tableHandleErrorCode = EOS_OK;
-	eos_GetErrorCode (&tableHandle[i], &tableHandleErrorCode);
-	eos_GetErrorMessage (&tableHandleErrorCode, errorMessage);
-	printf ("         TH %i ERROR %i: %s\n",
-		tableHandle[i], tableHandleErrorCode, errorMessage);
+        tableHandleErrorCode = EOS_OK;
+        eos_GetErrorCode (&tableHandle[i], &tableHandleErrorCode);
+        eos_GetErrorMessage (&tableHandleErrorCode, errorMessage);
+        printf ("         TH %i ERROR %i: %s\n",
+                tableHandle[i], tableHandleErrorCode, errorMessage);
       }
     }
 
@@ -156,11 +156,11 @@ int main ()
       eos_GetErrorMessage (&errorCode, errorMessage);
       printf ("eos_DestroyAll ERROR %i: %s\n", errorCode, errorMessage);
       for (int i = 0; i < nTables; i++) {
-	tableHandleErrorCode = EOS_OK;
-	eos_GetErrorCode (&tableHandle[i], &tableHandleErrorCode);
-	eos_GetErrorMessage (&tableHandleErrorCode, errorMessage);
-	printf ("         TH %i ERROR %i: %s\n",
-		tableHandle[i], tableHandleErrorCode, errorMessage);
+        tableHandleErrorCode = EOS_OK;
+        eos_GetErrorCode (&tableHandle[i], &tableHandleErrorCode);
+        eos_GetErrorMessage (&tableHandleErrorCode, errorMessage);
+        printf ("         TH %i ERROR %i: %s\n",
+                tableHandle[i], tableHandleErrorCode, errorMessage);
       }
     }
 

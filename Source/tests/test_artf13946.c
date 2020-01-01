@@ -73,7 +73,7 @@ int main ()
   }
   else {
     err = -1;
-    return(err);
+    goto CLEANUP;
   }
 
   /* Write custom sesameFilesDir.txt */
@@ -84,7 +84,7 @@ int main ()
   }
   else {
     err = -2;
-    return(err);
+    goto CLEANUP;
   }
 
   /*  Write custom sesameFilesDir.txt to stdout */
@@ -99,26 +99,31 @@ int main ()
   }
   else {
     err = -1;
-    return(err);
+    goto CLEANUP;
   }
   printf ("\n------ END CUSTOM sesameFilesDir.txt ------\n");
 
   printf ("\nCustom file list:\n");
   err = print_FileList(-1, "<...>/");
   if (! err)
-    return(err);
+    goto CLEANUP;
 
   /*  Write file_str to sesameFilesDir.txt */
   fp = fopen (indexFileName, "w");  /* open indexFileName */
   if (fp) {
-    fprintf(fp, file_str);
+    fprintf(fp, "%s", file_str);
     fclose (fp);              /* close indexFileName */
   }
   else {
     err = -3;
-    return(err);
+    goto CLEANUP;
   }
 
+ CLEANUP:
+  EOS_FREE (file_str);
+  for (i = 0; i < sesameFilesL; i++)
+    EOS_FREE (sesameFiles[i]);
+  EOS_FREE (sesameFiles);
   return(err);
 
 }

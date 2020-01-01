@@ -18,21 +18,9 @@
 ##################################################################
 # Compiler suite configurations based upon F90                 ###
 ##################################################################
-#  use the first F90 compiler found from F90_List
 F90_List = g95 gfortran
-F90_Found_List = $(foreach compiler,$(F90_List),$(call pathsearch,$(compiler)))
+
+#  use the first F90 compiler found from F90_List
+F90_Found_List = $(call memoize,create_F90_Found_List_once,$(F90_List))
 F90 = $(firstword $(F90_Found_List))
-F90_Key = $(strip $(firstword $(foreach compiler,$(F90_List),$(call match_r1,$(compiler),$(F90)))))
-ifeq ($(strip $(F90_Key)),)
-  $(error No supported Fortran compiler was found in your PATH for this machine. (supported: $(F90_List)))
-endif
-
-MAKE_WINLIB_AR = $(WINLIB_AR)
-
-##################################################################
-### Define selected variable values according to $(F90).       ###
-##################################################################
-ifeq ($(strip $(F90)),g95)
-  G95_MEM_SEGMENTS = 0
-  export G95_MEM_SEGMENTS
-endif
+F90_Key = $(call memoize,set_F90_Key_once,$(F90_List))

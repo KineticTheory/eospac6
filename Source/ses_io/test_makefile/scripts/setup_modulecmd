@@ -1,0 +1,26 @@
+#! /bin/sh
+(shopt -s igncr) 2>/dev/null && eval 'shopt -s igncr';#
+
+# $Date: 2017/02/07 16:15:53 MST $
+#
+# This script is used to define the location of modulecmd.
+#
+
+# define known possible locations for modulecmd
+if   [ -x /usr/bin/modulecmd ] ; then
+  MODULECMD=/usr/bin/modulecmd
+
+elif [ -x /usr/local/modules/$MODULE_VERSION/bin/modulecmd ] ; then
+  MODULECMD=/usr/local/modules/$MODULE_VERSION/bin/modulecmd
+
+elif [ -x /opt/modules/$MODULE_VERSION/bin/modulecmd ] ; then
+  MODULECMD=/opt/modules/$MODULE_VERSION/bin/modulecmd
+
+elif [ -x /usr/share/modules/bin/modulecmd ] ; then
+  MODULECMD=/usr/share/modules/bin/modulecmd
+
+else
+  MODULECMD=modulecmd_does_not_exist
+
+fi
+export MODULECMD

@@ -126,5 +126,8 @@ int main(){
       print_nr_and_nt(table_handles[i]);
    }
   }
+
+  eos_DestroyAll (&error);
+
   return 0;
 }

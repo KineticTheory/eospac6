@@ -48,7 +48,7 @@ int main ()
 
     N = data_sz[j];
 
-    _eos_CompressArray (data[j], &N, 78, NULL);
+    _eos_CompressArray (data[j], &N, 78, NULL, NULL);
 
     data_sz[j] = N;
 

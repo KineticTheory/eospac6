@@ -37,6 +37,9 @@ CC  = $(firstword $(notdir $(foreach compiler,$(call get,_CC,$(F90)),$(call path
 CXX = $(firstword $(notdir $(foreach compiler,$(call get,_CXX,$(F90)),$(call pathsearch,$(compiler)))))
 F77 = $(firstword $(notdir $(foreach compiler,$(call get,_F77,$(F90)),$(call pathsearch,$(compiler)))))
 
+# compiler check for CC, CXX, F90 and F77
+include $(BASEDIR)/config/Makefile.check_compilers
+
 ##################################################################
 ### Assign values to associative arrays, which hold various    ###
 ### compiler options -- specific to this architecture.         ###
@@ -50,6 +53,37 @@ F77 = $(firstword $(notdir $(foreach compiler,$(call get,_F77,$(F90)),$(call pat
 $(call set,VERSION_FLAG,f77,-V)   # Absoft
 #
 ### VERSION_FLAG{$F90} = $flag
+
+
+##################################################################
+### Define selected variable values according to $(F90).       ###
+##################################################################
+ifeq ($(strip $(F90)),f90)
+  F77 = $(ABSOFT)/bin/$(F77)
+  F90 = $(ABSOFT)/bin/$(F90)
+  ALT_SUBDIR := /$(notdir $(F90))
+  _F90FLAGS += -p$(INCDIR) -YCFRL=1
+endif
+
+ifeq ($(strip $(F90)),xlf90)
+###
+### This is a very specific configuration for a PowerPC with gcc, xlf and xlf90
+###
+  _F90FLAGS += -qfloat=nomaf -qsuffix=f=f90
+  _FFLAGS += -qfloat=nomaf -qfixed -qsuffix=f=f
+  ALT_SUBDIR := /$(notdir $(F90))
+  F77_LIBS += -lSystemStubs
+  F90_LIBS += -lSystemStubs
+  XLFINSTALL_LOC = $(shell dirname $(dir $(call pathsearch,$(F90))))
+  XLFENTRY_LOC = $(shell find $(XLFINSTALL_LOC) -name xlfentry)
+  ### The VERSION_FLAG hash not used for xlf compilers' version options
+  _F90_VERSION = what $(XLFENTRY_LOC) | grep 'ersion [0-9]'
+  _F77_VERSION = what $(XLFENTRY_LOC) | grep 'ersion [0-9]'
+endif
+
+ifeq ($(strip $(F90)),gfortran)
+  ALT_SUBDIR := /$(notdir $(F90))
+endif
 
 # Set additional compiler-specific options
 _CFLAGS += $(call get,_COMP_FLAGS,$(CC))

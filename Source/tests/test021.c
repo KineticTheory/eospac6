@@ -79,5 +79,7 @@ int main(){
   else
     printf("matID incorrect\n");
 
+  eos_DestroyAll (&error);
+
   return 0;
 }

@@ -27,16 +27,19 @@ $(call set,_CC,xlf90,        xlc         )   # IBM XL
 $(call set,_CC,mpixlf90,     mpixlc      )   # MPI IBM XL
 $(call set,_CC,mpif90,       mpicc       )   # MPI gfortran
 $(call set,_CC,ppu-gfortran, ppu-gcc     )   # PPU gfortran
+$(call set,_CC,gfortran,     gcc         )   # gfortran
 
 $(call set,_CXX,xlf90,       xlC         )   # IBM XL
 $(call set,_CXX,mpixlf90,    mpixlcxx    )   # MPI IBM XL
 $(call set,_CXX,mpif90,      mpicxx      )   # MPI gfortran
 $(call set,_CXX,ppu-gfortran,ppu-g++     )   # PPU gfortran
+$(call set,_CXX,gfortran,    g++         )   # gfortran
 
 $(call set,_F77,xlf90,       f77         )   # IBM XL
 $(call set,_F77,mpixlf90,    mpixlf77    )   # MPI IBM XL
 $(call set,_F77,mpif90,      mpif77      )   # MPI gfortran
 $(call set,_F77,ppu-gfortran,$(F90)      )   # PPU gfortran
+$(call set,_F77,gfortran,    $(F90)      )   # gfortran
 
 ##################################################################
 ### Define CC, CXX and  F77 according to $(F90).               ###
@@ -45,53 +48,186 @@ CC  = $(firstword $(notdir $(foreach compiler,$(call get,_CC,$(F90)),$(call path
 CXX = $(firstword $(notdir $(foreach compiler,$(call get,_CXX,$(F90)),$(call pathsearch,$(compiler)))))
 F77 = $(firstword $(notdir $(foreach compiler,$(call get,_F77,$(F90)),$(call pathsearch,$(compiler)))))
 
+# compiler check for CC, CXX, F90 and F77
+include $(BASEDIR)/config/Makefile.check_compilers
+
 ##################################################################
 ### Assign values to associative arrays, which hold various    ###
 ### compiler options -- specific to this architecture.         ###
 ##################################################################
 #
 ### VERSION_FLAG{$CC} = $flag
-$(call set,VERSION_FLAG,xlc,-qversion)   # XL C
-$(call set,VERSION_FLAG,mpixlc,-qversion)   # Backend cross-compiler XL C
-$(call set,VERSION_FLAG,mpicc,--version)   # Backend cross-compiler GNU C
+$(call set,VERSION_FLAG,xlc,        -qversion)   # XL C
+$(call set,VERSION_FLAG,mpixlc,     -qversion)   # Backend cross-compiler XL C
+$(call set,VERSION_FLAG,mpicc,      --version)   # Backend cross-compiler GNU C
 #
 ### VERSION_FLAG{$CXX} = $flag
-$(call set,VERSION_FLAG,xlC,-qversion)   # XL C++
-$(call set,VERSION_FLAG,mpixlC,-qversion)   # Backend cross-compiler XL C++
-$(call set,VERSION_FLAG,mpicxx,--version)   # Backend cross-compiler GNU C++
+$(call set,VERSION_FLAG,xlC,        -qversion)   # XL C++
+$(call set,VERSION_FLAG,mpixlC,     -qversion)   # Backend cross-compiler XL C++
+$(call set,VERSION_FLAG,mpicxx,     --version)   # Backend cross-compiler GNU C++
 #
 ### VERSION_FLAG{$F77} = $flag
-$(call set,VERSION_FLAG,f77,-qversion)   # XLF F77
-$(call set,VERSION_FLAG,mpixlf77,-qversion)   # Backend cross-compiler XLF F77
+$(call set,VERSION_FLAG,f77,        -qversion)   # XLF F77
+$(call set,VERSION_FLAG,mpixlf77,   -qversion)   # Backend cross-compiler XLF F77
 #
 ### VERSION_FLAG{$F90} = $flag
-$(call set,VERSION_FLAG,xlf90,-qversion)   # XLF F90
-$(call set,VERSION_FLAG,mpixlf90,-qversion)   # Backend cross-compiler XLF F90
-$(call set,VERSION_FLAG,mpif90,--version)   # Backend cross-compiler GNU F77 and/or F90
+$(call set,VERSION_FLAG,xlf90,      -qversion)   # XLF F90
+$(call set,VERSION_FLAG,mpixlf90,   -qversion)   # Backend cross-compiler XLF F90
+$(call set,VERSION_FLAG,mpif90,     --version)   # Backend cross-compiler GNU F77 and/or F90
 #
 ### _COMP_FLAGS{$CC} = $flag
+$(call set,_COMP_FLAGS,xlc,        -qfloat=nomaf -qstrict=precision)   # XL C
+$(call set,_COMP_FLAGS,mpixlc,     -qfloat=nomaf -qstrict=precision)   # Backend cross-compiler XL C
 #
 ### _COMP_FLAGS{$CXX} = $flag
+$(call set,_COMP_FLAGS,xlC,        -qfloat=nomaf -qstrict=precision)   # XL C++
+$(call set,_COMP_FLAGS,mpixlC,     -qfloat=nomaf -qstrict=precision)   # Backend cross-compiler XL C++
 #
 ### _COMP_FLAGS{$F77} = $flag
+$(call set,_COMP_FLAGS,f77,        -qfloat=nomaf -qstrict=precision)   # XLF F77
+$(call set,_COMP_FLAGS,mpixlf77,   -qfloat=nomaf -qstrict=precision)   # Backend cross-compiler XLF F77
 #
 ### _COMP_FLAGS{$F90} = $flag
-$(call set,_COMP_FLAGS,xlf90,-qfloat=nomaf -qsuffix=f=f90)   # XLF F90
-$(call set,_COMP_FLAGS,mpixlf90,-qfloat=nomaf -qsuffix=f=f90)   # Backend cross-compiler XLF F90
+$(call set,_COMP_FLAGS,xlf90,       -qfloat=nomaf -qstrict=precision -qsuffix=f=f90)   # XLF F90
+$(call set,_COMP_FLAGS,mpixlf90,    -qfloat=nomaf -qstrict=precision -qsuffix=f=f90)   # Backend cross-compiler XLF F90
 
 # define define_module_subdir script options
-$(call set,_DEFINE_MODULE_SUBDIR_FLAGS,xlf90,$(F90_Key))   # XLF F90
-$(call set,_DEFINE_MODULE_SUBDIR_FLAGS,mpixlf90,$(F90_Key))   # Backend cross-compiler XLF F90
-$(call set,_DEFINE_MODULE_SUBDIR_FLAGS,mpif90,$(F90_Key))   # Backend cross-compiler GNU F77 and/or F90
+$(call set,_DEFINE_MODULE_SUBDIR_FLAGS,xlf90,-d $(F90_Key))          # XLF F90
+$(call set,_DEFINE_MODULE_SUBDIR_FLAGS,mpixlf90,-d $(F90_Key))       # Backend cross-compiler XLF F90
+$(call set,_DEFINE_MODULE_SUBDIR_FLAGS,mpif90,-d $(F90_Key))         # Backend cross-compiler GNU F77 and/or F90
+$(call set,_DEFINE_MODULE_SUBDIR_FLAGS,ppu-gfortran,-d $(F90_Key))   # PPU GNU F90
+$(call set,_DEFINE_MODULE_SUBDIR_FLAGS,gfortran,-d $(F90_Key))       # GNU F90
+
+# define define_module_subdir script patterns
+$(call set,_DEFINE_MODULE_SUBDIR_PATTS,xlf90,'^ibm/')                # XLF F90
+$(call set,_DEFINE_MODULE_SUBDIR_PATTS,gfortran,'^gcc/')             # XLF F90
+
+# define optional modules for cross-compiling
+X_Compile_Module_List =
 
 # define selected variable values according to $(F90_Key).
-ALT_SUBDIR := $(shell $(BASEDIR)/scripts/define_module_subdir $(call get,_DEFINE_MODULE_SUBDIR_FLAGS,$(F90_Key)))
+# $(info $(shell . $(BASEDIR)/scripts/setup_modulecmd;echo 'MODULECMD:' $${MODULECMD} ) )
+ALT_SUBDIR_Key1 := $(firstword $(shell . $(BASEDIR)/scripts/setup_modulecmd;( $${MODULECMD} sh list -t 2>&1 ) | $(BASEDIR)/scripts/filter_module_names $(X_Compile_Module_List) ))
+ALT_SUBDIR_Key2 := $(call get,_DEFINE_MODULE_SUBDIR_PATTS,$(F90_Key))
+ALT_SUBDIR_Opts := $(call get,_DEFINE_MODULE_SUBDIR_FLAGS,$(F90_Key))
+ALT_SUBDIR := $(shell $(BASEDIR)/scripts/define_module_subdir $(ALT_SUBDIR_Opts) $(ALT_SUBDIR_Key1) $(ALT_SUBDIR_Key2))
+# $(warning ----------------------------------------------------)
+# $(warning ALT_SUBDIR_Key1 = firstword (shell . $(BASEDIR)/scripts/setup_modulecmd;( $${MODULECMD} sh list -t 2>&1 ) | $(BASEDIR)/scripts/filter_module_names $(X_Compile_Module_List) ) = $(firstword $(shell . $(BASEDIR)/scripts/setup_modulecmd;( $${MODULECMD} sh list -t 2>&1 ) | $(BASEDIR)/scripts/filter_module_names $(X_Compile_Module_List) )))
+# $(warning ALT_SUBDIR_Key2 = (call get,_DEFINE_MODULE_SUBDIR_PATTS,$(F90_Key)) = $(call get,_DEFINE_MODULE_SUBDIR_PATTS,$(F90_Key)))
+# $(warning ALT_SUBDIR_Opts= (call get,_DEFINE_MODULE_SUBDIR_FLAGS,$(F90_Key)) = $(call get,_DEFINE_MODULE_SUBDIR_FLAGS,$(F90_Key)))
+# $(warning $(shell set -x; $(BASEDIR)/scripts/define_module_subdir $(ALT_SUBDIR_Opts) $(ALT_SUBDIR_Key1) $(ALT_SUBDIR_Key2)))
+# $(info ALT_SUBDIR_Key1 = $(ALT_SUBDIR_Key1))
+# $(info ALT_SUBDIR_Key2 = $(ALT_SUBDIR_Key2))
+# $(info ALT_SUBDIR_Opts = $(ALT_SUBDIR_Opts))
+# $(info ALT_SUBDIR = $(ALT_SUBDIR))
+# $(warning ----------------------------------------------------)
 
-# Modify ARCH variable
-ARCH   := $(shell $(BASEDIR)/scripts/config.guess)$(ALT_SUBDIR)
+ifeq ($(strip $(NOVECT)),)
+
+# define optional performance enhancement options based upon the cpuinfo flags
+_SUPPORTED_CPUINFO_FLAGS = $(shell $(BASEDIR)/scripts/config.guess.wrapper -a)
+# $(warning _SUPPORTED_CPUINFO_FLAGS = $(_SUPPORTED_CPUINFO_FLAGS))
+
+_F90_MAJOR_VERSION = $(shell $(F90_VERSION) | perl -ne 'if(/(Version:|GNU Fortran)/ and /\s(\d+)/){print $$1;exit}')
+# $(warning _F90_MAJOR_VERSION = $(_F90_MAJOR_VERSION))
+# $(warning Key = $(F90)-$(_F90_MAJOR_VERSION)-$(lastword $(_SUPPORTED_CPUINFO_FLAGS)))
+
+### _F90-CPUINFO_COMP_FLAGS{Key} = $flag
+#   Key === $(F90)-$(_F90_MAJOR_VERSION)-$(lastword $(_SUPPORTED_CPUINFO_FLAGS))
+#   This provides a map between specific compilation options and a unique combination of a compiler and CPU flag
+#
+###  IBM XL Fortran:
+IBM_DIAG_OPTIONS = -qreport
+$(call set,_F90-CPUINFO_COMP_FLAGS,xlf90-15-power7,   -qenablevmx -qhot=noarraypad:level=1:simd $(IBM_DIAG_OPTIONS))
+$(call set,_F90-CPUINFO_COMP_FLAGS,xlf90-15-power8,   -qenablevmx -qhot=noarraypad:level=1:simd $(IBM_DIAG_OPTIONS))
+$(call set,_F90-CPUINFO_COMP_FLAGS,xlf90-15-power9,   -qenablevmx -qhot=noarraypad:level=1:simd $(IBM_DIAG_OPTIONS))
+
+$(call set,_F90-CPUINFO_COMP_FLAGS,xlf90-16-power7,   -qenablevmx -qhot=noarraypad:level=1:simd $(IBM_DIAG_OPTIONS))
+$(call set,_F90-CPUINFO_COMP_FLAGS,xlf90-16-power8,   -qenablevmx -qhot=noarraypad:level=1:simd $(IBM_DIAG_OPTIONS))
+$(call set,_F90-CPUINFO_COMP_FLAGS,xlf90-16-power9,   -qenablevmx -qhot=noarraypad:level=1:simd $(IBM_DIAG_OPTIONS))
+
+###  GNU Fortran:
+GNU_DIAG_OPTIONS = -fopt-info-vec
+$(call set,_F90-CPUINFO_COMP_FLAGS,gfortran-4-power7, -ftree-vectorize -maltivec -mcpu=power7 -fopenmp-simd $(GNU_DIAG_OPTIONS))
+$(call set,_F90-CPUINFO_COMP_FLAGS,gfortran-4-power8, -ftree-vectorize -maltivec -mcpu=power8 -fopenmp-simd $(GNU_DIAG_OPTIONS))
+$(call set,_F90-CPUINFO_COMP_FLAGS,gfortran-4-power9, -ftree-vectorize -maltivec -mcpu=power8 -fopenmp-simd $(GNU_DIAG_OPTIONS))
+
+$(call set,_F90-CPUINFO_COMP_FLAGS,gfortran-5-power7, -ftree-vectorize -maltivec -mcpu=power7 -fopenmp-simd $(GNU_DIAG_OPTIONS))
+$(call set,_F90-CPUINFO_COMP_FLAGS,gfortran-5-power8, -ftree-vectorize -maltivec -mcpu=power8 -fopenmp-simd $(GNU_DIAG_OPTIONS))
+$(call set,_F90-CPUINFO_COMP_FLAGS,gfortran-5-power9, -ftree-vectorize -maltivec -mcpu=power8 -fopenmp-simd $(GNU_DIAG_OPTIONS))
+
+$(call set,_F90-CPUINFO_COMP_FLAGS,gfortran-6-power7, -ftree-vectorize -maltivec -mcpu=power7 -fopenmp-simd $(GNU_DIAG_OPTIONS))
+$(call set,_F90-CPUINFO_COMP_FLAGS,gfortran-6-power8, -ftree-vectorize -maltivec -mcpu=power8 -fopenmp-simd $(GNU_DIAG_OPTIONS))
+$(call set,_F90-CPUINFO_COMP_FLAGS,gfortran-6-power9, -ftree-vectorize -maltivec -mcpu=power9 -fopenmp-simd $(GNU_DIAG_OPTIONS))
+
+$(call set,_F90-CPUINFO_COMP_FLAGS,gfortran-7-power7, -ftree-vectorize -maltivec -mcpu=power7 -fopenmp-simd $(GNU_DIAG_OPTIONS))
+$(call set,_F90-CPUINFO_COMP_FLAGS,gfortran-7-power8, -ftree-vectorize -maltivec -mcpu=power8 -fopenmp-simd $(GNU_DIAG_OPTIONS))
+$(call set,_F90-CPUINFO_COMP_FLAGS,gfortran-7-power9, -ftree-vectorize -maltivec -mcpu=power9 -fopenmp-simd $(GNU_DIAG_OPTIONS))
+
+$(call set,_F90-CPUINFO_COMP_FLAGS,gfortran-8-power7, -ftree-vectorize -maltivec -mcpu=power7 -fopenmp-simd $(GNU_DIAG_OPTIONS))
+$(call set,_F90-CPUINFO_COMP_FLAGS,gfortran-8-power8, -ftree-vectorize -maltivec -mcpu=power8 -fopenmp-simd $(GNU_DIAG_OPTIONS))
+$(call set,_F90-CPUINFO_COMP_FLAGS,gfortran-8-power9, -ftree-vectorize -maltivec -mcpu=power9 -fopenmp-simd $(GNU_DIAG_OPTIONS))
+
+# Initialize _CPUINFO_FLAGS based upon $(F90) and its major version number
+ifeq ($(and $(filter $(strip $(notdir $(F90))),xlf90),$(call gte,$(_F90_MAJOR_VERSION),13)),$(true))
+
+  # using xlf90 version 13 or later
+  _CPUINFO_FLAGS +=
+
+else ifeq ($(and $(filter $(strip $(notdir $(F90))),gfortran),$(call gte,$(_F90_MAJOR_VERSION),4)),$(true))
+
+  # using gfortran version 4 or later
+  _CPUINFO_FLAGS +=
+
+else
+
+  _CPUINFO_FLAGS += -DDISABLE_OMP_SIMD_PRAGMA
+
+endif
+
+ifneq ($(strip $(CPUFLAGS)),)
+
+  KEYLIST = $(call keys,_F90-CPUINFO_COMP_FLAGS)
+  MYKEYS = $(addprefix $(F90)-$(_F90_MAJOR_VERSION)-,$(CPUFLAGS))
+  SHORTCUT = $(filter $(MYKEYS),$(KEYLIST))
+  OTHER = $(subst $(F90)-$(_F90_MAJOR_VERSION)-,,$(filter-out $(SHORTCUT),$(MYKEYS)))
+  # $(warning CPUFLAGS : "$(CPUFLAGS)")
+  # $(warning KEYLIST : $(KEYLIST))
+  # $(warning MYKEYS : $(MYKEYS))
+  # $(warning SHORTCUT : $(SHORTCUT))
+  # $(warning OTHER : $(OTHER))
+
+  # define the _CPUINFO_FLAGS
+  _CPUINFO_FLAGS += $(call get,_F90-CPUINFO_COMP_FLAGS,$(SHORTCUT))
+  _CPUINFO_FLAGS += $(OTHER)
+
+else
+
+  ifeq ($(ALT_SUBDIR_Key1),craype-mic-knl)
+    # define the default _CPUINFO_FLAGS for the craype-mic-knl
+    _CPUINFO_FLAGS += $(call get,_F90-CPUINFO_COMP_FLAGS,$(F90)-$(_F90_MAJOR_VERSION)-knl)
+  else
+    # define the default _CPUINFO_FLAGS
+    _CPUINFO_FLAGS += $(call get,_F90-CPUINFO_COMP_FLAGS,$(notdir $(F90)-$(_F90_MAJOR_VERSION)-$(lastword $(_SUPPORTED_CPUINFO_FLAGS))))
+    # $(warning Key: $(notdir $(F90)-$(_F90_MAJOR_VERSION)-$(lastword $(_SUPPORTED_CPUINFO_FLAGS))))
+    # $(warning _CPUINFO_FLAGS = $(_CPUINFO_FLAGS))
+  endif
+
+endif
+
+endif # NOVECT
+
+ifeq ($(strip $(_CPUINFO_FLAGS)),)
+
+  _CPUINFO_FLAGS += -DDISABLE_OMP_SIMD_PRAGMA
+
+endif
+
+# Define option(s) special condition(s)
+_DEBUG := $(DEBUG)
 
 # Set additional compiler-specific options
-_CFLAGS += $(call get,_COMP_FLAGS,$(CC))
-_CXXFLAGS += $(call get,_COMP_FLAGS,$(CXX))
-_FFLAGS += $(call get,_COMP_FLAGS,$(F77))
+_CFLAGS += $(call get,_COMP_FLAGS,$(notdir $(CC)))
+_CXXFLAGS += $(call get,_COMP_FLAGS,$(notdir $(CXX)))
+_FFLAGS += $(call get,_COMP_FLAGS,$(notdir $(F77)))
 _F90FLAGS += $(call get,_COMP_FLAGS,$(F90_Key))

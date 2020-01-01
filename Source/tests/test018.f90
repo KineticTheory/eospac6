@@ -8,7 +8,7 @@
 !********************************************************************
 
 !> @file
-!! @ingroup tests quick
+!! @ingroup Fortran90 tests quick
 !! @brief Verify that linear extrapolation works as expected for the rational
 !! interpolator.
 !!
@@ -116,6 +116,8 @@ program test018
      enddo
   enddo
 
+  call eos_DestroyAll(errorCode)
+  
 997 format(50x,a46)
 998 format(a4,4a23)
 999 format(i4,4es23.15,1x,a)
@@ -252,7 +254,7 @@ subroutine setXandYVALS( &
   ! Get data type for current tableHandle
   call eos_GetTableInfo(tableHandles(THindex), 1_EOS_INTEGER, EOS_Table_Type, &
                         infoVal, errorCode)
-  iType = infoVal
+  iType = NINT(infoVal,EOS_INTEGER)
   if (errorCode.NE.EOS_OK) then
      call print_error(errorCode, 'setXandYVALS->eos_GetTableInfo')
   endif
@@ -260,7 +262,7 @@ subroutine setXandYVALS( &
   ! Get matID for current tableHandle
   call eos_GetTableInfo(tableHandles(THindex), 1_EOS_INTEGER, EOS_Material_ID, &
                         infoVal, errorCode)
-  matID = infoVal
+  matID = NINT(infoVal,EOS_INTEGER)
   if (errorCode.NE.EOS_OK) then
      call print_error(errorCode, 'setXandYVALS->eos_GetTableInfo')
   endif

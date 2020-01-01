@@ -1,12 +1,12 @@
-#-*-perl-*-
+eval '(exit $?0)' && eval 'exec perl -S "$0" ${1+"$@"}' #-*-perl-*-
+& eval 'exec perl -S "$0" $argv:q'
+        if 0;
+#
 ##################################################################
 #
 #  Copyright -- see file named COPYRIGHTNOTICE
 #
 ##################################################################
-eval '(exit $?0)' && eval 'exec perl -S "$0" ${1+"$@"}'
-& eval 'exec perl -S "$0" $argv:q'
-        if 0;
 #
 # Send the contents of a file as HTML email to eos_testing@lanl.gov using Net::SMTP.
 #
@@ -35,6 +35,8 @@ $smtp_server_name = $options->{"mail_server"}
   if ($options->{"mail_server"});
 
 my $scriptname = basename($0);
+my $host = `hostname`; chomp $host;
+my $sender = "\"$scriptname \@ $host\"";
 
 my $msgstr = "";
 # load HTML file in memory
@@ -73,7 +75,7 @@ if ($options->{"plaintextfile"}) {
 }
 
 my $header =<<END_HEADER;
-From: $scriptname <$email_address>
+From: $sender <$email_address>
 To: $email_address
 Subject: $subject
 MIME-Version: 1.0

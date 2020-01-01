@@ -6,6 +6,8 @@
 
 #include "_file_list_ascii.h"
 
+#undef DEBUG_PRINT
+
 #define check_errors_WRITE_DATA_RECORD_ASCII HEADER(check_errors_WRITE_DATA_RECORD_ASCII)
 #define my_write_old_ascii_header HEADER(my_write_old_ascii_header)
 
@@ -44,9 +46,16 @@ ses_error_flag _write_data_record_ascii(struct _ses_data_record* tmp, struct _se
     long index = 0;
     long size = _get_number_arrays(tmp->_the_iterator);
 
+#ifdef DEBUG_PRINT
+    printf("_write_data_record_ascii: SIZE: %ld\n", size);
+#endif
+
     for (index=0; index < size; index++) {   //  loop over the "arrays" in the data record
 
 	array_size = _get_array_size(tmp->_the_iterator, index);
+#ifdef DEBUG_PRINT
+        printf("_write_data_record_ascii: array_size: %ld\n", array_size);
+#endif
 
 	//  check array size -- must be > 0
 	if (array_size <= 0) {
@@ -57,9 +66,6 @@ ses_error_flag _write_data_record_ascii(struct _ses_data_record* tmp, struct _se
 	  return SES_OBJECT_OUT_OF_RANGE;
 	}
 
-#ifdef DEBUG_WRITE_DATA_RECORD_ASCII
-printf("_write_data_record_ascii:  array_size is %d\n", array_size);
-#endif
 
         ses_table_id the_table_id;
         if (array_size > 1) {
@@ -67,18 +73,10 @@ printf("_write_data_record_ascii:  array_size is %d\n", array_size);
 	   //  ARRAY_SIZE > 1
 
 	   the_table_id = tmp->_tid;
-	   if ((the_table_id >= 200) || (the_table_id == 100)) {
+	   if (the_table_id >= 200) {
 
 	      //  NOT 100 LEVEL TABLES
               didit_write = _write_ses_word_array_ascii(pSFH, &tmp->_the_data[index][0], array_size, nsig, do_valid);
-	      //  write_ses_word_array_ascii writes the \n
-#ifdef DEBUG_WRITE_DATA_RECORD_ASCII
-printf("after write ses word array ascii tid is %d index is %d size is %d\n", the_table_id, index, size);
-#endif
-	      if (index == (size -1)){
-       		//ses_boolean didit = SES_FALSE;
-		//didit = _write_char_ascii(pSFH->_c_file_handle, '\n');
-    	      }
 	   }
 	   else {
 
@@ -86,9 +84,6 @@ printf("after write ses word array ascii tid is %d index is %d size is %d\n", th
 
 	      didit_write = SES_FALSE;
 	      didit_write = _write_ses_string_ascii(pSFH, (ses_string)(&tmp->_the_data[index][0]), array_size*8);
-	      //ses_error_flag didit = SES_NO_ERROR;
-	      //didit = 117_write_char_ascii(pSFH->_c_file_handle, '\n');
-
 
 	   }
 
@@ -119,13 +114,14 @@ printf("after write ses word array ascii tid is %d index is %d size is %d\n", th
 
 
 	  if (pSFH->_start_index == 4) {
-       ses_boolean didit = _write_char_ascii(pSFH->_c_file_handle, '1');
-       didit = _write_char_ascii(pSFH->_c_file_handle, '1');
-       didit = _write_char_ascii(pSFH->_c_file_handle, '1');
-       didit = _write_char_ascii(pSFH->_c_file_handle, '1');
-       didit = _write_char_ascii(pSFH->_c_file_handle, '1');
+       /* ses_boolean didit = 0; */
+       /* didit = */ _write_char_ascii(pSFH->_c_file_handle, '1');
+       /* didit = */ _write_char_ascii(pSFH->_c_file_handle, '1');
+       /* didit = */ _write_char_ascii(pSFH->_c_file_handle, '1');
+       /* didit = */ _write_char_ascii(pSFH->_c_file_handle, '1');
+       /* didit = */ _write_char_ascii(pSFH->_c_file_handle, '1');
        char f90_linefeed = '\n';
-       didit = _write_char_ascii(pSFH->_c_file_handle, f90_linefeed);
+       /* didit = */ _write_char_ascii(pSFH->_c_file_handle, f90_linefeed);
 		pSFH->_start_index = 0;
 	  }
         }
@@ -155,22 +151,23 @@ printf("after write ses word array ascii tid is %d index is %d size is %d\n", th
        int num_ones = pSFH->_start_index;
        int num_zeros = 5-num_ones;
        for (i = pSFH->_start_index; i < 5; i++) {
-       		ses_boolean didit = _write_char_ascii(pSFH->_c_file_handle, ' ');
-		for(j = 1; j < 22; j++) { 
-       			didit = _write_char_ascii(pSFH->_c_file_handle, ' ');
-		}
-	
+       		/* ses_boolean didit = */ _write_char_ascii(pSFH->_c_file_handle, ' ');
+#ifdef DEBUG_PRINT
+           printf("_write_data_record_ascii: with word_size: %d\n",pSFH->_word_size);
+#endif
+           for(j = 1; j < pSFH->_word_size; j++) {
+               /* didit = */ _write_char_ascii(pSFH->_c_file_handle, ' ');
+           }
        }
 
-       //ses_boolean didit = _write_char_ascii(pSFH->_c_file_handle, '1');
-       ses_boolean didit;
+       /* ses_boolean didit; */
        for (i = 0; i < num_ones; i++) {
-          didit = _write_char_ascii(pSFH->_c_file_handle, '1');
+          /* didit = */ _write_char_ascii(pSFH->_c_file_handle, '1');
        }
        for (i = 0; i < num_zeros; i++) {
-          didit = _write_char_ascii(pSFH->_c_file_handle, '0');
+          /* didit = */ _write_char_ascii(pSFH->_c_file_handle, '0');
        }
-       didit = _write_char_ascii(pSFH->_c_file_handle, '\n');
+       /* didit = */ _write_char_ascii(pSFH->_c_file_handle, '\n');
        pSFH->_start_index = 0;
     }
 
@@ -231,19 +228,12 @@ void my_write_old_ascii_header(struct _ses_data_record* tmp, struct _ses_file_ha
     long length = _get_all_arrays_size(tmp);
     char the_r = 'r';
 
-#define FIX_DATES
-#ifdef FIX_DATES
     long cdate = (long)0;
     long udate = (long)0;
     long vers = (long)0;
     cdate = tmp->_date1;
     udate = tmp->_date2;
     vers = tmp->_vers;
-#else
-    long cdate = (long)0;
-    long udate = (long)0;
-    long vers = (long)0;
-#endif
 
     //  in an old ascii file, each data record has a header;  we write it here
 
@@ -255,11 +245,9 @@ void my_write_old_ascii_header(struct _ses_data_record* tmp, struct _ses_file_ha
       const char* spacer2 = "                                 ";
       const char* format = "%2ld%6ld%6ld%6ld%s%c%9ld%9ld%s%3ld%s%1ld";
 
-//printf("sprintf for tid = %ld\n", tid);
-
-      int n = 0;
-      n = sprintf(&the_string[0], format, flag, mid, tid, length*8, spacer, the_r, cdate, udate, space, vers, spacer2, flag);
-//printf("n is %d\n", n);
+      /* int n = 0; */
+      /* n = */ sprintf(&the_string[0], format, flag, mid, tid, length*8, spacer, the_r, cdate, udate, space, vers, spacer2, flag);
+      /* n = 3; */
     }
     else {
 
@@ -268,15 +256,13 @@ void my_write_old_ascii_header(struct _ses_data_record* tmp, struct _ses_file_ha
       const char* spacer2 = "                                 ";
       const char* format = "%2ld%6ld%6ld%6ld%s%c%9ld%9ld%s%3ld%s%1ld";
 
-//printf("sprintf for tid = %ld\n", tid);
-      int n = 0;
-      n = sprintf(&the_string[0], format, flag, mid, tid, length, spacer, the_r, cdate, udate, space, vers, spacer2, flag);    
-//printf("n is %d\n", n);
+      /* int n = 0; */
+      /* n = */ sprintf(&the_string[0], format, flag, mid, tid, length, spacer, the_r, cdate, udate, space, vers, spacer2, flag); 
+      /* n = 3; */
     }
-    ses_boolean didit_write1 = SES_FALSE;
-    didit_write1 = _write_ses_string_ascii(pSFH, the_string, 80);
-    //free(the_string);
-    //the_string = (ses_string)NULL;
+    /* ses_boolean didit_write1 = SES_FALSE; */
+    /* didit_write1 = */ _write_ses_string_ascii(pSFH, the_string, 80);
+    /* didit_write1 = SES_FALSE; */
 
 }
 

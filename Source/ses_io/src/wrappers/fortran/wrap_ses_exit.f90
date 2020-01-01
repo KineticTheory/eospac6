@@ -5,7 +5,6 @@ SES_BOOLEAN function ses_exit_f90()
 
    implicit none
 
-#define DEBUG_32BIT
 #ifdef DEBUG_32BIT
    integer(kind = 4) :: return_4
    integer(kind = 8) :: return_8

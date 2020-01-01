@@ -10,9 +10,7 @@
 /*! \file
  *  \ingroup tests
  *  \brief Perform the following tests:
- *    -# Verify memory error in eos_CleanUpColdCurveRecordType1 was fixed,
- *    -# and verify eos_CheckExtrapRecordType1 does not check Y values for
- *       cold curve data.
+ *    -# Verify memory error in eos_CleanUpColdCurveRecordType1 was fixed
  *
  *  See SourceForge issues
  *  <a href="https://tf.lanl.gov/sf/go/artf3926">artf3926</a>

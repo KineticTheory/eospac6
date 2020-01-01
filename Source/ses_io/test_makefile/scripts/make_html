@@ -18,6 +18,7 @@ BEGIN {
   GetOptions($options,
 	     "--xml",
 	     "--compiler_info_file=s",
+	     "--preamble=s",
 	     "--test_times_file=s",
 	     "--verbose",
 	     "--totaltests=i",
@@ -102,19 +103,25 @@ $docType
 <style type="text/css">
 <!--
 body {
-  background-color: #FFFFCC;
-  background: rgb(222,224,236);
+  background-color: #FFFFFF;
 }
 div#main {
 }
 div#summary_table_style {
   font-size: large;
-  border-left: thin solid #000000;
-  border-bottom: thin solid #000000;
+  border: thin solid #000000;
   float: right;
-  padding: 0.25em 0.25em 1em 1em;
+  padding: 1em;
   margin: 0 0 0 0;
-  background: rgb(222,224,236);
+  background-color: #FFFFFF;
+}
+div#preamble {
+  font-size: large;
+  border: thin solid #000000;
+  float: right;
+  padding: 1em;
+  margin: 0 0 0 0;
+  background-color: #FFFFFF;
 }
 div#item_list {
   background-color: #FFFFFF;
@@ -154,9 +161,11 @@ div#item_list {
   padding: 0.25em;
 }
 .logo {
-  background: url('https://sf4.lanl.gov/sf/wiki/do/viewAttachment/projects.eospac6/wiki/\$ProjectHome/project_logo.jpg') no-repeat top right;
+ /*
+  background: url('https://tf.lanl.gov/sf/page/do/viewImage/projects.eospac6?id=atch18174') no-repeat top right;
   height: 100px;
   line-height:33px;
+ */
 }
 \@media print {
   .red_item { color: #FF0000; }
@@ -232,7 +241,7 @@ while (<>) {
       else {
 	($result, $name, $other) = split(/[\s:,]+/, $_, 3);
 	$fcmp_options = "";
-	$fcmp_options = $1 if ($other =~ s/\(fcmp\s+options:\s+(.+)\)[\s,]*//);
+	$fcmp_options = $1 if ($other =~ s/\(fcmp\s+options:\s+([^\)]+)\)[\s,]*//);
 	$note = $other;
 	$item_list_section .= "\t<test>\n";
 	$item_list_section .= "\t\t<name>$name</name>\n";
@@ -255,7 +264,7 @@ while (<>) {
 	} else {
 	  ($result, $name, $other) = split(/[\s:,]+/, $_, 3);
 	  $fcmp_options = "";
-	  $fcmp_options = $1 if ($other =~ s/\(fcmp\s+options:\s+(.+)\)[\s,]*//);
+	  $fcmp_options = $1 if ($other =~ s/\(fcmp\s+options:\s+([^\)]+)\)[\s,]*//);
 	  $note = $other;
 	  $item_list_section .= "\t<test>\n";
 	  $item_list_section .= "\t\t<name>$name</name>\n";
@@ -279,7 +288,7 @@ while (<>) {
 	} else {
 	  ($result, $name, $other) = split(/[\s:,]+/, $_, 3);
 	  $fcmp_options = "";
-	  $fcmp_options = $1 if ($other =~ s/\(fcmp\s+options:\s+(.+)\)[\s,]*//);
+	  $fcmp_options = $1 if ($other =~ s/\(fcmp\s+options:\s+([^\)]+)\)[\s,]*//);
 	  $note = $other;
 	  $item_list_section .= "\t<test>\n";
 	  $item_list_section .= "\t\t<name>$name</name>\n";
@@ -304,7 +313,7 @@ while (<>) {
 	} else {
 	  ($result, $name, $other) = split(/[\s:,]+/, $_, 3);
 	  $fcmp_options = "";
-	  $fcmp_options = $1 if ($other =~ s/\(fcmp\s+options:\s+(.+)\)[\s,]*//);
+	  $fcmp_options = $1 if ($other =~ s/\(fcmp\s+options:\s+([^\)]+)\)[\s,]*//);
 	  $note = $other;
 	  $item_list_section .= "\t<test>\n";
 	  $item_list_section .= "\t\t<name>$name</name>\n";
@@ -346,16 +355,24 @@ if (! $options->{"xml"}) {
 
   print "$logo_section";
 
+  if ($options->{"preamble"}) {
+    print LOG "$0 INFO: write the specified preamble\n" if ($options->{"verbose"});
+    print "<div id='preamble'><!-- PREAMBLE DIV BLOCK -->\n";
+    print "<div class='border_bottom_item'><b>PREAMBLE</b></div>\n";
+    print $options->{"preamble"},"\n";
+    print "</div><!-- PREAMBLE DIV BLOCK -->\n\n";
+  }
+
   print "$main_section";
 
   print "<div id='summary_table_style'><!-- SUMMARY DIV BLOCK -->\n\n";
 
-  print "<div class='extra_pad border_bottom_item'><b>SUMMARY</b></div>\n";
-  print "<div class='extra_pad green_item'>Passed: $items_passed</div>\n";
-  print "<div class='extra_pad red_item'>Failed: $items_failed</div>\n";
-  print "<div class='extra_pad yellow_item'>Ignored: $items_ignored</div>\n";
-  print "<div class='extra_pad gray_item'>Excluded: $items_excluded</div>\n";
-  print "<div class='extra_pad'>Total: ",($items_failed + $items_passed + $items_ignored + $items_excluded),"</div>\n\n";
+  print "<div class='border_bottom_item'><b>SUMMARY</b></div>\n";
+  print "<div class='green_item'>Passed: $items_passed</div>\n";
+  print "<div class='red_item'>Failed: $items_failed</div>\n";
+  print "<div class='yellow_item'>Ignored: $items_ignored</div>\n";
+  print "<div class='gray_item'>Excluded: $items_excluded</div>\n";
+  print "<div>Total: ",($items_failed + $items_passed + $items_ignored + $items_excluded),"</div>\n\n";
 
   print "</div><!-- SUMMARY DIV BLOCK -->\n\n";
 
@@ -373,9 +390,10 @@ else {
 
   $environment = "";
   foreach my $var (sort keys %ENV) {
-    next if $var eq "EXE" || $var eq "MAKEFLAGS";
+    next if $var eq "EXE" || $var eq "MAKEFLAGS" || $var eq "HELP_ADDENDUM";
     $environment .= "${var}=" . $ENV{$var} . "\n";
   }
+
   $environment .= "EXE=" . $ENV{'EXE'} . "\n";
   $environment .= "MAKEFLAGS=" . $ENV{'MAKEFLAGS'} . "\n";
   chomp($environment);

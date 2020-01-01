@@ -10,6 +10,7 @@
 #include <stdlib.h>
 
 #undef DEBUG_SES_GET_COMMENTS
+#undef DEBUG_PRINT
 
 ses_error_flag ses_get_comments(ses_file_handle the_handle, ses_string* the_string) {
 
@@ -34,7 +35,7 @@ ses_error_flag ses_get_comments(ses_file_handle the_handle, ses_string* the_stri
   int i = 0;
   int j = 0;
   ses_error_flag didit_setup = SES_NO_ERROR;
-  ses_error_flag didit_get_comments = SES_NO_ERROR;
+  /* ses_error_flag didit_get_comments = SES_NO_ERROR; */
   ses_string the_new_string = malloc(sizeof(char) * 1);   /*  start with '\0' */
 
   strcpy(the_new_string, "");
@@ -51,7 +52,7 @@ ses_error_flag ses_get_comments(ses_file_handle the_handle, ses_string* the_stri
 		/*  get the comments from that table */
 
 		local_string[0] = (ses_string)NULL;
-		didit_get_comments = ses_comments(the_handle, local_string);
+		/* didit_get_comments = */ ses_comments(the_handle, local_string);
 #ifdef DEBUG_SES_GET_COMMENTS
 		printf("for table %d local_string is %s\n", i, local_string[0]);
 #endif

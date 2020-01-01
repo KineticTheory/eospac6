@@ -1,0 +1,92 @@
+#-*-makefile-*-###################################################
+#  
+#  Copyright -- see file named COPYRIGHTNOTICE
+#  
+##################################################################
+### This file contains the following:                          ###
+### Platform-dependent system configuration for an ARCH value  ###
+### containing the following pattern:                          ###
+###    *dec-osf
+###                                                            ###
+### The purpose of this file is                                ###
+###    - define various associative arrays                     ###
+###    - define ALT_SUBDIR                                     ###
+###    - optionally redefine ARCH                              ###
+##################################################################
+#
+# GMSL function dependencies exist (see $(BASEDIR)/config/gmsl).
+#
+# Compaq Alpha and OSF
+
+##################################################################
+# Compiler suite configurations based upon F90                 ###
+##################################################################
+# Default: use the first F90 compiler found from F90_List
+F90_List = f90
+F90_Found_List = $(foreach compiler,$(F90_List),$(call pathsearch,$(compiler)))
+F90 = $(firstword $(notdir $(F90_Found_List)))
+ifeq ($(strip $(F90))$(strip $(F90_Found_List)),)
+  $(error No supported Fortran compiler was found in your PATH for this machine. (supported: $(F90_List)))
+endif
+
+##################################################################
+### Assign values to associative arrays, which hold C, C++ and ###
+### F77 compiler names in preferential order according to      ###
+### the possible values of $(F90).                             ###
+##################################################################
+$(call set,_CC,f90, cc )   # DEC
+
+$(call set,_CXX,f90,cxx)   # DEC
+
+$(call set,_F77,f90,f77)   # DEC
+
+##################################################################
+### Define CC, CXX and  F77 according to $(F90).               ###
+##################################################################
+CC  = $(firstword $(foreach compiler,$(call get,_CC,$(F90_Key)),$(call pathsearch,$(compiler))))
+CXX = $(firstword $(foreach compiler,$(call get,_CXX,$(F90_Key)),$(call pathsearch,$(compiler))))
+F77 = $(firstword $(foreach compiler,$(call get,_F77,$(F90_Key)),$(call pathsearch,$(compiler))))
+
+##################################################################
+### Define selected variable values according to $(F90).       ###
+##################################################################
+ifeq ($(strip $(F90)),f90)
+  ALT_SUBDIR := $(shell $(BASEDIR)/scripts/define_module_subdir $(F90))
+endif
+
+##################################################################
+### Assign values to associative arrays, which hold various    ###
+### compiler options -- specific to this architecture.         ###
+##################################################################
+#
+### VERSION_FLAG{$CC} = $flag
+$(call set,VERSION_FLAG,cc,-V)   # DEC C
+#
+### VERSION_FLAG{$CXX} = $flag
+$(call set,VERSION_FLAG,cxx,-V)   # DEC C++
+#
+### VERSION_FLAG{$F77} = $flag
+$(call set,VERSION_FLAG,f77,-version)   # DEC F77
+#
+### VERSION_FLAG{$F90_Key} = $flag
+$(call set,VERSION_FLAG,f90,-version)   # DEC F90
+#
+### _COMP_FLAGS{$CC} = $flag
+#
+### _COMP_FLAGS{$CXX} = $flag
+#
+### _COMP_FLAGS{$F77} = $flag
+#
+### _COMP_FLAGS{$F90_Key} = $flag
+
+# define define_module_subdir script options
+$(call set,_DEFINE_MODULE_SUBDIR_FLAGS,f90,$(F90_Key))   # DEC F90
+
+# define selected variable values according to $(F90_Key).
+ALT_SUBDIR := $(shell $(BASEDIR)/scripts/define_module_subdir $(call get,_DEFINE_MODULE_SUBDIR_FLAGS,$(F90_Key)))
+
+# Set additional compiler-specific options
+_CFLAGS += $(call get,_COMP_FLAGS,$(CC))
+_CXXFLAGS += $(call get,_COMP_FLAGS,$(CXX))
+_FFLAGS += $(call get,_COMP_FLAGS,$(F77))
+_F90FLAGS += $(call get,_COMP_FLAGS,$(F90))

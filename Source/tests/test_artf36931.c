@@ -25,6 +25,9 @@
 #include "eos_Interface.h"
 #include "unistd.h"
 
+/* prototype defined in src/eos_Utils.proto.h, and function declared in src/eos_Utils.c */
+EOS_BOOLEAN _eos_fileExistsAndValid (EOS_CHAR * filename);
+
 int main ()
 {
   EOS_INTEGER err1, err2;
@@ -37,13 +40,12 @@ int main ()
   EOS_INTEGER matid;
   EOS_CHAR filename[100];
   EOS_CHAR *symlinkname2 = "./sesameu";
-  EOS_CHAR tmp[100];
+  EOS_CHAR tmp[200];
   EOS_CHAR errorMessage[EOS_MaxErrMsgLen];
   EOS_CHAR infoString[EOS_META_DATA_STRLEN];
 
-  int i, k, count;
+  int i, count;
 
-  EOS_BOOLEAN lexist;
   EOS_BOOLEAN equal;
 
   ntables = 2;
@@ -215,6 +217,8 @@ int main ()
   }
 
   printf("\n%2i %s\n", count, "tests passed");
+
+  eos_DestroyAll (&err1);
 
   return(0);
 }

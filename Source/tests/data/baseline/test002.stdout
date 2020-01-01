@@ -136,7 +136,7 @@ Ideal Gas Model,  forced,  data exists
 --- Load data ---
 --- Interpolate using tableType EOS_Pic_DT for material 2140 ---
 	i=0	X = 3.000000e+02, Y = 2.000000e+02, F = 1.126327e+06, dFx = 7.914291e+03, dFy = -5.401688e-07
-	i=1	X = 6.000000e+02, Y = 6.200000e+04, F = 4.681749e+06, dFx = 1.563900e+04, dFy = 8.932289e-02
+	i=1	X = 6.000000e+02, Y = 6.200000e+04, F = 4.681749e+06, dFx = 1.563900e+04, dFy = 8.932276e-02
 	i=2	X = 8.200000e+03, Y = 4.000000e+02, F = 6.470941e+08, dFx = 1.439629e+05, dFy = 0.000000e+00
 	i=3	X = 8.300000e+02, Y = 2.000000e+03, F = 8.909732e+06, dFx = 2.112739e+04, dFy = 5.430660e-04
 
@@ -174,6 +174,6 @@ Number Proportional Model,  forced,  data exists
 --- Load data ---
 --- Interpolate using tableType EOS_Pic_DT for material 2140 ---
 	i=0	X = 3.000000e+02, Y = 2.000000e+02, F = 1.126327e+06, dFx = 7.914291e+03, dFy = -5.401688e-07
-	i=1	X = 6.000000e+02, Y = 6.200000e+04, F = 4.686865e+06, dFx = 1.564419e+04, dFy = 2.070378e-01
+	i=1	X = 6.000000e+02, Y = 6.200000e+04, F = 4.686865e+06, dFx = 1.564419e+04, dFy = 2.070377e-01
 	i=2	X = 8.200000e+03, Y = 4.000000e+02, F = 6.470941e+08, dFx = 1.439629e+05, dFy = 0.000000e+00
 	i=3	X = 8.300000e+02, Y = 2.000000e+03, F = 8.909732e+06, dFx = 2.112739e+04, dFy = 5.430660e-04

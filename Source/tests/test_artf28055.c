@@ -56,7 +56,7 @@ void test_ses_write_comments(ses_file_type the_type) {
   ses_open_type wopen_flag = 'W';
   
   ses_file_handle wHandle = ses_open(filename, wopen_flag);
-  ses_set_format(wHandle, the_type);
+  ses_set_format(2, wHandle, the_type);
   
   /*  setup the file for writing */
 
@@ -206,11 +206,11 @@ ses_boolean test_ses_comments() {
   printf("TEST:  after open, the_handle is %d\n", the_handle);
 
   ses_table_id tid;
+  the_string= malloc(sizeof(ses_string)*1);
   for ( tid = 101; tid < 200; tid++) {
 
     ses_setup(the_handle, mid, tid);
 
-    the_string= malloc(sizeof(ses_string)*1);
     *the_string = (ses_string)NULL;
     the_error_flag = ses_comments(the_handle, the_string);
     if (the_error_flag == SES_NO_ERROR) {
@@ -272,11 +272,11 @@ ses_boolean test_ses_read_next() {
   printf("TEST:  after open, the_handle is %d\n", the_handle);
 
   ses_table_id tid;
+  the_string= malloc(sizeof(ses_string)*1);
   for ( tid = 101; tid < 200; tid++) {
 
     ses_setup(the_handle, mid, tid);
 
-    the_string= malloc(sizeof(ses_string)*1);
     *the_string = (ses_string)NULL;
     the_error_flag = SES_NO_ERROR;
     ses_word_reference the_buffer = ses_read_next(the_handle);
@@ -366,6 +366,8 @@ EOS_BOOLEAN test_eos_GetTableCmnts() {
     free(cmntStr);
     cmntStr = (EOS_CHAR*)NULL;
   }
+
+  eos_DestroyAll(&err);
 
   return (err == EOS_OK);
 

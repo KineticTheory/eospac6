@@ -110,8 +110,8 @@ ses_error_flag ses_write_next(ses_file_handle the_handle, ses_word_reference the
   }
 
   /*  Here, we're good to go */
-  FILE* pFILE = 0;
-  pFILE = _getPFILE(FILE_LIST[the_handle]->_the_handle);
+  /* FILE* pFILE = 0; */
+  /* pFILE = */ _getPFILE(FILE_LIST[the_handle]->_the_handle);
 
 
   long current = pIT->_current_array;
@@ -174,10 +174,10 @@ ses_error_flag ses_write_next(ses_file_handle the_handle, ses_word_reference the
   }
   
 
-  long nsig = 0;
-  nsig = FILE_LIST[the_handle]->_the_setup->_significant_digits;
-  ses_boolean do_valid = SES_FALSE;
-  do_valid = FILE_LIST[the_handle]->_the_setup->_do_validation;
+  /* long nsig = 0; */
+  /* nsig = FILE_LIST[the_handle]->_the_setup->_significant_digits; */
+  /* ses_boolean do_valid = SES_FALSE; */
+  /* do_valid = FILE_LIST[the_handle]->_the_setup->_do_validation; */
 
 
 

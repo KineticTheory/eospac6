@@ -15,7 +15,13 @@ JNIEXPORT jint JNICALL Java_MySesIO_SesIO_SesSetArrayOrder(JNIEnv *env, jobject 
   ses_error_flag return_value = SES_NO_ERROR;
 
   ses_file_handle handle = (ses_file_handle)jhandle;
-  char the_order = (char)the_order;
+
+    /* 20 Apr 2016, I believe the line of code below is a typo
+     
+     char the_order = (char)the_order;
+     
+     and it should be: */
+    char the_order = (char)jorder;
 
 #ifdef DEBUG_WRAP
   printf("SesSetArrayOrder.c:  the_handle is %d\n", handle);

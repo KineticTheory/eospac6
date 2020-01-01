@@ -25,13 +25,5 @@
 # Sesame test data file containing little endian version of material 3720
 ../tests/data/93270littlebin
 
-# ses003721 test data file list
-../tests/data/ses003721
-
-# ses003722 test data file list
-../tests/data/ses003722
-
-data/ses3720_taylor
-data/sesame.993716.bin
-data/sesame.993716.bin
-data/zr_bin.2.mod
+# ses003720 test data file list
+../tests/data/ses003720

@@ -8,7 +8,7 @@
 !********************************************************************
 
 !> @file
-!! @ingroup tests
+!! @ingroup Fortran2003 tests
 !! @brief Ensure the new EOS_CREATE_TZERO option works as expected.
 !!        See SourceForge© Issue #artf22354 for more details:
 !!        https://tf.lanl.gov/sf/go/artf22354
@@ -27,7 +27,7 @@ program testartf22354
   matid = 5030
   tabletype(1) =  EOS_At_DT
   tabletype(2) =  EOS_Ut_DT
-  tabletype(3) =  EOS_At_DT
+  tabletype(3) =  EOS_St_DT
   tabletype(4) =  EOS_St_DT ! EOS_CREATE_TZERO option enabled
   tabletype(5) =  EOS_At_DT
   tabletype(6) =  EOS_At_DT ! EOS_CREATE_TZERO option enabled
@@ -78,11 +78,13 @@ program testartf22354
         call eos_GetErrorCode ( th(i), err )
         call eos_GetErrorMessage ( err, errorMessage )
         if (err /= EOS_OK) then
-           write(*,'(a,i1,a,i4,2a)') '  TH ', th(i), ', eos_LoadTables ERROR ', err, ': ', &
+           write(*,'(a,i1,a,i6,2a)') '  TH ', th(i), ', eos_LoadTables ERROR ', err, ': ', &
                                      errorMessage(1:(len_trim(errorMessage)-1))
         endif
      enddo
   endif
+
+  call eos_DestroyAll (err)
 
 end program testartf22354
 

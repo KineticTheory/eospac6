@@ -1019,7 +1019,7 @@ struct json_expression* resolve_value(struct json_expression* the_expression, ch
 	}
 
 	return return_value;
-};
+}
 
 
 int get_value(struct json_expression* the_expression) {

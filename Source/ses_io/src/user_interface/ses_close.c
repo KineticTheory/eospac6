@@ -4,9 +4,10 @@
 #include "ses_externs.h"
 #include "ses_internals.h"
 
+#undef DEBUG_PRINT
+
 #define my_get_data_as_1d HEADER(my_get_data_as_1d)
 #define my_ses_close HEADER(my_ses_close)
-
 
 
 ses_error_flag ses_close(ses_file_handle the_handle) {
@@ -93,6 +94,7 @@ ses_error_flag my_ses_close(ses_file_handle the_handle) {
 
       /*  if the current data record has stuff in it, move it to the material_file */
 
+
       if (FILE_LIST[the_handle]->_the_setup->_setup_complete == SES_FALSE) {
 #ifdef DEBUG_PRINT
         printf("my_ses_close:  for W:  setup not complete \n");
@@ -130,8 +132,8 @@ ses_error_flag my_ses_close(ses_file_handle the_handle) {
           _releasePFILE(FILE_LIST[the_handle]->_the_handle);
           _set_latest_error(SES_NO_DATA_ERROR);
 
-           ses_boolean destructo = SES_FALSE;
-           destructo = _destruct_ses_data_record(FILE_LIST[the_handle]->_current_data_record);
+           /* ses_boolean destructo = SES_FALSE; */
+           /* destructo = */ _destruct_ses_data_record(FILE_LIST[the_handle]->_current_data_record);
            free(FILE_LIST[the_handle]->_current_data_record);
            FILE_LIST[the_handle]->_current_data_record = (struct _ses_data_record*)NULL;
 
@@ -211,8 +213,8 @@ ses_error_flag my_ses_close(ses_file_handle the_handle) {
 
           }
 
-          ses_boolean didit_set = SES_FALSE;
-          didit_set = _set_ready_to_write(FILE_LIST[the_handle]->FILE_TO_WRITE);
+          /* ses_boolean didit_set = SES_FALSE; */
+          /* didit_set = */ _set_ready_to_write(FILE_LIST[the_handle]->FILE_TO_WRITE);
 
         }
 
@@ -317,9 +319,33 @@ ses_error_flag my_ses_close(ses_file_handle the_handle) {
 
   _releasePFILE(FILE_LIST[the_handle]->_the_handle);
 
-  if (the_handle == _next_empty_file - 1) {
-    ses_exit();
+  _number_open_handles--;
+
+#ifdef DEBUG_PRINT
+	      printf("my_ses_close end of my_ses_close:  the_handle is %d _next_empty_file is %d\n", the_handle, _next_empty_file);
+#endif
+
+
+    //  on ses_close, destroy the memory on the handle (to avoid conflicts when reopening a file for read that has just been written
+
+    ses_boolean didit = _destruct_ses_file(FILE_LIST[the_handle]); 
+    if (FILE_LIST[the_handle] != NULL) {
+       free(FILE_LIST[the_handle]);
+       FILE_LIST[the_handle] = (struct _ses_file*)NULL;
+    }
+    if (didit == SES_FALSE) {
+#ifdef DEBUG_PRINT
+          printf("my_ses_close: Unsuccessful destruction of ses_file on ses_close\n");
+#endif	
+	
+    }
+	
+
+  if (_number_open_handles <= 0) {
+	ses_exit();
   }
+
+
 
   return return_value;
 }

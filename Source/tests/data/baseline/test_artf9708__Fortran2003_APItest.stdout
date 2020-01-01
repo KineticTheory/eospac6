@@ -14,10 +14,10 @@ EOS_Ut_DT   Interpolation Results:
 --- Interpolate using tableType EOS_Pt_DUt  ---
 EOS_Pt_DUt  Interpolation Results:
 eos_Interpolate ERROR  22008 (TH= 1): EOS_INTERP_EXTRAPOLATED: Interpolation caused extrapolation beyond data table boundaries
-    i= 0    X = 3.000000E+03, Y = 2.000000E+04, F = 1.042636E+08, dFx = 6.419503E+04, dFy = 4.920811E+00, errorCode:  22008
-    i= 1    X = 6.000000E+03, Y = 6.200000E+05, F = 2.511515E+09, dFx = 4.329750E+05, dFy = 3.911462E+03, errorCode:  22008
-    i= 2    X = 8.200000E+03, Y = 4.000000E+06, F = 2.183123E+10, dFx = 2.698645E+06, dFy = 5.451344E+03, errorCode:  22008
-    i= 3    X = 8.300000E+03, Y = 2.000000E+08, F = 1.106305E+12, dFx = 1.327998E+08, dFy = 5.531758E+03, errorCode:  22008
+    i= 0    X = 3.000000E+03, Y = 2.000000E+04, F = 1.042636E+08, dFx = 6.419503E+04, dFy = 4.920811E+00, errorCode:   2026
+    i= 1    X = 6.000000E+03, Y = 6.200000E+05, F = 2.511515E+09, dFx = 4.329750E+05, dFy = 3.911462E+03, errorCode:      0
+    i= 2    X = 8.200000E+03, Y = 4.000000E+06, F = 2.183123E+10, dFx = 2.698645E+06, dFy = 5.451344E+03, errorCode:      0
+    i= 3    X = 8.300000E+03, Y = 2.000000E+08, F = 1.106305E+12, dFx = 1.327998E+08, dFy = 5.531758E+03, errorCode:   2030
   
 --- Interpolate using tableType EOS_Pt_DT   ---
 EOS_Pt_DT   Interpolation Results:
@@ -29,10 +29,10 @@ EOS_Pt_DT   Interpolation Results:
 --- Interpolate using tableType EOS_T_DUt   ---
 EOS_T_DUt   Interpolation Results:
 eos_Interpolate ERROR  42008 (TH= 3): EOS_INTERP_EXTRAPOLATED: Interpolation caused extrapolation beyond data table boundaries
-    i= 0    X = 3.000000E+03, Y = 2.000000E+04, F = 0.000000E+00, dFx =-3.229793E+08, dFy = 2.786911E+07, errorCode:  42008
-    i= 1    X = 6.000000E+03, Y = 6.200000E+05, F = 1.060682E+08, dFx = 6.298476E+01, dFy = 1.648372E+02, errorCode:  42008
-    i= 2    X = 8.200000E+03, Y = 4.000000E+06, F = 6.370044E+08, dFx =-7.716651E+04, dFy = 1.580231E+02, errorCode:  42008
-    i= 3    X = 8.300000E+03, Y = 2.000000E+08, F = 3.131401E+10, dFx =-3.781528E+06, dFy = 1.565582E+02, errorCode:  42008
+    i= 0    X = 3.000000E+03, Y = 2.000000E+04, F = 0.000000E+00, dFx =-3.229793E+08, dFy = 2.786911E+07, errorCode:   2026
+    i= 1    X = 6.000000E+03, Y = 6.200000E+05, F = 1.060682E+08, dFx = 6.298476E+01, dFy = 1.648372E+02, errorCode:      0
+    i= 2    X = 8.200000E+03, Y = 4.000000E+06, F = 6.370044E+08, dFx =-7.716651E+04, dFy = 1.580231E+02, errorCode:      0
+    i= 3    X = 8.300000E+03, Y = 2.000000E+08, F = 3.131401E+10, dFx =-3.781528E+06, dFy = 1.565582E+02, errorCode:   2030
   
 --- Interpolate using tableType EOS_Gs_D    ---
 EOS_Gs_D    Interpolation Results:
@@ -59,10 +59,10 @@ EOS_Ut_DT   Interpolation Results:
 --- Interpolate using tableType EOS_Pt_DUt  ---
 EOS_Pt_DUt  Interpolation Results:
 eos_Interpolate ERROR  92008 (TH= 8): EOS_INTERP_EXTRAPOLATED: Interpolation caused extrapolation beyond data table boundaries
-    i= 0    X = 3.000000E+03, Y = 2.000000E+04, F = 1.042636E+08, dFx = 6.419503E+04, dFy = 4.920811E+00, errorCode:  92008
-    i= 1    X = 6.000000E+03, Y = 6.200000E+05, F = 2.511515E+09, dFx = 4.329750E+05, dFy = 3.911462E+03, errorCode:  92008
-    i= 2    X = 8.200000E+03, Y = 4.000000E+06, F = 2.183123E+10, dFx = 2.698645E+06, dFy = 5.451344E+03, errorCode:  92008
-    i= 3    X = 8.300000E+03, Y = 2.000000E+08, F = 1.106305E+12, dFx = 1.327998E+08, dFy = 5.531758E+03, errorCode:  92008
+    i= 0    X = 3.000000E+03, Y = 2.000000E+04, F = 1.042636E+08, dFx = 6.419503E+04, dFy = 4.920811E+00, errorCode:   2026
+    i= 1    X = 6.000000E+03, Y = 6.200000E+05, F = 2.511515E+09, dFx = 4.329750E+05, dFy = 3.911462E+03, errorCode:      0
+    i= 2    X = 8.200000E+03, Y = 4.000000E+06, F = 2.183123E+10, dFx = 2.698645E+06, dFy = 5.451344E+03, errorCode:      0
+    i= 3    X = 8.300000E+03, Y = 2.000000E+08, F = 1.106305E+12, dFx = 1.327998E+08, dFy = 5.531758E+03, errorCode:   2030
   
 --- Interpolate using tableType EOS_Pt_DT   ---
 EOS_Pt_DT   Interpolation Results:
@@ -74,10 +74,10 @@ EOS_Pt_DT   Interpolation Results:
 --- Interpolate using tableType EOS_T_DUt   ---
 EOS_T_DUt   Interpolation Results:
 eos_Interpolate ERROR 112008 (TH=10): EOS_INTERP_EXTRAPOLATED: Interpolation caused extrapolation beyond data table boundaries
-    i= 0    X = 3.000000E+03, Y = 2.000000E+04, F = 0.000000E+00, dFx =-3.229793E+08, dFy = 2.786911E+07, errorCode: 112008
-    i= 1    X = 6.000000E+03, Y = 6.200000E+05, F = 1.060682E+08, dFx = 6.298476E+01, dFy = 1.648372E+02, errorCode: 112008
-    i= 2    X = 8.200000E+03, Y = 4.000000E+06, F = 6.370044E+08, dFx =-7.716651E+04, dFy = 1.580231E+02, errorCode: 112008
-    i= 3    X = 8.300000E+03, Y = 2.000000E+08, F = 3.131401E+10, dFx =-3.781528E+06, dFy = 1.565582E+02, errorCode: 112008
+    i= 0    X = 3.000000E+03, Y = 2.000000E+04, F = 0.000000E+00, dFx =-3.229793E+08, dFy = 2.786911E+07, errorCode:   2026
+    i= 1    X = 6.000000E+03, Y = 6.200000E+05, F = 1.060682E+08, dFx = 6.298476E+01, dFy = 1.648372E+02, errorCode:      0
+    i= 2    X = 8.200000E+03, Y = 4.000000E+06, F = 6.370044E+08, dFx =-7.716651E+04, dFy = 1.580231E+02, errorCode:      0
+    i= 3    X = 8.300000E+03, Y = 2.000000E+08, F = 3.131401E+10, dFx =-3.781528E+06, dFy = 1.565582E+02, errorCode:   2030
   
 --- Interpolate using tableType EOS_Comment ---
 EOS_Comment Interpolation Results:

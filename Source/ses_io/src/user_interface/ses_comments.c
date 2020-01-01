@@ -9,6 +9,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#define _is_valid_tid_for_comments HEADER(_is_valid_tid_for_comments)
+
+
 ses_error_flag ses_comments(ses_file_handle the_handle, ses_string* the_string) {
 
   /*  at the current file location, read a 1D array of char's and 
@@ -102,16 +105,11 @@ ses_error_flag ses_comments(ses_file_handle the_handle, ses_string* the_string) 
   }
 
   long dim = 0;
-  if (pSFH->_filetype != 'A') {
+  if (pSFH->_filetype != ASCII_TYPE) {
   	dim = _get_table_size(pIR, the_tid)*8;
   }
   else {
-#define DEBUG_ASCII
-#ifdef DEBUG_ASCII
   	dim = _get_table_size(pIR, the_tid);	
-#else
-  	dim = _get_table_size(pIR, the_tid) * 8;
-#endif
   }
 
 
@@ -151,10 +149,8 @@ ses_error_flag ses_comments(ses_file_handle the_handle, ses_string* the_string) 
 
   int i;
 
-#define FIX_80_COLUMN_ASCII
-#ifdef FIX_80_COLUMN_ASCII
 
-  if (pSFH->_filetype == 'A') {
+  if (pSFH->_filetype == ASCII_TYPE) {
   	char tmp;
   	int index = 0;
   	int number_lines = (dim/80) + 1;
@@ -182,17 +178,6 @@ ses_error_flag ses_comments(ses_file_handle the_handle, ses_string* the_string) 
   	the_new_string[dim] = '\0';
   }
 	
-#else
-
-  char tmp;
-  for (i=0; i < dim ; i++) {
-
-    tmp = pSFH->pt2_read_char(pFILE);
-    the_new_string[i] = tmp;
-    
-  }
-  the_new_string[dim] = '\0';
-#endif
 
 
   *the_string = the_new_string;

@@ -1,0 +1,24 @@
+--- TEST 0
+eos_SetOption PASS 0: TH=0 
+eos_SetOption ERROR 12031: TH=0 EOS_INVALID_OPTION_FLAG: The option flag passed into eos_SetOption() is invalid because it conflicts a previously-set value of EOS_PT_SMOOTHING
+
+--- TEST 1
+eos_SetOption PASS 0: TH=1 
+eos_SetOption ERROR 22031: TH=1 EOS_INVALID_OPTION_FLAG: The option flag passed into eos_SetOption() is invalid because it conflicts a previously-set value of EOS_PT_SMOOTHING
+
+--- TEST 2
+eos_SetOption PASS 0: TH=2 
+eos_SetOption ERROR 32031: TH=2 EOS_INVALID_OPTION_FLAG: The option flag passed into eos_SetOption() is invalid because it conflicts a previously-set value of EOS_MONOTONIC_IN_X, EOS_MONOTONIC_IN_Y, EOS_SMOOTH or EOS_INVERT_AT_SETUP
+
+--- TEST 3
+eos_SetOption PASS 0: TH=3 
+eos_SetOption PASS 0: TH=3 
+
+--- TEST 4
+eos_SetOption PASS 0: TH=4 
+eos_SetOption PASS 0: TH=4 
+
+--- TEST 5
+eos_SetOption PASS 0: TH=5 
+eos_SetOption PASS 0: TH=5 
+

@@ -45,8 +45,8 @@ ses_error_flag ses_write_pairs(ses_file_handle the_handle, ses_word_reference bu
     pairs[2*i+1] = buf2[i]; 
   }
 
-  ses_error_flag write_error = SES_FALSE;
-  write_error = ses_write_next(the_handle, pairs, dim, "no_label");
+  /* ses_error_flag write_error = SES_FALSE; */
+  /* write_error = */ ses_write_next(the_handle, pairs, dim, "no_label");
 
 
   free(pairs);

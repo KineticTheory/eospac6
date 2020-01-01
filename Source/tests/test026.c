@@ -142,6 +142,9 @@ int main(){
   for(i=0;i<no_vals;i++){
     printf("interpolated value is %g, derivative x is %g, derivative y is %g \n", fVals[i], dFx[i], dFy[i]); 
   }
+
+  eos_DestroyAll (&error);
+
   return 0;
 }
 

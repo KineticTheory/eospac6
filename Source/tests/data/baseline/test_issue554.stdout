@@ -1,0 +1,22 @@
+--- Initialize ---
+--- Set EOS_INSERT_DATA option: type=1002, nInsert=1.000000 ---
+     1. EOS_Comment (table #101) for material 5030 with EOS_INSERT_DATA=1 option ***
+        Descriptive Comments
+     2. EOS_Info (table #201) for material 5030 with EOS_INSERT_DATA=1 option ***
+        Atomic Number, Atomic Mass, Normal Density, Solid Bulk Modulus, Exchange Coefficient
+     3. EOS_Pt_DT (table #301) for material 5030 with EOS_INSERT_DATA=1 option ***
+        Total Pressure (GPa) (Density (Mg/m^3)- and Temperature (K)-dependent)
+     4. EOS_Ut_DT (table #301) for material 5030 with EOS_INSERT_DATA=1 option ***
+        Total Specific-Internal-Energy (MJ/kg) (Density (Mg/m^3)- and Temperature (K)-dependent)
+     5. EOS_At_DT (table #301) for material 5030 with EOS_INSERT_DATA=1 option ***
+        Total Specific-Free-Energy (MJ/kg) (Density (Mg/m^3)- and Temperature (K)-dependent)
+     6. EOS_St_DT (table #301) for material 5030 with EOS_INSERT_DATA=1 option ***
+        Total Specific-Entropy (MJ/kg/K) (Density (Mg/m^3)- and Temperature (K)-dependent)
+--- Load data ---
+eos_LoadTables ERROR 62011: EOS_NO_DATA_TABLE: Data table, EOS_St_DT, is not in EOS table area and it could not be manufactured for table handle 5
+4: eos_LoadTables ERROR 52021: EOS_INVALID_TABLE_HANDLE: Invalid table handle because EOS_NO_DATA_TABLE: Data table, EOS_At_DT, is not in EOS table area and it could not be manufactured for table handle 4
+5: eos_LoadTables ERROR 62021: EOS_INVALID_TABLE_HANDLE: Invalid table handle because EOS_NO_DATA_TABLE: Data table, EOS_St_DT, is not in EOS table area and it could not be manufactured for table handle 5
+     1. EOS_Comment (table #101) for material 5030 with EOS_INSERT_DATA=1 option ***
+     2. EOS_Info (table #201) for material 5030 with EOS_INSERT_DATA=1 option ***
+     3. EOS_Pt_DT (table #301) for material 5030 with EOS_INSERT_DATA=1 option ***
+     4. EOS_Ut_DT (table #301) for material 5030 with EOS_INSERT_DATA=1 option ***

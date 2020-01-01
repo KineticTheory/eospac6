@@ -69,17 +69,6 @@ EOS_INTEGER _GET_CAT1_CAT0XREF(EOS_INTEGER t, EOS_INTEGER *tableType, EOS_INTEGE
 
 #define EOS_FREE(p) { assert(p != NULL); free(p); p=NULL; }
 
-void* safe_malloc(int bytes) {
-  void *p=NULL;
-  assert (p == NULL);
-  
-  p = malloc(bytes);
-  if (p == NULL) {
-    printf("safe_malloc failed to allocate %i bytes\n", bytes);
-    assert(p != NULL);
-  }
-  return p;
-}
 
 int main ()
 {
@@ -298,9 +287,9 @@ int main ()
     nXYPairs = NX[index] * NY[index];
 
     /* allocate memory */
-    X0[index] = (EOS_REAL *) safe_malloc (sizeof (EOS_REAL) * NX[index]);
-    Y0[index] = (EOS_REAL *) safe_malloc (sizeof (EOS_REAL) * NY[index]);
-    F0[index] = (EOS_REAL *) safe_malloc (sizeof (EOS_REAL) * nXYPairs);
+    X0[index] = (EOS_REAL *) safe_malloc (NX[index], sizeof (EOS_REAL));
+    Y0[index] = (EOS_REAL *) safe_malloc (NY[index], sizeof (EOS_REAL));
+    F0[index] = (EOS_REAL *) safe_malloc (nXYPairs, sizeof (EOS_REAL));
 
     if (! (X0[index] && Y0[index] && F0[index])) {
       printf ("Memory allocation error!\n");
@@ -394,11 +383,11 @@ int main ()
       assert(nXYPairs>0);
     }
 
-    Y = (EOS_REAL *) safe_malloc (sizeof (EOS_REAL) * nXYPairs);
-    F = (EOS_REAL *) safe_malloc (sizeof (EOS_REAL) * nXYPairs);
-    dFx = (EOS_REAL *) safe_malloc (sizeof (EOS_REAL) * nXYPairs);
-    dFy = (EOS_REAL *) safe_malloc (sizeof (EOS_REAL) * nXYPairs);
-    xyBounds = (EOS_INTEGER *) safe_malloc (sizeof (EOS_INTEGER) * nXYPairs);
+    Y = (EOS_REAL *) safe_malloc (nXYPairs, sizeof (EOS_REAL));
+    F = (EOS_REAL *) safe_malloc (nXYPairs, sizeof (EOS_REAL));
+    dFx = (EOS_REAL *) safe_malloc (nXYPairs, sizeof (EOS_REAL));
+    dFy = (EOS_REAL *) safe_malloc (nXYPairs, sizeof (EOS_REAL));
+    xyBounds = (EOS_INTEGER *) safe_malloc (nXYPairs, sizeof (EOS_INTEGER));
 
     if (! (Y && F && dFx && dFy && xyBounds)) {
       printf ("Memory allocation error!\n");

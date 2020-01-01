@@ -16,6 +16,7 @@
 #define _EOS_UTILS_INTERNAL_
 #define _EOS_UTILS_INTERNAL_PROTOTYPES
 #include "eos_types_internal.h"
+
 #include "eos_Utils.h"
 
 #ifndef _POSIX_
@@ -29,9 +30,85 @@
 #endif
 
 #include <ctype.h>
+
 #include "eos_Interpolation.h"
 
 static _EXCEPTIONS_T _exceptions; /* exclusively used in eos_Utils.c */
+
+/***********************************************************************/
+/*!
+ * \brief Find the right-most instance of *find in *string
+ *
+ * \param[in]     *string     - EOS_CHAR* : string to search
+ * \param[in]     *find       - EOS_CHAR* : string to find in *string
+ *
+ * \return        *cp         - EOS_CHAR* : pointer to start of *find within *string
+ *
+ ***********************************************************************/
+EOS_CHAR *
+strrstr (const EOS_CHAR * string, const EOS_CHAR * find)
+{
+  EOS_CHAR *cp;
+  int len1 = strlen (string);
+  int len2 = strlen (find);
+
+  for (cp = (EOS_CHAR *) string + MAX (0, len1 - len2); cp >= string; cp--)
+    {
+      if (strncmp (cp, find, len2) == 0)
+	return cp;
+    }
+  return NULL;
+}
+
+/*! *********************************************************************
+ *
+ * Function Name: _eos_ReplaceSubstring
+ * This routine will replace all instances of pattern found within original
+ * with replacement and return the modified string
+ *
+ ************************************************************************/
+EOS_CHAR* _eos_ReplaceSubstring( const EOS_CHAR *original, const EOS_CHAR *pattern, const EOS_CHAR *replacement )
+{
+  size_t const replen = strlen(replacement);
+  size_t const patlen = strlen(pattern);
+  size_t const orilen = strlen(original);
+
+  size_t patcnt = 0;
+  const EOS_CHAR * oriptr;
+  const EOS_CHAR * patloc;
+
+  // find how many times the pattern occurs in the original string
+  for (oriptr = original; ( patloc = strstr(oriptr, pattern) ) != NULL; oriptr = patloc + patlen)
+  {
+    patcnt++;
+  }
+
+  {
+    // allocate memory for the new string
+    size_t const retlen = orilen + patcnt * (replen - patlen);
+    EOS_CHAR * const returned = (EOS_CHAR *) malloc( sizeof(EOS_CHAR) * (retlen + 1) );
+
+    if (returned != NULL)
+    {
+      // copy the original string, 
+      // replacing all the instances of the pattern
+      EOS_CHAR * retptr = returned;
+      for (oriptr = original; ( patloc = strstr(oriptr, pattern) ) != NULL; oriptr = patloc + patlen)
+      {
+        size_t const skplen = patloc - oriptr;
+        // copy the section until the occurence of the pattern
+        strncpy(retptr, oriptr, skplen);
+        retptr += skplen;
+        // copy the replacement 
+        strncpy(retptr, replacement, replen);
+        retptr += replen;
+      }
+      // copy the rest of the string.
+      strcpy(retptr, oriptr);
+    }
+    return returned;
+  }
+}
 
 /*! *********************************************************************
  *
@@ -50,7 +127,7 @@ EOS_REAL _eos_round(EOS_REAL x, EOS_REAL p) {
   else 
     v = floor(v * f + 0.5) / f + IP;
 
- return v;
+  return v;
 }
 
 /*! *********************************************************************
@@ -102,20 +179,21 @@ EOS_INTEGER _eos_littleEndianMachine (void)
  * EOS_BOOLEAN bigEndianFile - is the associated data file big endian?
  *
  ************************************************************************/
-EOS_INTEGER _eos_byteSwap (EOS_CHAR *buf, EOS_INTEGER nwds, EOS_INTEGER wordSize,
-		      EOS_BOOLEAN bigEndianFile)
+EOS_INTEGER _eos_byteSwap (EOS_CHAR *buf, EOS_INTEGER nwds, EOS_INTEGER wordSize, EOS_BOOLEAN bigEndianFile)
 {
   EOS_INTEGER index, j;
   EOS_CHAR ctmp;
   EOS_BOOLEAN isLittleEndianMachine;
 
   isLittleEndianMachine = _eos_littleEndianMachine()?EOS_TRUE:EOS_FALSE;
-  if ((isLittleEndianMachine && bigEndianFile) ||
-      (! isLittleEndianMachine && ! bigEndianFile)) {
+  if ((isLittleEndianMachine && bigEndianFile) || (!isLittleEndianMachine && !bigEndianFile))
+    {
     /* convert Sesame data to either Big or Little Endian as needed */
     /* verify wordSize is evenly divisible by 2; otherwise return error */
-    if (! (wordSize > 0)) {
-      if ((EOS_INTEGER) fmod ((double) wordSize, (double) 2) == 0) {
+      if (!(wordSize > 0))
+	{
+	  if ((EOS_INTEGER) fmod ((double) wordSize, (double) 2) == 0)
+	    {
 #ifdef DEBUG
 	printf ("_eos_byteSwap error!\n");
 #endif
@@ -123,8 +201,10 @@ EOS_INTEGER _eos_byteSwap (EOS_CHAR *buf, EOS_INTEGER nwds, EOS_INTEGER wordSize
       }
     }
 
-    for (index = 0; index < wordSize * (nwds); index += wordSize) {
-      for (j = 0; j < (wordSize / 2); j++) {
+      for (index = 0; index < wordSize * (nwds); index += wordSize)
+	{
+	  for (j = 0; j < (wordSize / 2); j++)
+	    {
         ctmp = buf[index + j];
         buf[index + j] = buf[index + wordSize - j - 1];
         buf[index + wordSize - j - 1] = ctmp;
@@ -137,7 +217,9 @@ EOS_INTEGER _eos_byteSwap (EOS_CHAR *buf, EOS_INTEGER nwds, EOS_INTEGER wordSize
 /*! Function used to determine if a specific Sesame file is big endian or not.
  *  *esFile is assumed to already be opened by caller
  */
-EOS_BOOLEAN _eos_isBigEndianFile(FILE *esFile) {
+EOS_BOOLEAN
+_eos_isBigEndianFile (FILE * esFile)
+{
   EOS_INTEGER nRead, err=0;
   EOS_BOOLEAN result = EOS_TRUE;
   EOS_REAL x;
@@ -146,31 +228,37 @@ EOS_BOOLEAN _eos_isBigEndianFile(FILE *esFile) {
   fpos_t loc;
 
   /* Save current file position. Assume loc=NULL on falure. */
-  if (fgetpos(esFile, &loc)) loc_known = EOS_FALSE;
+  if (fgetpos (esFile, &loc))
+    loc_known = EOS_FALSE;
 
   /* reset to position 0 */
   err = fseek (esFile, 0, SEEK_SET);
-  if (err) {
+  if (err)
+    {
     /* Do some error handling in this function! */
   }
 
   nRead = fread (&x, sizeof (EOS_REAL), 1, esFile);
-  if (nRead <= 0) {
+  if (nRead <= 0)
+    {
     /* Do some error handling in this function! */
   }
   x_int = (EOS_INTEGER_UNSIGNED) x;
 
-  if (_eos_littleEndianMachine()) {
+  if (_eos_littleEndianMachine ())
+    {
     result = (x_int == 0)?EOS_TRUE:EOS_FALSE;
   }
-  else {
+  else
+    {
     result = (x_int != 0)?EOS_TRUE:EOS_FALSE;
   }
 
   /* Reset to position loc */
   if (loc_known) 
     err = fsetpos(esFile, &loc);
-  if (err) {
+  if (err)
+    {
     /* Do some error handling in this function! */
   }
 
@@ -189,9 +277,10 @@ EOS_BOOLEAN _eos_isBigEndianFile(FILE *esFile) {
  * Input Value:
  * EOS_INTEGER err     - the supplied table handle
  *************************************************************************/
-EOS_BOOLEAN eos_IsErrorCodeValid (EOS_INTEGER err) {
-  if (eos_GetStandardErrorCodeFromCustomErrorCode(err) < EOS_MIN_ERROR_CODE_VALUE ||
-      eos_GetStandardErrorCodeFromCustomErrorCode(err) > EOS_MAX_ERROR_CODE_VALUE)
+EOS_BOOLEAN
+eos_IsErrorCodeValid (EOS_INTEGER err)
+{
+  if (eos_GetStandardErrorCodeFromCustomErrorCode (err) < EOS_MIN_ERROR_CODE_VALUE || eos_GetStandardErrorCodeFromCustomErrorCode (err) > EOS_MAX_ERROR_CODE_VALUE)
     return EOS_FALSE;
   return EOS_TRUE;
 }
@@ -208,7 +297,9 @@ EOS_BOOLEAN eos_IsErrorCodeValid (EOS_INTEGER err) {
  * Input Value:
  * EOS_INTEGER th     - the supplied table handle
  *************************************************************************/
-EOS_BOOLEAN eos_IsHandleValid (EOS_INTEGER th) {
+EOS_BOOLEAN
+eos_IsHandleValid (EOS_INTEGER th)
+{
   if (th < 0 || th >= gEosDataMap.nAlloc)
     return EOS_FALSE;
   if (gEosDataMap.tableHandlesMap[th] == _EOS_INVALID_TABLE_HANDLE_VALUE)
@@ -225,7 +316,9 @@ EOS_BOOLEAN eos_IsHandleValid (EOS_INTEGER th) {
  * Input Value:
  * EOS_INTEGER th     - the supplied table handle
  *************************************************************************/
-void eos_InvalidateHandle (EOS_INTEGER th) {
+void
+eos_InvalidateHandle (EOS_INTEGER th)
+{
   gEosDataMap.tableHandlesMap[th] = _EOS_INVALID_TABLE_HANDLE_VALUE;
   return;
 }
@@ -243,7 +336,8 @@ void eos_InvalidateHandle (EOS_INTEGER th) {
  * eos_Data    *me     - pointer to an instance of type eos_Data.
  *                     
  ************************************************************************/
-EOS_CHAR *_eos_GetSesameFileName (eos_Data *me)
+EOS_CHAR *
+_eos_GetSesameFileName (eos_Data * me)
 {
   /* determine if an alternative source was used to load the data */
   if (me->altDataSource)
@@ -267,12 +361,29 @@ EOS_CHAR *_eos_GetSesameFileName (eos_Data *me)
  * 
  ***********************************************************************/
 //#define DEBUG_eos_fileExistsAndValid
-EOS_BOOLEAN _eos_fileExistsAndValid(EOS_CHAR *filename) {
-  EOS_BOOLEAN fileExists=EOS_FALSE, fileIsDir=EOS_FALSE;
+EOS_BOOLEAN
+_eos_fileExistsAndValid (EOS_CHAR * filename)
+{
+  EOS_BOOLEAN fileExists=EOS_FALSE, fileIsReadable=EOS_FALSE, fileIsDir=EOS_FALSE;
   struct stat file_statbuf;
 
   fileExists = (!((EOS_BOOLEAN) stat (filename, &file_statbuf)))?EOS_TRUE:EOS_FALSE;
-  if (! fileExists) return (fileExists);
+
+  if (fileExists) {
+    /* now test for access */
+    FILE *file;
+    file = fopen(filename, "r");
+    if (!file) {
+      return(EOS_FALSE); /* cannot read file */
+    }
+    else {
+      fclose(file);
+      fileIsReadable=EOS_TRUE;
+    }
+  }
+  else {
+    return(EOS_FALSE); /* file does not exist */
+  }
 
 #ifndef _IFMT
   /* The Windows header files define _S_ forms of this.  */
@@ -290,11 +401,12 @@ EOS_BOOLEAN _eos_fileExistsAndValid(EOS_CHAR *filename) {
 
 #ifdef DEBUG_eos_fileExistsAndValid
   printf("%s: file_statbuf.st_mode= %o",filename,file_statbuf.st_mode);
-  if (fileIsDir) printf(" DIRECTORY");
+  if (fileIsDir)
+    printf (" DIRECTORY");
   printf("\n");
 #endif
 
-  return ((fileExists && ! fileIsDir))?EOS_TRUE:EOS_FALSE;
+  return ((fileExists && fileIsReadable && ! fileIsDir))?EOS_TRUE:EOS_FALSE;
 }
 
 /***********************************************************************/
@@ -306,10 +418,11 @@ EOS_BOOLEAN _eos_fileExistsAndValid(EOS_CHAR *filename) {
  * \return _eos_is_absoluteFileName - EOS_BOOLEAN : file name is absolute or not
  * 
  ***********************************************************************/
-EOS_BOOLEAN _eos_is_absoluteFileName (EOS_CHAR *f) {
-  if ((f[0] == '/') ||
-      (f[0] == '\\' && f[1] == '\\' && isalpha ((int)f[2])) ||
-      (isalpha ((int)f[0]) && f[1] == ':' && f[2] == '\\')) {
+EOS_BOOLEAN
+_eos_is_absoluteFileName (EOS_CHAR * f)
+{
+  if ((f[0] == '/') || (f[0] == '\\' && f[1] == '\\' && isalpha ((int) f[2])) || (isalpha ((int) f[0]) && f[1] == ':' && f[2] == '\\'))
+    {
     /* one of the following absolute reference formats is detected:
      *   Unix        --> '/'
      *   DOS/Windows --> '//X'
@@ -328,11 +441,14 @@ EOS_BOOLEAN _eos_is_absoluteFileName (EOS_CHAR *f) {
  * is cross-referenced to the sesameFiles[idx] file.
  *
  ************************************************************************/
-EOS_BOOLEAN _eos_in_gMatidMap (EOS_INTEGER idx)
+EOS_BOOLEAN
+_eos_in_gMatidMap (EOS_INTEGER idx)
 {
   int i;
-  for(i=0; i<gMatidMapL; i++) {
-    if (gMatidMap[i].jfile == idx) return EOS_TRUE;
+  for (i = 0; i < gMatidMapL; i++)
+    {
+      if (gMatidMap[i].jfile == idx)
+	return EOS_TRUE;
   }
   return EOS_FALSE;
 }
@@ -344,11 +460,14 @@ EOS_BOOLEAN _eos_in_gMatidMap (EOS_INTEGER idx)
  * contains matid. A negative value is returned if matid is not found.
  *
  ************************************************************************/
-EOS_INTEGER _eos_find_matid_in_gMatidMap (EOS_INTEGER matid)
+EOS_INTEGER
+_eos_find_matid_in_gMatidMap (EOS_INTEGER matid)
 {
   EOS_INTEGER i;
-  for(i=0; i<gMatidMapL; i++) {
-    if (gMatidMap[i].matid == matid) return i;
+  for (i = 0; i < gMatidMapL; i++)
+    {
+      if (gMatidMap[i].matid == matid)
+	return i;
   }
   return -1; /* matid not found */
 }
@@ -361,13 +480,16 @@ EOS_INTEGER _eos_find_matid_in_gMatidMap (EOS_INTEGER matid)
  * A negative value is returned if matid is not found.
  *
  ************************************************************************/
-EOS_INTEGER _eos_find_userdefined_fileindex_in_gEosDataMapDataObjects (EOS_INTEGER fileIndex)
+EOS_INTEGER
+_eos_find_userdefined_fileindex_in_gEosDataMapDataObjects (EOS_INTEGER fileIndex)
 {
   EOS_INTEGER i;
-  for(i=0; i<gEosDataMap.nAlloc; i++) {
-    if (! gEosDataMap.dataObjects[i]) continue; /* skip invalid object */
-    if (gEosDataMap.dataObjects[i]->userDefinedDataFile &&
-	gEosDataMap.dataObjects[i]->dataFileIndex == fileIndex) return i;
+  for (i = 0; i < gEosDataMap.nAlloc; i++)
+    {
+      if (!gEosDataMap.dataObjects[i])
+	continue;		/* skip invalid object */
+      if (gEosDataMap.dataObjects[i]->userDefinedDataFile && gEosDataMap.dataObjects[i]->dataFileIndex == fileIndex)
+	return i;
   }
   return -1; /* reserved fileIndex not found */
 }
@@ -389,25 +511,33 @@ EOS_INTEGER _eos_find_userdefined_fileindex_in_gEosDataMapDataObjects (EOS_INTEG
  * struct stat *stat_buf                 - File statuses from stat()
  *
  ************************************************************************/
-EOS_INTEGER _eos_deleteDuplicateNames (EOS_CHAR ***files, EOS_INTEGER *filesL, struct stat *stat_buf)
+EOS_INTEGER
+_eos_deleteDuplicateNames (EOS_CHAR *** files, EOS_INTEGER * filesL, struct stat * stat_buf)
 {
   EOS_INTEGER err = EOS_OK;
   int i, j, k;
 
-  for (i = 0; i < *filesL; i++) {
-    for (j = 0; j < i; j++) {
-      if (i == j) continue;
-      if (!eos_compareFiles ((*files)[j], &stat_buf[j], (*files)[i], &stat_buf[i])) {
+  for (i = 0; i < *filesL; i++)
+    {
+      for (j = 0; j < i; j++)
+	{
+	  if (i == j)
+	    continue;
+	  if (!eos_compareFiles ((*files)[j], &stat_buf[j], (*files)[i], &stat_buf[i]))
+	    {
         /* files[i] and files[j] are identical */
-	if (!_eos_in_gMatidMap(i)) {
+	      if (!_eos_in_gMatidMap (i))
+		{
 	  /* files[i] is not referenced by a gMatidMap entry */
 	  EOS_FREE((*files)[i]);
 	}
-	else if (!_eos_in_gMatidMap(j)) {
+	      else if (!_eos_in_gMatidMap (j))
+		{
 	  /* files[j] is not referenced by a gMatidMap entry */
 	  EOS_FREE((*files)[j]);
 	}
-	else {
+	      else
+		{
 	  /* keep the most recent entry, files[i] */
 	  EOS_FREE((*files)[j]);
 	  /* reassign all occurrences of gMatidMap[k].jfile = j to gMatidMap[k].jfile = i */
@@ -443,7 +573,8 @@ EOS_INTEGER _eos_deleteDuplicateNames (EOS_CHAR ***files, EOS_INTEGER *filesL, s
  *  *defaultSesamePathList[EOS_NUMDEFAULTSESAMEPATHSL]
  *
  ************************************************************************/
-EOS_INTEGER eos_getSesameFileNames (EOS_CHAR ***files, EOS_INTEGER *filesL, EOS_CHAR **errMsg)
+EOS_INTEGER
+eos_getSesameFileNames (EOS_CHAR *** files, EOS_INTEGER * filesL, EOS_CHAR ** errMsg)
 {
   FILE *fp;
   EOS_CHAR indexFileName[PATH_MAX], indexFilePath[PATH_MAX];
@@ -451,80 +582,69 @@ EOS_INTEGER eos_getSesameFileNames (EOS_CHAR ***files, EOS_INTEGER *filesL, EOS_
   EOS_BOOLEAN fileExists;
   struct stat *stat_buf = NULL;
 
-  if (sesameIndexLocationsL <= 0) {
+  if (sesameIndexLocationsL <= 0)
+  {
     /* initialize sesamePaths to contain CWD */
     sesameIndexLocationsL = 1;
-    sesameIndexLocations =
-      (EOS_CHAR **) malloc (sesameIndexLocationsL * sizeof (EOS_CHAR *));
-    sesameIndexLocations[0] =
-      (EOS_CHAR *) malloc (strlen (".") * sizeof (EOS_CHAR *));
+    sesameIndexLocations = (EOS_CHAR **) malloc (sesameIndexLocationsL * sizeof (EOS_CHAR *));
+    sesameIndexLocations[0] = (EOS_CHAR *) malloc (2 * sizeof (EOS_CHAR *));
     strcpy (sesameIndexLocations[0], ".");
 
     /* append paths defined in SESAMEPATH environment variable to
        sesameIndexLocations[] */
-    ierr = _eos_parseENV ("SESAMEPATH", &sesameIndexLocations,
-			 &sesameIndexLocationsL);
+    ierr = _eos_parseENV ("SESAMEPATH", &sesameIndexLocations, &sesameIndexLocationsL);
 
     /* append defaultSesamePathList[] to sesameIndexLocations[] */
-    for (i = 0; i < EOS_NUMDEFAULTSESAMEPATHSL; i++) {
+    for (i = 0; i < EOS_NUMDEFAULTSESAMEPATHSL; i++)
+	{
       sesameIndexLocationsL++;
-      sesameIndexLocations =
-	(EOS_CHAR **) realloc (sesameIndexLocations,
-			       (sesameIndexLocationsL) * sizeof (EOS_CHAR *));
-      sesameIndexLocations[sesameIndexLocationsL - 1] =
-	(EOS_CHAR *) malloc (strlen (defaultSesamePathList[i]) *
-			     sizeof (EOS_CHAR *));
-      strcpy (sesameIndexLocations[sesameIndexLocationsL - 1],
-	      defaultSesamePathList[i]);
+	  sesameIndexLocations = (EOS_CHAR **) realloc (sesameIndexLocations, (sesameIndexLocationsL) * sizeof (EOS_CHAR *));
+	  sesameIndexLocations[sesameIndexLocationsL - 1] = (EOS_CHAR *) malloc (strlen (defaultSesamePathList[i]) * sizeof (EOS_CHAR *));
+	  strcpy (sesameIndexLocations[sesameIndexLocationsL - 1], defaultSesamePathList[i]);
     }
 
     location_cnt = sesameIndexLocationsL;
 
   }
-  else { /* not first time through, only use "." below */
+  else
+  {				/* not first time through, only use "." below */
     location_cnt = 1;
   }
 
   /* loop over all specified search path(s) */
-  for (i = 0; i < location_cnt; i++) {
+  for (i = 0; i < location_cnt; i++)
+  {
 
     /* if indexFileName will be <= PATH_MAX, then define it and continue */
-#ifdef _MSC_VER    
-    count =
-      strlen (sesameIndexLocations[i]) + strlen ("sesameFilesDir.txt") + 2;
-#else    
-    count =
-      strlen (sesameIndexLocations[i]) + strlen ("sesameFilesDir.txt") + 1;
-#endif
+    count = strlen (sesameIndexLocations[i]) + strlen ("sesameFilesDir.txt") + 1;
     if (count > PATH_MAX)
       continue;
     strcpy (indexFilePath, sesameIndexLocations[i]);
     strcpy (indexFileName, sesameIndexLocations[i]);
-/* docs.microsoft.com/en-us.cpp/preprocessor/predefined-macros */
-#ifdef _MSC_VER    
-    strcat (indexFileName, "\\sesameFilesDir.txt");
-#else
     strcat (indexFileName, "/sesameFilesDir.txt");
-#endif
+
     fileExists = _eos_fileExistsAndValid(indexFileName);
 
     if (fileExists)
       fp = fopen (indexFileName, "r");  /* try to open indexFileName */
-    if (fileExists && fp != NULL) {
+    if (fileExists && fp != NULL)
+	{
       /* parse sesameFilesDir.txt contents and add to sesameFiles[] */
       ierr = _eos_parseIndexFile (fp, indexFilePath, files, filesL, errMsg);
       fclose (fp);              /* close indexFileName */
 
-      if (ierr == _EOS_STOP_FILE_SEARCH) { /* add no more names to fileNames[] */
-	ierr = EOS_OK;
-	break;
+	  if (ierr == _EOS_STOP_FILE_SEARCH)
+      {			/* add no more names to fileNames[] */
+        ierr = EOS_OK;
+        break;
       }
 
     }
 
-    if (location_cnt > 1) {
+    if (location_cnt > 1)
+	{
       /* Add any default file names to sesameFiles[] that are found in
-	 indexFilePath */
+         indexFilePath */
       ierr = _eos_addDefaultFileNames (indexFilePath, files, filesL);
     }
   }
@@ -534,7 +654,8 @@ EOS_INTEGER eos_getSesameFileNames (EOS_CHAR ***files, EOS_INTEGER *filesL, EOS_
 
   /* Build stat_buf hash */
   stat_buf = (struct stat*) malloc(*filesL * sizeof(struct stat));
-  for (i = 0; i < *filesL; i++) {
+  for (i = 0; i < *filesL; i++)
+  {
     stat ((*files)[i], &stat_buf[i]);
   }
 
@@ -547,8 +668,9 @@ EOS_INTEGER eos_getSesameFileNames (EOS_CHAR ***files, EOS_INTEGER *filesL, EOS_
 
 #ifdef DEBUG_FILE_NAMES
   if (*filesL > 0)
-  printf ("File list after file comparisons:\n");
-  for (i = 0; i < *filesL; i++) {
+    printf ("File list after file comparisons:\n");
+  for (i = 0; i < *filesL; i++)
+  {
     printf ("%3d. %s\n", i, (*files)[i]);
   }
 #endif
@@ -576,8 +698,8 @@ EOS_INTEGER eos_getSesameFileNames (EOS_CHAR ***files, EOS_INTEGER *filesL, EOS_
  *                              reference
  *
  ************************************************************************/
-EOS_INTEGER _eos_parseENV (const EOS_CHAR *envVar, EOS_CHAR ***paths,
-			   EOS_INTEGER *pathsL)
+EOS_INTEGER
+_eos_parseENV (const EOS_CHAR * envVar, EOS_CHAR *** paths, EOS_INTEGER * pathsL)
 {
 
   EOS_CHAR *envVarVal, *p1;
@@ -595,13 +717,16 @@ EOS_INTEGER _eos_parseENV (const EOS_CHAR *envVar, EOS_CHAR ***paths,
 
   p1 = strchr (envVarVal, ';');
 #if defined(_WIN32) && ! defined(__CYGWIN__)
-  if (! p1) p1 = envVarVal; /* override if no semicolon found */
+  if (!p1)
+    p1 = envVarVal;		/* override if no semicolon found */
 #endif
-  if (p1) {
+  if (p1)
+    {
     /* Windows PCs use semicolon to separate environment variable values. */
     sprintf (controlString, "%%%d[^;]", PATH_MAX);
   }
-  else {
+  else
+    {
     /* *NIX uses colon to separate environment variable values. */
     sprintf (controlString, "%%%d[^:]", PATH_MAX);
   }
@@ -610,11 +735,10 @@ EOS_INTEGER _eos_parseENV (const EOS_CHAR *envVar, EOS_CHAR ***paths,
     *pathsL = 0;
   envVarVal_init = envVarVal;   /* store initial address of envVarVal pointer */
 
-  while ((sscanf (envVarVal, controlString, tmp) == 1)
-         && (envVarVal < envVarVal_init + L)) {
+  while ((sscanf (envVarVal, controlString, tmp) == 1) && (envVarVal < envVarVal_init + L))
+    {
     i = strlen (tmp) + 1;
-    *paths =
-      (EOS_CHAR **) realloc (*paths, sizeof (EOS_CHAR *) * (*pathsL + 1));
+      *paths = (EOS_CHAR **) realloc (*paths, sizeof (EOS_CHAR *) * (*pathsL + 1));
     (*paths)[*pathsL] = (EOS_CHAR *) malloc (i * sizeof (EOS_CHAR));
     strcpy ((*paths)[*pathsL], tmp);
     *pathsL += 1;
@@ -635,6 +759,7 @@ EOS_INTEGER _eos_parseENV (const EOS_CHAR *envVar, EOS_CHAR ***paths,
  *    3. Leading white space is ignored.
  *    4. Paths that are relative to opened text file are converted to
  *       absolute paths.
+ *    5. Leading and trailing white space are removed from each file name.
  *
  * Returned Values:
  * EOS_INTEGER _eos_parseIndexFile - error code
@@ -649,13 +774,11 @@ EOS_INTEGER _eos_parseENV (const EOS_CHAR *envVar, EOS_CHAR ***paths,
  * EOS_CHAR *fpPathName           - path location of text file
  *
  ************************************************************************/
-EOS_INTEGER _eos_parseIndexFile (FILE * fp, EOS_CHAR *fpPathName,
-				 EOS_CHAR ***fileNames,
-				 EOS_INTEGER *fileNamesL, EOS_CHAR **errMsg)
+EOS_INTEGER
+_eos_parseIndexFile (FILE * fp, EOS_CHAR * fpPathName, EOS_CHAR *** fileNames, EOS_INTEGER * fileNamesL, EOS_CHAR ** errMsg)
 {
   EOS_CHAR *tmp, *tmp2, *tok;
   EOS_INTEGER count, totChars, line = 0, matid, err = EOS_OK;
-  struct stat sesameFile_statbuf;
 
   EOS_CHAR *endtok = "END";
   EOS_CHAR *matidtok = "MATID";
@@ -670,7 +793,8 @@ EOS_INTEGER _eos_parseIndexFile (FILE * fp, EOS_CHAR *fpPathName,
   tok = malloc (sizeof (EOS_CHAR));
   tok[0] = '\0';
 
-  while (_eos_readLine (fp, &tmp)) { /* tmp is reallocated -- possibly larger than PATH_MAX */
+  while (_eos_readLine (fp, &tmp))
+  {				/* tmp is reallocated -- possibly larger than PATH_MAX */
 
     line++; /* increment line counter */
 
@@ -681,24 +805,26 @@ EOS_INTEGER _eos_parseIndexFile (FILE * fp, EOS_CHAR *fpPathName,
 
     sscanf (tmp, "%s", tok); /* read first non-white space character sequence */
 
-    if (! strncmp(tok, endtok, strlen(endtok))) {
+    if (!strncmp (tok, endtok, strlen (endtok)))
+	{
       /* satisfy request to add no more names to fileNames[] */
       err = _EOS_STOP_FILE_SEARCH;
       break;
     }
 
-    if (! strncmp(tok, matidtok, strlen(matidtok))) { /* user-specified matid to file association */
+    if (!strncmp (tok, matidtok, strlen (matidtok)))
+	{			/* user-specified matid to file association */
 
       /* find end of matidtok in tmp */
       count = (EOS_INTEGER) (strstr(tmp, matidtok) + strlen(matidtok) - tmp);
 
       sscanf (tmp + count, "%s", tok); /* read first non-white space character sequence after matidtok */
-      if (sscanf (tok, "%d", &matid) != 1) { /* attempt to read matid */
-	/* an error occurred if you get here */
-	err = EOS_INDEX_FILE_ERROR;
-	eos_SetCustomMsg_str (errMsg, "EOS_INDEX_FILE_ERROR: syntax error on line %d of %s",
-			      line, fpPathName);
-	break;
+	  if (sscanf (tok, "%d", &matid) != 1)
+      {			/* attempt to read matid */
+        /* an error occurred if you get here */
+        err = EOS_INDEX_FILE_ERROR;
+        eos_SetCustomMsg_str (errMsg, "EOS_INDEX_FILE_ERROR: syntax error on line %d of %s", line, fpPathName);
+        break;
       }
 
       /* find end of tok in tmp */
@@ -711,7 +837,8 @@ EOS_INTEGER _eos_parseIndexFile (FILE * fp, EOS_CHAR *fpPathName,
       newMapMatid = EOS_TRUE;
 
     }
-    else {
+    else
+	{
 
       totChars = strlen (tmp);
       count = 0;
@@ -720,16 +847,26 @@ EOS_INTEGER _eos_parseIndexFile (FILE * fp, EOS_CHAR *fpPathName,
     }
 
     tmp2 = malloc ((totChars + 1) * sizeof (EOS_CHAR));
-    while (strlen (&tmp[count]) && sscanf (&tmp[count], " %[^;\n\r#]", tmp2)) {
+    while (strlen (&tmp[count]) && sscanf (&tmp[count], " %[^;\n\r#]", tmp2))
+	{
+      int i;
 
       if (*fileNames)
-	*fileNames = (EOS_CHAR **) realloc (*fileNames, sizeof (EOS_CHAR *) * (*fileNamesL + 1));
+        *fileNames = (EOS_CHAR **) realloc (*fileNames, sizeof (EOS_CHAR *) * (*fileNamesL + 1));
       else
-	*fileNames = (EOS_CHAR **) malloc (sizeof (EOS_CHAR *) * (*fileNamesL + 1));
+        *fileNames = (EOS_CHAR **) malloc (sizeof (EOS_CHAR *) * (*fileNamesL + 1));
+
+      /* remove trailing white space from tmp2 */
+      for (i=strlen(tmp2)-1; i>0; i--) {
+        if (tmp2[i] == ' ' || tmp2[i] == '\t') tmp2[i] = '\0';
+        else break;
+      }
 
       count += strlen (tmp2);
-      if (strlen (tmp2) <= PATH_MAX) {
-	if (_eos_is_absoluteFileName(tmp2)) {
+	  if (strlen (tmp2) <= PATH_MAX)
+      {
+        if (_eos_is_absoluteFileName (tmp2))
+		{
           /* one of the following absolute reference formats is detected:
            *   Unix        --> '/'
            *   DOS/Windows --> '//X'
@@ -739,7 +876,8 @@ EOS_INTEGER _eos_parseIndexFile (FILE * fp, EOS_CHAR *fpPathName,
           (*fileNames)[*fileNamesL] = (EOS_CHAR *) malloc ((count + 1) * sizeof (EOS_CHAR));
           strcpy ((*fileNames)[*fileNamesL], tmp2);
         }
-        else {
+        else
+		{
           /* need to prepend *fpPathName string to tmp2 to make it an absolute reference */
           totChars = strlen (fpPathName) + 1 + count;
           (*fileNames)[*fileNamesL] = (EOS_CHAR *) malloc ((totChars + 1) * sizeof (EOS_CHAR));
@@ -748,17 +886,28 @@ EOS_INTEGER _eos_parseIndexFile (FILE * fp, EOS_CHAR *fpPathName,
           strcat ((*fileNames)[*fileNamesL], tmp2);
         }
 
-        /* if (*fileNames)[*fileNamesL] exists, then increment *fileNamesL;
-         * otherwise current (*fileNames)[*fileNamesL] will be discarded.
-         */
-        if (!(EOS_BOOLEAN) stat ((*fileNames)[*fileNamesL], &sesameFile_statbuf)) {
-          *fileNamesL += 1;
-	}
-	else {
-	  /* remove extra string and its pointer allocation */
-	  EOS_FREE((*fileNames)[*fileNamesL]);
-	  *fileNames = (EOS_CHAR **) realloc (*fileNames, sizeof (EOS_CHAR *) * (*fileNamesL));
-	}
+        {
+          /* if (*fileNames)[*fileNamesL] exists, then increment *fileNamesL;
+           * otherwise current (*fileNames)[*fileNamesL] will be discarded.
+           */
+          EOS_BOOLEAN fileExists=EOS_FALSE;
+
+          fileExists = _eos_fileExistsAndValid((*fileNames)[*fileNamesL]);
+
+          if (fileExists) {
+            *fileNamesL += 1;
+          }
+          else {
+            /* remove extra string and its pointer allocation */
+            EOS_FREE((*fileNames)[*fileNamesL]);
+            if (*fileNamesL <= 0) {
+              EOS_FREE(*fileNames);
+            }
+            else {
+              *fileNames = (EOS_CHAR **) realloc (*fileNames, sizeof (EOS_CHAR *) * (*fileNamesL));
+            }
+          }
+        }
 
       }
 
@@ -768,7 +917,8 @@ EOS_INTEGER _eos_parseIndexFile (FILE * fp, EOS_CHAR *fpPathName,
     EOS_FREE (tmp2);
     strcpy (tmp, "");
 
-    if (newMapMatid) {
+    if (newMapMatid)
+	{
       _eos_addMatidMap ( matid, *fileNamesL-1 );
     }
   }
@@ -789,14 +939,17 @@ EOS_INTEGER _eos_parseIndexFile (FILE * fp, EOS_CHAR *fpPathName,
  * EOS_INTEGER index          - file index to associate with matid
  *
  ************************************************************************/
-void _eos_addMatidMap ( EOS_INTEGER matid, EOS_INTEGER index )
+void
+_eos_addMatidMap (EOS_INTEGER matid, EOS_INTEGER index)
 {
   /* allocate/reallocate the global gMatidMap array */
-  if (!gMatidMap) {
+  if (!gMatidMap)
+    {
     gMatidMapL = 1;
     gMatidMap = (MatidMap *) malloc (gMatidMapL * sizeof (MatidMap));
   }
-  else {
+  else
+    {
     gMatidMapL++;
     gMatidMap = realloc (gMatidMap, gMatidMapL * sizeof (MatidMap));
   }
@@ -804,6 +957,27 @@ void _eos_addMatidMap ( EOS_INTEGER matid, EOS_INTEGER index )
   /* store new gMatidMap entry */
   gMatidMap[gMatidMapL-1].matid = matid;
   gMatidMap[gMatidMapL-1].jfile = index;
+}
+
+/*! *********************************************************************
+ *
+ * Function Name: _eos_destroyMatidMap
+ * Destroy the matid and file index, gMatidMap[].
+ *
+ * Input Value:
+ * EOS_INTEGER matid          - material id number
+ * EOS_INTEGER index          - file index to associate with matid
+ *
+ ************************************************************************/
+void
+_eos_destroyMatidMap ()
+{
+  /* allocate/reallocate the global gMatidMap array */
+  if (gMatidMap && gMatidMapL > 0)
+  {
+    EOS_FREE(gMatidMap);
+    gMatidMapL = 0;
+  }
 }
 
 /*! *********************************************************************
@@ -820,7 +994,9 @@ void _eos_addMatidMap ( EOS_INTEGER matid, EOS_INTEGER index )
  * FILE        *fp          - text file pointer
  *
  ************************************************************************/
-EOS_INTEGER _eos_readLine(FILE * fp, EOS_CHAR **line) {
+EOS_INTEGER
+_eos_readLine (FILE * fp, EOS_CHAR ** line)
+{
   EOS_CHAR *in = NULL;
   EOS_INTEGER L1 = 0, L2 = 0;
   EOS_CHAR *p1, *p2;
@@ -828,16 +1004,20 @@ EOS_INTEGER _eos_readLine(FILE * fp, EOS_CHAR **line) {
 
   in = (EOS_CHAR*) malloc(PATH_MAX * sizeof(EOS_CHAR));
 
-  while (fgets(in, PATH_MAX, fp)) {
+  while (fgets (in, PATH_MAX, fp))
+    {
     L1 = strlen(*line);
     L2 = strlen(in);
     *line = realloc (*line, (L1 + L2 + 1) * sizeof (EOS_CHAR));
     strcat (*line, in);
     p1 = strchr (*line, '\n');
     p2 = strchr (*line, '\r');
-    if (p1 || p2) {
-      if (p1) *p1 = '\0';
-      if (p2) *p2 = '\0';
+      if (p1 || p2)
+	{
+	  if (p1)
+	    *p1 = '\0';
+	  if (p2)
+	    *p2 = '\0';
       break;
     }
   }
@@ -871,9 +1051,8 @@ EOS_INTEGER _eos_readLine(FILE * fp, EOS_CHAR **line) {
  *  *defaultSesameFileNames[EOS_NUMDEFAULTFILENAMES]
  *
  ************************************************************************/
-EOS_INTEGER _eos_addDefaultFileNames (EOS_CHAR *srchPathName,
-				      EOS_CHAR ***fileNames,
-				      EOS_INTEGER *fileNamesL)
+EOS_INTEGER
+_eos_addDefaultFileNames (EOS_CHAR * srchPathName, EOS_CHAR *** fileNames, EOS_INTEGER * fileNamesL)
 {
   EOS_CHAR *tmp, *tmp2;
   EOS_INTEGER i, totChars;
@@ -885,21 +1064,14 @@ EOS_INTEGER _eos_addDefaultFileNames (EOS_CHAR *srchPathName,
   tmp = malloc (PATH_MAX * sizeof (EOS_CHAR));
   tmp2 = malloc (sizeof (EOS_CHAR));
 
-  for (i = 0; i < EOS_NUMDEFAULTFILENAMES; i++) {
+  for (i = 0; i < EOS_NUMDEFAULTFILENAMES; i++)
+    {
 
-#ifdef _MSC_VER
-    totChars = strlen (srchPathName) + 3 + strlen (defaultSesameFileNames[i]);
-#else
     totChars = strlen (srchPathName) + 2 + strlen (defaultSesameFileNames[i]);
-#endif
     tmp2 = realloc (tmp2, totChars * sizeof (EOS_CHAR));
 
     strcpy (tmp2, srchPathName);
-#ifdef _MSC_VER
-    strcat (tmp2, "\\");
-#else    
     strcat (tmp2, "/");
-#endif
     strcat (tmp2, defaultSesameFileNames[i]);
 
     /* if file named tmp2 exists, is not a directory, is not longer than
@@ -909,12 +1081,10 @@ EOS_INTEGER _eos_addDefaultFileNames (EOS_CHAR *srchPathName,
 
     fileExists = _eos_fileExistsAndValid(tmp2);
 
-    if ((strlen (tmp2) <= PATH_MAX) && fileExists) {
-      *fileNames =
-        (EOS_CHAR **) realloc (*fileNames,
-                               sizeof (EOS_CHAR *) * (*fileNamesL + 1));
-      (*fileNames)[*fileNamesL] =
-        (EOS_CHAR *) malloc ((totChars + 1) * sizeof (EOS_CHAR));
+      if ((strlen (tmp2) <= PATH_MAX) && fileExists)
+	{
+	  *fileNames = (EOS_CHAR **) realloc (*fileNames, sizeof (EOS_CHAR *) * (*fileNamesL + 1));
+	  (*fileNames)[*fileNamesL] = (EOS_CHAR *) malloc ((totChars + 1) * sizeof (EOS_CHAR));
       strcpy ((*fileNames)[*fileNamesL], tmp2);
       *fileNamesL += 1;
     }
@@ -960,16 +1130,15 @@ EOS_INTEGER _eos_addDefaultFileNames (EOS_CHAR *srchPathName,
  *
  ************************************************************************/
 static int comparison_counter = 0;
-EOS_INTEGER eos_compareFiles (EOS_CHAR *file1, struct stat *stat_buf1,
-			      EOS_CHAR *file2, struct stat *stat_buf2)
+EOS_INTEGER
+eos_compareFiles (EOS_CHAR * file1, struct stat *stat_buf1, EOS_CHAR * file2, struct stat *stat_buf2)
 {
   EOS_INTEGER err = EOS_OK;
 
   //#define print_stat(n,s)  printf("%d %d %d %s\n", (int)(s).st_ino, (int)(s).st_dev, (int)(s).st_size, n);
   comparison_counter++;
 #ifdef print_stat
-  printf("%d comparison(s) ------------------------------------\n",
-	 comparison_counter);
+  printf ("%d comparison(s) ------------------------------------\n", comparison_counter);
   print_stat(file1, *stat_buf1);
   print_stat(file2, *stat_buf2);
 #endif
@@ -980,7 +1149,8 @@ EOS_INTEGER eos_compareFiles (EOS_CHAR *file1, struct stat *stat_buf1,
    * This test is irrelevant in a Win32 environment (i.e., MS Developer Studio),
    * or any environment that doesn't use unique device and/or inode values.
    */
-  if (same_file (*stat_buf1, *stat_buf2)) {
+  if (same_file (*stat_buf1, *stat_buf2))
+    {
     err = EOS_OK;
     return err;
   }
@@ -993,12 +1163,14 @@ EOS_INTEGER eos_compareFiles (EOS_CHAR *file1, struct stat *stat_buf1,
    * inode comparison test to testing if same file sizes and times,
    * then do binary file comparison for completeness.
    */
-  if (0) {
+  if (0)
+    {
     FILE *fp1, *fp2;
     EOS_INTEGER n, n1, n2;
     EOS_CHAR *tmpStr1, *tmpStr2;
 
-    if (same_size (*stat_buf1, *stat_buf2) && same_time (*stat_buf1, *stat_buf2)) {
+      if (same_size (*stat_buf1, *stat_buf2) && same_time (*stat_buf1, *stat_buf2))
+	{
 
       /* do a binary file comparison here */
       n = BUFSIZ;
@@ -1006,10 +1178,12 @@ EOS_INTEGER eos_compareFiles (EOS_CHAR *file1, struct stat *stat_buf1,
       fp2 = fopen (file2, "rb");
       tmpStr1 = (EOS_CHAR *) malloc (n * sizeof (EOS_CHAR));
       tmpStr2 = (EOS_CHAR *) malloc (n * sizeof (EOS_CHAR));
-      while (! feof (fp1) && ! feof (fp2)) {
+	  while (!feof (fp1) && !feof (fp2))
+	    {
 	n1 = fread (tmpStr1, sizeof (EOS_CHAR), n, fp1);
 	n2 = fread (tmpStr2, sizeof (EOS_CHAR), n, fp2);
-	if (n1 != n2 || memcmp (tmpStr1, tmpStr2, n1)) {
+	      if (n1 != n2 || memcmp (tmpStr1, tmpStr2, n1))
+		{
 	  err = -1;
 	  break;
 	}
@@ -1026,14 +1200,16 @@ EOS_INTEGER eos_compareFiles (EOS_CHAR *file1, struct stat *stat_buf1,
 	EOS_FREE (tmpStr2);
 
     }
-    else {
+      else
+	{
 
       /* files are unique based upon file sizes and/or times */
       err = -1;
 
     }
   }
-  else {
+  else
+    {
 
     /* files are always assumed unique */
     err = -1;
@@ -1066,27 +1242,34 @@ EOS_INTEGER eos_compareFiles (EOS_CHAR *file1, struct stat *stat_buf1,
  *                                       not (EOS_FALSE)
  *
  ************************************************************************/
-EOS_INTEGER _eos_compactFilesArray (EOS_CHAR ***files, EOS_INTEGER *filesL,
-				    EOS_BOOLEAN update_gMatidMap)
+EOS_INTEGER
+_eos_compactFilesArray (EOS_CHAR *** files, EOS_INTEGER * filesL, EOS_BOOLEAN update_gMatidMap)
 {
   EOS_INTEGER i, j, k = 0, m;
   EOS_CHAR *tmpStr;
 
   /* Shift all empty strings to the end of files[] array */
-  for (i = 0; i < *filesL; i++) {
-    if ((*files)[i] == NULL) {    /* found an empty string */
-      for (j = i; j < *filesL; j++) {
-        if ((*files)[j] != NULL) {        /* found next non-empty string */
+  for (i = 0; i < *filesL; i++)
+    {
+      if ((*files)[i] == NULL)
+	{			/* found an empty string */
+	  for (j = i; j < *filesL; j++)
+	    {
+	      if ((*files)[j] != NULL)
+		{		/* found next non-empty string */
           /* swap (*files)[i] and (*files)[j] addresses */
           tmpStr = (*files)[i];
           (*files)[i] = (*files)[j];
           (*files)[j] = tmpStr;
           k++;
 
-	  if (update_gMatidMap) {
+		  if (update_gMatidMap)
+		    {
 	    /* reset gMatidMap[].jfile value as necessary. */
-	    for (m = 0; m < gMatidMapL; m++) {
-	      if (gMatidMap[m].jfile == j) gMatidMap[m].jfile = i;
+		      for (m = 0; m < gMatidMapL; m++)
+			{
+			  if (gMatidMap[m].jfile == j)
+			    gMatidMap[m].jfile = i;
 	    }
 	  }
 
@@ -1094,13 +1277,15 @@ EOS_INTEGER _eos_compactFilesArray (EOS_CHAR ***files, EOS_INTEGER *filesL,
         }
       }
     }
-    else {                      /* found a non-empty string */
+      else
+	{			/* found a non-empty string */
       k = i + 1;
     }
   }
 
   /* Reallocate files[] excluding all empty strings */
-  for (i = k; i < *filesL; i++) {
+  for (i = k; i < *filesL; i++)
+    {
     if ((*files)[i])
       EOS_FREE ((*files)[i]);
   }
@@ -1110,7 +1295,8 @@ EOS_INTEGER _eos_compactFilesArray (EOS_CHAR ***files, EOS_INTEGER *filesL,
   return (EOS_OK);
 }
 
-EOS_INTEGER _eos_mag (EOS_REAL g, EOS_INTEGER gamma)
+EOS_INTEGER
+_eos_mag (EOS_REAL g, EOS_INTEGER gamma)
 {
   // calculate the base-10 order-of-_eos_magnitude of g, and
   // place lower limit on returned value
@@ -1122,7 +1308,8 @@ EOS_INTEGER _eos_mag (EOS_REAL g, EOS_INTEGER gamma)
 
 #define COMPILE_DEBUG_INSTRUCTIONS
 
-typedef struct {
+typedef struct
+{
     EOS_INTEGER Mi;
     EOS_INTEGER Mim1;
     EOS_INTEGER Ni;
@@ -1136,8 +1323,8 @@ typedef struct {
     EOS_REAL    f_init;
 } CALCFMOD_DEBUG_STR;
 
-EOS_REAL _eos_calcFmod (EOS_REAL Fim1, EOS_REAL Fi, EOS_REAL x0, EOS_REAL xmax,
-			EOS_REAL xi, EOS_REAL trend, void *calcFmod_debug)
+EOS_REAL
+_eos_calcFmod (EOS_REAL Fim1, EOS_REAL Fi, EOS_REAL x0, EOS_REAL xmax, EOS_REAL xi, EOS_REAL trend, void *calcFmod_debug)
 {
   EOS_INTEGER zero = (EOS_INTEGER) 0;
   EOS_REAL ten = (EOS_REAL) 10;
@@ -1162,7 +1349,8 @@ EOS_REAL _eos_calcFmod (EOS_REAL Fim1, EOS_REAL Fi, EOS_REAL x0, EOS_REAL xmax,
 
 #ifdef COMPILE_DEBUG_INSTRUCTIONS
   // Conditionally store calcFmod_debug
-  if (calcFmod_debug) {
+  if (calcFmod_debug)
+    {
     CALCFMOD_DEBUG_STR *debug_str_ptr = (CALCFMOD_DEBUG_STR*)calcFmod_debug;
     debug_str_ptr->Mi      = Mi;
     debug_str_ptr->Mim1    = Mim1;
@@ -1209,9 +1397,8 @@ EOS_REAL _eos_calcFmod (EOS_REAL Fim1, EOS_REAL Fi, EOS_REAL x0, EOS_REAL xmax,
  *
  * ==================================================================
  */
-EOS_INTEGER _eos_MakeMonotonic (EOS_INTEGER nx, EOS_INTEGER ny, EOS_REAL x[],
-                                EOS_REAL y[], EOS_REAL F[], EOS_INTEGER indep,
-				EOS_REAL F_shift[], EOS_BOOLEAN enableDebugDump)
+EOS_INTEGER
+_eos_MakeMonotonic (EOS_INTEGER nx, EOS_INTEGER ny, EOS_REAL x[], EOS_REAL y[], EOS_REAL F[], EOS_INTEGER indep, EOS_REAL F_shift[], EOS_BOOLEAN enableDebugDump)
 {
   EOS_INTEGER zero = (EOS_INTEGER) 0;
   EOS_REAL zero_r = (EOS_REAL) 0;
@@ -1222,17 +1409,22 @@ EOS_INTEGER _eos_MakeMonotonic (EOS_INTEGER nx, EOS_INTEGER ny, EOS_REAL x[],
   CALCFMOD_DEBUG_STR *calcFmod_debug = NULL;
 #endif
 
-  if (indep == 1) {             // guarantee monotonicity of F w.r.t. x
+  if (indep == 1)
+    {				// guarantee monotonicity of F w.r.t. x
 
-    if (nx >= 3) {              // check for sufficient x-values
+      if (nx >= 3)
+	{			// check for sufficient x-values
 
       _exceptions.fmin = 1.e99;
-      for (i = 1; i < nx; i++) { // find exceptions data along first line
-	if (_exceptions.fmin > F[i]) {
+	  for (i = 1; i < nx; i++)
+	    {			// find exceptions data along first line
+	      if (_exceptions.fmin > F[i])
+		{
 	  _exceptions.fmin = F[i];
 	  _exceptions.fmin_index = i;
 	}
-	if (F[i] >= 0.) {
+	      if (F[i] >= 0.)
+		{
 	  _exceptions.x_threshold_index = i;
 	  _exceptions.x_threshold       = x[i];
 	  _exceptions.xvals             = x;
@@ -1244,18 +1436,18 @@ EOS_INTEGER _eos_MakeMonotonic (EOS_INTEGER nx, EOS_INTEGER ny, EOS_REAL x[],
       ierr4 = _eos_RemoveLoops (nx, ny, F, (EOS_INTEGER) 1, &_exceptions);
 
       // force monotonicity of F w.r.t. x according to trend
-      for (j = 0; j < ny; j++) {
+	  for (j = 0; j < ny; j++)
+	    {
 
 	// determine if monotonic-increasing or -decreasing is desired along current constant-y array
 	trend = (F[j * nx + (nx-1)] < F[j * nx]) ? (EOS_REAL) (-1) : (EOS_REAL) (1);
 
-        for (i = 1; i < nx; i++) {
+	      for (i = 1; i < nx; i++)
+		{
           // Calculate Fmod, which is the bounding value of F[i][j]
 	  val0 = (F_shift) ? F_shift[i - 1] : zero_r;
 	  val1 = (F_shift) ? F_shift[i] : zero_r;
-          Fmod = _eos_calcFmod (F[(i - 1) + nx * j] + val0,
-			   F[i + nx * j] + val1,
-				x[0], x[nx - 1], x[i], trend, (void*)calcFmod_debug);
+		  Fmod = _eos_calcFmod (F[(i - 1) + nx * j] + val0, F[i + nx * j] + val1, x[0], x[nx - 1], x[i], trend, (void *) calcFmod_debug);
 
           // Reset F[i][j] if needed
           if (trend < zero)
@@ -1266,7 +1458,8 @@ EOS_INTEGER _eos_MakeMonotonic (EOS_INTEGER nx, EOS_INTEGER ny, EOS_REAL x[],
       }                         /* ny loop */
     }                           /* if nx > 3 */
   }                             /* wrp to x */
-  else if (indep == 2) {        // guarantee monotonicity of F w.r.t. x & y
+  else if (indep == 2)
+    {				// guarantee monotonicity of F w.r.t. x & y
 
     // w.r.t. x
     ierr4 = _eos_MakeMonotonic (nx, ny, &x[0], &y[0], &F[0], (EOS_INTEGER) 1, F_shift, enableDebugDump);
@@ -1279,9 +1472,11 @@ EOS_INTEGER _eos_MakeMonotonic (EOS_INTEGER nx, EOS_INTEGER ny, EOS_REAL x[],
       return (ierr4);
 
   }
-  else if (indep == 3) {        // guarantee monotonicity of F w.r.t. y
+  else if (indep == 3)
+    {				// guarantee monotonicity of F w.r.t. y
 
-    if (ny >= 3) {              // check for sufficient y-values
+      if (ny >= 3)
+	{			// check for sufficient y-values
 
       EOS_REAL global_tiny = HUGE_D;
 
@@ -1289,22 +1484,27 @@ EOS_INTEGER _eos_MakeMonotonic (EOS_INTEGER nx, EOS_INTEGER ny, EOS_REAL x[],
       ierr4 = _eos_RemoveLoops (nx, ny, F, (EOS_INTEGER) 2, (_EXCEPTIONS_T*)NULL);
 
       // store the magnitude of value in F[] that has the smallest magnitude
-      for (i = 0; i < nx; i++) {
-	for (j = 0; j < ny; j++) {
-	  if (ABS(F[i + nx * j]) > 0.0 && global_tiny > ABS(F[i + nx * j])) global_tiny = ABS(F[i + nx * j]);
+	  for (i = 0; i < nx; i++)
+	    {
+	      for (j = 0; j < ny; j++)
+		{
+		  if (ABS (F[i + nx * j]) > 0.0 && global_tiny > ABS (F[i + nx * j]))
+		    global_tiny = ABS (F[i + nx * j]);
 	}
       }
 
       // force monotonicity of F w.r.t. y according to trend
-      for (i = 0; i < nx; i++) {
+	  for (i = 0; i < nx; i++)
+	    {
 
 #ifdef COMPILE_DEBUG_INSTRUCTIONS
-	if (i <= 2 && enableDebugDump) {
+	      if (i <= 2 && enableDebugDump)
+		{
 	  //if(i > 0) printf("debug:\ndebug:\n");
-	  printf ("debug: %-4s %12s %12s %12s %12s %12s %12s %12s %12s %12s %12s %12s %12s %12s %12s %12s\n",
-		  "#j","y","Fmod","f_debug","%","Mi","Mim1","Ni","Oi","Mi2","Pim1","Pi2","Qi","dFmin","x_ratio","f_init");
+		  printf ("debug: %-4s %12s %12s %12s %12s %12s %12s %12s %12s %12s %12s %12s %12s %12s %12s %12s\n", "#j", "y", "Fmod", "f_debug", "%", "Mi", "Mim1", "Ni", "Oi", "Mi2", "Pim1", "Pi2", "Qi", "dFmin", "x_ratio", "f_init");
 	}
-	if (enableDebugDump) {
+	      if (enableDebugDump)
+		{
 	  calcFmod_debug = &_calcFmod_debug;
 	  calcFmod_debug->Mi      = 0;
 	  calcFmod_debug->Mim1    = 0;
@@ -1323,15 +1523,15 @@ EOS_INTEGER _eos_MakeMonotonic (EOS_INTEGER nx, EOS_INTEGER ny, EOS_REAL x[],
 	// determine if monotonic-increasing or -decreasing is desired along current constant-x array
 	trend = (F[i + (ny-1) * nx] < F[i]) ? (EOS_REAL) (-1) : (EOS_REAL) (1);
 
-        for (j = 0; j < ny; j++) {
+	      for (j = 0; j < ny; j++)
+		{
 
-	  if (j > 0) {
+		  if (j > 0)
+		    {
 	    // Calculate Fmod, which is the bounding value of F[i][j]
 	    val1 = (F_shift) ? F_shift[i] : zero_r;
 #if 0
-	    Fmod = _eos_calcFmod (F[i + nx * (j - 1)] + val1,
-				  F[i + nx * j] + val1,
-				  y[0], y[ny - 1], y[j], trend, (void*)calcFmod_debug);
+		      Fmod = _eos_calcFmod (F[i + nx * (j - 1)] + val1, F[i + nx * j] + val1, y[0], y[ny - 1], y[j], trend, (void *) calcFmod_debug);
 #else
 	    Fmod = MAX(F[i + nx * j] + val1, F[i + nx * (j - 1)] + val1 + global_tiny / 10.0);
 #endif
@@ -1343,14 +1543,12 @@ EOS_INTEGER _eos_MakeMonotonic (EOS_INTEGER nx, EOS_INTEGER ny, EOS_REAL x[],
 	  }
 
 #ifdef COMPILE_DEBUG_INSTRUCTIONS
-	  if (i <= 2 && enableDebugDump) {
+		  if (i <= 2 && enableDebugDump)
+		    {
 	    calcFmod_debug = &_calcFmod_debug;
 	    printf ("debug: %-4i %12g %12g %12g %12g %12i %12i %12i %12i %12i %12g %12g %12g %12g %12g %12g\n",
 		    /* i + nx * */ j, y[j], F[i + nx * j], F[i + nx * j], 0.0,
-		    calcFmod_debug->Mi, calcFmod_debug->Mim1, calcFmod_debug->Ni, calcFmod_debug->Oi,
-		    calcFmod_debug->Mi2, calcFmod_debug->Pim1, calcFmod_debug->Pi2, calcFmod_debug->Qi,
-		    calcFmod_debug->dFmin, calcFmod_debug->x_ratio, calcFmod_debug->f_init
-		    );
+			      calcFmod_debug->Mi, calcFmod_debug->Mim1, calcFmod_debug->Ni, calcFmod_debug->Oi, calcFmod_debug->Mi2, calcFmod_debug->Pim1, calcFmod_debug->Pi2, calcFmod_debug->Qi, calcFmod_debug->dFmin, calcFmod_debug->x_ratio, calcFmod_debug->f_init);
 
 	  }
 #endif
@@ -1376,24 +1574,25 @@ EOS_INTEGER _eos_MakeMonotonic (EOS_INTEGER nx, EOS_INTEGER ny, EOS_REAL x[],
  *        2 if invalid search result
  *        3 if calloc failed
  ************************************************************************/
-int _eos_RemoveLoops (EOS_INTEGER nx, EOS_INTEGER ny, EOS_REAL F[],
-                      EOS_INTEGER dim, _EXCEPTIONS_T *e)
+int
+_eos_RemoveLoops (EOS_INTEGER nx, EOS_INTEGER ny, EOS_REAL F[], EOS_INTEGER dim, _EXCEPTIONS_T * e)
 {
-  int i, j, step, stepj, imax, jmax,
-    indexm1, index, indexp1, totPairs, pairIndex, minCntr, maxCntr;
+  int i, j, step, stepj, imax, jmax, indexm1, index, indexp1, totPairs, pairIndex, minCntr, maxCntr;
   int *maxIndex, *minIndex;
   EOS_REAL *avgValue;
   EOS_INTEGER backwardDiffSign, forwardDiffSign;
   EOS_REAL zero = (EOS_REAL) 0;
   EOS_REAL two = (EOS_REAL) 2;
 
-  if (dim == 1) {
+  if (dim == 1)
+    {
     step = nx;
     stepj = 1;
     imax = nx * ny;
     jmax = nx - 1;
   }
-  else if (dim == 2) {
+  else if (dim == 2)
+    {
     step = 1;
     stepj = nx;
     imax = nx;
@@ -1410,41 +1609,47 @@ int _eos_RemoveLoops (EOS_INTEGER nx, EOS_INTEGER ny, EOS_REAL F[],
   if ((avgValue = (EOS_REAL *) calloc (jmax, sizeof (EOS_REAL))) == NULL)
     return (EOS_FAILED);
 
-  for (i = 0; i < imax; i += step) {    // current dim-line
+  for (i = 0; i < imax; i += step)
+    {				// current dim-line
     totPairs = 0;               // intialize max-min pair counter
     maxCntr = 0;                // intialize max counter
     minCntr = 0;                // intialize min counter
 
     // find all max-min pairs in F for loops on current dim-line
-    for (j = 1; j < jmax; j++) {
+      for (j = 1; j < jmax; j++)
+	{
       indexm1 = i + (j - 1) * stepj;
       index = i + (j) * stepj;  // current element of dim-line
       indexp1 = i + (j + 1) * stepj;
       backwardDiffSign = SIGN (F[index] - F[indexm1]);
       forwardDiffSign = SIGN (F[indexp1] - F[index]);
 
-      if (e != NULL) { /* exception(s) have been provided */
+	  if (e != NULL)
+	    {			/* exception(s) have been provided */
 	if ( e->fmin < F[index] && index <= e->fmin_index )
 	  backwardDiffSign = forwardDiffSign;
       }
 
-      if (backwardDiffSign != forwardDiffSign) {
+	  if (backwardDiffSign != forwardDiffSign)
+	    {
         // found a local-max or -min
 
-        if ((maxCntr == 0) &&
-            (maxIndex[maxCntr] == 0) && backwardDiffSign < 0) {
+	      if ((maxCntr == 0) && (maxIndex[maxCntr] == 0) && backwardDiffSign < 0)
+		{
           // found min first along dim-line
           maxIndex[maxCntr] = i;        // save local-max index
           minIndex[minCntr] = index;    // save local-min index
           maxCntr++;            // increment max counter
           minCntr++;            // increment min counter
         }
-        else if ((backwardDiffSign >= 0) && (forwardDiffSign <= 0)) {
+	      else if ((backwardDiffSign >= 0) && (forwardDiffSign <= 0))
+		{
           // found local-max or start of a Maxwellian region
           maxIndex[maxCntr] = index;    // save local-max index
           maxCntr++;            // increment max counter
         }
-        else if ((backwardDiffSign <= 0) && (forwardDiffSign >= 0)) {
+	      else if ((backwardDiffSign <= 0) && (forwardDiffSign >= 0))
+		{
           // found local-min or end of a Maxwellian region
           minIndex[minCntr] = index;    // save local-min index
           minCntr++;            // increment min counter
@@ -1456,7 +1661,8 @@ int _eos_RemoveLoops (EOS_INTEGER nx, EOS_INTEGER ny, EOS_REAL F[],
 
     // consider that local-max found last instead of local-min
     totPairs = maxCntr;         // reset max-min pair counter
-    if (maxCntr > minCntr) {
+      if (maxCntr > minCntr)
+	{
       minIndex[totPairs] = jmax - 1;
       minCntr = maxCntr;
     }
@@ -1469,7 +1675,8 @@ int _eos_RemoveLoops (EOS_INTEGER nx, EOS_INTEGER ny, EOS_REAL F[],
 
     // Remove loops from current dim-line
     pairIndex = 0;
-    for (j = 0; j < jmax; j++) {
+      for (j = 0; j < jmax; j++)
+	{
       if (pairIndex >= totPairs)
         break;                  // all loops removed
 
@@ -1477,14 +1684,12 @@ int _eos_RemoveLoops (EOS_INTEGER nx, EOS_INTEGER ny, EOS_REAL F[],
       indexp1 = i + (j + 1) * stepj;
 
       // reset F-value
-      if ((F[index] > avgValue[pairIndex]) ||
-          ((F[index] < avgValue[pairIndex])
-           && (index >= maxIndex[pairIndex])))
+	  if ((F[index] > avgValue[pairIndex]) || ((F[index] < avgValue[pairIndex]) && (index >= maxIndex[pairIndex])))
         F[index] = avgValue[pairIndex];
 
       // reset arrays' values consider next max-min pair
-      if ((index >= minIndex[pairIndex]) &&
-          (F[indexp1] > avgValue[pairIndex])) {
+	  if ((index >= minIndex[pairIndex]) && (F[indexp1] > avgValue[pairIndex]))
+	    {
         maxIndex[pairIndex] = 0;
         minIndex[pairIndex] = 0;
         avgValue[pairIndex] = zero;
@@ -1515,8 +1720,8 @@ int _eos_RemoveLoops (EOS_INTEGER nx, EOS_INTEGER ny, EOS_REAL F[],
  *                      00 if there are no errors,
  *
  ***********************************************************************/
-EOS_INTEGER _eos_MakeSmooth (EOS_INTEGER nX, EOS_INTEGER nY,
-                             EOS_REAL X[], EOS_REAL Y[], EOS_REAL F[])
+EOS_INTEGER
+_eos_MakeSmooth (EOS_INTEGER nX, EOS_INTEGER nY, EOS_REAL X[], EOS_REAL Y[], EOS_REAL F[])
 {
   EOS_INTEGER j, jpre1, jpre2, jpre3, jpres;
   EOS_REAL ftemp, dpres, fdens, fden1, fden3;
@@ -1526,7 +1731,8 @@ EOS_INTEGER _eos_MakeSmooth (EOS_INTEGER nX, EOS_INTEGER nY,
 
   // force linear temperature dependence for low temperature.
   ftemp = (Y[1] - Y[0]) / (Y[2] - Y[0]);
-  for (j = 0; j < nX; j++) {
+  for (j = 0; j < nX; j++)
+    {
     jpre1 = j;
     jpre2 = jpre1 + nX;
     jpre3 = jpre2 + nX;
@@ -1536,7 +1742,8 @@ EOS_INTEGER _eos_MakeSmooth (EOS_INTEGER nX, EOS_INTEGER nY,
   // force linear density dependence for low and high density.   
   fdens = (X[1] - X[0]) / (X[2] - X[0]);
   jpres = -nX;
-  for (j = 0; j < nY; j++) {
+  for (j = 0; j < nY; j++)
+    {
     jpres = jpres + nX;
     F[jpres + 1] = F[jpres + 2] * fdens + F[jpres] * ((EOS_REAL) 1.0 - fdens);
   }
@@ -1546,9 +1753,9 @@ EOS_INTEGER _eos_MakeSmooth (EOS_INTEGER nX, EOS_INTEGER nY,
   fden3 = X[nX - 2] / X[nX - 3];
 
   jpres = nX - 1;
-  F[nX - 2] =
-    F[nX - 3] * fdens * fden3 + F[nX - 1] * ((EOS_REAL) 1.0 - fdens) * fden1;
-  for (j = 1; j < nY; j++) {
+  F[nX - 2] = F[nX - 3] * fdens * fden3 + F[nX - 1] * ((EOS_REAL) 1.0 - fdens) * fden1;
+  for (j = 1; j < nY; j++)
+    {
     jpres = jpres + nX;
     dpres = (F[jpres - 2] - F[nX - 3]) / X[nX - 3];
     F[jpres - 1] = F[nX - 2] + dpres * X[nX - 2];
@@ -1568,7 +1775,8 @@ EOS_INTEGER _eos_MakeSmooth (EOS_INTEGER nX, EOS_INTEGER nY,
  *    buffer  = output string into which result is placed
  *
  ***********************************************************************/
-void _eos_dbl2String (EOS_REAL x, EOS_INTEGER fw, char *buffer)
+void
+_eos_dbl2String (EOS_REAL x, EOS_INTEGER fw, char *buffer)
 {
   EOS_INTEGER p;
   p = fw - 8;
@@ -1589,17 +1797,18 @@ void _eos_dbl2String (EOS_REAL x, EOS_INTEGER fw, char *buffer)
  * EOS_INTEGER optFlag
  * 
  ************************************************************************/
-EOS_REAL eos_getRealOptionFromTableHandle (EOS_INTEGER th,
-                                           EOS_INTEGER optFlag,
-                                           EOS_INTEGER *err)
+EOS_REAL
+eos_getRealOptionFromTableHandle (EOS_INTEGER th, EOS_INTEGER optFlag, EOS_INTEGER * err)
 {
   eos_OptionValue *optVal = NULL;
   EOS_BOOLEAN bv;
   *err = EOS_OK;
 
-  if (!EOS_IS_INTERPOLATION_OPTION (optFlag)) {
+  if (!EOS_IS_INTERPOLATION_OPTION (optFlag))
+    {
     eos_GetOptionEosDataMap (&gEosDataMap, th, optFlag, &optVal, err);
-    if (!optVal || eos_GetStandardErrorCodeFromCustomErrorCode(*err) != EOS_OK) {
+      if (!optVal || eos_GetStandardErrorCodeFromCustomErrorCode (*err) != EOS_OK)
+	{
       if (eos_GetStandardErrorCodeFromCustomErrorCode(*err) == EOS_OK)
         *err = EOS_INVALID_OPTION_FLAG;
       return 0;
@@ -1607,7 +1816,8 @@ EOS_REAL eos_getRealOptionFromTableHandle (EOS_INTEGER th,
 
     return optVal->rval;
   }
-  else {                        /* interpolation option, they are only boolean! */
+  else
+    {				/* interpolation option, they are only boolean! */
 
     eos_GetOptionEosInterpolation (&gEosInterpolation, th, optFlag, &bv, err);
     return (EOS_REAL) bv;
@@ -1629,17 +1839,18 @@ EOS_REAL eos_getRealOptionFromTableHandle (EOS_INTEGER th,
  * EOS_INTEGER optFlag
  * 
  ************************************************************************/
-EOS_INTEGER eos_getIntOptionFromTableHandle (EOS_INTEGER th,
-                                             EOS_INTEGER optFlag,
-                                             EOS_INTEGER *err)
+EOS_INTEGER
+eos_getIntOptionFromTableHandle (EOS_INTEGER th, EOS_INTEGER optFlag, EOS_INTEGER * err)
 {
   eos_OptionValue *optVal = NULL;
   EOS_BOOLEAN bv;
   *err = EOS_OK;
 
-  if (!EOS_IS_INTERPOLATION_OPTION (optFlag)) {
+  if (!EOS_IS_INTERPOLATION_OPTION (optFlag))
+    {
     eos_GetOptionEosDataMap (&gEosDataMap, th, optFlag, &optVal, err);
-    if (!optVal || eos_GetStandardErrorCodeFromCustomErrorCode(*err) != EOS_OK) {
+      if (!optVal || eos_GetStandardErrorCodeFromCustomErrorCode (*err) != EOS_OK)
+	{
       if (eos_GetStandardErrorCodeFromCustomErrorCode(*err) == EOS_OK)
         *err = EOS_INVALID_OPTION_FLAG;
       return 0;
@@ -1647,7 +1858,8 @@ EOS_INTEGER eos_getIntOptionFromTableHandle (EOS_INTEGER th,
 
     return optVal->ival;
   }
-  else {                        /* interpolation option, they are only boolean! */
+  else
+    {				/* interpolation option, they are only boolean! */
 
     eos_GetOptionEosInterpolation (&gEosInterpolation, th, optFlag, &bv, err);
     return (EOS_INTEGER) bv;
@@ -1668,17 +1880,18 @@ EOS_INTEGER eos_getIntOptionFromTableHandle (EOS_INTEGER th,
  * EOS_INTEGER optFlag
  * 
  ************************************************************************/
-EOS_BOOLEAN eos_getBoolOptionFromTableHandle (EOS_INTEGER th,
-                                              EOS_INTEGER optFlag,
-                                              EOS_INTEGER *err)
+EOS_BOOLEAN
+eos_getBoolOptionFromTableHandle (EOS_INTEGER th, EOS_INTEGER optFlag, EOS_INTEGER * err)
 {
   eos_OptionValue *optVal = NULL;
   EOS_BOOLEAN bv;
   *err = EOS_OK;
 
-  if (!EOS_IS_INTERPOLATION_OPTION (optFlag)) {
+  if (!EOS_IS_INTERPOLATION_OPTION (optFlag))
+    {
     eos_GetOptionEosDataMap (&gEosDataMap, th, optFlag, &optVal, err);
-    if (!optVal || eos_GetStandardErrorCodeFromCustomErrorCode(*err) != EOS_OK) {
+      if (!optVal || eos_GetStandardErrorCodeFromCustomErrorCode (*err) != EOS_OK)
+	{
       if (eos_GetStandardErrorCodeFromCustomErrorCode(*err) == EOS_OK)
         *err = EOS_INVALID_OPTION_FLAG;
       return EOS_FALSE;
@@ -1686,7 +1899,8 @@ EOS_BOOLEAN eos_getBoolOptionFromTableHandle (EOS_INTEGER th,
 
     return optVal->bval;
   }
-  else {                        /* interpolation option, they are only boolean! */
+  else
+    {				/* interpolation option, they are only boolean! */
 
     eos_GetOptionEosInterpolation (&gEosInterpolation, th, optFlag, &bv, err);
     return bv;
@@ -1710,34 +1924,34 @@ EOS_BOOLEAN eos_getBoolOptionFromTableHandle (EOS_INTEGER th,
  * EOS_INTEGER optFlag
  * 
  ************************************************************************/
-void eos_GetConversionFactorsFromTableHandle (EOS_INTEGER th,
-                                              EOS_INTEGER *dataType,
-                                              EOS_REAL *convX,
-                                              EOS_REAL *convY,
-                                              EOS_REAL *convF,
-                                              EOS_INTEGER *err)
+void
+eos_GetConversionFactorsFromTableHandle (EOS_INTEGER th, EOS_INTEGER * dataType, EOS_REAL * convX, EOS_REAL * convY, EOS_REAL * convF, EOS_INTEGER * err)
 {
   EOS_INTEGER i, tableHandle = -1;
   *err = EOS_OK;
 
-  if (! eos_IsHandleValid(th)) {
+  if (!eos_IsHandleValid (th))
+    {
     *err = EOS_INVALID_TABLE_HANDLE;
     return;
   }
 
   if (dataType == NULL || gEosDataMap.tableTypes[th] == *dataType)
     tableHandle = th;
-  else {                        /* search for the table handles which shares our object but has type *dataType */
+  else
+    {				/* search for the table handles which shares our object but has type *dataType */
 
-    for (i = 0; i < gEosDataMap.nHandles; i++) {
-      if (gEosDataMap.tableHandlesMap[i] == gEosDataMap.tableHandlesMap[th] &&
-          gEosDataMap.tableTypes[i] == *dataType) {
+      for (i = 0; i < gEosDataMap.nHandles; i++)
+	{
+	  if (gEosDataMap.tableHandlesMap[i] == gEosDataMap.tableHandlesMap[th] && gEosDataMap.tableTypes[i] == *dataType)
+	    {
         tableHandle = i;
         break;
       }
     }
 
-    if (tableHandle < 0) {      /* not found */
+      if (tableHandle < 0)
+	{			/* not found */
       *convX = *convY = *convF = 1.0;
       return;
     }
@@ -1766,16 +1980,97 @@ void eos_GetConversionFactorsFromTableHandle (EOS_INTEGER th,
  * EOS_INTEGER th - table handle
  * 
  ************************************************************************/
-EOS_INTEGER eos_GetDataTypeFromTableHandle (EOS_INTEGER th, EOS_INTEGER *err)
+EOS_INTEGER
+eos_GetDataTypeFromTableHandle (EOS_INTEGER th, EOS_INTEGER * err)
 {
   *err = EOS_OK;
 
-  if (! eos_IsHandleValid(th)) {
+  if (!eos_IsHandleValid (th))
+    {
     *err = EOS_INVALID_TABLE_HANDLE;
     return 0;
   }
 
   return gEosDataMap.tableTypes[th];
+}
+
+/***********************************************************************/
+/*!
+ * \brief Get the data type description corresponding to the provided table handle, th.
+ *
+ * \param[in]     th          - EOS_INTEGER : specified table handle
+ *
+ * \return        description - EOS_CHAR*   : eos_TableList[i].eosTableName; possibly modified from default
+ *
+ ***********************************************************************/
+EOS_CHAR *
+eos_GetDataTypeDescriptionFromTableHandle (EOS_INTEGER th)
+{
+  EOS_CHAR pattern0[40], pattern[20], pattern1[20], *description = NULL;
+  EOS_INTEGER err = EOS_OK;
+  EOS_INTEGER dataType = eos_GetDataTypeFromTableHandle (th, &err);
+
+  if (!eos_TableListReverseMap)
+    _eos_SetTableListReverseMap ();	/* build reverse lookup for eos_TableList[] */
+
+  description = (EOS_CHAR *) malloc (sizeof (EOS_CHAR) * (EOS_META_DATA_STRLEN + 1));
+  sprintf (description, "%s", EOS_TYPE_TO_TAB_NAME (dataType));
+
+  switch (EOS_TYPE_TO_INDEP_VAR2 (dataType))
+  {
+    /* special cases for tables that include cold curve data */
+  case EOS_Pt:
+    sprintf (pattern, "Total Pressure");
+    sprintf (pattern1, " Pressure");
+    break;
+  case EOS_Ut:
+  case EOS_At:
+    sprintf (pattern, "Total Specific");
+    sprintf (pattern1, " Specific");
+    break;
+  case EOS_Pic:
+    sprintf (pattern, "Ion Pressure");
+    sprintf (pattern1, " Ion Pressure");
+    break;
+  case EOS_Uic:
+  case EOS_Aic:
+    sprintf (pattern, "Ion Specific");
+    sprintf (pattern1, " Ion Specific");
+    break;
+  default:
+    break;
+  }
+
+  sprintf (pattern0, "%s", "");
+  switch (EOS_TYPE_TO_INDEP_VAR2 (dataType))
+  {
+    /* special cases for tables that include cold curve data */
+  case EOS_Pt:
+  case EOS_Pic:
+    sprintf (pattern0, "%s", "Density-Normalized ");
+  case EOS_Ut:
+  case EOS_At:
+  case EOS_Uic:
+  case EOS_Aic:
+    {
+      EOS_CHAR *s = NULL, *cp = NULL;
+      s = _eos_ReplaceSubstring (EOS_TYPE_TO_TAB_NAME (dataType), pattern, strcat (strcat (pattern0, "Thermal"), pattern1));
+      sprintf (description, "%s", s);
+      EOS_FREE(s);
+      cp = strrstr (description, "GPa)-");	/* find right-most instance of "GPa)-" in description */
+      if (cp) {
+        EOS_CHAR *s = NULL;
+        s = _eos_ReplaceSubstring (cp, "GPa)-", "MJ/kg)-");
+        sprintf (cp, "%s", s);
+        EOS_FREE(s);
+      }
+    }
+    break;
+  default:
+    break;
+  }
+
+  return description;
 }
 
 /*! *********************************************************************
@@ -1801,13 +2096,8 @@ EOS_INTEGER eos_GetDataTypeFromTableHandle (EOS_INTEGER th, EOS_INTEGER *err)
  * 
  ************************************************************************/
 
-void _eos_InterpolateRecordType_1D (EOS_INTEGER nX, EOS_REAL *X, EOS_REAL *F,
-                                    EOS_REAL *F2, EOS_INTEGER th,
-                                    EOS_INTEGER dataType,
-                                    EOS_INTEGER nXYPairs, EOS_REAL *srchX,
-                                    EOS_REAL *fVals, EOS_REAL *dFx,
-                                    EOS_INTEGER *xyBounds,
-                                    EOS_INTEGER *errorCode, EOS_CHAR **errMsg)
+void
+_eos_InterpolateRecordType_1D (EOS_INTEGER nX, EOS_REAL * X, EOS_REAL * F, EOS_REAL * F2, EOS_INTEGER th, EOS_INTEGER dataType, EOS_INTEGER nXYPairs, EOS_REAL * srchX, EOS_REAL * fVals, EOS_REAL * dFx, EOS_INTEGER * xyBounds, EOS_INTEGER * errorCode, EOS_CHAR ** errMsg)
 {
   EOS_INTEGER err, doRational = 0, i, tabInd1, tabInd2, cat, *xyBounds2;
   EOS_REAL *uVals, *dUx, *xVals;
@@ -1820,43 +2110,41 @@ void _eos_InterpolateRecordType_1D (EOS_INTEGER nX, EOS_REAL *X, EOS_REAL *F,
 
   xVals = srchX;
 
-  switch (cat) {
+  switch (cat)
+    {
   case EOS_CATEGORY0:          /* indicates the table is not inverted */
     {
       doRational = eos_getBoolOptionFromTableHandle (th, EOS_RATIONAL, &err);
-      if (doRational) {
+	if (doRational)
+	  {
 	/* add "ghost node" data prior to interpolation */
 	nGhostData = 1;
-	_eos_CreateGhostData (nGhostData, nX, 0, X, NULL, &F, NULL,
-			      &nxtbl, &nytbl, &xtbls, &ytbls, &ftbls, NULL, &err, errMsg);
-	if (eos_GetStandardErrorCodeFromCustomErrorCode(err) != EOS_OK) {
+	    _eos_CreateGhostData (nGhostData, nX, 0, X, NULL, &F, NULL, &nxtbl, &nytbl, &xtbls, &ytbls, &ftbls, NULL, &err, errMsg);
+	    if (eos_GetStandardErrorCodeFromCustomErrorCode (err) != EOS_OK)
+	      {
 	  *errorCode = err;
 	  return;
 	}
         err = EOS_OK;
-        eos_RationalInterpolate (nXYPairs, nxtbl, 1, 0, xtbls, *ftbls, xVals, fVals, dFx,
-                                 'y', xyBounds, &err);
+	    eos_RationalInterpolate (nXYPairs, nxtbl, 1, 0, xtbls, *ftbls, xVals, fVals, dFx, 'y', xyBounds, &err);
 
 	/* ignore old extrapolation detection logic */
 	if (eos_GetStandardErrorCodeFromCustomErrorCode(err) == EOS_INTERP_EXTRAPOLATED)
 	  err = EOS_OK;
 
 	/* set extrapolation error codes appropriately */
-	_eos_CheckExtrapCategory0(nGhostData, nxtbl, nytbl, xtbls, NULL,
-				  nXYPairs, xVals, NULL, xyBounds, &err);
+	    _eos_CheckExtrapCategory0 (nGhostData, nxtbl, nytbl, xtbls, NULL, nXYPairs, xVals, NULL, xyBounds, &err);
 
 	/* free memory containing "ghost node" data */
 	_eos_DestroyGhostData (&nGhostData, &xtbls, &ytbls, &ftbls, NULL);
       }
-      else if (eos_getBoolOptionFromTableHandle (th, EOS_LINEAR, &err)) { /* interpolate linearly instead */
+	else if (eos_getBoolOptionFromTableHandle (th, EOS_LINEAR, &err))
+	  {			/* interpolate linearly instead */
 #define USE_NEW_LINEAR_DERIVATIVE_LOGIC
 #ifndef USE_NEW_LINEAR_DERIVATIVE_LOGIC
-        eos_LineInterpolate (EOS_TRUE, nXYPairs, nX, 1, 0, X, &F, xVals, fVals, dFx,
-                             'y', xyBounds, &err);
+	    eos_LineInterpolate (EOS_TRUE, nXYPairs, nX, 1, 0, X, &F, xVals, fVals, dFx, 'y', xyBounds, &err);
 #else
-	eos_LineInterpolate (eos_getBoolOptionFromTableHandle (th, EOS_DISCONTINUOUS_DERIVATIVES, &err),
-			     nXYPairs, nX, 1, 0, X, &F, xVals, fVals, dFx,
-			     'y', xyBounds, &err);
+	    eos_LineInterpolate (eos_getBoolOptionFromTableHandle (th, EOS_DISCONTINUOUS_DERIVATIVES, &err), nXYPairs, nX, 1, 0, X, &F, xVals, fVals, dFx, 'y', xyBounds, &err);
 #endif
       }
 
@@ -1871,14 +2159,13 @@ void _eos_InterpolateRecordType_1D (EOS_INTEGER nX, EOS_REAL *X, EOS_REAL *F,
 
       doRational = eos_getBoolOptionFromTableHandle (th, EOS_RATIONAL, &err);
       /* do inverse interpolation */
-      if (doRational) {
+	if (doRational)
+	  {
         err = EOS_OK;
-        eos_InverseRationalInterpolateF (EOS_FALSE, nXYPairs, xVals, dFx, fVals, nX, X,
-                                         F, xyBounds, &err);
+	    eos_InverseRationalInterpolateF (EOS_FALSE, nXYPairs, xVals, dFx, fVals, nX, X, F, xyBounds, &err);
       }
       else if (eos_getBoolOptionFromTableHandle (th, EOS_LINEAR, &err)) /* interpolate linearly instead */
-        eos_InverseInterpolateF (nXYPairs, xVals, dFx, fVals, nX, X, F,
-                                 xyBounds, &err);
+	  eos_InverseInterpolateF (nXYPairs, xVals, dFx, fVals, nX, X, F, xyBounds, &err);
       if (eos_GetStandardErrorCodeFromCustomErrorCode(err) != EOS_OK)
         *errorCode = err;
       if (eos_GetStandardErrorCodeFromCustomErrorCode(err) == EOS_UNDEFINED)
@@ -1901,33 +2188,32 @@ void _eos_InterpolateRecordType_1D (EOS_INTEGER nX, EOS_REAL *X, EOS_REAL *F,
       dUx = (EOS_REAL *) malloc (sizeof (EOS_REAL) * nXYPairs);
       xyBounds2 = (EOS_INTEGER *) malloc (sizeof (EOS_INTEGER) * nXYPairs);
 
-      _eos_InterpolateRecordType_1D (nX, X, F2, NULL, th, tabInd2,
-                                     nXYPairs, xVals, uVals, dUx, xyBounds,
-                                     errorCode, errMsg);
-      if (eos_GetStandardErrorCodeFromCustomErrorCode(*errorCode) == EOS_UNDEFINED) {
+	_eos_InterpolateRecordType_1D (nX, X, F2, NULL, th, tabInd2, nXYPairs, xVals, uVals, dUx, xyBounds, errorCode, errMsg);
+	if (eos_GetStandardErrorCodeFromCustomErrorCode (*errorCode) == EOS_UNDEFINED)
+	  {
         EOS_FREE (dUx);
         EOS_FREE (uVals);
         break;
       }
-      _eos_InterpolateRecordType_1D (nX, X, F, NULL, th, tabInd1,
-                                     nXYPairs, uVals, fVals, dFx /*dFu */ ,
+	_eos_InterpolateRecordType_1D (nX, X, F, NULL, th, tabInd1, nXYPairs, uVals, fVals, dFx /*dFu */ ,
                                      xyBounds2, errorCode, errMsg);
       EOS_FREE(xyBounds2);
-      if (eos_GetStandardErrorCodeFromCustomErrorCode(*errorCode) == EOS_UNDEFINED) {
+	if (eos_GetStandardErrorCodeFromCustomErrorCode (*errorCode) == EOS_UNDEFINED)
+	  {
         EOS_FREE (dUx);
         EOS_FREE (uVals);
         break;
       }
       /* derivative dFx = dFu * dUx */
-      for (i = 0; i < nXYPairs; i++) {
+	for (i = 0; i < nXYPairs; i++)
+	  {
 
 	/* DAP -- Test multiplication with EOS_CHECK_PRODUCT prior to performing it.
 	          This is a temporary kludge to prevent SIGFPE. */
 	if (EOS_CHECK_PRODUCT(dUx[i], dFx[i]))
 	  dFx[i] = dUx[i] * dFx[i] /*dFu */ ;
 	else
-	  dFx[i] = SIGN(dUx[i]) * SIGN(dFx[i]) *
-	    (EOS_IS_PRODUCT_GT_MAX(dUx[i], dFx[i]) ? DBL_MAX : DBL_MIN);
+	      dFx[i] = SIGN (dUx[i]) * SIGN (dFx[i]) * (EOS_IS_PRODUCT_GT_MAX (dUx[i], dFx[i]) ? DBL_MAX : DBL_MIN);
 
       }
       EOS_FREE (dUx);
@@ -1956,7 +2242,8 @@ void _eos_InterpolateRecordType_1D (EOS_INTEGER nX, EOS_REAL *X, EOS_REAL *F,
  * 	const EOS_INTEGER err     input: error code.
  * 
  ************************************************************************/
-EOS_CHAR* eos_GetCustomErrorMsg (EOS_INTEGER th, const EOS_INTEGER err)
+EOS_CHAR *
+eos_GetCustomErrorMsg (EOS_INTEGER th, const EOS_INTEGER err)
 {
   EOS_INTEGER standard_err;
 
@@ -1972,7 +2259,8 @@ EOS_CHAR* eos_GetCustomErrorMsg (EOS_INTEGER th, const EOS_INTEGER err)
   if (! gEosDataMap.customErrorMsg[th] )
     return "";
 
-  if (th >= 0 && th < gEosDataMap.nAlloc && eos_IsErrorCodeValid (err)) {
+  if (th >= 0 && th < gEosDataMap.nAlloc && eos_IsErrorCodeValid (err))
+    {
     if (gEosDataMap.customErrorMsg[th][standard_err - EOS_MIN_ERROR_CODE_VALUE])
       return gEosDataMap.customErrorMsg[th][standard_err - EOS_MIN_ERROR_CODE_VALUE]; 
   }
@@ -1991,7 +2279,8 @@ EOS_CHAR* eos_GetCustomErrorMsg (EOS_INTEGER th, const EOS_INTEGER err)
  * 	                  ...     input: arbitrary number of arguments.
  * 
  ************************************************************************/
-void eos_SetCustomMsg_str (EOS_CHAR **msg, const EOS_CHAR *fmt, ...)
+void
+eos_SetCustomMsg_str (EOS_CHAR ** msg, const EOS_CHAR * fmt, ...)
 {
   va_list args;
 
@@ -2006,26 +2295,29 @@ void eos_SetCustomMsg_str (EOS_CHAR **msg, const EOS_CHAR *fmt, ...)
   va_end (args);
 }
 
-EOS_INTEGER eos_GetHandleFromCustomErrorCode(const EOS_INTEGER err)
+inline EOS_INTEGER
+eos_GetHandleFromCustomErrorCode (const EOS_INTEGER err)
 {
   /* remove the original err value from the err, returning the th (th<0 indicates no th included) */
-  EOS_INTEGER fact = EOS_MAGX10_MAX_ERROR_CODE_VALUE;
-  EOS_INTEGER th = (EOS_INTEGER)(err / fact) - 1;
+  static const EOS_REAL fact = 1.0 / EOS_MAGX10_MAX_ERROR_CODE_VALUE;
+  EOS_INTEGER th = (EOS_INTEGER)(err * fact) - 1;
   
   return(th);
 }
 
-EOS_INTEGER eos_GetStandardErrorCodeFromCustomErrorCode(const EOS_INTEGER err)
+inline EOS_INTEGER
+eos_GetStandardErrorCodeFromCustomErrorCode (const EOS_INTEGER err)
 {
   /* remove the th value from the err, returning the original err */
-  EOS_INTEGER fact = EOS_MAGX10_MAX_ERROR_CODE_VALUE;
+  static const EOS_INTEGER fact = EOS_MAGX10_MAX_ERROR_CODE_VALUE;
   EOS_INTEGER th = eos_GetHandleFromCustomErrorCode(err);
   EOS_INTEGER original_err = err - fact * MAX(0, th + 1);
   
   return(original_err);
 }
 
-EOS_INTEGER eos_SetCustomErrorCode(EOS_INTEGER th, const EOS_INTEGER err)
+EOS_INTEGER
+eos_SetCustomErrorCode (EOS_INTEGER th, const EOS_INTEGER err)
 {
   if (err >= EOS_MAGX10_MAX_ERROR_CODE_VALUE)
     return err;
@@ -2052,7 +2344,8 @@ EOS_INTEGER eos_SetCustomErrorCode(EOS_INTEGER th, const EOS_INTEGER err)
  * 
  ************************************************************************/
 #include <assert.h>
-EOS_INTEGER eos_SetCustomErrorMsg (EOS_INTEGER th, const EOS_INTEGER err, const EOS_CHAR *fmt, ...)
+EOS_INTEGER
+eos_SetCustomErrorMsg (EOS_INTEGER th, const EOS_INTEGER err, const EOS_CHAR * fmt, ...)
 {
   va_list args;
   EOS_INTEGER custom_err;
@@ -2071,8 +2364,7 @@ EOS_INTEGER eos_SetCustomErrorMsg (EOS_INTEGER th, const EOS_INTEGER err, const 
     return(err);
 
   if (!gEosDataMap.customErrorMsg[th][standard_err - EOS_MIN_ERROR_CODE_VALUE])
-    gEosDataMap.customErrorMsg[th][standard_err - EOS_MIN_ERROR_CODE_VALUE] =
-      (EOS_CHAR *) malloc (EOS_MaxErrMsgLen * sizeof (EOS_CHAR));
+    gEosDataMap.customErrorMsg[th][standard_err - EOS_MIN_ERROR_CODE_VALUE] = (EOS_CHAR *) malloc (EOS_MaxErrMsgLen * sizeof (EOS_CHAR));
 
   va_start (args, fmt);
   vsprintf (gEosDataMap.customErrorMsg[th][standard_err - EOS_MIN_ERROR_CODE_VALUE], fmt, args);
@@ -2094,11 +2386,13 @@ EOS_INTEGER eos_SetCustomErrorMsg (EOS_INTEGER th, const EOS_INTEGER err, const 
  * 	const EOS_INTEGER err     input: error code.
  *
  ************************************************************************/
-void eos_ResetOneCustomErrorMsg (EOS_INTEGER th, const EOS_INTEGER err)
+void
+eos_ResetOneCustomErrorMsg (EOS_INTEGER th, const EOS_INTEGER err)
 {
   EOS_INTEGER standard_err;
 
-  if (th >= 0 && th < gEosDataMap.nAlloc) {
+  if (th >= 0 && th < gEosDataMap.nAlloc)
+    {
 
     /* ensure memory access is limited to appropriate bounds */
     standard_err = eos_GetStandardErrorCodeFromCustomErrorCode(err);
@@ -2118,7 +2412,8 @@ void eos_ResetOneCustomErrorMsg (EOS_INTEGER th, const EOS_INTEGER err)
  * 	      EOS_INTEGER th      input: associated table handle.
  *
  ************************************************************************/
-void eos_ResetCustomErrorMsg (EOS_INTEGER th)
+void
+eos_ResetCustomErrorMsg (EOS_INTEGER th)
 {
   int i;
   int imax = EOS_MAX_ERROR_CODE_VALUE - EOS_MIN_ERROR_CODE_VALUE + 1;
@@ -2129,7 +2424,8 @@ void eos_ResetCustomErrorMsg (EOS_INTEGER th)
   if (! gEosDataMap.customErrorMsg[th])
     return;
 
-  if (th >= 0 && th < gEosDataMap.nAlloc) {
+  if (th >= 0 && th < gEosDataMap.nAlloc)
+    {
     for (i=0; i<imax; i++)
       EOS_FREE(gEosDataMap.customErrorMsg[th][i]);
   }
@@ -2141,7 +2437,8 @@ void eos_ResetCustomErrorMsg (EOS_INTEGER th)
  *      Reset all custom error message strings to NULL.
  * 
  ************************************************************************/
-void eos_ResetAllCustomErrorMsg (void)
+void
+eos_ResetAllCustomErrorMsg (void)
 {
   EOS_INTEGER i;
 
@@ -2164,12 +2461,15 @@ void eos_ResetAllCustomErrorMsg (void)
  *      EOS_INTEGER _eos_QuickSort    Return maximum number levels of recursion
  *                                    reached during sorting.
  *      EOS_CHAR    **errMsg          Custom error message
+ *      EOS_INTEGER *ia               Optional output array (extent n) of indexes corresponding
+ *                                    to original location of each value in a[].
+ *                                    Ignored if ia==NULL.
  * 
  ************************************************************************/
 #define EOS_RECURSION_LIMIT 500
 static EOS_INTEGER max_recursion_level = 0;
-EOS_INTEGER _eos_QuickSort (EOS_INTEGER N, EOS_REAL a[], EOS_INTEGER lvl,
-                            EOS_INTEGER *err, EOS_CHAR **errMsg)
+EOS_INTEGER
+_eos_QuickSort (EOS_INTEGER N, EOS_REAL a[], EOS_INTEGER lvl, EOS_INTEGER * err, EOS_CHAR ** errMsg, EOS_INTEGER * ia)
 {
   EOS_INTEGER i = 0, j = N - 1;
   EOS_REAL x = a[N / 2], h;
@@ -2183,38 +2483,80 @@ EOS_INTEGER _eos_QuickSort (EOS_INTEGER N, EOS_REAL a[], EOS_INTEGER lvl,
     max_recursion_level = lvl;
 
   //  partition
-  do {
+  do
+  {
     while (a[i] < x)
       i++;
     while (a[j] > x)
       j--;
-    if (i <= j) {
+    if (i <= j)
+	{
       h = a[i];
       a[i] = a[j];
       a[j] = h;
+	  if (ia)
+	    ia[i] = ia[j];
       i++;
       j--;
     }
-  } while (i <= j);
+  }
+  while (i <= j);
 
-  if (lvl > EOS_RECURSION_LIMIT) {
+  if (lvl > EOS_RECURSION_LIMIT)
+  {
     *err = EOS_FAILED;
-    eos_SetCustomMsg_str (errMsg,
-			  "eos_Utils::_eos_QuickSort ERROR exceeded EOS_RECURSION_LIMIT=%i",
-			  EOS_RECURSION_LIMIT);
+    eos_SetCustomMsg_str (errMsg, "eos_Utils::_eos_QuickSort ERROR exceeded EOS_RECURSION_LIMIT=%i", EOS_RECURSION_LIMIT);
     return max_recursion_level;
   }
 
   //  recursion
   if (0 < j)
-    _eos_QuickSort (j + 1, &(a[0]), lvl + 1, err, errMsg);
+    _eos_QuickSort (j + 1, &(a[0]), lvl + 1, err, errMsg, ia);
   if (eos_GetStandardErrorCodeFromCustomErrorCode(*err) != EOS_OK)
     return max_recursion_level;
 
   if (i < N - 1)
-    _eos_QuickSort (N - i, &(a[i]), lvl + 1, err, errMsg);
+    _eos_QuickSort (N - i, &(a[i]), lvl + 1, err, errMsg, ia);
 
   return max_recursion_level;
+}
+
+/*! *********************************************************************
+ *
+ * function _eos_RemoveDuplicates
+ *      This function is used to eliminate duplicate values in a[].
+ *      The array, a[], is assumed to be sorted.
+ *      
+ * 
+ * The arguments are:
+ *       EOS_REAL*      a            in/out: array of real values
+ *       EOS_INTEGER*   n            in/out: size of array of real values
+ *       EOS_INTEGER*   ia           Optional output array (extent n) of indexes corresponding
+ *                                   to original location of each value in a[].
+ *                                   Ignored if ia==NULL.
+ *
+ ************************************************************************/
+EOS_INTEGER
+_eos_RemoveDuplicates (EOS_REAL * a, EOS_INTEGER * n, EOS_INTEGER * ia)
+{
+//#define DEBUG__eos_RemoveDuplicates
+  EOS_INTEGER i, k, err = EOS_OK;
+
+  /* remove duplicates from a[] */
+  k = 1;
+  for (i = 1; i < *n; i++)
+    {
+      if (a[i] != a[k - 1])
+	{
+      a[k] = a[i];
+	  if (ia)
+	    ia[k] = ia[i];
+      k++;
+    }
+  }
+  *n = k;
+
+  return err;
 }
 
 /*! *********************************************************************
@@ -2230,41 +2572,41 @@ EOS_INTEGER _eos_QuickSort (EOS_INTEGER N, EOS_REAL a[], EOS_INTEGER lvl,
  *       EOS_INTEGER    n_target     input:  desired size of array of real values
  *                                           ( ignored if n_target<0 )
  *       EOS_CHAR       **errMsg     in/out: Custom error message
+ *       EOS_INTEGER    *ia          Optional output array (extent n) of indexes corresponding
+ *                                   to original location of each value in a[].
+ *                                   Ignored if ia==NULL.
  *
  ************************************************************************/
-void _eos_CompressArray (EOS_REAL *a, EOS_INTEGER *n, EOS_INTEGER n_target, EOS_CHAR **errMsg)
+void
+_eos_CompressArray (EOS_REAL * a, EOS_INTEGER * n, EOS_INTEGER n_target, EOS_CHAR ** errMsg, EOS_INTEGER * ia)
 {
-//#define DEBUG__eos_CompressArray
+  //#define DEBUG__eos_CompressArray
   EOS_INTEGER i, j, k, n0, iter = 0, cnt = 0, err, lvl = 0;
   EOS_REAL eps = 0.0, *b = NULL, sumb = 0.0;
 
   /* remove duplicates from a[] */
-  k = 1;
-  for (i = 1; i < *n; i++) {
-    if (a[i] != a[k - 1]) {
-      a[k] = a[i];
-      k++;
-    }
-  }
-  *n = k;
+  err = _eos_RemoveDuplicates (a, n, ia);
 
   /*find initial eps based upon an average relative difference */
   n0 = *n;
 
   /* create list of ratios */
   b = (EOS_REAL *) malloc ((n0 - 1) * sizeof (EOS_REAL));
-  for (i = 0; i < n0 - 1; i++) {
+  for (i = 0; i < n0 - 1; i++)
+  {
     b[i] = 0.0;
-    if (a[i] == 0.0) continue; /* don't allow division by zero */
+    if (a[i] == 0.0)
+      continue;		/* don't allow division by zero */
     cnt++;
     b[i] = a[i + 1] / a[i];
     sumb += b[i];
   }
 
   /* sort list of ratios */
-  lvl = _eos_QuickSort (n0 - 1, b, lvl, &err, errMsg);
+  lvl = _eos_QuickSort (n0 - 1, b, lvl, &err, errMsg, ia);
 
-  for (i = 0; i < cnt; i++) {
+  for (i = 0; i < cnt; i++)
+  {
     //sumb += b[i];
   }
 
@@ -2276,16 +2618,20 @@ void _eos_CompressArray (EOS_REAL *a, EOS_INTEGER *n, EOS_INTEGER n_target, EOS_
   b = (EOS_REAL *) malloc (n0 * sizeof (EOS_REAL));
 
   /* iteratively gather representative sample of a[] into b[] */
-  while ((n0 != n_target) && (iter < *n * 2)) {
+  while ((n0 != n_target) && (iter < *n * 2))
+  {
     iter++;
     k = 1;
     for (i = 0; i < *n; i++)
       b[i] = a[i];              /* set values of temporary array, b[] */
-    for (i = 0; i < *n - 1; i++) {
-      for (j = k; j < *n; j++) {
-        if (ABS ((b[j] - b[i]) / ((b[i] == 0.0 ) ? TINY_D : b[i])) > eps) {
-	  break;
-	}
+    for (i = 0; i < *n - 1; i++)
+    {
+      for (j = k; j < *n; j++)
+      {
+        if (ABS ((b[j] - b[i]) / ((b[i] == 0.0) ? TINY_D : b[i])) > eps)
+        {
+          break;
+        }
       }
       k = j + 1;                /* k points right AFTER the first distinct element */
       if (j < *n)               /* if distinct element found */
@@ -2301,13 +2647,16 @@ void _eos_CompressArray (EOS_REAL *a, EOS_INTEGER *n, EOS_INTEGER n_target, EOS_
       eps *= 1.0 + (EOS_REAL) (n0 - n_target) / ((EOS_REAL) (n_target + iter));
   }
 
-  if (n0 > n_target) { /* use fallback sampling method */
+  if (n0 > n_target)
+  {				/* use fallback sampling method */
 
     EOS_INTEGER step = (EOS_INTEGER)((EOS_REAL)n_target / (EOS_REAL)(n0 - n_target) + 0.5);
     j = 0;
-    for (i = 0; i < n0; i++) {
+    for (i = 0; i < n0; i++)
+    {
       b[j] = b[i];
-      if ((i+1) % step) j++;
+      if ((i + 1) % step)
+        j++;
     }
     n0 = n_target;
     b[n0-1] = a[*n - 1];        /* always keep last element of a[] */
@@ -2322,313 +2671,235 @@ void _eos_CompressArray (EOS_REAL *a, EOS_INTEGER *n, EOS_INTEGER n_target, EOS_
 
 /*! *********************************************************************
  *
- * function _eos_GetInvertedTable
- *      This function is used to generate RecordTypes 1 and 2 inverted
- *      tables for dumping to the TablesLoaded.dat file.
- *      
+ * \brief This is used to subtract, as needed, the cold curve data from the table.
  * 
- * The arguments are:
- * const EOS_INTEGER    th               input:  table handle
- * const EOS_INTEGER    dataType         input:  data type of inverted table
- *       EOS_REAL*      _xtbls2          input:  X-values of inverted table, eosTableTypeRef2
- *                                               (used only by category 3 and 4 data types)
- *       EOS_REAL*      _ytbls2          input:  Y-values of inverted table, eosTableTypeRef2
- *                                               (used only by category 3 and 4 data types)
- *       EOS_REAL*      _ftbls2          input:  F-values of inverted table, eosTableTypeRef2
- *                                               (used only by category 3 and 4 data types)
- *       EOS_REAL*      _coldCurve2      input:  coldcurve-values of inverted table, eosTableTypeRef2
- *                                               (used only by category 3 and 4 data types)
- *       EOS_REAL**     xtbls            input:  X-values of inverted table
- *       EOS_REAL**     ytbls            input:  Y-values of inverted table
- *       EOS_REAL**     ftbls            input:  F-values of inverted table
- *       EOS_REAL*      coldCurve        input:  coldcurve-values of inverted table
- *       EOS_INTEGER*   nxtbls           in/out: total X-values in inverted table
- *       EOS_INTEGER*   nytbls           in/out: total Y-values in inverted table
- *       EOS_REAL**     xtbls_new        output: X-values of inverted table
- *       EOS_REAL**     ytbls_new        output: Y-values of inverted table
- *       EOS_REAL**     ftbls_new        output: F-values of inverted table
- *       EOS_BOOLEAN**  ftbls_invt_mask  output: which F-values are extrapolations
- *       EOS_INTEGER*   err              output: error code
- *       EOS_INTEGER    _target_N        input: reset internal target_N=_target_N if _target_N>0
+ * \param[in]    th         - EOS_INTEGER : table handle
+ * \param[in]    dataType   - EOS_INTEGER : data type
+ * \param[in]    *nxtbl     - EOS_INTEGER : x extent of ftbls and coldCurve
+ * \param[in]    *nytbl     - EOS_INTEGER : y extent of ftbls
+ * \param[in]    **ftbls    - EOS_REAL    : data array
+ * \param[in]    *coldCurve - EOS_REAL    : cold curve data array
+ *
+ * \return _eos_RemoveAndStoreColdCurve - EOS_INTEGER : error code
  *
  ************************************************************************/
-static EOS_BOOLEAN firstTime = EOS_TRUE;
+EOS_INTEGER
+_eos_RemoveAndStoreColdCurve (EOS_INTEGER th, EOS_INTEGER dataType, EOS_INTEGER * nxtbl, EOS_INTEGER * nytbl, EOS_REAL ** ftbls, EOS_REAL * coldCurve)
+{
+
+  EOS_INTEGER i, j, err = EOS_OK;
+
+  switch (EOS_TYPE_TO_INDEP_VAR2 (dataType))
+    {
+    /* special cases for tables that include cold curve data */
+  case EOS_Pt:
+  case EOS_Pic:
+  case EOS_Ut:
+  case EOS_Uic:
+  case EOS_At:
+  case EOS_Aic:
+    /* remove cold curve from F */
+      for (i = 0; i < *nxtbl; i++)
+	{
+      for (j = 1; j < *nytbl; j++)
+	(*ftbls)[i + j * (*nxtbl)] -= (*ftbls)[i];
+	  if (coldCurve)
+	    coldCurve[i] = (*ftbls)[i];
+      (*ftbls)[i] = 0.0;
+    }
+    break;
+  default:
+    // do nothing
+    break;
+  }
+
+  return(err);
+
+}
+
+/*! *********************************************************************
+ *
+ * \brief This is used to normalize (i.e., divide) the table with X[].
+ * 
+ * \param[in]    th         - EOS_INTEGER : table handle
+ * \param[in]    dataType   - EOS_INTEGER : data type
+ * \param[in]    *nxtbl     - EOS_INTEGER : x extent of ftbls and coldCurve
+ * \param[in]    *nytbl     - EOS_INTEGER : y extent of ftbls
+ * \param[in]    **ftbls    - EOS_REAL    : data array
+ * \param[in]    *coldCurve - EOS_REAL    : cold curve data array
+ *
+ * \return _eos_NormalizeWithX - EOS_INTEGER : error code
+ *
+ ************************************************************************/
+EOS_INTEGER
+_eos_NormalizeWithX (EOS_INTEGER th, EOS_INTEGER dataType, EOS_INTEGER * nxtbl, EOS_INTEGER * nytbl, EOS_REAL ** ftbls, EOS_REAL * X)
+{
+
+  EOS_INTEGER i, j, err = EOS_OK;
+
+  switch (EOS_TYPE_TO_INDEP_VAR2 (dataType))
+    {
+      /* special cases for pressure tables that include cold curve data */
+    case EOS_Pt:
+    case EOS_Pic:
+      /* divide by X */
+      for (i = 0; i < *nxtbl; i++)
+	{
+	  for (j = 1; j < *nytbl; j++)
+	    (*ftbls)[i + j * (*nxtbl)] /= FLOOR (X[i]);
+	}
+      break;
+    default:
+      // do nothing
+      break;
+    }
+
+  return (err);
+
+}
+
+/*! *********************************************************************
+ *
+ * \brief This function is used to generate RecordTypes 1 and 2 inverted
+ *      tables for dumping to the TablesLoaded.dat file.
+ *      
+ * \param[in]     th              - const EOS_INTEGER   :  table handle
+ * \param[in]     dataType        - const EOS_INTEGER   :  data type of inverted table
+ * \param[in]     _xtbls2         -       EOS_REAL*     :  X-values of inverted table, eosTableTypeRef2
+ *                                               (used only by category 3 and 4 data types)
+ * \param[in]     _ytbls2         -       EOS_REAL*     :  Y-values of inverted table, eosTableTypeRef2
+ *                                               (used only by category 3 and 4 data types)
+ * \param[in]     _ftbls2         -       EOS_REAL*     :  F-values of inverted table, eosTableTypeRef2
+ *                                               (used only by category 3 and 4 data types)
+ * \param[in]     _coldCurve2     -       EOS_REAL*     :  coldcurve-values of inverted table, eosTableTypeRef2
+ *                                               (used only by category 3 and 4 data types)
+ * \param[in]     xtbls           -       EOS_REAL**    :  X-values of inverted table
+ * \param[in]     ytbls           -       EOS_REAL**    :  Y-values of inverted table
+ * \param[in]     ftbls           -       EOS_REAL**    :  F-values of inverted table
+ * \param[in]     coldCurve       -       EOS_REAL*     :  coldcurve-values of inverted table
+ * \param[in,out] nxtbls          -       EOS_INTEGER*  :  total X-values in inverted table
+ * \param[in,out] nytbls          -       EOS_INTEGER*  :  total Y-values in inverted table
+ * \param[out]    xtbls_new       -       EOS_REAL**    :  X-values of inverted table
+ * \param[out]    ytbls_new       -       EOS_REAL**    :  Y-values of inverted table
+ * \param[out]    ftbls_new       -       EOS_REAL**    :  F-values of inverted table
+ * \param[out]    ftbls_invt_mask -       EOS_BOOLEAN** :  which F-values are extrapolations
+ * \param[out]    err             -       EOS_INTEGER*  :  error code
+ * \param[in]     _target_N       -       EOS_INTEGER   :  reset internal target_N=_target_N if _target_N>0
+ *
+ ************************************************************************/
+/* static EOS_BOOLEAN firstTime = EOS_TRUE; */
 #define _EOS_GETINVERTEDTABLE_CLEANUP_MEMORY if(xtbls_invt) EOS_FREE(xtbls_invt); \
                                              if(ytbls_invt) EOS_FREE(ytbls_invt); \
                                              if(ftbls_invt) EOS_FREE(ftbls_invt); \
                                              if(dFx) EOS_FREE(dFx); \
                                              if(dFy) EOS_FREE(dFy);
-void _eos_GetInvertedTable (EOS_INTEGER th, EOS_INTEGER dataType,
-                            EOS_REAL *_xtbls2, EOS_REAL *_ytbls2,
-                            EOS_REAL *_ftbls2, EOS_REAL *_coldCurve2,
-                            EOS_REAL **xtbls, EOS_REAL **ytbls,
-                            EOS_REAL **ftbls, EOS_REAL *coldCurve,
-                            EOS_INTEGER *nxtbl, EOS_INTEGER *nytbl,
-                            EOS_REAL **xtbls_new, EOS_REAL **ytbls_new, EOS_REAL **ftbls_new,
-                            EOS_INTEGER **ftbls_invt_mask, EOS_INTEGER *err, EOS_INTEGER _target_N)
+void
+_eos_GetInvertedTable (EOS_INTEGER th, EOS_INTEGER dataType, EOS_REAL * _xtbls2, EOS_REAL * _ytbls2, EOS_REAL * _ftbls2, EOS_REAL * _coldCurve2, EOS_REAL ** xtbls, EOS_REAL ** ytbls, EOS_REAL ** ftbls, EOS_REAL * coldCurve, EOS_INTEGER * nxtbl, EOS_INTEGER * nytbl, EOS_REAL ** xtbls_new, EOS_REAL ** ytbls_new, EOS_REAL ** ftbls_new, EOS_INTEGER **ftbls_invt_mask, EOS_INTEGER *err, EOS_INTEGER _target_N)
 {
-  EOS_INTEGER i, j;
+
+  EOS_INTEGER i, j, err1 = EOS_OK;
   EOS_REAL *dFx = NULL, *dFy = NULL;
-  EOS_INTEGER nXYPairs, new_Nx, target_N;
-  EOS_REAL xconv, yconv;
-  EOS_REAL *xtbls_invt = NULL, *ytbls_invt = NULL, *ftbls_invt = NULL, *ytbls_invt_tmp = NULL;
-  EOS_CHAR *errMsg = NULL;
+  EOS_INTEGER nXYPairs;
+#define __SAVE_CONVERSION_FACTORS__
+#ifdef __SAVE_CONVERSION_FACTORS__
+  EOS_REAL convX, convY, convF;
+#endif
+  EOS_REAL *xtbls_invt = NULL, *ytbls_invt = NULL, *ftbls_invt = NULL;
 
   *err = EOS_OK;
 
   EOS_FREE (*ftbls_invt_mask);
   *ftbls_invt_mask = NULL;
 
-  /* get x-conversion factor */
-  xconv = eos_getRealOptionFromTableHandle (th, EOS_X_CONVERT, err);
-  if (eos_GetStandardErrorCodeFromCustomErrorCode(*err) != EOS_OK)
-    return;
+#ifdef __SAVE_CONVERSION_FACTORS__
+  /* Some users have implemented code that sets conversion factors prior to loading data;
+     therefore, save conversion factors to be reset later in this loop. */
+  eos_GetConversionFactorsFromTableHandle (th, &dataType, &convX, &convY, &convF, &err1);
+  if (err1)
+    {
+    convX = convY = convF = 1.0;
+  }
+  eos_SetOptionEosDataMap (&gEosDataMap, th, EOS_X_CONVERT, 1.0, -1, &err1);
+  eos_SetOptionEosDataMap (&gEosDataMap, th, EOS_Y_CONVERT, 1.0, -1, &err1);
+  eos_SetOptionEosDataMap (&gEosDataMap, th, EOS_F_CONVERT, 1.0, -1, &err1);
+#endif
 
-  /* get y-conversion factor */
-  yconv = eos_getRealOptionFromTableHandle (th, EOS_Y_CONVERT, err);
-  if (eos_GetStandardErrorCodeFromCustomErrorCode(*err) != EOS_OK)
-    return;
-
-  /* Calculate inverted table data to be dumped to file. */
-  firstTime = EOS_FALSE;
-  switch (EOS_CATEGORY (dataType)) {
+  /*
+   * Fetch inverted data for subsequent interpolation of the inverted table data.
+   */
+  switch (EOS_CATEGORY (dataType))
+    {
   case EOS_CATEGORY1:          /* x(F,y) */
-
-    /* determine ALL possible values for new independent variable, F,
-       which corresponds to dataType */
-    if (_target_N > 0)
-      target_N = _target_N; /* override default value */
-    else
-      target_N = *nxtbl;
-    //new_Nx = *nxtbl * (*nytbl);
-    if (ytbls) {
-      new_Nx = *nxtbl * (*nytbl);
+    {
+        _eos_GetInvertedTable_CATEGORY1 (th, dataType, xtbls, ytbls, ftbls, coldCurve, nxtbl, nytbl, &xtbls_invt, &ytbls_invt, &ftbls_invt, err, _target_N, &nXYPairs);
+      break;
     }
-    else {
-      new_Nx = *nxtbl;
-      *nytbl = 1;
-    }
-    xtbls_invt = (EOS_REAL *) malloc (new_Nx * (*nytbl) * sizeof (EOS_REAL));
-    for (j = 0; j < new_Nx; j++)
-      xtbls_invt[j] =
-        (coldCurve) ? (*ftbls)[j] + coldCurve[j -
-                                              (EOS_INTEGER) (j / (*nxtbl)) *
-                                              (*nxtbl)]
-        : (*ftbls)[j];
-    *nxtbl = new_Nx;
-
-    if (ytbls && *nytbl>1) {
-      /* sort values for new independent variable */
-      _eos_QuickSort (*nxtbl, xtbls_invt, 0, err, &errMsg);
-      if (errMsg) *err = eos_SetCustomErrorMsg(th, *err, "%s", errMsg);
-      EOS_FREE(errMsg);
-      if (eos_GetStandardErrorCodeFromCustomErrorCode(*err) != EOS_OK) {
-        _EOS_GETINVERTEDTABLE_CLEANUP_MEMORY;
-        return;
-      }
-      _eos_CompressArray (xtbls_invt, nxtbl, target_N, NULL); /* eliminate *approximately* duplicate values */
-    }
-
-    nXYPairs = *nxtbl * (*nytbl);
-
-    xtbls_invt =
-      (EOS_REAL *) realloc (xtbls_invt, nXYPairs * sizeof (EOS_REAL));
-    ytbls_invt = (EOS_REAL *) malloc (nXYPairs * sizeof (EOS_REAL));
-    for (j = 0; j < *nytbl; j++) {
-      for (i = 0; i < *nxtbl; i++) {
-        xtbls_invt[i + j * (*nxtbl)] = xtbls_invt[i];
-        ytbls_invt[i + j * (*nxtbl)] = (ytbls) ? (*ytbls)[j] : 0.0;
-      }
-    }
-
-    break;
-
   case EOS_CATEGORY2:          /* y(x,F) */
-
-    /* determine ALL possible values for new independent variable, F,
-       which corresponds to dataType */
-    if (_target_N > 0)
-      target_N = _target_N; /* override default value */
-    else
-      target_N = 100; //MAX (*nytbl, 100);
-    *nytbl *= *nxtbl;
-    ytbls_invt = (EOS_REAL *) malloc (*nytbl * sizeof (EOS_REAL));
-    for (j = 0; j < *nytbl; j++)
-      ytbls_invt[j] =
-        (coldCurve) ? (*ftbls)[j] + coldCurve[j % (*nxtbl)] : (*ftbls)[j];
-
-    if (*nytbl>1) {
-      /* sort values for new independent variable */
-      _eos_QuickSort (*nytbl, ytbls_invt, 0, err, &errMsg);
-      if (errMsg) *err = eos_SetCustomErrorMsg(th, *err, "%s", errMsg);
-      EOS_FREE(errMsg);
-      if (eos_GetStandardErrorCodeFromCustomErrorCode(*err) != EOS_OK) {
-	_EOS_GETINVERTEDTABLE_CLEANUP_MEMORY;
-	return;
-      }
-      _eos_CompressArray (ytbls_invt, nytbl, target_N, NULL);   /* eliminate *approximately* duplicate values */
+    {
+        _eos_GetInvertedTable_CATEGORY2 (th, dataType, xtbls, ytbls, ftbls, coldCurve, nxtbl, nytbl, &xtbls_invt, &ytbls_invt, &ftbls_invt, err, _target_N, &nXYPairs);
+      break;
     }
-
-    nXYPairs = *nxtbl * (*nytbl);
-
-    xtbls_invt = (EOS_REAL *) malloc (nXYPairs * sizeof (EOS_REAL));
-    ytbls_invt_tmp = (EOS_REAL *) malloc (nXYPairs * sizeof (EOS_REAL));
-    for (i = 0; i < *nxtbl; i++) {
-      for (j = 0; j < *nytbl; j++) {
-        xtbls_invt[i + j * (*nxtbl)] = (*xtbls)[i];
-        ytbls_invt_tmp[i + j * (*nxtbl)] = ytbls_invt[j];
-      }
-    }
-    EOS_FREE (ytbls_invt);
-    ytbls_invt = ytbls_invt_tmp;
-
-    break;
-
   case EOS_CATEGORY3:          /* F(G,y) */
-
-    /* determine ALL possible values for new independent variable, G,
-       which corresponds to REF2(dataType) */
-    if (_target_N > 0)
-      target_N = _target_N; /* override default value */
-    else
-      target_N = *nxtbl;
-    if (ytbls) {
-      new_Nx = *nxtbl * (*nytbl);
+    {
+        _eos_GetInvertedTable_CATEGORY1 (th, EOS_EOS_TABLE_TYPE_REF2 (dataType), &_xtbls2, ((ytbls) ? &_ytbls2 : NULL), &_ftbls2, _coldCurve2, nxtbl, nytbl, &xtbls_invt, &ytbls_invt, &ftbls_invt, err, _target_N, &nXYPairs);
+      break;
     }
-    else {
-      new_Nx = *nxtbl;
-      *nytbl = 1;
-    }
-    xtbls_invt = (EOS_REAL *) malloc (new_Nx * (*nytbl) * sizeof (EOS_REAL));
-    for (j = 0; j < new_Nx; j++) {
-      xtbls_invt[j] =
-        (_coldCurve2) ? _ftbls2[j] + _coldCurve2[j -
-                                                 (EOS_INTEGER) (j /
-                                                                (*nxtbl)) *
-                                                 (*nxtbl)]
-        : _ftbls2[j];
-    }
-    *nxtbl = new_Nx;
-
-    if (ytbls && *nytbl>1) {
-      /* sort values for new independent variable */
-      _eos_QuickSort (*nxtbl, xtbls_invt, 0, err, &errMsg);
-      if (errMsg) *err = eos_SetCustomErrorMsg(th, *err, "%s", errMsg);
-      EOS_FREE(errMsg);
-      if (eos_GetStandardErrorCodeFromCustomErrorCode(*err) != EOS_OK) {
-        _EOS_GETINVERTEDTABLE_CLEANUP_MEMORY;
-        return;
-      }
-      _eos_CompressArray (xtbls_invt, nxtbl, target_N, NULL); /* eliminate *approximately* duplicate values */
-    }
-
-    nXYPairs = *nxtbl * (*nytbl);
-
-    xtbls_invt =
-      (EOS_REAL *) realloc (xtbls_invt, nXYPairs * sizeof (EOS_REAL));
-    ytbls_invt = (EOS_REAL *) malloc (nXYPairs * sizeof (EOS_REAL));
-    for (j = 0; j < *nytbl; j++) {
-      for (i = 0; i < *nxtbl; i++) {
-        xtbls_invt[i + j * (*nxtbl)] = xtbls_invt[i];
-        ytbls_invt[i + j * (*nxtbl)] = (ytbls) ? (*ytbls)[j] : 0.0;
-      }
-    }
-
-    break;
-
   case EOS_CATEGORY4:          /* F(x,G) */
-
-    /* determine ALL possible values for new independent variable, G,
-       which corresponds to REF2(dataType) */
-    if (_target_N > 0)
-      target_N = _target_N; /* override default value */
-    else
-      target_N = MAX (*nytbl, 100);
-    *nytbl *= *nxtbl;
-    ytbls_invt = (EOS_REAL *) malloc (*nxtbl * *nytbl * sizeof (EOS_REAL));
-    for (j = 0; j < *nytbl; j++)
-      ytbls_invt[j] =
-        (_coldCurve2) ? _ftbls2[j] + _coldCurve2[j % (*nxtbl)] : _ftbls2[j];
-
-    if (*nytbl>1) {
-      /* sort values for new independent variable */
-      _eos_QuickSort (*nytbl, ytbls_invt, 0, err, &errMsg);
-      if (errMsg) *err = eos_SetCustomErrorMsg(th, *err, "%s", errMsg);
-      EOS_FREE(errMsg);
-      if (eos_GetStandardErrorCodeFromCustomErrorCode(*err) != EOS_OK) {
-	_EOS_GETINVERTEDTABLE_CLEANUP_MEMORY;
-	return;
-      }
-      _eos_CompressArray (ytbls_invt, nytbl, target_N, NULL);   /* eliminate *approximately* duplicate values */
+    {
+        _eos_GetInvertedTable_CATEGORY2 (th, EOS_EOS_TABLE_TYPE_REF2 (dataType), &_xtbls2, ((ytbls) ? &_ytbls2 : NULL), &_ftbls2, _coldCurve2, nxtbl, nytbl, &xtbls_invt, &ytbls_invt, &ftbls_invt, err, _target_N, &nXYPairs);
+      break;
     }
-
-    nXYPairs = *nxtbl * (*nytbl);
-
-    xtbls_invt = (EOS_REAL *) malloc (nXYPairs * sizeof (EOS_REAL));
-    ytbls_invt_tmp = (EOS_REAL *) malloc (nXYPairs * sizeof (EOS_REAL));
-    //ytbls_invt = (EOS_REAL*) realloc(ytbls_invt, nXYPairs * sizeof(EOS_REAL));
-    for (i = 0; i < *nxtbl; i++) {
-      for (j = 0; j < *nytbl; j++) {
-        xtbls_invt[i + j * (*nxtbl)] = (*xtbls)[i];
-        ytbls_invt_tmp[i + j * (*nxtbl)] = ytbls_invt[j];
-      }
-    }
-    EOS_FREE (ytbls_invt);
-    ytbls_invt = ytbls_invt_tmp;
-
-    break;
-
   default:
-    *err = EOS_UNDEFINED;
-    *err = eos_SetCustomErrorMsg(th, *err,
-				 "eos_Utils::_eos_GetInvertedTable ERROR, invalid data category, %i",
-				 EOS_CATEGORY (dataType));
-    _EOS_GETINVERTEDTABLE_CLEANUP_MEMORY;
-    return;
+    {
+      *err = EOS_UNDEFINED;
+      *err = eos_SetCustomErrorMsg(th, *err, "eos_Utils::_eos_GetInvertedTable ERROR, invalid data category, %i", EOS_CATEGORY (dataType));
+      _EOS_GETINVERTEDTABLE_CLEANUP_MEMORY;
+      return;
+    }
   }
 
+  /*
+   * Calculate inverted table data.
+   */
   ftbls_invt = (EOS_REAL *) malloc (nXYPairs * sizeof (EOS_REAL));
   dFx = (EOS_REAL *) malloc (nXYPairs * sizeof (EOS_REAL));
   dFy = (EOS_REAL *) malloc (nXYPairs * sizeof (EOS_REAL));
 
   /* Interpolate the new temporary data table. */
-  if (ftbls_invt) {
-    eos_InterpolateEosInterpolation(&gEosInterpolation, th, nXYPairs, xtbls_invt, ytbls_invt,
-				    ftbls_invt, dFx, dFy, &dataType, err);
-    if (eos_GetStandardErrorCodeFromCustomErrorCode(*err) != EOS_OK) {
-      if (eos_GetStandardErrorCodeFromCustomErrorCode(*err) == EOS_INTERP_EXTRAPOLATED) {
+  if (ftbls_invt)
+    {
+    eos_InterpolateEosInterpolation(&gEosInterpolation, th, nXYPairs, xtbls_invt, ytbls_invt, ftbls_invt, dFx, dFy, &dataType, err);
+    if (eos_GetStandardErrorCodeFromCustomErrorCode(*err) != EOS_OK)
+    {
+      if (eos_GetStandardErrorCodeFromCustomErrorCode(*err) == EOS_INTERP_EXTRAPOLATED)
+	  {
         /* reset error code */
         *err = EOS_OK;
 
 	/* allocate memory to store extrapolation error codes */
 	*ftbls_invt_mask = (EOS_INTEGER *) malloc (nXYPairs * sizeof (EOS_INTEGER));
 
-        /* apply supplied conversion factors to convert input to Sesame default units */
-        for (i = 0; i < nXYPairs; i++) {
-          xtbls_invt[i] /= FLOOR (xconv);
-          ytbls_invt[i] /= FLOOR (yconv);
-        }
-        eos_CheckExtrapEosInterpolation (&gEosInterpolation, th, nXYPairs,
-                                         xtbls_invt, ytbls_invt,
-                                         *ftbls_invt_mask, err);
-        if (eos_GetStandardErrorCodeFromCustomErrorCode(*err) != EOS_OK) {
-          *err = eos_SetCustomErrorMsg (th, *err,
-					"eos_Utils::_eos_GetInvertedTable ERROR, eos_CheckExtrapEosInterpolation returned error code %i",
-					*err);
+        eos_CheckExtrapEosInterpolation (&gEosInterpolation, th, nXYPairs, xtbls_invt, ytbls_invt, *ftbls_invt_mask, err);
+        if (eos_GetStandardErrorCodeFromCustomErrorCode(*err) != EOS_OK)
+        {
+          *err = eos_SetCustomErrorMsg (th, *err, "eos_Utils::_eos_GetInvertedTable ERROR, eos_CheckExtrapEosInterpolation returned error code %i", *err);
           _EOS_GETINVERTEDTABLE_CLEANUP_MEMORY;
           return;
         }
       }
-      else {
+        else
+	    {
         _EOS_GETINVERTEDTABLE_CLEANUP_MEMORY;
         return;
       }
     }
   }
 
-  if (ytbls) {
+  if (ytbls)
+    {
     /* reorganize X and Y data arrays */
-    for (j = 1; j < *nytbl; j++) {
+      for (j = 1; j < *nytbl; j++)
+      {
       for (i = 1; i < *nxtbl; i++)
         xtbls_invt[i] = xtbls_invt[i + j * (*nxtbl)];
       ytbls_invt[j] = ytbls_invt[j * (*nxtbl)];
@@ -2642,6 +2913,203 @@ void _eos_GetInvertedTable (EOS_INTEGER th, EOS_INTEGER dataType,
 
   /* Deallocate all temporary arrays */
   _EOS_GETINVERTEDTABLE_CLEANUP_MEMORY;
+
+#ifdef __SAVE_CONVERSION_FACTORS__
+  /* restore conversion factors */
+  eos_SetOptionEosDataMap (&gEosDataMap, th, EOS_X_CONVERT, convX, -1, &err1);
+  eos_SetOptionEosDataMap (&gEosDataMap, th, EOS_Y_CONVERT, convY, -1, &err1);
+  eos_SetOptionEosDataMap (&gEosDataMap, th, EOS_F_CONVERT, convF, -1, &err1);
+#endif
+}
+
+/*!
+ * Helper function for _eos_GetInvertedTable for x(F,y)
+ */
+void
+_eos_GetInvertedTable_CATEGORY1 (EOS_INTEGER th, EOS_INTEGER dataType, EOS_REAL ** xtbls, EOS_REAL ** ytbls, EOS_REAL ** ftbls, EOS_REAL * coldCurve, EOS_INTEGER * nxtbl, EOS_INTEGER * nytbl, EOS_REAL ** xtbls_invt, EOS_REAL ** ytbls_invt, EOS_REAL ** ftbls_invt, EOS_INTEGER * err, EOS_INTEGER _target_N, EOS_INTEGER * nXYPairs)
+{
+  EOS_INTEGER i, j;
+  EOS_REAL *dFx = NULL, *dFy = NULL;
+  EOS_INTEGER new_Nx, target_N;
+  EOS_CHAR *errMsg = NULL;
+
+  /* determine ALL possible values for new independent variable, F,
+     which corresponds to dataType */
+  if (_target_N > 0)
+    target_N = _target_N; /* override default value */
+  else
+    target_N = *nxtbl;
+  //new_Nx = *nxtbl * (*nytbl);
+  if (ytbls)
+    {
+    new_Nx = *nxtbl * (*nytbl);
+  }
+  else
+    {
+    new_Nx = *nxtbl;
+    *nytbl = 1;
+  }
+  *xtbls_invt = (EOS_REAL *) malloc (new_Nx * (*nytbl) * sizeof (EOS_REAL));
+  for (j = 0; j < new_Nx; j++)
+    (*xtbls_invt)[j] = (coldCurve) ? (*ftbls)[j] + coldCurve[j - (EOS_INTEGER) (j / (*nxtbl)) * (*nxtbl)] : (*ftbls)[j];
+  *nxtbl = new_Nx;
+
+  if (ytbls && *nytbl > 1)
+    {
+    /* sort values for new independent variable */
+    _eos_QuickSort (*nxtbl, *xtbls_invt, 0, err, &errMsg, NULL);
+    if (errMsg)
+        *err = eos_SetCustomErrorMsg(th, *err, "%s", errMsg);
+    EOS_FREE(errMsg);
+    if (eos_GetStandardErrorCodeFromCustomErrorCode (*err) != EOS_OK)
+	{
+      _EOS_GETINVERTEDTABLE_CLEANUP_MEMORY;
+      return;
+    }
+    _eos_CompressArray (*xtbls_invt, nxtbl, target_N, NULL, NULL); /* eliminate *approximately* duplicate values */
+  }
+
+  *nXYPairs = *nxtbl * (*nytbl);
+
+  *xtbls_invt = (EOS_REAL *) realloc (*xtbls_invt, *nXYPairs * sizeof (EOS_REAL));
+  *ytbls_invt = (EOS_REAL *) malloc (*nXYPairs * sizeof (EOS_REAL));
+  for (j = 0; j < *nytbl; j++)
+    {
+      for (i = 0; i < *nxtbl; i++)
+	{
+          (*xtbls_invt)[i + j * (*nxtbl)] = (*xtbls_invt)[i];
+          (*ytbls_invt)[i + j * (*nxtbl)] = (ytbls) ? (*ytbls)[j] : 0.0;
+        }
+  }
+}
+
+/*!
+ * Helper function for _eos_GetInvertedTable for y(x,F)
+ */
+void
+_eos_GetInvertedTable_CATEGORY2 (EOS_INTEGER th, EOS_INTEGER dataType, EOS_REAL ** xtbls, EOS_REAL ** ytbls, EOS_REAL ** ftbls, EOS_REAL * coldCurve, EOS_INTEGER * nxtbl, EOS_INTEGER * nytbl, EOS_REAL ** xtbls_invt, EOS_REAL ** ytbls_invt, EOS_REAL ** ftbls_invt, EOS_INTEGER * err, EOS_INTEGER _target_N, EOS_INTEGER * nXYPairs)
+{
+  EOS_INTEGER i, j, err1 = EOS_OK;
+  EOS_REAL *dFx = NULL, *dFy = NULL;
+  EOS_INTEGER target_N;
+  EOS_REAL *ytbls_invt_tmp = NULL;
+  EOS_CHAR *errMsg = NULL;
+  EOS_INTEGER *ia = NULL;
+#ifdef __INCLUDE_COLD_CURVE_IN_INVERTED_GRID__
+  EOS_INTEGER ny;
+#endif
+
+#ifdef __REMOVE_COLD_CURVE_FROM_SELECTED_INVERSIONS__
+  if (EOS_TYPE_TO_RECORD_TYPE(dataType) == 1 && eos_getBoolOptionFromTableHandle (th, EOS_INVERT_AT_SETUP, &err1))
+  {
+
+    EOS_INTEGER subTableNum = EOS_TYPE_TO_SUB_TAB_NUM(dataType);
+    void *ptr = (void*) eos_GetEosDataEosDataMap (&gEosDataMap, th, &dataType, &err1);
+    EOS_REAL *CC = NULL;
+    EOS_REAL **coldCurve_ptr = &CC;
+
+    coldCurve_ptr = _eos_AllocateColdCurveEosDataMap (ptr, *nxtbl, subTableNum);
+
+    err1 = _eos_RemoveAndStoreColdCurve(th, dataType, nxtbl, nytbl, ftbls, *coldCurve_ptr);
+
+#ifdef __NORMALIZE_WITH_X_FOR_SELECTED_INVERSIONS__
+    {
+      EOS_BOOLEAN zero_exists = ((*xtbls)[0] == 0.0) ? EOS_TRUE : EOS_FALSE;
+      if (zero_exists)
+        (*xtbls)[0] = (*xtbls)[1] * 0.75;
+      err1 = _eos_NormalizeWithX (th, dataType, nxtbl, nytbl, ftbls, *xtbls);
+      //if (zero_exists) (*xtbls)[0] = (*xtbls)[1] * 0.99;
+    }
+#endif
+
+  }
+#endif
+
+  /* determine ALL possible values for new independent variable, F,
+     which corresponds to dataType */
+  if (_target_N > 0)
+    target_N = _target_N; /* override default value */
+  else
+    target_N = 100; //MAX (*nytbl, 100);
+  *nytbl *= *nxtbl;
+  *ytbls_invt = (EOS_REAL *) malloc (*nytbl * sizeof (EOS_REAL));
+
+  for (j = 0; j < *nytbl; j++)
+  {
+#ifdef __REMOVE_COLD_CURVE_FROM_SELECTED_INVERSIONS__
+    (*ytbls_invt)[j] = (*ftbls)[j];
+#else
+    (*ytbls_invt)[j] = (coldCurve) ? (*ftbls)[j] + coldCurve[j % (*nxtbl)] : (*ftbls)[j];
+#endif
+  }
+
+  if (*nytbl > 1)
+  {
+    /* sort values for new independent variable */
+    _eos_QuickSort (*nytbl, *ytbls_invt, 0, err, &errMsg, ia);
+    if (errMsg)
+      *err = eos_SetCustomErrorMsg(th, *err, "%s", errMsg);
+    EOS_FREE(errMsg);
+    if (eos_GetStandardErrorCodeFromCustomErrorCode (*err) != EOS_OK)
+	{
+      _EOS_GETINVERTEDTABLE_CLEANUP_MEMORY;
+      return;
+    }
+    _eos_CompressArray (*ytbls_invt, nytbl, target_N, NULL, ia);   /* eliminate *approximately* duplicate values */
+#ifdef __INCLUDE_COLD_CURVE_IN_INVERTED_GRID__
+    switch (EOS_TYPE_TO_INDEP_VAR2 (dataType))
+    {
+      /* special cases for pressure tables, which include cold curve data */
+    case EOS_Pt:
+    case EOS_Pic:
+      ny = *nytbl;
+      *nytbl += *nxtbl;
+      *ytbls_invt = (EOS_REAL *) realloc (*ytbls_invt, *nytbl * sizeof (EOS_REAL));
+
+	  for (j = 0; j < *nxtbl; j++)
+      {
+        (*ytbls_invt)[j+ny] = (coldCurve) ? coldCurve[j] : (*ftbls)[j];
+      }
+
+      /* re-sort values for new independent variable */
+      _eos_QuickSort (*nytbl, *ytbls_invt, 0, err, &errMsg, ia);
+      if (errMsg)
+	    *err = eos_SetCustomErrorMsg(th, *err, "%s", errMsg);
+      EOS_FREE(errMsg);
+      if (eos_GetStandardErrorCodeFromCustomErrorCode (*err) != EOS_OK)
+      {
+        _EOS_GETINVERTEDTABLE_CLEANUP_MEMORY;
+        return;
+      }
+
+      /* remove duplicate values */
+      err1 = _eos_RemoveDuplicates (*ytbls_invt, nytbl, ia);
+      if (eos_GetStandardErrorCodeFromCustomErrorCode (err1) != EOS_OK)
+      {
+        *err = eos_SetCustomErrorMsg(th, err1, "%s", errMsg);
+        _EOS_GETINVERTEDTABLE_CLEANUP_MEMORY;
+        return;
+      }
+    }
+#endif
+
+    EOS_FREE (ia);
+  }
+
+  *nXYPairs = *nxtbl * (*nytbl);
+
+  *xtbls_invt = (EOS_REAL *) malloc (*nXYPairs * sizeof (EOS_REAL));
+  ytbls_invt_tmp = (EOS_REAL *) malloc (*nXYPairs * sizeof (EOS_REAL));
+  for (i = 0; i < *nxtbl; i++)
+  {
+    for (j = 0; j < *nytbl; j++)
+	{
+      (*xtbls_invt)[i + j * (*nxtbl)] = (*xtbls)[i];
+      ytbls_invt_tmp[i + j * (*nxtbl)] = (*ytbls_invt)[j];
+    }
+  }
+  EOS_FREE (*ytbls_invt);
+  *ytbls_invt = ytbls_invt_tmp;
 }
 
 /*! *********************************************************************
@@ -2656,7 +3124,8 @@ void _eos_GetInvertedTable (EOS_INTEGER th, EOS_INTEGER dataType,
  * 
  ************************************************************************/
 EOS_BOOLEAN enable_DEBUG_PRINT = EOS_FALSE;
-void _eos_DEBUG_PRINT (const EOS_CHAR *fmt, ...)
+void
+_eos_DEBUG_PRINT (const EOS_CHAR * fmt, ...)
 {
   va_list args;
 
@@ -2687,16 +3156,22 @@ void _eos_DEBUG_PRINT (const EOS_CHAR *fmt, ...)
  *      EOS_INTEGER              error code
  * 
  ************************************************************************/
-EOS_INTEGER _eos_DestroyGhostData (EOS_INTEGER *nGhostData, EOS_REAL **xtbls, EOS_REAL **ytbls, EOS_REAL ***ftbls, EOS_REAL **coldCurve)
+EOS_INTEGER
+_eos_DestroyGhostData (EOS_INTEGER * nGhostData, EOS_REAL ** xtbls, EOS_REAL ** ytbls, EOS_REAL *** ftbls, EOS_REAL ** coldCurve)
 {
-  if (*nGhostData > 0) {
-    if (xtbls) EOS_FREE(*xtbls);
+  if (*nGhostData > 0)
+  {
+    if (xtbls)
+      EOS_FREE (*xtbls);
     /* *ytbls is currently allocated sequentially with xtbls, so no free is needed */
-    if (coldCurve) EOS_FREE(*coldCurve);
-    if (ftbls) EOS_FREE(*ftbls);
+    if (coldCurve)
+      EOS_FREE (*coldCurve);
+    if (ftbls)
+      EOS_FREE (*ftbls);
   }
   return(EOS_OK);
 }
+
 /*! *********************************************************************
  *
  * function _eos_CreateGhostData
@@ -2728,11 +3203,8 @@ EOS_INTEGER _eos_DestroyGhostData (EOS_INTEGER *nGhostData, EOS_REAL **xtbls, EO
  *      EOS_CHAR    **errMsg     custom error message
  * 
  ************************************************************************/
-void _eos_CreateGhostData (EOS_INTEGER nGhostData, EOS_INTEGER nxtbl_in, EOS_INTEGER nytbl_in,
-			   EOS_REAL *xtbls_in, EOS_REAL *ytbls_in, EOS_REAL **ftbls_in, EOS_REAL *coldCurve_in,
-			   EOS_INTEGER *nxtbl_out, EOS_INTEGER *nytbl_out,
-			   EOS_REAL **xtbls_out, EOS_REAL **ytbls_out, EOS_REAL ***ftbls_out, EOS_REAL **coldCurve_out,
-			   EOS_INTEGER *err, EOS_CHAR **errMsg)
+void
+_eos_CreateGhostData (EOS_INTEGER nGhostData, EOS_INTEGER nxtbl_in, EOS_INTEGER nytbl_in, EOS_REAL * xtbls_in, EOS_REAL * ytbls_in, EOS_REAL ** ftbls_in, EOS_REAL * coldCurve_in, EOS_INTEGER * nxtbl_out, EOS_INTEGER * nytbl_out, EOS_REAL ** xtbls_out, EOS_REAL ** ytbls_out, EOS_REAL *** ftbls_out, EOS_REAL ** coldCurve_out, EOS_INTEGER * err, EOS_CHAR ** errMsg)
 {
   EOS_INTEGER i, j, k;
   EOS_REAL *ptr=NULL;
@@ -2750,18 +3222,18 @@ void _eos_CreateGhostData (EOS_INTEGER nGhostData, EOS_INTEGER nxtbl_in, EOS_INT
     *coldCurve_out = NULL;
 
   /* determine if sufficient data exist for expansion */
-  if (nxtbl_in < 4) {
+  if (nxtbl_in < 4)
+    {
     *err = EOS_MEM_ALLOCATION_FAILED;
-    eos_SetCustomMsg_str (errMsg,
-			  "EOS_MEM_ALLOCATION_FAILED: EOS table area cannot be expanded because nxtbl<4 in eos_Utils::_eos_CreateGhostData");
+      eos_SetCustomMsg_str (errMsg, "EOS_MEM_ALLOCATION_FAILED: EOS table area cannot be expanded because nxtbl<4 in eos_Utils::_eos_CreateGhostData");
     return;
   }
   nxtbl = nxtbl_in + nGhostData*(_EOS_CREATEGHOSTDATA_X_LO + _EOS_CREATEGHOSTDATA_X_HI);
 
-  if (nytbl_in < 1 && ytbls_in) {
+  if (nytbl_in < 1 && ytbls_in)
+    {
     *err = EOS_MEM_ALLOCATION_FAILED;
-    eos_SetCustomMsg_str (errMsg,
-			  "EOS_MEM_ALLOCATION_FAILED: EOS table area cannot be expanded because nytbl<1 in eos_Utils::_eos_CreateGhostData");
+      eos_SetCustomMsg_str (errMsg, "EOS_MEM_ALLOCATION_FAILED: EOS table area cannot be expanded because nytbl<1 in eos_Utils::_eos_CreateGhostData");
     return;
   }
 
@@ -2773,22 +3245,23 @@ void _eos_CreateGhostData (EOS_INTEGER nGhostData, EOS_INTEGER nxtbl_in, EOS_INT
     nytbl = 1;
 
   ptr = (EOS_REAL *) malloc ((nxtbl + nytbl + nxtbl * nytbl) * sizeof (EOS_REAL));
-  if (! ptr) {
+  if (!ptr)
+    {
     *err = EOS_MEM_ALLOCATION_FAILED;
-    eos_SetCustomMsg_str (errMsg,
-			  "EOS_MEM_ALLOCATION_FAILED: EOS table area cannot be expanded because malloc(ptr) failed in eos_Utils::_eos_CreateGhostData");
+      eos_SetCustomMsg_str (errMsg, "EOS_MEM_ALLOCATION_FAILED: EOS table area cannot be expanded because malloc(ptr) failed in eos_Utils::_eos_CreateGhostData");
     *err = _eos_DestroyGhostData (&nGhostData, &xtbls, &ytbls, &ftbls, &coldCurve);
     return;
   }
   xtbls = ptr;
   ytbls = ptr + nxtbl;
 
-  if (coldCurve_in) {
+  if (coldCurve_in)
+    {
     coldCurve = (EOS_REAL *) malloc (nxtbl * sizeof (EOS_REAL));
-    if (! coldCurve) {
+      if (!coldCurve)
+	{
       *err = EOS_MEM_ALLOCATION_FAILED;
-      eos_SetCustomMsg_str (errMsg,
-			    "EOS_MEM_ALLOCATION_FAILED: EOS table area cannot be expanded because malloc(coldCurve) failed in eos_Utils::_eos_CreateGhostData");
+	  eos_SetCustomMsg_str (errMsg, "EOS_MEM_ALLOCATION_FAILED: EOS table area cannot be expanded because malloc(coldCurve) failed in eos_Utils::_eos_CreateGhostData");
       *err = _eos_DestroyGhostData (&nGhostData, &xtbls, &ytbls, &ftbls, &coldCurve);
       return;
     }
@@ -2812,7 +3285,8 @@ void _eos_CreateGhostData (EOS_INTEGER nGhostData, EOS_INTEGER nxtbl_in, EOS_INT
     xtbls[nxtbl-1] = xtbls_in[nxtbl_in-1] + (xtbls_in[nxtbl_in-1] - xtbls_in[nxtbl_in-2]);
   else
     xtbls[nxtbl-1] = xtbls_in[nxtbl_in-1];
-  if (nytbl > nytbl_in && ytbls_in) {
+  if (nytbl > nytbl_in && ytbls_in)
+    {
     if (_EOS_CREATEGHOSTDATA_Y_LO)
       ytbls[0] = 2*ytbls_in[0] - ytbls_in[1]; /* assume increasing order */
     else
@@ -2824,20 +3298,22 @@ void _eos_CreateGhostData (EOS_INTEGER nGhostData, EOS_INTEGER nxtbl_in, EOS_INT
   }
   for (i=1;i<nxtbl-1;i++)
     xtbls[i] = xtbls_in[i-1];
-  if (nytbl > nytbl_in && ytbls_in) {
+  if (nytbl > nytbl_in && ytbls_in)
+    {
     for (j=1;j<nytbl-1;j++)
       ytbls[j] = ytbls_in[j-1];
   }
-  else if (ytbls_in) {
+  else if (ytbls_in)
+    {
     for (j=0;j<nytbl;j++)
       ytbls[j] = ytbls_in[j];
   }
 
   ftbls = (EOS_REAL **) malloc (nytbl * sizeof (EOS_REAL*));
-  if (! ftbls) {
+  if (!ftbls)
+    {
     *err = EOS_MEM_ALLOCATION_FAILED;
-    eos_SetCustomMsg_str (errMsg,
-			  "EOS_MEM_ALLOCATION_FAILED: EOS table area cannot be expanded because malloc(ftbls) failed in eos_Utils::_eos_CreateGhostData");
+      eos_SetCustomMsg_str (errMsg, "EOS_MEM_ALLOCATION_FAILED: EOS table area cannot be expanded because malloc(ftbls) failed in eos_Utils::_eos_CreateGhostData");
     *err = _eos_DestroyGhostData (&nGhostData, &xtbls, &ytbls, &ftbls, &coldCurve);
     return;
   }
@@ -2845,54 +3321,50 @@ void _eos_CreateGhostData (EOS_INTEGER nGhostData, EOS_INTEGER nxtbl_in, EOS_INT
   for (j=0;j<nytbl;j++)
     ftbls[j] = ptr + nxtbl + nytbl + j*nxtbl;
 
-  if (nytbl_in > 1 && ytbls_in) {
+  if (nytbl_in > 1 && ytbls_in)
+    {
     for (i=_EOS_CREATEGHOSTDATA_X_LO;i<nxtbl-_EOS_CREATEGHOSTDATA_X_HI;i++)
       for (j=_EOS_CREATEGHOSTDATA_Y_LO;j<nytbl-_EOS_CREATEGHOSTDATA_Y_HI;j++)
 	ftbls[j][i] = ftbls_in[j-1][i-1];
   }
-  else {
+  else
+    {
     for (i=_EOS_CREATEGHOSTDATA_X_LO;i<nxtbl-_EOS_CREATEGHOSTDATA_X_HI;i++)
       ftbls[0][i] = ftbls_in[0][i-1];
   }
 
   i=0;
-  if (1) {
+  if (1)
+    {
     /* use 1-D linear extrapolation to calculate ghost data */
-    if (nytbl != nytbl_in && ytbls_in) { /* expansion in x- and y-dimensions */
-      for (j=1;j<nytbl-1;j++) {
+      if (nytbl != nytbl_in && ytbls_in)
+	{			/* expansion in x- and y-dimensions */
+	  for (j = 1; j < nytbl - 1; j++)
+	    {
 	if (_EOS_CREATEGHOSTDATA_X_LO)
-	  ftbls[j][0] = ftbls[j][1] +
-	    (xtbls[0] - xtbls[1]) / (xtbls[2] - xtbls[1]) *
-	    (ftbls[j][2] - ftbls[j][1]);
+		ftbls[j][0] = ftbls[j][1] + (xtbls[0] - xtbls[1]) / (xtbls[2] - xtbls[1]) * (ftbls[j][2] - ftbls[j][1]);
 	if (_EOS_CREATEGHOSTDATA_X_HI)
-	  ftbls[j][nxtbl-1] = ftbls[j][nxtbl-3] +
-	    (xtbls[nxtbl-1] - xtbls[nxtbl-3]) / (xtbls[nxtbl-2] - xtbls[nxtbl-3]) *
-	    (ftbls[j][nxtbl-2] - ftbls[j][nxtbl-3]);
+		ftbls[j][nxtbl - 1] = ftbls[j][nxtbl - 3] + (xtbls[nxtbl - 1] - xtbls[nxtbl - 3]) / (xtbls[nxtbl - 2] - xtbls[nxtbl - 3]) * (ftbls[j][nxtbl - 2] - ftbls[j][nxtbl - 3]);
       }
-      for (i=1;i<nxtbl-1;i++) {
+	  for (i = 1; i < nxtbl - 1; i++)
+	    {
 	if (_EOS_CREATEGHOSTDATA_Y_LO)
-	  ftbls[0][i] = ftbls[1][i] +
-	    (ytbls[0] - ytbls[1]) / (ytbls[2] - ytbls[1]) *
-	    (ftbls[2][i] - ftbls[1][i]);
+		ftbls[0][i] = ftbls[1][i] + (ytbls[0] - ytbls[1]) / (ytbls[2] - ytbls[1]) * (ftbls[2][i] - ftbls[1][i]);
 	if (_EOS_CREATEGHOSTDATA_Y_HI)
-	  ftbls[nytbl-1][i] = ftbls[nytbl-3][i] +
-	    (ytbls[nytbl-1] - ytbls[nytbl-3]) / (ytbls[nytbl-2] - ytbls[nytbl-3]) *
-	    (ftbls[nytbl-2][i] - ftbls[nytbl-3][i]);
+		ftbls[nytbl - 1][i] = ftbls[nytbl - 3][i] + (ytbls[nytbl - 1] - ytbls[nytbl - 3]) / (ytbls[nytbl - 2] - ytbls[nytbl - 3]) * (ftbls[nytbl - 2][i] - ftbls[nytbl - 3][i]);
       }
     }
-    else { /* expansion in x-dimension; no expansion in y-dimension */
+      else
+	{			/* expansion in x-dimension; no expansion in y-dimension */
       j = 0;
       if (_EOS_CREATEGHOSTDATA_X_LO)
-	ftbls[j][0] = ftbls[j][1] +
-	  (xtbls[0] - xtbls[1]) / (xtbls[2] - xtbls[1]) *
-	  (ftbls[j][2] - ftbls[j][1]);
+	    ftbls[j][0] = ftbls[j][1] + (xtbls[0] - xtbls[1]) / (xtbls[2] - xtbls[1]) * (ftbls[j][2] - ftbls[j][1]);
       if (_EOS_CREATEGHOSTDATA_X_HI)
-	ftbls[j][nxtbl-1] = ftbls[j][nxtbl-3] +
-	  (xtbls[nxtbl-1] - xtbls[nxtbl-3]) / (xtbls[nxtbl-2] - xtbls[nxtbl-3]) *
-	  (ftbls[j][nxtbl-2] - ftbls[j][nxtbl-3]);
+	    ftbls[j][nxtbl - 1] = ftbls[j][nxtbl - 3] + (xtbls[nxtbl - 1] - xtbls[nxtbl - 3]) / (xtbls[nxtbl - 2] - xtbls[nxtbl - 3]) * (ftbls[j][nxtbl - 2] - ftbls[j][nxtbl - 3]);
     }
   }
-  else {
+  else
+    {
     /* use 1-D rational extrapolation to calculate ghost data */
     /*
      * void eos_RationalInterpolate4 (EOS_REAL x, EOS_REAL *X, EOS_REAL *F,
@@ -2900,40 +3372,50 @@ void _eos_CreateGhostData (EOS_INTEGER nGhostData, EOS_INTEGER nxtbl_in, EOS_INT
      */
     EOS_REAL X[4], F[4];
 
-    if (nytbl != nytbl_in && ytbls_in) { /* expansion in y-dimension */
-      for (j=1;j<nytbl-1;j++) {
-	for (k=0;k<4;k++) {
+      if (nytbl != nytbl_in && ytbls_in)
+	{			/* expansion in y-dimension */
+	  for (j = 1; j < nytbl - 1; j++)
+	    {
+	      for (k = 0; k < 4; k++)
+		{
 	  X[k] = xtbls[k+1];
 	  F[k] = ftbls[j][k+1];
 	}
 	eos_RationalInterpolate4 (xtbls[0], X, F, &(ftbls[j][0]), NULL);
-	for (i=0;i<4;i++) {
+	      for (i = 0; i < 4; i++)
+		{
 	  X[k] = xtbls[nxtbl-1-(4-k)];
 	  F[k] = ftbls[j][nxtbl-1-(4-k)];
 	}
 	eos_RationalInterpolate4 (xtbls[nxtbl-1], X, F, &(ftbls[j][nxtbl-1]), NULL);
       }
-      for (i=1;i<nxtbl-1;i++) {
-	for (k=0;k<4;k++) {
+	  for (i = 1; i < nxtbl - 1; i++)
+	    {
+	      for (k = 0; k < 4; k++)
+		{
 	  X[k] = ytbls[k+1];
 	  F[k] = ftbls[k+1][i];
 	}
 	eos_RationalInterpolate4 (ytbls[0], X, F, &(ftbls[0][i]), NULL);
-	for (k=0;k<4;k++) {
+	      for (k = 0; k < 4; k++)
+		{
 	  X[k] = ytbls[nytbl-1-(4-k)];
 	  F[k] = ftbls[nytbl-1-(4-k)][i];
 	}
 	eos_RationalInterpolate4 (ytbls[nytbl-1], X, F, &(ftbls[nytbl-1][i]), NULL);
       }
     }
-    else { /* no expansion in y-dimension */
+      else
+	{			/* no expansion in y-dimension */
       j = 0;
-      for (k=0;k<4;k++) {
+	  for (k = 0; k < 4; k++)
+	    {
 	X[k] = xtbls[k+1];
 	F[k] = ftbls[j][k+1];
       }
       eos_RationalInterpolate4 (xtbls[0], X, F, &(ftbls[j][0]), NULL);
-      for (i=0;i<4;i++) {
+	  for (i = 0; i < 4; i++)
+	    {
 	X[k] = xtbls[nxtbl-1-(4-k)];
 	F[k] = ftbls[j][nxtbl-1-(4-k)];
       }
@@ -2941,12 +3423,17 @@ void _eos_CreateGhostData (EOS_INTEGER nGhostData, EOS_INTEGER nxtbl_in, EOS_INT
     }
   }
 
-  if (nytbl > 3 && ytbls_in) {
+  if (nytbl > 3 && ytbls_in)
+    {
     /* ignore corners for now since they are not used by the birational interpolator */
-    if (_EOS_CREATEGHOSTDATA_X_LO) ftbls[0][0]             = 0.0;
-    if (_EOS_CREATEGHOSTDATA_X_HI) ftbls[0][nxtbl-1]       = 0.0;
-    if (_EOS_CREATEGHOSTDATA_Y_LO) ftbls[nytbl-1][0]       = 0.0;
-    if (_EOS_CREATEGHOSTDATA_Y_HI) ftbls[nytbl-1][nxtbl-1] = 0.0;
+      if (_EOS_CREATEGHOSTDATA_X_LO)
+	ftbls[0][0] = 0.0;
+      if (_EOS_CREATEGHOSTDATA_X_HI)
+	ftbls[0][nxtbl - 1] = 0.0;
+      if (_EOS_CREATEGHOSTDATA_Y_LO)
+	ftbls[nytbl - 1][0] = 0.0;
+      if (_EOS_CREATEGHOSTDATA_Y_HI)
+	ftbls[nytbl - 1][nxtbl - 1] = 0.0;
   }
   /* assign new arrays and values to output variables */
   *nxtbl_out = nxtbl;
@@ -2968,7 +3455,8 @@ void _eos_CreateGhostData (EOS_INTEGER nGhostData, EOS_INTEGER nxtbl_in, EOS_INT
  * \return eos_getRequiredNumSubtables - EOS_INTEGER : required number of subtables for the data type
  *
  ***********************************************************************/
-EOS_INTEGER eos_getRequiredNumSubtables (eos_Data *me, EOS_INTEGER dataType)
+EOS_INTEGER
+eos_getRequiredNumSubtables (eos_Data * me, EOS_INTEGER dataType)
 {
 
   EOS_INTEGER n1 = EOS_TYPE_TO_SUB_TAB_NUM(dataType);
@@ -2990,10 +3478,12 @@ EOS_INTEGER eos_getRequiredNumSubtables (eos_Data *me, EOS_INTEGER dataType)
  * This function returns the variable type's index in eos_VarList[].
  *
  ************************************************************************/
-EOS_INTEGER get_VarListIndex(EOS_INTEGER t)
+EOS_INTEGER
+get_VarListIndex (EOS_INTEGER t)
 {
   EOS_INTEGER i;
-  for (i=0;i<MAX_VARS;i++) {
+  for (i = 0; i < MAX_VARS; i++)
+    {
     if (eos_VarList[i].eosVarType == t)
       return i;
   }
@@ -3005,14 +3495,19 @@ EOS_INTEGER get_VarListIndex(EOS_INTEGER t)
  *  flag == 2 :: eosVarType_s
  *  flag == 3 :: eosVarDescription
  */
-EOS_CHAR* get_VarStr(EOS_INTEGER t, EOS_INTEGER flag)
+EOS_CHAR *
+get_VarStr (EOS_INTEGER t, EOS_INTEGER flag)
 {
   EOS_CHAR *sp = NULL;
   EOS_INTEGER i = get_VarListIndex(t);
-  if (i < 0) return sp;
-  if (flag == 1) sp = eos_VarList[i].eosVarType_short_s;
-  if (flag == 2) sp = eos_VarList[i].eosVarType_s;
-  if (flag == 3) sp = eos_VarList[i].eosVarDescription;
+  if (i < 0)
+    return sp;
+  if (flag == 1)
+    sp = eos_VarList[i].eosVarType_short_s;
+  if (flag == 2)
+    sp = eos_VarList[i].eosVarType_s;
+  if (flag == 3)
+    sp = eos_VarList[i].eosVarDescription;
   return sp;
 }
 
@@ -3021,10 +3516,12 @@ EOS_CHAR* get_VarStr(EOS_INTEGER t, EOS_INTEGER flag)
  * This function returns the option flag's index in eos_OptionFlags[].
  *
  ************************************************************************/
-EOS_INTEGER get_OptionFlagIndex(EOS_INTEGER f)
+EOS_INTEGER
+get_OptionFlagIndex (EOS_INTEGER f)
 {
   EOS_INTEGER i;
-  for (i=0;i<EOS_TOTAL_TABLE_OPTIONS;i++) {
+  for (i = 0; i < EOS_TOTAL_TABLE_OPTIONS; i++)
+    {
     if (eos_OptionFlags[i] == f)
       return i;
   }
@@ -3033,11 +3530,13 @@ EOS_INTEGER get_OptionFlagIndex(EOS_INTEGER f)
 
 /*! This function returns the option flag's string representation
  */
-EOS_CHAR* get_OptionFlagStr(EOS_INTEGER f)
+EOS_CHAR *
+get_OptionFlagStr (EOS_INTEGER f)
 {
   EOS_CHAR *sp = NULL;
   EOS_INTEGER i = get_OptionFlagIndex(f);
-  if (i < 0 || i >= EOS_TOTAL_TABLE_OPTIONS) return sp;
+  if (i < 0 || i >= EOS_TOTAL_TABLE_OPTIONS)
+    return sp;
   sp = eos_OptionFlags_str[i];
   return sp;
 }
@@ -3061,17 +3560,20 @@ EOS_CHAR* get_OptionFlagStr(EOS_INTEGER f)
  * EOS_REAL    y      - value to search for
  *
  ************************************************************************/
-int _eos_locate (EOS_REAL x[], EOS_INTEGER jlower, EOS_INTEGER jupper,
-                 EOS_INTEGER ix, EOS_REAL y, EOS_INTEGER *l, EOS_INTEGER *u)
+int
+_eos_locate (EOS_REAL x[], EOS_INTEGER jlower, EOS_INTEGER jupper, EOS_INTEGER ix, EOS_REAL y, EOS_INTEGER * l, EOS_INTEGER * u)
 {
   int jmiddle;
 
   jmiddle = (jlower + jupper) / 2;
-  while ((y != x[jmiddle * ix]) && ((jupper - jlower) > 1)) {
-    if (y > x[jmiddle * ix]) {
+  while ((y != x[jmiddle * ix]) && ((jupper - jlower) > 1))
+    {
+      if (y > x[jmiddle * ix])
+	{
       jlower = jmiddle;
     }
-    else {
+      else
+	{
       jupper = jmiddle;
     }
     jmiddle = (jlower + jupper) / 2;
@@ -3100,7 +3602,8 @@ int _eos_locate (EOS_REAL x[], EOS_INTEGER jlower, EOS_INTEGER jupper,
  *       upon the calling function. CONSIDER REFACTORING! -DAP
  *
  ************************************************************************/
-int _eos_hunt (EOS_REAL x[], EOS_INTEGER n, EOS_INTEGER ix /* step */ ,
+int
+_eos_hunt (EOS_REAL x[], EOS_INTEGER n, EOS_INTEGER ix /* step */ ,
                EOS_REAL y, EOS_INTEGER jlower /* start index */ ,
                EOS_INTEGER *err)
      /* find (lower, upper ) interval where x[lower*ix] <= y < x[upper *ix] */
@@ -3111,62 +3614,68 @@ int _eos_hunt (EOS_REAL x[], EOS_INTEGER n, EOS_INTEGER ix /* step */ ,
 
   *err = EOS_OK;
 
-//#define USE_ROUNDOFF_TOLERANCE
+  //#define USE_ROUNDOFF_TOLERANCE
 #ifdef USE_ROUNDOFF_TOLERANCE
   /* Use this logic if machine round-off is causing problems with extrapolation
      detection. */
-  if (!_eos_machinePrecisionData.gotMachinePrecision) {
+  if (!_eos_machinePrecisionData.gotMachinePrecision)
+  {
     /* determine the current machine's floating point precision */
     _eos_machinePrecisionData.gotMachinePrecision = 1;
-    eos_GetMachinePrecision (&_eos_machinePrecisionData.eps,
-                             &_eos_machinePrecisionData.epsneg);
+    eos_GetMachinePrecision (&_eos_machinePrecisionData.eps, &_eos_machinePrecisionData.epsneg);
     _eos_machinePrecisionData.maxIter = 100;
-    _eos_machinePrecisionData.maxErr =
-      pow (MAX
-           (_eos_machinePrecisionData.eps, _eos_machinePrecisionData.epsneg),
-           0.75);
+    _eos_machinePrecisionData.maxErr = pow (MAX (_eos_machinePrecisionData.eps, _eos_machinePrecisionData.epsneg), 0.75);
   }
-  EOS_ROUNDOFF_TOLERANCE =
-    100*MAX(_eos_machinePrecisionData.eps, _eos_machinePrecisionData.epsneg);
+  EOS_ROUNDOFF_TOLERANCE = 100 * MAX (_eos_machinePrecisionData.eps, _eos_machinePrecisionData.epsneg);
 #endif
 
   /* check if all the numbers in X are the same */
-  if (x[0] == x[n * ix]) {
+  if (x[0] == x[n * ix])
+  {
     for (i = 1; i <= n; i++)
       if (x[i * ix] != x[0])
         break;
-    if (i > n) {                /* all values are the same */
+    if (i > n)
+	{			/* all values are the same */
       *err = EOS_UNDEFINED;
       return 0;
     }
   }
 
-  if ((jlower < 0) || jlower >= n) {
+  if ((jlower < 0) || jlower >= n)
+  {
     jlower = 0;
     jupper = n;
   }
-  else {                        /* if lower, upper are within range */
+  else
+  {				/* if lower, upper are within range */
     inc = 1;
-    if (y >= x[jlower * ix]) {
-      if (jlower == (n - 1)) {
+    if (y >= x[jlower * ix])
+	{
+	  if (jlower == (n - 1))
+      {
         if (y > x[n] + EOS_ROUNDOFF_TOLERANCE)
           *err = EOS_xHi_yOk;
         return (n - 1);         /* edge interval */
       }
       jupper = jlower + 1;
       /* make interval of length 1, expand & move (jupper, jlower interval until Y is inside it */
-      while (y >= x[jupper * ix]) {
+	  while (y >= x[jupper * ix])
+      {
         jlower = jupper;
         inc += inc;             /* double increment */
         jupper += inc;
-        if (jupper >= (n - 1)) {
+        if (jupper >= (n - 1))
+		{
           jupper = n;
           break;
         }
       }                         /* while loop */
     }
-    else {                      /* y >= x[jlower*ix], hunt down */
-      if (jlower == 0) {
+    else
+	{			/* y >= x[jlower*ix], hunt down */
+	  if (jlower == 0)
+      {
         if (y < x[0] - EOS_ROUNDOFF_TOLERANCE)
           *err = EOS_xLo_yOk;
         return (0);             /* hit the edge */
@@ -3174,11 +3683,13 @@ int _eos_hunt (EOS_REAL x[], EOS_INTEGER n, EOS_INTEGER ix /* step */ ,
       jupper = jlower;
       jlower -= 1;
       /* make interval of length 1, expand & move (jupper, jlower interval until Y is inside it */
-      while (y < x[jlower * ix]) {
+	  while (y < x[jlower * ix])
+      {
         jupper = jlower;
         inc += inc;
         jlower -= inc;
-        if (jlower < 0) {
+        if (jlower < 0)
+		{
           jlower = 0;
           break;
         }
@@ -3196,3 +3707,4 @@ int _eos_hunt (EOS_REAL x[], EOS_INTEGER n, EOS_INTEGER ix /* step */ ,
     *err = EOS_xHi_yOk;
   return res;
 }
+

@@ -56,8 +56,7 @@ long _get_address_for_table_ascii(struct _ses_index_record* ptIR, ses_table_id t
 
   }
 
-  
-  return_value = return_value;  //  one marker for the index record
+  //  one marker for the index record
   
   return return_value;
 }

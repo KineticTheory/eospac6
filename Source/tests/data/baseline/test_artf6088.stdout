@@ -24,8 +24,8 @@
 21: successfully created forced-monotonic table type=EOS_Pf_Uf (243), matId=33336
 22: successfully created forced-monotonic table type=EOS_Uf_Tf (247), matId=33336
 23: successfully created forced-monotonic table type=EOS_Uf_Pf (248), matId=33336
-24: successfully created table type=EOS_Pm_D (220), matId=33336
-25: successfully created table type=EOS_Pf_D (240), matId=33336
+42: successfully created table type=EOS_Pm_D (220), matId=33336
+43: successfully created table type=EOS_Pf_D (240), matId=33336
 
 --- LOAD DATA ---
 0: successfully loaded forced-monotonic table type=EOS_Tm_D (215), matId=33336
@@ -52,8 +52,8 @@
 21: eos_LoadTables ERROR 222021 for EOS_Pf_Uf: EOS_INVALID_TABLE_HANDLE: Invalid table handle because EOS_CANT_INVERT_DATA: Can't invert wrt first independent variable
 22: successfully loaded forced-monotonic table type=EOS_Uf_Tf (247), matId=33336
 23: successfully loaded forced-monotonic table type=EOS_Uf_Pf (248), matId=33336
-24: successfully loaded table type=EOS_Pm_D (215), matId=33336
-25: successfully loaded table type=EOS_Pf_D (220), matId=33336
+42: successfully loaded table type=EOS_Pm_D (215), matId=33336
+43: successfully loaded table type=EOS_Pf_D (220), matId=33336
 
 --- FETCH DATA ---
 
@@ -501,7 +501,7 @@ EOS_Uf_D   => cat 0, ref1=EOS_NullTable and ref2=EOS_NullTable    (TH: 5) forced
 	X0 =   8.937500000000000e+04  F0 =   6.044803024172394e+05
 	X0 =   1.787500000000000e+05  F0 =   1.012083595746234e+06
 
-EOS_Pm_D   => cat 0, ref1=EOS_NullTable and ref2=EOS_NullTable    (TH: 24)
+EOS_Pm_D   => cat 0, ref1=EOS_NullTable and ref2=EOS_NullTable    (TH: 42)
 	X0 =   0.000000000000000e+00  F0 =   0.000000000000000e+00
 	X0 =   8.937500000000000e-06  F0 =  -4.691206980446739e-10
 	X0 =   1.787500000000000e-05  F0 =  -1.679476648016121e-09
@@ -575,7 +575,7 @@ EOS_Pm_D   => cat 0, ref1=EOS_NullTable and ref2=EOS_NullTable    (TH: 24)
 	X0 =   8.937500000000000e+04  F0 =   4.127788047813447e+10
 	X0 =   1.787500000000000e+05  F0 =   1.359581840186777e+11
 
-EOS_Pf_D   => cat 0, ref1=EOS_NullTable and ref2=EOS_NullTable    (TH: 25)
+EOS_Pf_D   => cat 0, ref1=EOS_NullTable and ref2=EOS_NullTable    (TH: 43)
 	X0 =   0.000000000000000e+00  F0 =   0.000000000000000e+00
 	X0 =   8.937500000000000e-06  F0 =  -4.691206367589571e-10
 	X0 =   1.787500000000000e-05  F0 =  -1.679476339151478e-09
@@ -1109,7 +1109,7 @@ EOS_Uf_D   => cat 0, ref1=EOS_NullTable and ref2=EOS_NullTable    (TH: 5)
 --- CLEAN UP ---
 
 EOS_D_Tm   => cat 1, ref1=EOS_NullTable and ref2=EOS_NullTable    (TH: 6)
-	X =   0.000000000000000e+00  F =   1.905824131322176e-21  F_ref =   0.000000000000000e+00
+	X =   0.000000000000000e+00  F =   1.905824131322176e-21  F_ref =   0.000000000000000e+00  (EOS_xLo_yOk)
 	X =   2.620576459673279e-07  F =   8.937500000000000e-06  F_ref =   8.937500000000000e-06
 	X =   6.603480586834155e-07  F =   1.787500000000000e-05  F_ref =   1.787500000000000e-05
 	X =   2.240617949647064e-06  F =   4.468750000000000e-05  F_ref =   4.468750000000000e-05
@@ -1266,7 +1266,7 @@ eos_Interpolate ERROR 92021: EOS_INVALID_TABLE_HANDLE: Invalid table handle beca
 --- CLEAN UP ---
 
 EOS_D_Tf   => cat 1, ref1=EOS_NullTable and ref2=EOS_NullTable    (TH: 9)
-	X =   0.000000000000000e+00  F =   8.470329472543003e-22  F_ref =   0.000000000000000e+00
+	X =   0.000000000000000e+00  F =   8.470329472543003e-22  F_ref =   0.000000000000000e+00  (EOS_xLo_yOk)
 	X =   3.144691751607934e-07  F =   8.937500000000000e-06  F_ref =   8.937500000000000e-06
 	X =   7.924176704200986e-07  F =   1.787500000000000e-05  F_ref =   1.787500000000000e-05
 	X =   2.688741539576476e-06  F =   4.468750000000000e-05  F_ref =   4.468750000000000e-05
@@ -1504,7 +1504,7 @@ eos_Interpolate ERROR 142021: EOS_INVALID_TABLE_HANDLE: Invalid table handle bec
 --- CLEAN UP ---
 
 EOS_Pm_Tm  => cat 3, ref1=EOS_Pm_D      and ref2=EOS_D_Tm         (TH: 14)
-	X =   0.000000000000000e+00  F =  -1.000348583872720e-25  F_ref =   0.000000000000000e+00
+	X =   0.000000000000000e+00  F =  -1.000348583872720e-25  F_ref =   0.000000000000000e+00  (EOS_xLo_yOk)
 	X =   2.620576459673279e-07  F =  -4.691206980446739e-10  F_ref =  -4.691206980446739e-10
 	X =   6.603480586834155e-07  F =  -1.679476648016121e-09  F_ref =  -1.679476648016121e-09
 	X =   2.240617949647064e-06  F =  -9.065145527981186e-09  F_ref =  -9.065145527981186e-09
@@ -1585,7 +1585,7 @@ eos_Interpolate ERROR 162021: EOS_INVALID_TABLE_HANDLE: Invalid table handle bec
 --- CLEAN UP ---
 
 EOS_Um_Tm  => cat 3, ref1=EOS_Um_D      and ref2=EOS_D_Tm         (TH: 16)
-	X =   0.000000000000000e+00  F =   5.207211816756768e+00  F_ref =   5.207211816756768e+00
+	X =   0.000000000000000e+00  F =   5.207211816756768e+00  F_ref =   5.207211816756768e+00  (EOS_xLo_yOk)
 	X =   2.620576459673279e-07  F =   5.207211816756768e+00  F_ref =   5.207211816756768e+00
 	X =   6.603480586834155e-07  F =   5.207162449336663e+00  F_ref =   5.207162449336663e+00
 	X =   2.240617949647064e-06  F =   5.207032803581332e+00  F_ref =   5.207032803581332e+00
@@ -1818,7 +1818,7 @@ eos_Interpolate ERROR 202021: EOS_INVALID_TABLE_HANDLE: Invalid table handle bec
 --- CLEAN UP ---
 
 EOS_Pf_Tf  => cat 3, ref1=EOS_Pf_D      and ref2=EOS_D_Tf         (TH: 20)
-	X =   0.000000000000000e+00  F =  -4.445993125278361e-26  F_ref =   0.000000000000000e+00
+	X =   0.000000000000000e+00  F =  -4.445993125278361e-26  F_ref =   0.000000000000000e+00  (EOS_xLo_yOk)
 	X =   3.144691751607934e-07  F =  -4.691206367589571e-10  F_ref =  -4.691206367589571e-10
 	X =   7.924176704200986e-07  F =  -1.679476339151478e-09  F_ref =  -1.679476339151478e-09
 	X =   2.688741539576476e-06  F =  -9.065142907940859e-09  F_ref =  -9.065142907940859e-09
@@ -1899,7 +1899,7 @@ eos_Interpolate ERROR 222021: EOS_INVALID_TABLE_HANDLE: Invalid table handle bec
 --- CLEAN UP ---
 
 EOS_Uf_Tf  => cat 3, ref1=EOS_Uf_D      and ref2=EOS_D_Tf         (TH: 22)
-	X =   0.000000000000000e+00  F =   5.207211816767055e+00  F_ref =   5.207211816767055e+00
+	X =   0.000000000000000e+00  F =   5.207211816767055e+00  F_ref =   5.207211816767055e+00  (EOS_xLo_yOk)
 	X =   3.144691751607934e-07  F =   5.207211816767055e+00  F_ref =   5.207211816767055e+00
 	X =   7.924176704200986e-07  F =   5.207162449362583e+00  F_ref =   5.207162449362583e+00
 	X =   2.688741539576476e-06  F =   5.207032803669280e+00  F_ref =   5.207032803669280e+00

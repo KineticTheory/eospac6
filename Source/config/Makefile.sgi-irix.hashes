@@ -31,6 +31,9 @@ CC  = $(firstword $(notdir $(foreach compiler,$(call get,_CC,$(F90)),$(call path
 CXX = $(firstword $(notdir $(foreach compiler,$(call get,_CXX,$(F90)),$(call pathsearch,$(compiler)))))
 F77 = $(firstword $(notdir $(foreach compiler,$(call get,_F77,$(F90)),$(call pathsearch,$(compiler)))))
 
+# compiler check for CC, CXX, F90 and F77
+include $(BASEDIR)/config/Makefile.check_compilers
+
 ##################################################################
 ### Assign values to associative arrays, which hold various    ###
 ### compiler options -- specific to this architecture.         ###
@@ -59,3 +62,22 @@ _CFLAGS += $(call get,_COMP_FLAGS,$(CC))
 _CXXFLAGS += $(call get,_COMP_FLAGS,$(CXX))
 _FFLAGS += $(call get,_COMP_FLAGS,$(F77))
 _F90FLAGS += $(call get,_COMP_FLAGS,$(F90))
+
+
+##################################################################
+### Define selected variable values according to $(F90).       ###
+##################################################################
+ifeq ($(strip $(F90)),f90)
+  ifeq ($(strip $(N32)),)
+    C_ADDRESS_FLAG := -mabi=64
+    F_ADDRESS_FLAG := -64
+    ALT_SUBDIR := 
+  else
+    C_ADDRESS_FLAG := 
+    F_ADDRESS_FLAG := 
+    ALT_SUBDIR := /n32
+  endif
+endif
+
+# Modify ARCH variable
+ARCH   := $(shell $(BASEDIR)/scripts/config.guess)$(ALT_SUBDIR)

@@ -8,7 +8,7 @@
 !********************************************************************
 
 !> @file
-!! @ingroup tests quick
+!! @ingroup Fortran2003 tests quick
 !! @brief Verify that linear extrapolation works as expected for the rational
 !! interpolator.
 !!
@@ -36,7 +36,7 @@ program test018
   
   character*(13) :: codeLabel, s
 
-  logical equal
+  logical(EOS_BOOLEAN) :: equal
 
   coldCurveTypesList(1) = EOS_Pc_D
 
@@ -116,6 +116,8 @@ program test018
      enddo
   enddo
 
+  call eos_DestroyAll(errorCode)
+
 997 format(50x,a46)
 998 format(a4,4a23)
 999 format(i4,4es23.15,1x,a)
@@ -134,7 +136,7 @@ subroutine print_table_errors(tableHandles, nTables, label)
   character(*) :: label
   integer(EOS_INTEGER) :: errorCode, ierr
   character(EOS_MaxErrMsgLen) :: errorMessage
-  logical equal
+  logical(EOS_BOOLEAN) :: equal
 
   ierr = EOS_OK
 
@@ -165,7 +167,7 @@ subroutine print_error(errorCode, label)
   character(*) :: label
   integer(EOS_INTEGER) :: errorCode
   character(EOS_MaxErrMsgLen) :: errorMessage
-  logical equal
+  logical(EOS_BOOLEAN) :: equal
 
   call eos_GetErrorMessage(errorCode, errorMessage)
   write(*,'(2a,i4,2a)') trim(label), ' ERROR ', errorCode, ': ', &
@@ -179,7 +181,7 @@ subroutine print_error(errorCode, label)
   endif
 end subroutine print_error
 
-module test018_reallocate_mod
+module test018__Fortran2003_APItest_reallocate_mod
 contains
 ! ===========================================================================
 ! Reallocate a 1-D EOS_INTEGER array to n elements.
@@ -201,7 +203,7 @@ function reallocate(p, n)               ! reallocate EOS_INTEGER
   reallocate(1:nold) = p(1:nold)
   deallocate(p) 
 end function reallocate
-end module test018_reallocate_mod
+end module test018__Fortran2003_APItest_reallocate_mod
 
 ! ===========================================================================
 ! Assign X and Y values for interpolation based upon data type.
@@ -209,7 +211,7 @@ end module test018_reallocate_mod
 subroutine setXandYVALS( &
      tableHandles, nTableHandles, THindex,nXYPairs,X,Y,iType,matID)
   use eos_Interface2003
-  use test018_reallocate_mod
+  use test018__Fortran2003_APItest_reallocate_mod
   implicit none
   integer(EOS_INTEGER) :: nTableHandles, tableHandles(nTableHandles), &
                           THindex, nXYPairs, iType, matID
@@ -252,7 +254,7 @@ subroutine setXandYVALS( &
   ! Get data type for current tableHandle
   call eos_GetTableInfo(tableHandles(THindex), 1_EOS_INTEGER, EOS_Table_Type, &
                         infoVal, errorCode)
-  iType = infoVal
+  iType = NINT(infoVal,EOS_INTEGER)
   if (errorCode.NE.EOS_OK) then
      call print_error(errorCode, 'setXandYVALS->eos_GetTableInfo')
   endif
@@ -260,7 +262,7 @@ subroutine setXandYVALS( &
   ! Get matID for current tableHandle
   call eos_GetTableInfo(tableHandles(THindex), 1_EOS_INTEGER, EOS_Material_ID, &
                         infoVal, errorCode)
-  matID = infoVal
+  matID = NINT(infoVal,EOS_INTEGER)
   if (errorCode.NE.EOS_OK) then
      call print_error(errorCode, 'setXandYVALS->eos_GetTableInfo')
   endif

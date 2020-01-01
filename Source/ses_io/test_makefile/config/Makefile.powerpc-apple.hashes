@@ -1,0 +1,58 @@
+#-*-makefile-*-###################################################
+#  
+#  Copyright -- see file named COPYRIGHTNOTICE
+#  
+##################################################################
+### This file contains the following:                          ###
+### Platform-dependent system configuration for a BASE_ARCH    ###
+### value containing the following pattern:                    ###
+###    powerpc-apple
+##################################################################
+#
+# GMSL function dependencies exist (see $(BASEDIR)/config/gmsl).
+#
+# IBM PowerPC and MacOS
+
+##################################################################
+### Assign values to associative arrays, which hold C, C++ and ###
+### F77 compiler names in preferential order according to      ###
+### the possible values of $(F90).                             ###
+##################################################################
+$(call set,_CC,f90,      gcc         )   # Absoft
+$(call set,_CC,xlf90,    gcc         )   # IBM XL
+$(call set,_CC,gfortran, gcc         )   # gfortran
+
+$(call set,_CXX,f90,     g++         )   # Absoft
+$(call set,_CXX,xlf90,   g++         )   # IBM XL
+$(call set,_CXX,gfortran,g++         )   # gfortran
+
+$(call set,_F77,f90,     f77      f90)   # Absoft
+$(call set,_F77,xlf90,   xlf         )   # IBM XL
+$(call set,_F77,gfortran,gfortran    )   # gfortran
+
+##################################################################
+### Define CC, CXX and  F77 according to $(F90).               ###
+##################################################################
+CC  = $(firstword $(notdir $(foreach compiler,$(call get,_CC,$(F90)),$(call pathsearch,$(compiler)))))
+CXX = $(firstword $(notdir $(foreach compiler,$(call get,_CXX,$(F90)),$(call pathsearch,$(compiler)))))
+F77 = $(firstword $(notdir $(foreach compiler,$(call get,_F77,$(F90)),$(call pathsearch,$(compiler)))))
+
+##################################################################
+### Assign values to associative arrays, which hold various    ###
+### compiler options -- specific to this architecture.         ###
+##################################################################
+#
+### VERSION_FLAG{$CC} = $flag
+#
+### VERSION_FLAG{$CXX} = $flag
+#
+### VERSION_FLAG{$F77} = $flag
+$(call set,VERSION_FLAG,f77,-V)   # Absoft
+#
+### VERSION_FLAG{$F90} = $flag
+
+# Set additional compiler-specific options
+_CFLAGS += $(call get,_COMP_FLAGS,$(CC))
+_CXXFLAGS += $(call get,_COMP_FLAGS,$(CXX))
+_FFLAGS += $(call get,_COMP_FLAGS,$(F77))
+_F90FLAGS += $(call get,_COMP_FLAGS,$(F90))

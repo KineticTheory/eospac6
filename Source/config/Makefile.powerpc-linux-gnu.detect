@@ -18,11 +18,9 @@
 ##################################################################
 # Compiler suite configurations based upon F90                 ###
 ##################################################################
+F90_List = xlf90 mpixlf90 mpif90 gfortran
+
 # Default: use the first F90 compiler found from F90_List
-F90_List = xlf90 mpixlf90 mpif90
-F90_Found_List = $(foreach compiler,$(F90_List),$(call pathsearch,$(compiler)))
+F90_Found_List = $(call memoize,create_F90_Found_List_once,$(F90_List))
 F90 = $(firstword $(F90_Found_List))
-F90_Key = $(strip $(firstword $(foreach compiler,$(F90_List),$(call match_r1,$(compiler),$(F90)))))
-ifeq ($(strip $(F90_Key)),)
-  $(error No supported Fortran compiler was found in your PATH for this machine. (supported: $(F90_List)))
-endif
+F90_Key = $(call memoize,set_F90_Key_once,$(F90_List))

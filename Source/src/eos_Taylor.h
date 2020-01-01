@@ -50,6 +50,9 @@ typedef struct
     EOS_REAL **f;  /*! array to hold Taylor polynomial values calculated given array(s) of x or (x,y) */
     EOS_REAL **df; /*! array to hold Taylor derivative values calculated given array(s) of x or (x,y) */
 
+    EOS_INTEGER f_NX; /*! f and df array extents corresponding to extent of x array passed to Evaluate() */
+    EOS_INTEGER f_NY; /*! f and df array extents corresponding to extent of y array passed to Evaluate() */
+
     EOS_REAL *P;   /*! array containing intermediate Taylor coefficients for bivariate calculations */
     EOS_REAL **c;  /*! Taylor coefficients; bivariate array dimension: [nx][ny]
 		    *                       univariate array dimension: [1][nx] */

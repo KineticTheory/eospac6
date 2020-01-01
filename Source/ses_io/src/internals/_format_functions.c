@@ -6,7 +6,7 @@
 
 #include <string.h>
 
-#undef DEBUG_GET_GRID
+//#define DEBUG_GET_GRID
 
 #define check_errors_go_to_index_record HEADER(check_errors_go_to_index_record)
 #define check_errors_go_to_data_record HEADER(check_errors_go_to_data_record)
@@ -132,11 +132,10 @@ ses_boolean _get_grid(ses_file_handle the_handle, ses_material_id the_mid,
 #endif
   struct _ses_file_handle* pSFH = FILE_LIST[the_handle]->_the_handle;
 #ifdef DEBUG_GET_GRID
-  printf("_get_grid: addresses:  nr is %ld and nt is %ld\n", nr, nt);
+  printf("_get_grid: addresses:  nr is %lx and nt is %lx\n", (unsigned long)nr, (unsigned long)nt);
   printf("_get_grid: *nr is %ld and *nt is %ld\n", *nr, *nt);
 #endif
-  return_value = pSFH->pt2_get_grid(the_handle, the_mid,
-				    the_tid, nr, nt, ntab);
+  return_value = pSFH->pt2_get_grid(the_handle, the_mid, the_tid, nr, nt, ntab);
 
 #ifdef DEBUG_GET_GRID
   printf("_get_grid: after pt2_get_grid, *nr is %ld and *nt is %ld and *ntab is %ld\n", *nr, *nt, *ntab);
@@ -174,7 +173,7 @@ ses_boolean _get_grid(ses_file_handle the_handle, ses_material_id the_mid,
       NP = _the_tables[i]->_num_arrays; /* save old value */
       NW = _get_table_size(FILE_LIST[the_handle]->_current_index_record, the_tid);
 #ifdef DEBUG_GET_GRID
-      printf("_get_grid: NP is %d NW is %d num_arrays is %d\n", NP, NW, _the_tables[i]->_num_arrays);
+      printf("_get_grid: NP is %ld NW is %ld num_arrays is %ld\n", NP, NW, _the_tables[i]->_num_arrays);
       printf("_get_grid: *nr is %ld and *nt is %ld\n", *nr, *nt);
 #endif
 
@@ -183,7 +182,7 @@ ses_boolean _get_grid(ses_file_handle the_handle, ses_material_id the_mid,
 
 	_the_tables[i]->_num_arrays = ( NW - 2 - *nr - *nt ) / ( *nr * *nt ) + 2*_the_tables[i]->_num_independent;
 #ifdef DEBUG_GET_GRID
-      printf("get_grid: in ! user defined  NW is %d nr is %d nt is %d num_ind is %d num_arrays is %d\n", NW, *nr, *nt, _the_tables[i]->_num_independent, _the_tables[i]->_num_arrays);
+      printf("get_grid: in ! user defined  NW is %ld nr is %ld nt is %ld num_ind is %ld num_arrays is %ld\n", NW, *nr, *nt, _the_tables[i]->_num_independent, _the_tables[i]->_num_arrays);
 #endif
       }
 
@@ -237,7 +236,7 @@ ses_boolean _get_grid(ses_file_handle the_handle, ses_material_id the_mid,
 
       }
 #ifdef DEBUG_GET_GRID
-      printf("_get_grid: at end NP is %d NW is %d num_arrays is %d\n", NP, NW, _the_tables[i]->_num_arrays);
+      printf("_get_grid: at end NP is %ld NW is %ld num_arrays is %ld\n", NP, NW, _the_tables[i]->_num_arrays);
 #endif
 
     }

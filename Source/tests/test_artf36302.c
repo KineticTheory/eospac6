@@ -150,6 +150,8 @@ int main (int argc, char **argv)
 
   if (L) free(L);
 
+  eos_DestroyAll (&errorCode);
+
   return 0;
 
 }

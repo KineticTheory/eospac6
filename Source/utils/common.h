@@ -13,9 +13,15 @@
 #include <utime.h>
 #include <assert.h>
 #include <math.h>
+#include <limits.h>
+#ifndef PATH_MAX
+#define PATH_MAX 255
+#endif
 #include "TEST_FUNCTIONS.h"
 #include "eos_Interface.h"
 #include "getopt.h"
+
+#include "eos_SaferMemoryAllocation.h"
 
 EOS_INTEGER one   = 1;
 EOS_INTEGER two   = 2;
@@ -48,28 +54,31 @@ enum { OK = 0,                          /*   0 */
        inverseInterpolationError,       /*  14 */
        InvalidDataType,                 /*  15 */
        fopenError,                      /*  16 */
+       MissingConfigFile,               /*  17 */
        eospacError = 255                /* 255 */
 };
 
 char localErrorMessages[][120] = {
-  "No errors encountered",
-  "Insufficient arguments provided, given the defined options",
-  "Invalid sesSubtableIndex (3rd argument)",
-  "sesSubtableIndex is valid given sesTableNum, but the subtable is unavailable",
-  "Invalid sesTableNum (2nd argument)",
-  "Data dump error; no stdout",
-  "fprintf function error",
-  "malloc error",
-  "Invalid sesame file name",
-  "Missing sesame file",
-  "Incorrect number of independent variables specified",
-  "Invalid independent variables specified",
-  "The -r (density) independent variable is required",
-  "_QuickSort ERROR exceeded QUICKSORT_RECURSION_LIMIT",
-  "calculateCategory2 ERROR performing inverse interpolation",
-  "Invalid data type (2nd argument)",
-  "Cannot open specified input file",
-  "The -x independent variable is required"
+  /*   0 */  "No errors encountered",
+  /*   1 */  "Insufficient arguments provided, given the defined options",
+  /*   2 */  "Invalid sesSubtableIndex (3rd argument)",
+  /*   3 */  "sesSubtableIndex is valid given sesTableNum, but the subtable is unavailable",
+  /*   4 */  "Invalid sesTableNum (2nd argument)",
+  /*   5 */  "Data dump error; no stdout",
+  /*   6 */  "fprintf function error",
+  /*   7 */  "malloc error",
+  /*   8 */  "Invalid sesame file name",
+  /*   9 */  "Missing sesame file",
+  /*  10 */  "Incorrect number of independent variables specified",
+  /*  11 */  "Invalid independent variables specified",
+  /*  12 */  "The -r (density) independent variable is required",
+  /*  13 */  "_QuickSort ERROR exceeded QUICKSORT_RECURSION_LIMIT",
+  /*  14 */  "calculateCategory2 ERROR performing inverse interpolation",
+  /*  15 */  "Invalid data type (2nd argument)",
+  /*  16 */  "Cannot open specified input file",
+  /*  17 */  "Configuration file was not found"
+  /*  18 */  "The -x independent variable is required"
+  /* 255 */
 };
 
 /*
@@ -271,49 +280,6 @@ int getSamples(int N, EOS_REAL v_lower, EOS_REAL v_upper, EOS_REAL *v) {
   return(err);
 }
 
-/*! \brief Safer malloc */
-void* safe_malloc(int n, size_t size) {
-  void *p=NULL;
-  assert (p == NULL);
-  
-  //p = malloc(n * size);
-  p = (void*)calloc(n, size);
-  if (p == NULL) {
-    printf("safe_malloc failed to allocate %d bytes\n", (int)(n * size));
-    assert(p != NULL);
-  }
-  return p;
-}
-
-/*! \brief Safer realloc */
-void* safe_realloc(void* p, int n, size_t size) {
-  void *ptr = realloc(p, n * size);
-  if (ptr == NULL) {
-    printf("safe_realloc failed to allocate %d bytes\n", (int)(n * size));
-    assert(ptr != NULL);
-  }
-  return ptr;
-}
-
-/*! \brief Split str into an array of char* tokens within result; split using characters in delim */
-int split (char *str, char *delim, char ***result)
-{
-  char *cp;
-  int i = 0;
-
-  cp = strtok (str, delim);
-  while (cp != NULL) {
-    if (i == 0) *result = (char**) safe_malloc(1, sizeof(char*));
-    else        *result = (char**) realloc(*result, (i+1)*sizeof(char*));
-    (*result)[i] = (char*) safe_malloc(strlen(cp), sizeof(char));
-    strcpy((*result)[i], cp);
-    i++;
-    cp = strtok (NULL, delim);
-  }
-
-  return i;
-}
-
 /* \brief Count independent variable options
  */
 int countIndependentVariableOptions (char *p) {
@@ -470,5 +436,83 @@ void cleanIndexFile (EOS_INTEGER file_cnt) {
       remove(indexFileName);
     }
   }
+}
+
+static EOS_CHAR fName[PATH_MAX];
+static EOS_CHAR fNameBak[PATH_MAX];
+static int fNameBakCreated = 0;
+
+#include <time.h>
+
+/* \brief Backup an existing TablesLoaded.dat file.
+ */
+int backupTablesLoadedFile() {
+  EOS_BOOLEAN fileExists;
+  struct stat file_statbuf;
+  time_t current_time;
+  EOS_CHAR *c_time_string = NULL;
+
+  if (strlen(option['D'].arg) > 0) strncpy(fName, option['D'].arg, PATH_MAX);
+  else                             strncpy(fName, "TablesLoaded.dat", PATH_MAX);
+
+  /* If TablesLoaded.dat file does not exist, then do nothing more */
+  fileExists = (!(stat ("TablesLoaded.dat", &file_statbuf)))?EOS_TRUE:EOS_FALSE;
+  if (! fileExists) return 0;
+
+  /* Get current time */
+  current_time = time(NULL);
+
+  /* Conditionally convert time to string */
+  if (current_time != ((time_t)-1)) {
+    c_time_string = (EOS_CHAR*)malloc(100 * sizeof(EOS_CHAR));
+    if (c_time_string)
+      sprintf(c_time_string, ".%d", (int)current_time);
+  }
+
+  {
+    int err = 0;
+    sprintf(fNameBak, "%s%s%s", "TablesLoaded.dat", ".bak", (c_time_string ? c_time_string : ""));
+    EOS_FREE(c_time_string);
+    err = rename("TablesLoaded.dat", fNameBak);
+    if (err) {
+      fprintf (stderr, "\nrename ERROR %d: could not rename file, %s -> %s\n\n", err, "TablesLoaded.dat", fNameBak);
+      return err;
+    }
+    fprintf (stderr, "rename file, %s -> %s\n", "TablesLoaded.dat", fNameBak);
+    fNameBakCreated++;
+  }
+
+  return 0;
+}
+
+/* \brief Rename TablesLoaded.dat to requested name and conditionally recover an existing
+ *        TablesLoaded.dat.bak.* file.
+ */
+int recoverTablesLoadedFile() {
+  EOS_BOOLEAN fileExists;
+  struct stat file_statbuf;
+
+  fileExists = (!(stat ("TablesLoaded.dat", &file_statbuf)))?EOS_TRUE:EOS_FALSE;
+  if (fileExists && strcmp("TablesLoaded.dat", fName)) {
+    int err = 0;
+    err = rename("TablesLoaded.dat", fName);
+    if (err) {
+      fprintf (stderr, "\nrename ERROR %d: could not rename file, TablesLoaded.dat -> %s\n\n", err, fName);
+      return err;
+    }
+    fprintf (stderr, "rename file, TablesLoaded.dat -> %s\n", fName);
+  }
+
+  if (fNameBakCreated && strcmp("TablesLoaded.dat", fName)) {
+    int err = 0;
+    err = rename(fNameBak, "TablesLoaded.dat");
+    if (err) {
+      fprintf (stderr, "\nrename ERROR %d: could not rename file, %s -> %s\n\n", err, fNameBak, "TablesLoaded.dat");
+      return err;
+    }
+    fprintf (stderr, "rename file, %s -> %s\n", fNameBak, "TablesLoaded.dat");
+  }
+
+  return 0;
 }
 #endif

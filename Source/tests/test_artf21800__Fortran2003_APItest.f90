@@ -8,7 +8,7 @@
 !********************************************************************
 
 !> @file
-!! @ingroup tests
+!! @ingroup Fortran2003 Fortran2003 tests
 !! @brief Ensure the new eos_SetDataFileName and eos_GetMaxDataFileNameLength
 !!        work as expected. See SourceForge© Issue #artf21800 for more details:
 !!        https://tf.lanl.gov/sf/go/artf21800
@@ -25,6 +25,11 @@
 !! MATIDS TO TEST: 7411 7432 7440 7450 7460 7470 7510 7520 7521 7530 7541 7542 7550 7560 7561 7570 7580 7590
 !! MATIDS TO TEST: 7591 7592 7593 7601 7602 7603 7660 7740 7741 7750 7760 7761 7770 7771 7830 7831 7832 7833
 !! MATIDS TO TEST: 7834 7930 7931 7940 7941 7970 7971 7980 7981 8020
+!! REQUIRED FILE (OR): /usr/projects/data/eos/export-controlled/ieee64/sesame
+!! REQUIRED FILE (OR): /opt/local/codes/data/eos/export-controlled/ieee64/sesame
+!! REQUIRED FILE (OR): /usr/gapps/lanl-data/eos/export-controlled/ieee64/sesame
+!! REQUIRED FILE (OR): /projects/lanl-data/eos/export-controlled/ieee64/sesame
+
 program testsetfile
   use eos_Interface2003
   real(EOS_REAL) ::  comment_string_length
@@ -36,9 +41,10 @@ program testsetfile
   integer(EOS_INTEGER) :: one
   integer(EOS_INTEGER) :: info_item
   character*4096 filename, filename2, fn
+  character(4096) :: dirList(4)
   character(EOS_MaxErrMsgLen) :: errorMessage
 
-  integer indx1
+  integer indx1, i
 
   logical lexist
 
@@ -240,25 +246,37 @@ program testsetfile
 
   print*,"-----------------------------------------"
 
-  filename = "/usr/projects/data/eos/sesame"
-  inquire(FILE=trim(fileName), EXIST=lexist)
-  if (.NOT.lexist) then
-     filename = "/opt/local/codes/data/eos/sesame"
+  dirList(1) = "/usr/projects/data/eos"
+  dirList(2) = "/opt/local/codes/data/eos"
+  dirList(3) = "/usr/gapps/lanl-data/eos"
+  dirList(4) = "/projects/lanl-data/eos"
+
+  lexist = .FALSE.
+  do i = 1, ubound(dirList,1)
+     filename = trim(dirList(i)) // "/sesame"
      inquire(FILE=trim(fileName), EXIST=lexist)
-     if (.NOT.lexist) then
-        print*,"ERROR: no sesame file found"
-        stop
-     endif
+     if (lexist) exit
+  enddo
+  if (.NOT.lexist) then
+     print*,"ERROR: 'sesame' file not found in the following locations:"
+     do i = 1, ubound(dirList,1)
+        print*,"       ", trim(dirList(i))
+     enddo
+     stop
   endif
-  filename2 = "/usr/projects/data/eos/export-controlled/ieee64/sesame"
-  inquire(FILE=trim(fileName2), EXIST=lexist)
+
+  lexist = .FALSE.
+  do i = 1, ubound(dirList,1)
+     filename2 = trim(dirList(i)) // "/export-controlled/ieee64/sesame"
+     inquire(FILE=trim(fileName2), EXIST=lexist)
+     if (lexist) exit
+  enddo
   if (.NOT.lexist) then
-     filename2 = "/opt/local/codes/data/eos/export-controlled/ieee64/sesame"
-     inquire(FILE=trim(fileName), EXIST=lexist)
-     if (.NOT.lexist) then
-        print*,"ERROR: no sesame file found"
-        stop
-     endif
+     print*,"ERROR: 'sesame' file not found in the following locations:"
+     do i = 1, ubound(dirList,1)
+        print*,"       ", trim(dirList(i)) // "/export-controlled/ieee64"
+     enddo
+     stop
   endif
 
   do indx1 =1,190
@@ -418,5 +436,7 @@ program testsetfile
      print*,"-----------------------------------------"
 
   enddo
+
+  call eos_DestroyAll (err1)
 
 end program testsetfile

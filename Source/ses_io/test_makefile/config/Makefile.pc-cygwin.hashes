@@ -1,0 +1,86 @@
+#-*-makefile-*-###################################################
+#  
+#  Copyright -- see file named COPYRIGHTNOTICE
+#  
+##################################################################
+### This file contains the following:                          ###
+### Platform-dependent system configuration for an ARCH value  ###
+### containing the following pattern:                          ###
+###    *pc-cygwin
+###                                                            ###
+### The purpose of this file is                                ###
+###    - define various associative arrays                     ###
+###    - define ALT_SUBDIR                                     ###
+###    - optionally redefine ARCH                              ###
+##################################################################
+#
+# GMSL function dependencies exist (see $(BASEDIR)/config/gmsl).
+#
+# Cygwin and MS Windows PC
+
+##################################################################
+# Compiler suite configurations based upon F90                 ###
+##################################################################
+#  use the first F90 compiler found from F90_List
+F90_List = g95 gfortran
+F90_Found_List = $(foreach compiler,$(F90_List),$(call pathsearch,$(compiler)))
+F90 = $(firstword $(notdir $(F90_Found_List)))
+ifeq ($(strip $(F90))$(strip $(F90_Found_List)),)
+  $(error No supported Fortran compiler was found in your PATH for this machine. (supported: $(F90_List)))
+endif
+MAKE_WINLIB_AR = $(WINLIB_AR)
+
+##################################################################
+### Assign values to associative arrays, which hold C, C++ and ###
+### F77 compiler names in preferential order according to      ###
+### the possible values of $(F90).                             ###
+##################################################################
+$(call set,_CC,g95,      gcc         )   # G95
+$(call set,_CC,gfortran, gcc         )   # gfortran
+
+$(call set,_CXX,g95,     g++         )   # G95
+$(call set,_CXX,gfortran,g++         )   # gfortran
+
+$(call set,_F77,g95,     g77 g95     )   # G95
+$(call set,_F77,gfortran,g77 gfortran)   # gfortran
+
+##################################################################
+### Define CC, CXX and  F77 according to $(F90).               ###
+##################################################################
+CC  = $(firstword $(foreach compiler,$(call get,_CC,$(F90_Key)),$(call pathsearch,$(compiler))))
+CXX = $(firstword $(foreach compiler,$(call get,_CXX,$(F90_Key)),$(call pathsearch,$(compiler))))
+F77 = $(firstword $(foreach compiler,$(call get,_F77,$(F90_Key)),$(call pathsearch,$(compiler))))
+
+##################################################################
+### Assign values to associative arrays, which hold various    ###
+### compiler options -- specific to this architecture.         ###
+##################################################################
+#
+### VERSION_FLAG{$CC} = $flag
+#
+### VERSION_FLAG{$CXX} = $flag
+#
+### VERSION_FLAG{$F77} = $flag
+#
+### VERSION_FLAG{$F90_Key} = $flag
+#
+### _COMP_FLAGS{$CC} = $flag
+#
+### _COMP_FLAGS{$CXX} = $flag
+#
+### _COMP_FLAGS{$F77} = $flag
+#
+### _COMP_FLAGS{$F90_Key} = $flag
+
+# define define_module_subdir script options
+$(call set,_DEFINE_MODULE_SUBDIR_FLAGS,g95,$(F90_Key))   # G95
+$(call set,_DEFINE_MODULE_SUBDIR_FLAGS,gfortran,gcc)   # gfortran
+
+# define selected variable values according to $(F90_Key).
+ALT_SUBDIR := $(shell $(BASEDIR)/scripts/define_module_subdir $(call get,_DEFINE_MODULE_SUBDIR_FLAGS,$(F90_Key)))
+
+# Set additional compiler-specific options
+_CFLAGS += $(call get,_COMP_FLAGS,$(notdir $(CC)))
+_CXXFLAGS += $(call get,_COMP_FLAGS,$(notdir $(CXX)))
+_FFLAGS += $(call get,_COMP_FLAGS,$(notdir $(F77)))
+_F90FLAGS += $(call get,_COMP_FLAGS,$(F90_Key))

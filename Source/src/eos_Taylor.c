@@ -57,6 +57,7 @@ EOS_COMMON_TAYLOR_INFO* _eos_getCommonTaylorInfo(eos_Data *me, ses_material_id m
   }
   rvalue->NTYPS = tmp[0];
   assert(rvalue->NTYPS == size);
+  EOS_FREE(tmp);
 
   /* get NTBLS[] for tid */
   *err = _eos_GetNextArray_i(sesFile, &(rvalue->NTBLS), &size);
@@ -200,6 +201,7 @@ EOS_INTEGER eos_Load2DTaylor(eos_Data *me, ses_material_id mid, ses_table_id tid
       return err;
     }
     *M = tmp[0];
+    EOS_FREE(tmp);
 
     /* get N for tidref */
     err = _eos_GetNextArray_i(commonInfo->sesFile, &tmp, &size);
@@ -208,6 +210,7 @@ EOS_INTEGER eos_Load2DTaylor(eos_Data *me, ses_material_id mid, ses_table_id tid
       return err;
     }
     *N = tmp[0];
+    EOS_FREE(tmp);
 
     /* get NX for tidref */
     err = _eos_GetNextArray_i(commonInfo->sesFile, &tmp, &size);
@@ -216,6 +219,7 @@ EOS_INTEGER eos_Load2DTaylor(eos_Data *me, ses_material_id mid, ses_table_id tid
 	return err;
     }
     NX = tmp[0];
+    EOS_FREE(tmp);
 
     /* get NY for tidref */
     err = _eos_GetNextArray_i(commonInfo->sesFile, &tmp, &size);
@@ -224,6 +228,7 @@ EOS_INTEGER eos_Load2DTaylor(eos_Data *me, ses_material_id mid, ses_table_id tid
 	return err;
     }
     NY = tmp[0];
+    EOS_FREE(tmp);
 
     /* get TX for tidref */
     err = _eos_GetNextArray_r(commonInfo->sesFile, TX, &size);
@@ -334,17 +339,17 @@ void _eos_DestroyTaylor(void *ptr)
 
   if (me->c) {
     for (i=0; i<M; i++)
-      EOS_FREE(me->c[i]);
+      EOS_FREE((me->c)[i]);
     EOS_FREE(me->c);
   }
   if (me->f) {
-    for (i=0; i<M; i++)
-      EOS_FREE(me->f[i]);
+    for (i=0; i<me->f_NX; i++)
+      EOS_FREE((me->f)[i]);
     EOS_FREE(me->f);
   }
   if (me->df) {
-    for (i=0; i<M; i++)
-      EOS_FREE(me->df[i]);
+    for (i=0; i<me->f_NX; i++)
+      EOS_FREE((me->df)[i]);
     EOS_FREE(me->df);
   }
 
@@ -363,13 +368,15 @@ void _eos_DestroyTaylor(void *ptr)
   me->Nx = 0;
   me->Ny = 0;
 
-  me->Destroy         = NULL;
-  me->SetIntervals    = NULL;
-  me->SetCoefficients = NULL;
-  me->GetCoefficients = NULL;
-  me->Print           = NULL;
-  me->Evaluate        = NULL;
-  me->Derivative      = NULL;
+  me->Destroy          = NULL;
+  me->SetIntervals     = NULL;
+  me->SetCoefficients  = NULL;
+  me->GetCoefficients  = NULL;
+  me->Print            = NULL;
+  me->Evaluate         = NULL;
+  me->Derivative       = NULL;
+  me->EvaluateScalar   = NULL;
+  me->DerivativeScalar = NULL;
 
   EOS_FREE(me); // free me which was allocated in either _eos_Create1DTaylor or _eos_Create2DTaylor
 }
@@ -576,6 +583,8 @@ void _eos_Evaluate1DTaylorValueArray(void *ptr, EOS_INTEGER M, EOS_INTEGER N, EO
 
   // f  = Taylor results; array dimension: [1][M]
   _eos_AllocateArray(1, M, &(me->f));
+  me->f_NX = 1;
+  me->f_NY = M;
 
   for (i=0; i<M; i++)
     me->f[0][i] = _eos_horner(me, (x[i] - me->a), me->c[0], me->Nx, 0);
@@ -597,6 +606,8 @@ void _eos_Evaluate2DTaylorValueArray(void *ptr, EOS_INTEGER M, EOS_INTEGER N, EO
 
   // f  = Taylor results; array dimension: [M][N]
   _eos_AllocateArray(M, N, &(me->f));
+  me->f_NX = M;
+  me->f_NY = N;
 
   for (ii=0; ii<M; ii++)
   {
@@ -666,6 +677,8 @@ void _eos_Evaluate1DTaylorDerivativeArray(void *ptr, EOS_INTEGER nux, EOS_INTEGE
 
   // df  = Taylor derivative results; array dimension: [1][M]
   _eos_AllocateArray(1, M, &(me->df));
+  me->f_NX = 1;
+  me->f_NY = M;
 
   for (i=0; i<M; i++)
   me->df[0][i] = _eos_Evaluate1DTaylorDerivativeScalar(me, nux, 0, x[i], 0);
@@ -689,6 +702,8 @@ void _eos_Evaluate2DTaylorDerivativeArray(void *ptr, EOS_INTEGER nux, EOS_INTEGE
 
   // df  = Taylor derivative results; array dimension: [M][N]
   _eos_AllocateArray(M, N, &(me->df));
+  me->f_NX = M;
+  me->f_NY = N;
 
   for (i=0; i<M; i++)
   {
@@ -728,13 +743,15 @@ void _eos_Init0DTaylor(eos_Taylor *me)
   me->divideByFactorial = EOS_FALSE;
 
   /* define virtual functions */
-  me->Destroy         = _eos_DestroyTaylor;
-  me->SetIntervals    = NULL; /* dimension-specific function to be defined later */
-  me->SetCoefficients = NULL; /* dimension-specific function to be defined later */
-  me->GetCoefficients = _eos_GetTaylorCoefficients;
-  me->Print           = NULL;
-  me->Evaluate        = NULL; /* dimension-specific function to be defined later */
-  me->Derivative      = NULL; /* dimension-specific function to be defined later */
+  me->Destroy          = _eos_DestroyTaylor;
+  me->SetIntervals     = NULL; /* dimension-specific function to be defined later */
+  me->SetCoefficients  = NULL; /* dimension-specific function to be defined later */
+  me->GetCoefficients  = _eos_GetTaylorCoefficients;
+  me->Print            = NULL; /* dimension-specific function to be defined later */
+  me->Evaluate         = NULL; /* dimension-specific function to be defined later */
+  me->Derivative       = NULL; /* dimension-specific function to be defined later */
+  me->EvaluateScalar   = NULL; /* dimension-specific function to be defined later */
+  me->DerivativeScalar = NULL; /* dimension-specific function to be defined later */
 }
 
 //! Univariate Taylor initializer

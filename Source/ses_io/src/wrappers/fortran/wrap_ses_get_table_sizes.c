@@ -9,7 +9,7 @@
 #include <stdio.h>
 
 
-//#define DEBUG_WRAP
+#define DEBUG_WRAP
 
 #ifdef LC_UNDER
 ses_boolean ses_get_table_sizes_(ses_file_handle* pt_handle, ses_material_id* mid, ses_table_id_reference the_buffer, long* size) {
@@ -39,7 +39,7 @@ ses_boolean SES_GET_TABLE_SIZES(ses_file_handle* pt_handle, ses_material_id* mid
   long return_size = 0;
 
 #ifdef DEBUG_WRAP
-  printf("ses_get_table_sizes.c:  mid is %d\n", my_mid);
+  printf("ses_get_table_sizes.c:  mid is %ld\n", my_mid);
 #endif
 
   ses_table_id_reference my_buffer = ses_get_table_sizes(the_handle, my_mid, &return_size);
@@ -48,7 +48,7 @@ ses_boolean SES_GET_TABLE_SIZES(ses_file_handle* pt_handle, ses_material_id* mid
   printf("ses_get_table_sizes.c:  return_size is %ld\n", return_size);
   int i = 0;
   for (i = 0; i < return_size; i++) {
-	printf("table size[%d] is %d\n", i, my_buffer[i]);
+	printf("table size[%d] is %ld\n", i, my_buffer[i]);
   }
 #endif
   int j = 0;

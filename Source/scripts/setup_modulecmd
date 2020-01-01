@@ -1,7 +1,7 @@
 #! /bin/sh
 (shopt -s igncr) 2>/dev/null && eval 'shopt -s igncr';#
 
-# $Date: 2016/11/29 21:57:10 $
+# $Date: 2018/01/25 10:39:55 MST $
 #
 # This script is used to define the location of modulecmd.
 #
@@ -16,6 +16,9 @@ elif [ -x /opt/modules/$MODULE_VERSION/bin/modulecmd ] ; then
 elif [ -x /opt/modules/default/bin/modulecmd ] ; then
   MODULECMD=/opt/modules/default/bin/modulecmd
 
+elif [ -x /opt/local/packages/Modules/$MODULE_VERSION/bin/modulecmd ] ; then
+  MODULECMD=/opt/local/packages/Modules/$MODULE_VERSION/bin/modulecmd
+
 elif [ -x /usr/share/modules/bin/modulecmd ] ; then
   MODULECMD=/usr/share/modules/bin/modulecmd
 
@@ -25,12 +28,18 @@ elif [ -x /usr/bin/modulecmd ] ; then
 elif [ -x /usr/share/lmod/lmod/libexec/lmod ] ; then
   MODULECMD=/usr/share/lmod/lmod/libexec/lmod
 
+elif [ -x /usr/local/Modules/libexec/modulecmd.tcl ] ; then
+  MODULECMD=/usr/local/Modules/libexec/modulecmd.tcl
+
+elif [ -x ${HOME}/libexec/modulecmd.tcl ] ; then
+  MODULECMD=${HOME}/libexec/modulecmd.tcl
+
 else
   MODULECMD=modulecmd_does_not_exist
 
 fi
 export MODULECMD
 
-if [ "$1" == "verbose" ]; then
+if [ "$1" = "verbose" ]; then
   printf "%s" "${MODULECMD}"
 fi

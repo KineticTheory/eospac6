@@ -38,7 +38,7 @@ ses_io_module.o : ses_io_module.f90
 	$(F90) $(F90FLAGS) -I$(IPATH1) -I$(IPATH2) -o ses_io_module.o $(FSRC) 
 
 .c.o:
-	$(CC) $(LOCAL_CFLAGS) $(CFLAGS) -o $@  $<
+	$(CC) $(LOCAL_CFLAGS) $(CFLAGS) $<
 
 
 clean:  

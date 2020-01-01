@@ -44,6 +44,8 @@ void eos_DestroyEosData (eos_Data *ptr)
   ptr->destructing = 1;         /* to prevent circular calls */
   eos_DestroyEosErrorHandler (&(ptr->eosErrorHandler));
 
+  EOS_FREE(ptr->altDataSource);
+
   ptr->Destroy(p);
 }
 
@@ -95,13 +97,17 @@ void eos_ConstructEosData (eos_Data *me, EOS_INTEGER th,
   me->SetSmoothing = NULL;                       /* pure virtual function */
   me->AreSmoothingRequirementsCompatible = NULL; /* pure virtual function */
   me->InvertAtSetup = NULL;                      /* pure virtual function */
+  me->AllocateColdCurve = NULL;                  /* pure virtual function */
+  me->CleanUpColdCurve = NULL;                   /* pure virtual function */
 
   me->IsaShareableObject = _eos_IsaShareableObjectEosData; /* pure virtual function */
 
   eos_ConstructEosErrorHandler ((eos_ErrorHandler *) me);
   me->eosErrorHandler.HandleError = eos_HandleErrorEosData;     /* derived virtual function */
+  me->eosErrorHandler.errorCode = EOS_OK;                       /* initialize error code */
   me->destructing = 0;          /* to prevent circular calls to destructor */
   me->refCounter = 0;
+  me->isAllocated = 0;
   me->isLoaded = 0;
   me->forceCreate = EOS_FALSE;
   me->dumpNotLoadedMsg = EOS_FALSE;
@@ -751,8 +757,7 @@ EOS_BOOLEAN _eos_AreOptionsDefaultEosData (eos_Data *obj1)
  ************************************************************************/
 EOS_BOOLEAN _isOptionDefaultEosData (eos_Data *obj1, EOS_INTEGER of, EOS_INTEGER dataType)
 {
-  EOS_INTEGER i, inX, inY, ind = EOS_LOADING_OPTION_FLAG_TO_INDEX (of);
-  EOS_BOOLEAN isDef = EOS_TRUE;
+  EOS_INTEGER i, ind = EOS_LOADING_OPTION_FLAG_TO_INDEX (of);
 
   if (!EOS_IS_LOADING_OPTION (of)) return EOS_TRUE; /* not a loading option */
 
@@ -765,20 +770,8 @@ EOS_BOOLEAN _isOptionDefaultEosData (eos_Data *obj1, EOS_INTEGER of, EOS_INTEGER
 
   /* compare with default value */
 
-  if (of == EOS_MONOTONIC_IN_X) {
-    inX = (eos_DefaultTableOptions[i].optionValue.bval) ? 1 : 0;
-    /* check if all x monotonicity options are default */
-    obj1->AreMonotonicRequirementsCompatible (obj1, dataType, inX, -1, &isDef);
-    if (! isDef) return EOS_FALSE;
-  }
-  else if (of == EOS_MONOTONIC_IN_Y) {
-    inY = (eos_DefaultTableOptions[i].optionValue.bval) ? 1 : 0;
-    /* check if all x monotonicity options are default */
-    obj1->AreMonotonicRequirementsCompatible (obj1, dataType, -1, inY, &isDef);
-    if (! isDef) return EOS_FALSE;
-  }
-  else if (of == EOS_INSERT_DATA &&
-	   obj1->tableOptions[ind].optionValue.ival != eos_DefaultTableOptions[i].optionValue.ival)
+  if (of == EOS_INSERT_DATA &&
+      obj1->tableOptions[ind].optionValue.ival != eos_DefaultTableOptions[i].optionValue.ival)
     return EOS_FALSE;
   else if (obj1->tableOptions[ind].optionValue.bval != eos_DefaultTableOptions[i].optionValue.bval)
     return EOS_FALSE;

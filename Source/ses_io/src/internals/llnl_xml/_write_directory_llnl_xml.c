@@ -120,15 +120,16 @@ void _create_xml_directory(char* path) {
 
 	//  if a directory does not exist named "path", create it
 
-	int didit_work = 0;
+	/* int didit_work = 0; */
 
 	struct stat fileStat;
     	if(stat(path,&fileStat) < 0)    {
 		//  directory path does not exist, so make it
-#ifdef WIN32
-          didit_work = mkdir(path);
+		/* didit_work = */ 
+#ifndef WIN32
+			mkdir(path, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
 #else
-		didit_work = mkdir(path, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+			mkdir(path);
 #endif
 	}
 	else {
@@ -178,6 +179,7 @@ char* _get_descriptive_material_name(ses_material_id mid) {
 	return return_value;
 
 }
+
 
 
 

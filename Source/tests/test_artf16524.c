@@ -153,7 +153,8 @@ int main ()
       if (equal) {
 	eos_CheckExtrap (&tableHandle[i], &nXYPairs, X, Y, extrapCode,
 			 &errorCode);
-	if (errorCode != EOS_OK) {
+	eos_ErrorCodesEqual((EOS_INTEGER*)&EOS_INTERP_EXTRAPOLATED, &errorCode, &equal);
+	if (! equal && errorCode != EOS_OK) {
 	  printf ("eos_CheckExtrap ERROR %i: %s\n", errorCode,
 		  errorMessage);
 	}

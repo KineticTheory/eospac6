@@ -29,6 +29,7 @@ struct _ses_material_file* _construct_ses_material_file(ses_material_id the_mid)
 #ifdef DEBUG_PRINT
     printf("_construct_ses_material_file: memory allocation error in _construct_material_file\n");
 #endif
+
     _set_latest_error(SES_MEMORY_ALLOCATION_ERROR);
     return (struct _ses_material_file*)NULL;
   }
@@ -47,8 +48,8 @@ struct _ses_material_file* _construct_ses_material_file(ses_material_id the_mid)
     _set_latest_error(SES_OBJECT_CONSTRUCTION_ERROR);
 
     /*  destruct upon error */
-    ses_boolean didit_destruct = SES_FALSE;
-    didit_destruct = _destruct_material_file(ptMF);
+    /* ses_boolean didit_destruct = SES_FALSE; */
+    /* didit_destruct = */ _destruct_material_file(ptMF);
     free(ptMF);
     ptMF = (struct _ses_material_file*)NULL;
 
@@ -63,8 +64,8 @@ struct _ses_material_file* _construct_ses_material_file(ses_material_id the_mid)
     _set_latest_error(SES_OBJECT_CONSTRUCTION_ERROR);
 
     /*  destruct upon error */
-    ses_boolean didit_destruct = SES_FALSE;
-    didit_destruct = _destruct_material_file(ptMF);
+    /* ses_boolean didit_destruct = SES_FALSE; */
+    /* didit_destruct = */ _destruct_material_file(ptMF);
     free(ptMF);
     ptMF = (struct _ses_material_file*)NULL;
 
@@ -323,7 +324,7 @@ ses_boolean _add_table(struct _ses_material_file* the_mf,
   return return_value;
  
 
-};
+}
 
 
 ses_boolean _combine_two_material_files(struct _ses_material_file* this, 
@@ -372,8 +373,10 @@ ses_boolean _combine_two_material_files(struct _ses_material_file* this,
 
   struct _ses_data_record_list* pDRL = the_material_file->_the_tables2;
   struct _ses_data_record* tmp = pDRL->_head;
-  ses_material_id the_mid = the_material_file->_the_mid;
-
+#ifdef DEBUG_PRINT
+  ses_material_id the_mid = 0;
+  the_mid = the_material_file->_the_mid;
+#endif
   ses_boolean didit_add1, didit_add2;
 
   while (tmp != (struct _ses_data_record*)NULL) {
@@ -559,8 +562,8 @@ ses_boolean  _write_material_file(struct _ses_material_file* the_file, struct _s
 
     /*  release memory on error */
 
-    ses_boolean didit_destruct = SES_FALSE;
-    didit_destruct = _destruct_ses_index_record(the_file->_the_index_record);
+    /* ses_boolean didit_destruct = SES_FALSE; */
+    /* didit_destruct = */ _destruct_ses_index_record(the_file->_the_index_record);
     free(the_file->_the_index_record);
     the_file->_the_index_record = (struct _ses_index_record*)NULL;
     return SES_FALSE;
@@ -576,8 +579,8 @@ ses_boolean  _write_material_file(struct _ses_material_file* the_file, struct _s
 
     /*  release memory on error */
 
-    ses_boolean didit_destruct = SES_FALSE;
-    didit_destruct = _destruct_ses_index_record(the_file->_the_index_record);
+    /* ses_boolean didit_destruct = SES_FALSE; */
+    /* didit_destruct = */ _destruct_ses_index_record(the_file->_the_index_record);
     free(the_file->_the_index_record);
     the_file->_the_index_record = (struct _ses_index_record*)NULL;
     return SES_FALSE;
@@ -660,8 +663,8 @@ struct _ses_material_file* _read_material_file(ses_file_handle the_handle, unsig
   struct _ses_file_handle* pSFH = FILE_LIST[the_handle]->_the_handle;
   FILE* pFILE = pSFH->_c_file_handle;
 
-  int fseek_return = 0;
-  fseek_return = fseek(pFILE, maddress*8, SEEK_SET);
+  /* int fseek_return = 0; */
+  /* fseek_return = */ fseek(pFILE, maddress*8, SEEK_SET);
 
   /*  error check the arguments */
   if (pSFH == (struct _ses_file_handle*)NULL) {
@@ -722,18 +725,18 @@ struct _ses_material_file* _read_material_file(ses_file_handle the_handle, unsig
     _set_latest_error(SES_OBJECT_CONSTRUCTION_ERROR);
 
     /*  release memory on error exit */
-    ses_boolean didit_destruct = SES_FALSE;
-    didit_destruct = _destruct_material_file(return_value);
+    /* ses_boolean didit_destruct = SES_FALSE; */
+    /* didit_destruct = */ _destruct_material_file(return_value);
 
     return (struct _ses_material_file*)NULL;
   }
 
   ses_table_id* the_tids = 0;
   the_tids = return_value->_the_index_record->_tblid;
-  long* the_addresses = 0;
-  the_addresses = return_value->_the_index_record->_iadr;
-  long* the_nwords = 0;
-  the_nwords = return_value->_the_index_record->_nwds;
+  /* long* the_addresses = 0; */
+  /* the_addresses = return_value->_the_index_record->_iadr; */
+  /* long* the_nwords = 0; */
+  /* the_nwords = return_value->_the_index_record->_nwds; */
 
   /*  read all the tables */
 
@@ -751,8 +754,8 @@ struct _ses_material_file* _read_material_file(ses_file_handle the_handle, unsig
     _set_latest_error(SES_OBJECT_CONSTRUCTION_ERROR);
 
     /*  release memory on error exit */
-    ses_boolean didit_destruct = SES_FALSE;
-    didit_destruct = _destruct_material_file(return_value);
+    /* ses_boolean didit_destruct = SES_FALSE; */
+    /* didit_destruct = */ _destruct_material_file(return_value);
 
  
     return (struct _ses_material_file*)NULL;
@@ -768,11 +771,11 @@ struct _ses_material_file* _read_material_file(ses_file_handle the_handle, unsig
   long ntab = -1;
   ses_material_id the_mid = 0;
   ses_table_id the_tid = 0;
-  ses_boolean didit_add = SES_FALSE;
+  /* ses_boolean didit_add = SES_FALSE; */
   int j = 0;
   int number_arrays = 0;
 
-  ses_boolean didit_getit, didit_go;
+  /* ses_boolean didit_getit, didit_go; */
 
     struct _ses_setup* pSET = FILE_LIST[the_handle]->_the_setup;
     long date1 = pSET->_date;
@@ -786,9 +789,9 @@ struct _ses_material_file* _read_material_file(ses_file_handle the_handle, unsig
     the_mid = return_value->_the_mid;
 
     the_tid = the_tids[i];
-    didit_go = pSFH->pt2_go_to_data_record(the_handle, the_mid, the_tid);
+    /* didit_go = */ pSFH->pt2_go_to_data_record(the_handle, the_mid, the_tid);
 
-    didit_getit = _get_grid(the_handle, the_mid, 
+    /* didit_getit = */ _get_grid(the_handle, the_mid, 
 			    the_tid, &nr, &nt, &ntab);
 
     the_data_record = _construct_ses_data_record( maddress, nr, nt, ntab, 
@@ -823,7 +826,7 @@ struct _ses_material_file* _read_material_file(ses_file_handle the_handle, unsig
       the_data_record->_the_data[j] = _read_ses_word_array(pSFH, size[j], nsig, do_valid);
     }
 
-    didit_add = _add_to_list_dr(return_value->_the_tables2, the_data_record);
+    /* didit_add = */ _add_to_list_dr(return_value->_the_tables2, the_data_record);
     the_data_record = (struct _ses_data_record*)NULL;
 
 

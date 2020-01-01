@@ -3,12 +3,14 @@
 #include "ses_globals.h"
 #include "ses_externs.h"
 #include "ses_internals.h"
+
+
 #include <stdlib.h>
 #include <string.h>
 
 // forward declaration
 #ifndef _MSC_VER
-void itoa(long n, char s[]);
+ void itoa(long n, char s[]);
 #endif
 
 
@@ -33,8 +35,8 @@ ses_string ses_date(ses_file_handle the_handle) {
 
   struct _ses_file_handle* pSFH = FILE_LIST[the_handle]->_the_handle;
 
-  FILE* pFILE = 0;
-  pFILE = _getPFILE(pSFH);
+  /* FILE* pFILE = 0; */
+  /* pFILE = */ _getPFILE(pSFH);
 
   struct _ses_directory* ptDIR = FILE_LIST[the_handle]->_directory;
 
@@ -65,27 +67,32 @@ ses_string ses_date(ses_file_handle the_handle) {
     FILE_LIST[the_handle]->_directory = (struct _ses_directory*)NULL;
     ptDIR = (struct _ses_directory*)NULL;
   }
+
+
   _releasePFILE(pSFH);
+
+
   return return_value;
 }
 
-ses_string _make_date_into_string(long the_long) {
-  ses_string return_value = malloc(sizeof(char) * 8);
 
-/*  make  a long into a string */
+ses_string _make_date_into_string(long the_long) {
+
+  ses_string return_value = malloc(sizeof(char)*8);
 #ifndef _MSC_VER
-   void itoa(long n, char s[]); 
-   itoa(the_long, return_value);
+  itoa(the_long, return_value);
 #else
   int radix = 10;
   itoa(the_long, return_value, radix);
 #endif
+
   return return_value;
 }
 
 #ifndef _MSC_VER
 void itoa(long n, char s[])
  {
+
      void reverse(char s[]);
      long i, sign;
  
@@ -104,7 +111,6 @@ void itoa(long n, char s[])
      reverse(s);
  }
 #endif
-
 void reverse(char s[])
  {
      int i, j;
@@ -118,5 +124,6 @@ void reverse(char s[])
          s[j] = c;
      }
  }
+
 
 

@@ -18,16 +18,18 @@
 #define _write_ses_string_ascii HEADER(_write_ses_string_ascii)
 #define _write_eof_ascii HEADER(_write_eof_ascii)
 
-
 double             _read_double_ascii(struct _ses_file_handle* pSFH, unsigned int nsig, ses_boolean do_validation);
 double             _read_double_tomax_ascii(struct _ses_file_handle* pSFH, unsigned int nsig, ses_boolean do_validation, int max_length);
 
 ses_boolean        _write_double_ascii(struct _ses_file_handle* pSFH, double the_double, unsigned int nsig, ses_boolean do_validation);
 ses_boolean        _write_double_tomax_ascii(struct _ses_file_handle* pSFH, double the_double, unsigned int nsig, ses_boolean do_validation, int max_length);
 
+long               _read_long_tomax_ascii(struct _ses_file_handle* PSFH, unsigned int fixed_size);
 long               _read_long_ascii(struct _ses_file_handle* PSFH);
 ses_boolean        _write_long_ascii(struct _ses_file_handle* pSFH, long the_long);
 
+
+long               _read_long_tomax_pFILE_ascii(FILE* pFILE, unsigned int fixed_size, ses_boolean needs_flip);
 long               _read_long_pFILE_ascii(FILE* pFILE, ses_boolean needs_flip);
 ses_boolean        _write_long_pFILE_ascii(FILE* pFILE, ses_boolean needs_flip);
 

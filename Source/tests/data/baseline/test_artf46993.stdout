@@ -1,0 +1,15 @@
+matid = [ 3720 3720 3720 3720 3720 3720 3720 3720 3720 3720 3720 3720 3720 3720 3720]
+test  0 PASSED :: all tables were successfully loaded and destroyed
+matid = [ 3720 3720 3720 3720 3720    0    0    0    0    0    0    0    0    0    0]
+eos_LoadTables ERROR 152009: EOS_MATERIAL_NOT_FOUND: Material ID specified for table handle 14 is not in library
+eos_LoadTables ERROR  62009: EOS_MATERIAL_NOT_FOUND: Material ID specified for table handle 5 is not in library
+eos_LoadTables ERROR  72009: EOS_MATERIAL_NOT_FOUND: Material ID specified for table handle 6 is not in library
+eos_LoadTables ERROR  82009: EOS_MATERIAL_NOT_FOUND: Material ID specified for table handle 7 is not in library
+eos_LoadTables ERROR  92009: EOS_MATERIAL_NOT_FOUND: Material ID specified for table handle 8 is not in library
+eos_LoadTables ERROR 102009: EOS_MATERIAL_NOT_FOUND: Material ID specified for table handle 9 is not in library
+eos_LoadTables ERROR 112009: EOS_MATERIAL_NOT_FOUND: Material ID specified for table handle 10 is not in library
+eos_LoadTables ERROR 122009: EOS_MATERIAL_NOT_FOUND: Material ID specified for table handle 11 is not in library
+eos_LoadTables ERROR 132009: EOS_MATERIAL_NOT_FOUND: Material ID specified for table handle 12 is not in library
+eos_LoadTables ERROR 142009: EOS_MATERIAL_NOT_FOUND: Material ID specified for table handle 13 is not in library
+eos_LoadTables ERROR 152009: EOS_MATERIAL_NOT_FOUND: Material ID specified for table handle 14 is not in library
+test  1 PASSED :: all tables were successfully loaded and destroyed

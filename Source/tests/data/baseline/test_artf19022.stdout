@@ -9,7 +9,6 @@ valid data type 14, EOS_T_DUt
 valid data type 15, EOS_Ut_DPt
 eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 16, EOS_Ut_DAt
 eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 17, EOS_Ut_DSt
-eos_LoadTables ERROR 12032: EOS_INVALID_DATA_TYPE: Cannot load data for EOS_Ut_PtT unless EOS_PT_SMOOTHING option is set for this table handle, 0 for type 18, EOS_Ut_PtT (fcmp_ignore)
 eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 18, EOS_Ut_PtT
 eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 21, EOS_At_DT
 eos_Mix ERROR 2014: EOS_BAD_DATA_TYPE: Data table type is not recognized for type 23, EOS_T_DAt

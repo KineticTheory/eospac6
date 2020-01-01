@@ -8,7 +8,7 @@
 !********************************************************************
 
 !> @file
-!! @ingroup tests
+!! @ingroup Fortran90 tests
 !! @brief Perform the following tests:
 !!    -# Verify that the unexpected errors are not returned for a
 !!       valid EOS_Gs_D table using material 34272.
@@ -31,7 +31,7 @@ program TestF90
 
   integer(EOS_INTEGER) ::  i, j
   real(EOS_REAL) :: X(nXYPairs), Y(nXYPairs), F(nXYPairs), dFx(nXYPairs), dFy(nXYPairs)
-  integer(EOS_INTEGER) :: tableType(nTables), numIndVars(nTables)
+  integer(EOS_INTEGER) :: tableType(nTables), numIndVars(nTables), xyBounds(nXYPairs)
   integer(EOS_INTEGER) :: matID(nTables)
   integer(EOS_INTEGER) :: tableHandle(nTables)
   integer(EOS_INTEGER) :: errorCode
@@ -191,6 +191,7 @@ program TestF90
   Y(4) = 200000000.0_EOS_REAL
 
   do i=1, nTables
+     xyBounds = 0
      write(*,*) ' '
      write(*,997) '--- Interpolate using tableType ', tableTypeLabel(i),' ---'
      call eos_Interpolate ( tableHandle(i), nXYPairs, X, Y, F, dFx, dFy, errorCode)
@@ -202,13 +203,14 @@ program TestF90
                      errorMessage(1:(len_trim(errorMessage)-1))
         call eos_ErrorCodesEqual(EOS_INTERP_EXTRAPOLATED, errorCode, equal)
         if (.NOT. equal) cycle
+        call eos_CheckExtrap(tableHandle(i), nXYPairs, X, Y, xyBounds, errorCode)
      endif
      do j=1, nXYPairs
         if (numIndVars(i).EQ.1) then
-           write(*,996) j-1,X(j),F(j),dFx(j),errorCode
+           write(*,996) j-1,X(j),F(j),dFx(j),xyBounds(j)
         endif
         if (numIndVars(i).EQ.2) then
-           write(*,999) j-1,X(j),Y(j),F(j),dFx(j),dFy(j),errorCode
+           write(*,999) j-1,X(j),Y(j),F(j),dFx(j),dFy(j),xyBounds(j)
         endif
      enddo
   enddo

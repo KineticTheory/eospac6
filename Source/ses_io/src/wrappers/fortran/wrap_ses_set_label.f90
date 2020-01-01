@@ -1,7 +1,5 @@
 
 
-#define DEBUG_WRAP
-
 SES_ERROR_FLAG function ses_set_label_f90(the_handle, the_label)
 
    implicit none

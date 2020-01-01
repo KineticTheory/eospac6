@@ -8,11 +8,11 @@ EOS_Pt_DT Interpolation Results:
 	i=0	X = 9.300000e-01, Y = 2.000000e+03, F = -2.700000e+01, dFx = 0.000000e+00, dFy = 1.000000e-02, errorCode: 2026 EOS_xOk_yLo
 	i=1	X = 2.000000e+00, Y = 2.000000e+03, F = -2.700000e+01, dFx = 0.000000e+00, dFy = 1.000000e-02, errorCode: 2025 EOS_xHi_yLo
 	i=2	X = 2.000000e+00, Y = 5.000000e+03, F = 3.000000e+00, dFx = 0.000000e+00, dFy = 1.000000e-02, errorCode: 2024 EOS_xHi_yOk
-	i=3	X = 2.000000e+00, Y = 6.000000e+03, F = 1.300000e+01, dFx = 0.000000e+00, dFy = 1.000000e-02, errorCode: 2023 EOS_xHi_yHi
+	i=3	X = 2.000000e+00, Y = 6.000000e+03, F = 1.300000e+01, dFx = 0.000000e+00, dFy = 1.000000e-02, errorCode: 2024 EOS_xHi_yOk
 	i=4	X = 1.150000e+00, Y = 6.000000e+03, F = 1.300000e+01, dFx = 0.000000e+00, dFy = 1.000000e-02, errorCode: 2030 EOS_xOk_yHi
 	i=5	X = 2.000000e-01, Y = 6.000000e+03, F = 1.300000e+01, dFx = 0.000000e+00, dFy = 1.000000e-02, errorCode: 2029 EOS_xLo_yHi
 	i=6	X = 2.000000e-01, Y = 4.975000e+03, F = 2.750000e+00, dFx = 0.000000e+00, dFy = 1.000000e-02, errorCode: 2028 EOS_xLo_yOk
-	i=7	X = 2.000000e-01, Y = 1.050000e+03, F = -3.650000e+01, dFx = 0.000000e+00, dFy = 1.000000e-02, errorCode: 2027 EOS_xLo_yLo
+	i=7	X = 2.000000e-01, Y = 1.050000e+03, F = -3.650000e+01, dFx = 0.000000e+00, dFy = 1.000000e-02, errorCode: 2028 EOS_xLo_yOk
 
 
 AFTER UNPACKING: 
@@ -23,8 +23,8 @@ EOS_Pt_DT Interpolation Results:
 	i=0	X = 9.300000e-01, Y = 2.000000e+03, F = -2.700000e+01, dFx = 0.000000e+00, dFy = 1.000000e-02, errorCode: 2026 EOS_xOk_yLo
 	i=1	X = 2.000000e+00, Y = 2.000000e+03, F = -2.700000e+01, dFx = 0.000000e+00, dFy = 1.000000e-02, errorCode: 2025 EOS_xHi_yLo
 	i=2	X = 2.000000e+00, Y = 5.000000e+03, F = 3.000000e+00, dFx = 0.000000e+00, dFy = 1.000000e-02, errorCode: 2024 EOS_xHi_yOk
-	i=3	X = 2.000000e+00, Y = 6.000000e+03, F = 1.300000e+01, dFx = 0.000000e+00, dFy = 1.000000e-02, errorCode: 2023 EOS_xHi_yHi
+	i=3	X = 2.000000e+00, Y = 6.000000e+03, F = 1.300000e+01, dFx = 0.000000e+00, dFy = 1.000000e-02, errorCode: 2024 EOS_xHi_yOk
 	i=4	X = 1.150000e+00, Y = 6.000000e+03, F = 1.300000e+01, dFx = 0.000000e+00, dFy = 1.000000e-02, errorCode: 2030 EOS_xOk_yHi
 	i=5	X = 2.000000e-01, Y = 6.000000e+03, F = 1.300000e+01, dFx = 0.000000e+00, dFy = 1.000000e-02, errorCode: 2029 EOS_xLo_yHi
 	i=6	X = 2.000000e-01, Y = 4.975000e+03, F = 2.750000e+00, dFx = 0.000000e+00, dFy = 1.000000e-02, errorCode: 2028 EOS_xLo_yOk
-	i=7	X = 2.000000e-01, Y = 1.050000e+03, F = -3.650000e+01, dFx = 0.000000e+00, dFy = 1.000000e-02, errorCode: 2027 EOS_xLo_yLo
+	i=7	X = 2.000000e-01, Y = 1.050000e+03, F = -3.650000e+01, dFx = 0.000000e+00, dFy = 1.000000e-02, errorCode: 2028 EOS_xLo_yOk

@@ -95,7 +95,7 @@ int main ()
     /* printf ("a[%i] = b[%i] = %.15e\n", i, i, a[i]); */
   }
 
-  max_recursion_level = _eos_QuickSort (N, a, 0, &err, &errorMessage);
+  max_recursion_level = _eos_QuickSort (N, a, 0, &err, &errorMessage, NULL);
   printf ("\nAFTER SORT: (err=%i)\n", err);
   if (err != EOS_OK) {
     printf ("_eos_QuickSort ERROR %i: %s\n", err, errorMessage);

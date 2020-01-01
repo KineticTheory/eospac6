@@ -9,19 +9,17 @@
 
 #ifndef  EOS_DATA_H
 #define  EOS_DATA_H
-
 #include "eos_types.h"
 #include "eos_ErrorHandler.h"
 #include "eos_universal_types.h"
 #include "ses_defines.h"
-/* #include "eos_types_internal.h" */
 
 #define _MIN_FIELD_WIDTH 23     /* Define the minimum field width of real numbers written to the output file.
                                    This is used by Print functions for all data objects. */
 
 typedef struct
 {
-  eos_ErrorHandler eosErrorHandler;     /* must be the FIRST, DO NOT MOVE */
+  eos_ErrorHandler eosErrorHandler;     /* must be the FIRST, DO NOT MOVE! */
   EOS_INTEGER tableHandle;      /* This is a unique handle associated with a specific data table object. */
   EOS_INTEGER materialID;       /* This is the specific Sesame material ID associated with the data stored in an instantiation of this container. */
   EOS_INTEGER creationDate;
@@ -34,6 +32,7 @@ typedef struct
   EOS_INTEGER dataSize;         /* total size of data for this table in sesame file */
   EOS_INTEGER destructing;      /* to prevent circular calls */
   EOS_INTEGER refCounter;       /* number of handles to this object */
+  EOS_INTEGER isAllocated;      /* 0 when not allocated, 1 when allocated, -1 when can't be allocated */
   EOS_INTEGER isLoaded;         /* 0 when not loaded, 1 when loaded, -1 when can't be loaded */
   EOS_INTEGER tableNum;
   EOS_INTEGER numSubtablesLoaded;
@@ -89,8 +88,10 @@ typedef struct
                                               EOS_INTEGER makeSmooth,
                                               EOS_INTEGER makePtSmooth,
                                               EOS_BOOLEAN *compatible);
-  void (*SetExtrapolationBounds) (void *ptr, EOS_INTEGER dataType);
+  void (*SetExtrapolationBounds) (void *ptr, EOS_INTEGER th, EOS_INTEGER dataType);
   void (*InvertAtSetup) (void *ptr, EOS_INTEGER th, EOS_INTEGER dataType, EOS_INTEGER *errorCode);
+  EOS_REAL** (*AllocateColdCurve) (void *ptr, EOS_INTEGER NR, EOS_INTEGER subTableNum);
+  void (*CleanUpColdCurve) (void *ptr, EOS_INTEGER *err);
   void (*Interpolate) (void *ptr, EOS_INTEGER th, EOS_INTEGER dataType,
 		       EOS_INTEGER nXYPairs, EOS_REAL *srchX,
 		       EOS_REAL *srchY, EOS_REAL *fVals,

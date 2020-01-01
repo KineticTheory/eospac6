@@ -75,5 +75,8 @@ int main ()
   eos_SetCustomErrorMsg (tableHandle, err,
                          "int %i, sci: %e, float: %f\n", 100, 100., 100.);
   printf ("%s", eos_GetCustomErrorMsg (tableHandle, err));
+
+  eos_DestroyAll (&err);
+  
   return 0;
 }

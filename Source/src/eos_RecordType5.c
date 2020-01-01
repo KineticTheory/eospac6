@@ -91,64 +91,10 @@ void eos_CreateRecordType5 (void *ptr, EOS_INTEGER th)
 {
   eos_RecordType5 *me;
 
-#if 0 // no_SetFileIndexesRecordType
-
-  EOS_INTEGER matid;
-  EOS_INTEGER ierr = EOS_OK, count;
-  EOS_REAL *read_data;
-
   me = (eos_RecordType5 *) ptr;
 
-#ifdef DEBUG
-  printf ("creating record type 5... \n");
-#endif
-  matid = me->eosData.materialID;
-  read_data = NULL;
-  /* seek to the table */
-  /* get the file offset for reading data and 3 reals date1, date2 and vers */
-  ierr =
-    eos_SeekToDataTable (matid, me->eosData.tableNum, &read_data, 3,
-                         &(me->eosData.dataFileOffset),
-                         &(me->eosData.dataFileIndex),
-                         &(me->eosData.dataSize),
-			 me->eosData.userDefinedDataFile);
-  if (ierr) {
-#ifdef DEBUG
-    printf ("error seeking to the table! ERROR %d\n", ierr);
-#endif
-    /* deallocate read_data[], which was allocated by eos_SeekToDataTable() above */
-    EOS_FREE (read_data);
-    ((eos_ErrorHandler *) me)->HandleError (me, th, ierr);
-    return;
-  }
-
-  count = 0;
-  /* read creation date */
-  me->eosData.creationDate = (EOS_INTEGER) read_data[count++];     /* 1 */
-  /* read modification date */
-  me->eosData.modificationDate = (EOS_INTEGER) read_data[count++]; /* 2 */
-  if (me->eosData.modificationDate == 0)
-    me->eosData.modificationDate = me->eosData.creationDate;
-  /* read version number */
-  me->eosData.latestVersion = (EOS_INTEGER) read_data[count++];    /* 3 */
-
-  /* deallocate read_data[], which was allocated by eos_SeekToDataTable() above */
-  EOS_FREE (read_data);
-
-  /* check the size of data */
-  if (me->eosData.dataSize != 5) {
-#ifdef DEBUG
-    printf ("wrong amount of data read! %d instead of 5\n",
-            me->eosData.dataSize);
-#endif
-    ((eos_ErrorHandler *) me)->HandleError (me, th, EOS_READ_DATA_FAILED);
-    return;                     /* wrong amount of data read! */
-  }
-
-#else // end no_SetFileIndexesRecordType
-
-  me = (eos_RecordType5 *) ptr;
-
+  gEosDataMap.errorCodes[th] = EOS_OK; /* reset previous error */
+ 
   /* set the sesame file indexes and offsets for RecordType5 */
   eos_SetFileIndexesRecordType5 (me, th);
 
@@ -160,7 +106,8 @@ void eos_CreateRecordType5 (void *ptr, EOS_INTEGER th)
     ((eos_ErrorHandler *) me)->HandleError (me, th, EOS_READ_DATA_FAILED);
     return;                     /* wrong amount of data read! */
   }
-#endif
+
+  me->eosData.isAllocated = 1;
 }
 
 /***********************************************************************/
@@ -200,7 +147,7 @@ void eos_SetFileIndexesRecordType5 (void *ptr, EOS_INTEGER th)
     EOS_FREE(errMsg);
   }
   if (ierr) {
-    /* deallocate read_data[], which was allocated by eos_SeekToDataTable() above */
+    /* deallocate read_data[], which was allocated by eos_SesSeekToDataTable() above */
     EOS_FREE (read_data);
     ((eos_ErrorHandler *) me)->HandleError (me, th, ierr);
     return;
@@ -216,7 +163,7 @@ void eos_SetFileIndexesRecordType5 (void *ptr, EOS_INTEGER th)
   /* read version number */
   me->eosData.latestVersion = (EOS_INTEGER) read_data[count++];    /* 3 */
 
-  /* deallocate read_data[], which was allocated by eos_SeekToDataTable() above */
+  /* deallocate read_data[], which was allocated by eos_SesSeekToDataTable() above */
   EOS_FREE (read_data);
 
   /* check the size of data */
@@ -463,7 +410,7 @@ void eos_SetPackedTableRecordType5 (void *ptr, EOS_INTEGER th,
           sizeof (EOS_INTEGER));
   byteCount += sizeof (EOS_INTEGER);
   memcpy (&(tmpINT), packedTable + byteCount, sizeof (EOS_INTEGER));
-  me->eosData.isLoaded = (tmpINT != 0);
+  me->eosData.isLoaded = (tmpINT != 0) ? 1 : 0;
   byteCount += sizeof (EOS_INTEGER);
 
   memcpy (&(me->eosData.dataFileIndex), packedTable + byteCount,

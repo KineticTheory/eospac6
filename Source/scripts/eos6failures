@@ -1,0 +1,33 @@
+#! /bin/sh
+
+loc=`dirname $0`
+me=`basename $0`
+
+_arch=`${loc}/config.guess.wrapper`
+
+# process command line options
+while getopts a:h option;
+do
+
+  case "$option"
+  in
+
+    a)  _arch=$OPTARG;;
+    h)  cat <<EOF >&2
+
+Usage: ${me} [options] [DIR [, ...]]
+   -a <ARCH> define an ARCH directory other than that of the current platform
+   -h        display this help
+
+EOF
+        exit 2
+        ;;
+
+  esac
+
+done
+
+shiftcount=`expr $OPTIND - 1`
+shift $shiftcount
+
+find tests/${_arch} -name 'pass*.txt' -exec grep FAILED {} \;

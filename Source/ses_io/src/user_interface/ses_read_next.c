@@ -54,7 +54,7 @@ ses_word_reference ses_read_next(ses_file_handle the_handle) {
   long iadr = 0;
   iadr = pIT->_address_arrays[current];
 
-  ses_boolean didit_go = SES_FALSE;
+  /* ses_boolean didit_go = SES_FALSE; */
 
   /*  go to the next array location */
 
@@ -67,12 +67,12 @@ ses_word_reference ses_read_next(ses_file_handle the_handle) {
        pSFH->_array_address = FILE_LIST[the_handle]->_current_index_record->_array_iadr[table_index][pSFH->_iteration_index];
         pSFH->_array_filename = FILE_LIST[the_handle]->_current_index_record->_array_filename[table_index][pSFH->_iteration_index];
 
-       didit_go = _go_to_next_array_location(pSFH, pSFH->_array_address);
+       /* didit_go = */ _go_to_next_array_location(pSFH, pSFH->_array_address);
 
   }
   else {
 
-       didit_go = _go_to_next_array_location(pSFH, start + iadr);
+       /* didit_go = */ _go_to_next_array_location(pSFH, start + iadr);
 
   }
 
@@ -85,25 +85,22 @@ ses_word_reference ses_read_next(ses_file_handle the_handle) {
 #endif
     pIT->_current_array = pIT->_number_arrays;
     _set_latest_error(SES_READ_ERROR);
-    return 0;
+    return (ses_word_reference)NULL;
   }
 
   the_buffer = malloc(sizeof(ses_word)*the_size);
+  int i = 0;
+  for (i= 0; i < the_size; i++) {
+	the_buffer[i] = 0.0;
+  }
   if (the_buffer == (ses_word_reference)NULL) {
 #ifdef DEBUG_PRINT
     printf("ses_read_next: memory allocation error in ses_read_next\n");
 #endif
     _set_latest_error(SES_READ_ERROR);
-    return 0;
+    return (ses_word_reference)NULL;
   }
 
-#define ADD_INITIALIZE
-#ifdef ADD_INITIALIZE
-  int i = 0;
-  for (i= 0; i < the_size; i++) {
-	the_buffer[i] = 0.0;
-  }
-#endif
   
   /*  fill the output buffer */
 
@@ -112,8 +109,7 @@ ses_word_reference ses_read_next(ses_file_handle the_handle) {
 
   //  pad comments tables if necessary
 
-
-  if ((the_tid > 100) && (the_tid < 200) && (pSFH->_filetype != 'B')) {
+  if ((the_tid >= 100) && (the_tid < 200) && (pSFH->_filetype != BINARY_TYPE) && (the_size > 1)) {
 
      //  comments tables -- need to be padded to mod 8
 
@@ -125,6 +121,10 @@ ses_word_reference ses_read_next(ses_file_handle the_handle) {
      dim = dim + pad;
 
      ses_string the_string = malloc(sizeof(char)*dim);
+     int i3 = 0;
+     for (i3= 0; i3 < sizeof(char)*dim; i3++) {
+	the_string[i3] = ' ';
+     }
      for (i=0; i < the_size ; i++) {
 
         tmp = pSFH->pt2_read_char(pFILE);
@@ -143,6 +143,7 @@ ses_word_reference ses_read_next(ses_file_handle the_handle) {
   }
   else {
 
+
      ses_boolean original_needs_flip = pSFH->_needs_flip;
      if ((the_tid > 100) && (the_tid < 200)) {
        pSFH->_needs_flip = SES_FALSE;  
@@ -154,10 +155,9 @@ ses_word_reference ses_read_next(ses_file_handle the_handle) {
 #endif
         pSFH->_needs_flip = original_needs_flip;
         _set_latest_error(SES_READ_ERROR);
-        return 0;
+        return (ses_word_reference)NULL;
      }
      pSFH->_needs_flip = original_needs_flip;
-
 
   }
   if (pDIR->_has_multiple_files == SES_TRUE) {

@@ -1,22 +1,16 @@
 
 #include "ses_defines.h"
 #include "ses_globals.h"
+
 #include "ses_externs.h"
 #include "ses_internals.h"
 
 #include <string.h>
 
-//#define DEBUG_SES_WRITE_COMMENTS
-#define FIX_SES_WRITE_ASCII
-
-
 ses_error_flag ses_write_comments(ses_file_handle the_handle, ses_string the_comments, ses_number dim) {
 
  /*  at the current file location, write a 1D array that holds the string 
      with the comments */
-#ifdef DEBUG_SES_WRITE_COMMENTS
-  printf("ses_write_comments:  the_comments are %s dim is %d\n", the_comments, dim);
-#endif
 
 
   ses_error_flag return_value = SES_NO_ERROR;
@@ -69,24 +63,16 @@ ses_error_flag ses_write_comments(ses_file_handle the_handle, ses_string the_com
   //  if not ascii, pad up
   char my_filetype = FILE_LIST[the_handle]->_the_handle->_filetype;
 
-  if (my_filetype == 'A') {
+  if (my_filetype == ASCII_TYPE) {
 	div = 8;
   }
 
-#ifdef FIX_SES_WRITE_ASCII
-  	dim = dim + (8 - dim%8);
-#else
-  if (my_filetype != 'A') {
-
-  	dim = dim + (8 - dim%8);
-  }
-#endif
-
-  /* added by KT (malloc and free) */
-  ses_word *the_buffer;
-  the_buffer = (ses_word *)malloc(sizeof(ses_word) * dim / div);
+  dim = dim + (8 - dim%8);
 
   /* ses_word the_buffer[dim/div]; */
+  ses_word* the_buffer;
+  the_buffer = (ses_word*)malloc(sizeof(ses_word) * dim / div);
+
   int j2 = 0;
   for (j2=0; j2 < dim/div; j2++) {
 	the_buffer[j2] = 0.0;
@@ -119,32 +105,23 @@ ses_error_flag ses_write_comments(ses_file_handle the_handle, ses_string the_com
     }
   }
 
-#ifdef FIX_SES_WRITE_ASCII
-  if (my_filetype == 'A') {
+  if (my_filetype == ASCII_TYPE) {
   	myUnion.the_char[7] = ' ';
   }
   else {
 	myUnion.the_char[7] = '\0';
   }
-#else
-  myUnion.the_char[7] = '\0';
-#endif
   the_buffer[jindex] = myUnion.the_word;
   ses_word_reference the_wbuffer = &the_buffer[0];
 
 
 
-  ses_error_flag didit_write = SES_FALSE;
+  /* ses_error_flag didit_write = SES_FALSE; */
 
 
-#ifdef DEBUG_SES_WRITE_COMMENTS
-  printf("ses_write_comment:  passing |%s| to ses_write_next, strlen is %d (dim/div) is %d\n", the_wbuffer, strlen(the_wbuffer), dim/div);
-  
-#endif
-
-  didit_write = ses_write_next(the_handle, the_wbuffer, (dim)/div, "no_label");
+  /* didit_write = */ ses_write_next(the_handle, the_wbuffer, (dim)/div, "no_label");
 
   free(the_buffer);
-
   return return_value;
 }
+

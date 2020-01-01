@@ -29,8 +29,8 @@ ses_error_flag ses_read_pairs(ses_file_handle the_handle, ses_word_reference buf
     return SES_READ_ERROR;
   }
 
-  FILE* pFILE = 0;
-  pFILE = _getPFILE(pSFH);
+  /* FILE* pFILE = 0; */
+  /* pFILE = */ _getPFILE(pSFH);
 
   if (FILE_LIST[the_handle]->_the_setup->_setup_complete == SES_FALSE) {
 #ifdef DEBUG_PRINT

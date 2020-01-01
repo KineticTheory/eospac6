@@ -1,6 +1,4 @@
 
-#undef DEBUG_32BIT
-
 #undef DEBUG_WRAP
 
 

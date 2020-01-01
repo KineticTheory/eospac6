@@ -8,7 +8,7 @@
 !********************************************************************
 
 !> @file
-!! @ingroup tests quick
+!! @ingroup Fortran2003 tests quick
 !! @brief Ensure the extrapolation errors are set appropriately for EOS and Opacity
 !!        tables as expected. See SourceForge© Issue #artf28105 for more details:
 !!        https://tf.lanl.gov/sf/go/artf28105
@@ -158,6 +158,8 @@ program toy
      endif
 
   enddo
+
+  call eos_DestroyAll (errorCode)
 
 997 format(a,'=',i4,2x,a,'=',i6)
 998 format(/,a,'=',10(1pe20.12))

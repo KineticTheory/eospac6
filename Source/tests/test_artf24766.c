@@ -31,17 +31,7 @@
 #include <assert.h>
 #include <string.h>
 
-void* safe_malloc(int bytes) {
-  void *p=NULL;
-  assert (p == NULL);
-  
-  p = malloc(bytes);
-  if (p == NULL) {
-    printf("safe_malloc failed to allocate %i bytes\n", bytes);
-    assert(p != NULL);
-  }
-  return p;
-}
+#define EOS_FREE(p) { assert(p != NULL); free(p); p=NULL; }
 
 /* prototypes */
 EOS_BOOLEAN _eos_fileExistsAndValid(EOS_CHAR *filename);
@@ -84,15 +74,16 @@ EOS_INTEGER main() {
 
   /* find REQUIRED FILE */
   eos_GetMaxDataFileNameLength (&max_length);
-  req_filename = (EOS_CHAR *) safe_malloc(max_length * sizeof(EOS_CHAR));
+  req_filename = (EOS_CHAR *) safe_malloc(max_length, sizeof(EOS_CHAR));
   strcpy(req_filename, "./tests/data/ses3720_taylor");
+  tmp = (EOS_CHAR *) safe_malloc(max_length, sizeof(EOS_CHAR));
   for (i = 0; i < 10; i++) {
-    tmp = (EOS_CHAR *) safe_malloc(max_length * sizeof(EOS_CHAR));
     if (_eos_fileExistsAndValid(req_filename)) break;
     req_filename = (EOS_CHAR *) realloc (req_filename, (strlen(req_filename) + 4) * sizeof (EOS_CHAR));
     sprintf(tmp, "./.%s", req_filename);
     strcpy(req_filename, tmp);
   }
+  EOS_FREE(tmp);
 
   errorCode = EOS_OK;
   for (i = 0; i < nTables; i++) {
@@ -112,7 +103,7 @@ EOS_INTEGER main() {
                 tableHandle[i], tableHandleErrorCode, errorMessage);
       }
     }
-    return 0;
+    goto CLEANUP;
   }
 
   for (i = 0; i < nTables/2; i++) {
@@ -123,7 +114,7 @@ EOS_INTEGER main() {
     if (errorCode != EOS_OK) {
       eos_GetErrorMessage (&errorCode, errorMessage);
       printf ("eos_SetOption ERROR %i: %s (fcmp_ignore)\n", errorCode, errorMessage);
-      return 0;
+      goto CLEANUP;
     }
 
     /* set the required SESAME file name for all table handles */
@@ -131,14 +122,14 @@ EOS_INTEGER main() {
     if (errorCode != EOS_OK) {
       eos_GetErrorMessage (&errorCode, errorMessage);
       printf ("eos_SetDataFilename ERROR %i: %s (fcmp_ignore)\n", errorCode, errorMessage);
-      return 0;
+      goto CLEANUP;
     }
 
     eos_SetOption (&tableHandle[i], &EOS_USE_TAYLOR_FIT, EOS_NullPtr, &errorCode);
     if (errorCode != EOS_OK) {
       eos_GetErrorMessage (&errorCode, errorMessage);
       printf ("eos_SetOption ERROR %i: %s (fcmp_ignore)\n", errorCode, errorMessage);
-      return 0;
+      goto CLEANUP;
     }
   }
 
@@ -155,7 +146,7 @@ EOS_INTEGER main() {
                 tableHandle[i], tableHandleErrorCode, errorMessage);
       }
     }
-    return 0;
+    goto CLEANUP;
   }
 
 
@@ -201,7 +192,9 @@ EOS_INTEGER main() {
     }
   }
 
+ CLEANUP:
   eos_DestroyAll (&errorCode);
+  EOS_FREE(req_filename);
 
   return 0;
 

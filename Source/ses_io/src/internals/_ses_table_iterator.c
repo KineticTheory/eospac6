@@ -81,8 +81,8 @@ struct _ses_iterator* _construct_ses_iterator(long maddress, long nr, long nt, l
     _set_latest_error(SES_MEMORY_ALLOCATION_ERROR);
 
     /*  release memory upon error */
-    ses_boolean didit_destruct = SES_FALSE;
-    didit_destruct = _destruct_ses_iterator(the_iterator);
+    /* ses_boolean didit_destruct = SES_FALSE; */
+    /* didit_destruct = */ _destruct_ses_iterator(the_iterator);
 
     return (struct _ses_iterator*)NULL;
   }
@@ -96,8 +96,8 @@ struct _ses_iterator* _construct_ses_iterator(long maddress, long nr, long nt, l
     _set_latest_error(SES_MEMORY_ALLOCATION_ERROR);
 
     /*  release memory upon error */
-    ses_boolean didit_destruct = SES_FALSE;
-    didit_destruct = _destruct_ses_iterator(the_iterator);
+    /* ses_boolean didit_destruct = SES_FALSE; */
+    /* didit_destruct = */ _destruct_ses_iterator(the_iterator);
 
     return (struct _ses_iterator*)NULL;
   }
@@ -110,8 +110,8 @@ struct _ses_iterator* _construct_ses_iterator(long maddress, long nr, long nt, l
     _set_latest_error(SES_MEMORY_ALLOCATION_ERROR);
 
     /*  release memory upon error */
-    ses_boolean didit_destruct = SES_FALSE;
-    didit_destruct = _destruct_ses_iterator(the_iterator);
+    /* ses_boolean didit_destruct = SES_FALSE; */
+    /* didit_destruct = */ _destruct_ses_iterator(the_iterator);
 
     return (struct _ses_iterator*)NULL;
   }
@@ -169,7 +169,7 @@ struct _ses_iterator* _copy_ses_iterator(struct _ses_iterator* pIT) {
 
   //  copy values
 
-  ses_boolean didit_destruct = SES_FALSE;
+  /* ses_boolean didit_destruct = SES_FALSE; */
 
   return_value->_maddress = pIT->_maddress;
   return_value->_current_array = pIT->_current_array;
@@ -190,7 +190,7 @@ struct _ses_iterator* _copy_ses_iterator(struct _ses_iterator* pIT) {
     _set_latest_error(SES_MEMORY_ALLOCATION_ERROR);
 
     /*  release memory upon error */
-    didit_destruct = _destruct_ses_iterator(return_value);
+    /* didit_destruct = */ _destruct_ses_iterator(return_value);
     free(return_value);
     return_value = (struct _ses_iterator*)NULL;
   
@@ -211,7 +211,7 @@ struct _ses_iterator* _copy_ses_iterator(struct _ses_iterator* pIT) {
     _set_latest_error(SES_MEMORY_ALLOCATION_ERROR);
 
     /*  release memory upon error */
-    didit_destruct = _destruct_ses_iterator(return_value);
+    /* didit_destruct = */ _destruct_ses_iterator(return_value);
     free(return_value);
     return_value = (struct _ses_iterator*)NULL;
 
@@ -239,7 +239,7 @@ struct _ses_iterator* _copy_ses_iterator(struct _ses_iterator* pIT) {
     _set_latest_error(SES_MEMORY_ALLOCATION_ERROR);
 
     /*  release memory upon error */
-    didit_destruct = _destruct_ses_iterator(return_value);
+    /* didit_destruct = */ _destruct_ses_iterator(return_value);
     free(return_value);
     return_value = (struct _ses_iterator*)NULL;
 
@@ -273,7 +273,7 @@ struct _ses_iterator* _copy_ses_iterator(struct _ses_iterator* pIT) {
         _set_latest_error(SES_MEMORY_ALLOCATION_ERROR);
 
         /*  release memory upon error */
-        didit_destruct = _destruct_ses_iterator(return_value);
+        /* didit_destruct = */ _destruct_ses_iterator(return_value);
         free(return_value);
         return_value = (struct _ses_iterator*)NULL;
 

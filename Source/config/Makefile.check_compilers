@@ -1,0 +1,82 @@
+#-*-makefile-*-###################################################
+#  
+#  Copyright -- see file named COPYRIGHTNOTICE
+#  
+##################################################################
+### The purpose of this file is                                ###
+### Verify the F90 compiler is supported for the current ARCH. ###
+##################################################################
+#
+ifeq ($(FIRST_PASS_DONE),$(false))
+
+  ifeq ($(strip $(F90_Key)),)
+    ifeq ($(strip $(F90)),)
+      $(info *********************************************************************)
+      $(info *                                                                   *)
+      $(info *                           !!! ERROR !!!                           *)
+      $(info * No supported Fortran compiler was found in your PATH for this     *)
+      $(info * machine. Supported Fortran compilers:                             *)
+      $(info * $(F90_List))
+      $(info *                                                                   *)
+      $(info *********************************************************************)
+      $(error )
+    endif
+    ifneq ($(strip $(call not $(F90))$(call not $(F77))$(call not $(CC))$(call not $(CXX))),)
+      $(info *********************************************************************)
+      $(info *                                                                   *)
+      $(info *                           !!! ERROR !!!                           *)
+      $(info * The specified Fortran compiler is not supported for this machine; *)
+      $(info * therefore you must specify values for F90, F77, CC and CXX.       *)
+      $(info *                                                                   *)
+      $(info *********************************************************************)
+      $(error )
+    endif
+  endif
+
+  ifdef VERBOSE
+    $(info $(strip F90_Key = $(F90_Key)))
+    $(info _F77($(F90_Key)) = $(call get,_F77,$(F90_Key)))
+    $(info _CC($(F90_Key)) = $(call get,_CC,$(F90_Key)))
+    $(info _CXX($(F90_Key)) = $(call get,_CXX,$(F90_Key)))
+  endif
+
+  F90_SUPPORTED = $(if $(strip $(F90_Key)),$(true),$(false))
+  F77_SUPPORTED = $(filter $(notdir $(F77)),$(notdir $(call get,_F77,$(F90_Key))))
+  CC_SUPPORTED  = $(filter $(notdir $(CC)),$(notdir $(call get,_CC,$(F90_Key))))
+  CXX_SUPPORTED = $(filter $(notdir $(CXX)),$(notdir $(call get,_CXX,$(F90_Key))))
+  ifdef VERBOSE
+    $(warning F90_SUPPORTED = $(if $(strip $(F90_Key)),$(true),$(false))                      )
+    $(warning F77_SUPPORTED = $(filter $(notdir $(F77)),$(notdir $(call get,_F77,$(F90_Key)))))
+    $(warning CC_SUPPORTED  = $(filter $(notdir $(CC)),$(notdir $(call get,_CC,$(F90_Key))))  )
+    $(warning CXX_SUPPORTED = $(filter $(notdir $(CXX)),$(notdir $(call get,_CXX,$(F90_Key)))))
+  endif
+
+  ifneq ($(strip $(call not $(F90_SUPPORTED))$(call not $(F77_SUPPORTED))$(call not $(CC_SUPPORTED))$(call not $(CXX_SUPPORTED))),)
+    $(warning )
+    $(info *********************************************************************)
+    $(info *                                                                   *)
+    $(info *                          !!! NOTICE !!!                           *)
+    $(info * Your values specified for F90, F77, CC and/or CXX will be used.   *)
+    $(info * This specific combination is unsupported, and no guarantees are   *)
+    $(info * made regarding computed results. Specificaly, the following are   *)
+    $(info * unsupported for this combination of compiler executables:         *)
+    ifneq ($(call not $(F90_SUPPORTED)),$(false))
+      $(info *   F90 = $(F90))
+    endif
+    ifneq ($(call not $(F77_SUPPORTED)),$(false))
+      $(info *   F77 = $(F77))
+    endif
+    ifneq ($(call not $(CC_SUPPORTED)),$(false))
+      $(info *   CC = $(CC))
+    endif
+    ifneq ($(call not $(CXX_SUPPORTED)),$(false))
+      $(info *   CXX = $(CXX))
+    endif
+    $(info *                                                                   *)
+    $(info *********************************************************************)
+  endif
+
+endif
+
+FIRST_PASS_DONE=$(true)
+export FIRST_PASS_DONE

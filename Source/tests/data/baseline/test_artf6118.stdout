@@ -28,8 +28,8 @@
 25: successfully created forced-monotonic table type=EOS_Af_Tf (252), matId=33336
 26: successfully created forced-monotonic table type=EOS_Af_Pf (253), matId=33336
 27: successfully created forced-monotonic table type=EOS_Af_Uf (254), matId=33336
-28: successfully created table type=EOS_Pm_D (220), matId=33336
-29: successfully created table type=EOS_Pf_D (240), matId=33336
+48: successfully created table type=EOS_Pm_D (220), matId=33336
+49: successfully created table type=EOS_Pf_D (240), matId=33336
 
 --- LOAD DATA ---
 0: successfully loaded forced-monotonic table type=EOS_Tm_D (215), matId=33336
@@ -60,8 +60,8 @@
 25: successfully loaded forced-monotonic table type=EOS_Af_Tf (252), matId=33336
 26: successfully loaded forced-monotonic table type=EOS_Af_Pf (253), matId=33336
 27: eos_LoadTables ERROR 282021 for EOS_Af_Uf: EOS_INVALID_TABLE_HANDLE: Invalid table handle because EOS_CANT_INVERT_DATA: Can't invert wrt first independent variable
-28: successfully loaded table type=EOS_Pm_D (215), matId=33336
-29: successfully loaded table type=EOS_Pf_D (220), matId=33336
+48: successfully loaded table type=EOS_Pm_D (215), matId=33336
+49: successfully loaded table type=EOS_Pf_D (220), matId=33336
 
 --- FETCH DATA ---
 
@@ -657,7 +657,7 @@ EOS_Af_D   => cat 0, ref1=EOS_NullTable and ref2=EOS_NullTable    (TH: 7) forced
 	X0 =   8.937500000000000e+04  F0 =   5.709886505096045e+05
 	X0 =   1.787500000000000e+05  F0 =   9.770719113528508e+05
 
-EOS_Pm_D   => cat 0, ref1=EOS_NullTable and ref2=EOS_NullTable    (TH: 28)
+EOS_Pm_D   => cat 0, ref1=EOS_NullTable and ref2=EOS_NullTable    (TH: 48)
 	X0 =   0.000000000000000e+00  F0 =   0.000000000000000e+00
 	X0 =   8.937500000000000e-06  F0 =  -4.691206980446739e-10
 	X0 =   1.787500000000000e-05  F0 =  -1.679476648016121e-09
@@ -731,7 +731,7 @@ EOS_Pm_D   => cat 0, ref1=EOS_NullTable and ref2=EOS_NullTable    (TH: 28)
 	X0 =   8.937500000000000e+04  F0 =   4.127788047813447e+10
 	X0 =   1.787500000000000e+05  F0 =   1.359581840186777e+11
 
-EOS_Pf_D   => cat 0, ref1=EOS_NullTable and ref2=EOS_NullTable    (TH: 29)
+EOS_Pf_D   => cat 0, ref1=EOS_NullTable and ref2=EOS_NullTable    (TH: 49)
 	X0 =   0.000000000000000e+00  F0 =   0.000000000000000e+00
 	X0 =   8.937500000000000e-06  F0 =  -4.691206367589571e-10
 	X0 =   1.787500000000000e-05  F0 =  -1.679476339151478e-09
@@ -1401,7 +1401,7 @@ EOS_Af_D   => cat 0, ref1=EOS_NullTable and ref2=EOS_NullTable    (TH: 7)
 	X =   1.787500000000000e+05  F =   9.770719113528508e+05  F_ref =   9.770719113528508e+05
 
 EOS_D_Tm   => cat 1, ref1=EOS_NullTable and ref2=EOS_NullTable    (TH: 8)
-	X =   0.000000000000000e+00  F =   1.905824131322176e-21  F_ref =   0.000000000000000e+00
+	X =   0.000000000000000e+00  F =   1.905824131322176e-21  F_ref =   0.000000000000000e+00  (EOS_xLo_yOk)
 	X =   2.620576459673279e-07  F =   8.937500000000000e-06  F_ref =   8.937500000000000e-06
 	X =   6.603480586834155e-07  F =   1.787500000000000e-05  F_ref =   1.787500000000000e-05
 	X =   2.240617949647064e-06  F =   4.468750000000000e-05  F_ref =   4.468750000000000e-05
@@ -1555,7 +1555,7 @@ EOS_D_Am   => cat 1, ref1=EOS_NullTable and ref2=EOS_NullTable    (TH: 11)
 eos_Interpolate ERROR 122021: EOS_INVALID_TABLE_HANDLE: Invalid table handle because EOS_CANT_INVERT_DATA: Can't invert wrt first independent variable
 
 EOS_D_Tf   => cat 1, ref1=EOS_NullTable and ref2=EOS_NullTable    (TH: 12)
-	X =   0.000000000000000e+00  F =   8.470329472543003e-22  F_ref =   0.000000000000000e+00
+	X =   0.000000000000000e+00  F =   8.470329472543003e-22  F_ref =   0.000000000000000e+00  (EOS_xLo_yOk)
 	X =   3.144691751607934e-07  F =   8.937500000000000e-06  F_ref =   8.937500000000000e-06
 	X =   7.924176704200986e-07  F =   1.787500000000000e-05  F_ref =   1.787500000000000e-05
 	X =   2.688741539576476e-06  F =   4.468750000000000e-05  F_ref =   4.468750000000000e-05
@@ -1718,7 +1718,7 @@ EOS_Um_Am  => cat 3, ref1=EOS_Um_D      and ref2=EOS_D_Am         (TH: 18)
 eos_Interpolate ERROR 192021: EOS_INVALID_TABLE_HANDLE: Invalid table handle because EOS_CANT_INVERT_DATA: Can't invert wrt first independent variable
 
 EOS_Am_Tm  => cat 3, ref1=EOS_Am_D      and ref2=EOS_D_Tm         (TH: 19)
-	X =   0.000000000000000e+00  F =   5.207211815972472e+00  F_ref =   5.207211815972472e+00
+	X =   0.000000000000000e+00  F =   5.207211815972472e+00  F_ref =   5.207211815972472e+00  (EOS_xLo_yOk)
 	X =   2.620576459673279e-07  F =   5.207211815972472e+00  F_ref =   5.207211815972472e+00
 	X =   6.603480586834155e-07  F =   5.207162447420235e+00  F_ref =   5.207162447420235e+00
 	X =   2.240617949647064e-06  F =   5.207032797347350e+00  F_ref =   5.207032797347350e+00
@@ -1878,7 +1878,7 @@ EOS_Uf_Af  => cat 3, ref1=EOS_Uf_D      and ref2=EOS_D_Af         (TH: 24)
 eos_Interpolate ERROR 252021: EOS_INVALID_TABLE_HANDLE: Invalid table handle because EOS_CANT_INVERT_DATA: Can't invert wrt first independent variable
 
 EOS_Af_Tf  => cat 3, ref1=EOS_Af_D      and ref2=EOS_D_Tf         (TH: 25)
-	X =   0.000000000000000e+00  F =   5.207211815825899e+00  F_ref =   5.207211815825899e+00
+	X =   0.000000000000000e+00  F =   5.207211815825899e+00  F_ref =   5.207211815825899e+00  (EOS_xLo_yOk)
 	X =   3.144691751607934e-07  F =   5.207211815825899e+00  F_ref =   5.207211815825899e+00
 	X =   7.924176704200986e-07  F =   5.207162447062870e+00  F_ref =   5.207162447062870e+00
 	X =   2.688741539576476e-06  F =   5.207032796188502e+00  F_ref =   5.207032796188502e+00

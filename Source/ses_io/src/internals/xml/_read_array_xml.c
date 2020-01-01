@@ -26,6 +26,10 @@ ses_error_flag _read_array_xml(struct _ses_file_handle* pSFH, ses_word_reference
     return SES_NULL_OBJECT_ERROR;
   }
 
+    
+    /****************************
+     * The following is always false. Unsigned int's can never be less than 0.
+     *  Commenting out code: April 20, 2016
 
   if (nsig < 0) {
 #ifdef DEBUG_PRINT
@@ -34,6 +38,7 @@ ses_error_flag _read_array_xml(struct _ses_file_handle* pSFH, ses_word_reference
     _set_latest_error(SES_OBJECT_OUT_OF_RANGE);
     return SES_OBJECT_OUT_OF_RANGE;
   }
+     *****************************/
 
   if (size < 0) {
 #ifdef DEBUG_PRINT

@@ -85,7 +85,7 @@ void eos_InverseRationalInterpolateXF (EOS_INTEGER nsrch, EOS_REAL * searchX, EO
 				       EOS_REAL * searchDFx, EOS_REAL * searchDFy, EOS_REAL * resultY,
 				       EOS_INTEGER nxtbl, EOS_INTEGER nytbl, EOS_REAL * xtbls, EOS_REAL * ytbls,
 				       EOS_REAL ** ftbls, EOS_INTEGER nGhostData, EOS_INTEGER * xyBounds,
-				       EOS_INTEGER * err, EOS_CHAR ** errMsg);
+				       EOS_INTEGER dataType, EOS_BOOLEAN invertAtSetup, EOS_INTEGER * err, EOS_CHAR ** errMsg);
 void eos_LineInterpolate (EOS_BOOLEAN use_discontinuous_derivatives, EOS_INTEGER numZones, EOS_INTEGER numXVals,
 			  EOS_INTEGER numYVals, EOS_INTEGER fixedIndex, EOS_REAL * YValues, EOS_REAL ** FVals,
 			  EOS_REAL * searchYVals, EOS_REAL * searchFVals, EOS_REAL * searchDFy, EOS_CHAR fixedVar,

@@ -11,11 +11,12 @@
 #include <stdio.h>
 
 #define _EOS_ACCESS_INTERNAL_PROTOTYPES
-
 #include "eos_types_internal.h"
-#include "eos_Data.h"
 #include "eos_Access.h"
+
 #include "eos_Utils.h"
+
+#include "eos_Data.h"
 
 /************************************************************************
  * 

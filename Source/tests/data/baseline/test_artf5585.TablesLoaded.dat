@@ -16,7 +16,7 @@ Ordered list of Sesame files searched:
 
 TableHandle=0 matid =  2140 source = /opt/local/codes/data/eos/sesame page =  1
 Data Type = EOS_Pt_DT
-Loading Options: EOS_INSERT_DATA, EOS_MONOTONIC_IN_Y
+Loading Options: EOS_INSERT_DATA=4
 Description = Total Pressure (GPa) (Density (Mg/m^3)- and Temperature (K)-dependent)
   fconv =   1.000000000000000E+00         xconv =   1.000000000000000E+00         yconv =   1.000000000000000E+00
 
@@ -526,7 +526,7 @@ Description = Total Pressure (GPa) (Density (Mg/m^3)- and Temperature (K)-depend
 
 TableHandle=0 matid =  2140 source = /opt/local/codes/data/eos/sesame page =  2
 Data Type = EOS_Pt_DT
-Loading Options: EOS_INSERT_DATA, EOS_MONOTONIC_IN_Y
+Loading Options: EOS_INSERT_DATA=4
 Description = Total Pressure (GPa) (Density (Mg/m^3)- and Temperature (K)-dependent)
   fconv =   1.000000000000000E+00         xconv =   1.000000000000000E+00         yconv =   1.000000000000000E+00
 
@@ -1036,7 +1036,7 @@ Description = Total Pressure (GPa) (Density (Mg/m^3)- and Temperature (K)-depend
 
 TableHandle=0 matid =  2140 source = /opt/local/codes/data/eos/sesame page =  3
 Data Type = EOS_Pt_DT
-Loading Options: EOS_INSERT_DATA, EOS_MONOTONIC_IN_Y
+Loading Options: EOS_INSERT_DATA=4
 Description = Total Pressure (GPa) (Density (Mg/m^3)- and Temperature (K)-dependent)
   fconv =   1.000000000000000E+00         xconv =   1.000000000000000E+00         yconv =   1.000000000000000E+00
 
@@ -1546,7 +1546,7 @@ Description = Total Pressure (GPa) (Density (Mg/m^3)- and Temperature (K)-depend
 
 TableHandle=0 matid =  2140 source = /opt/local/codes/data/eos/sesame page =  4
 Data Type = EOS_Pt_DT
-Loading Options: EOS_INSERT_DATA, EOS_MONOTONIC_IN_Y
+Loading Options: EOS_INSERT_DATA=4
 Description = Total Pressure (GPa) (Density (Mg/m^3)- and Temperature (K)-dependent)
   fconv =   1.000000000000000E+00         xconv =   1.000000000000000E+00         yconv =   1.000000000000000E+00
 
@@ -2056,7 +2056,7 @@ Description = Total Pressure (GPa) (Density (Mg/m^3)- and Temperature (K)-depend
 
 TableHandle=0 matid =  2140 source = /opt/local/codes/data/eos/sesame page =  5
 Data Type = EOS_Pt_DT
-Loading Options: EOS_INSERT_DATA, EOS_MONOTONIC_IN_Y
+Loading Options: EOS_INSERT_DATA=4
 Description = Total Pressure (GPa) (Density (Mg/m^3)- and Temperature (K)-dependent)
   fconv =   1.000000000000000E+00         xconv =   1.000000000000000E+00         yconv =   1.000000000000000E+00
 
@@ -2566,7 +2566,7 @@ Description = Total Pressure (GPa) (Density (Mg/m^3)- and Temperature (K)-depend
 
 TableHandle=0 matid =  2140 source = /opt/local/codes/data/eos/sesame page =  6
 Data Type = EOS_Pt_DT
-Loading Options: EOS_INSERT_DATA, EOS_MONOTONIC_IN_Y
+Loading Options: EOS_INSERT_DATA=4
 Description = Total Pressure (GPa) (Density (Mg/m^3)- and Temperature (K)-dependent)
   fconv =   1.000000000000000E+00         xconv =   1.000000000000000E+00         yconv =   1.000000000000000E+00
 
@@ -3076,7 +3076,7 @@ Description = Total Pressure (GPa) (Density (Mg/m^3)- and Temperature (K)-depend
 
 TableHandle=0 matid =  2140 source = /opt/local/codes/data/eos/sesame page =  7
 Data Type = EOS_Pt_DT
-Loading Options: EOS_INSERT_DATA, EOS_MONOTONIC_IN_Y
+Loading Options: EOS_INSERT_DATA=4
 Description = Total Pressure (GPa) (Density (Mg/m^3)- and Temperature (K)-dependent)
   fconv =   1.000000000000000E+00         xconv =   1.000000000000000E+00         yconv =   1.000000000000000E+00
 
@@ -3586,7 +3586,7 @@ Description = Total Pressure (GPa) (Density (Mg/m^3)- and Temperature (K)-depend
 
 TableHandle=0 matid =  2140 source = /opt/local/codes/data/eos/sesame page =  8
 Data Type = EOS_Pt_DT
-Loading Options: EOS_INSERT_DATA, EOS_MONOTONIC_IN_Y
+Loading Options: EOS_INSERT_DATA=4
 Description = Total Pressure (GPa) (Density (Mg/m^3)- and Temperature (K)-dependent)
   fconv =   1.000000000000000E+00         xconv =   1.000000000000000E+00         yconv =   1.000000000000000E+00
 
@@ -4096,7 +4096,7 @@ Description = Total Pressure (GPa) (Density (Mg/m^3)- and Temperature (K)-depend
 
 TableHandle=0 matid =  2140 source = /opt/local/codes/data/eos/sesame page =  9
 Data Type = EOS_Pt_DT
-Loading Options: EOS_INSERT_DATA, EOS_MONOTONIC_IN_Y
+Loading Options: EOS_INSERT_DATA=4
 Description = Total Pressure (GPa) (Density (Mg/m^3)- and Temperature (K)-dependent)
   fconv =   1.000000000000000E+00         xconv =   1.000000000000000E+00         yconv =   1.000000000000000E+00
 
@@ -4606,7 +4606,7 @@ Description = Total Pressure (GPa) (Density (Mg/m^3)- and Temperature (K)-depend
 
 TableHandle=0 matid =  2140 source = /opt/local/codes/data/eos/sesame page = 10
 Data Type = EOS_Pt_DT
-Loading Options: EOS_INSERT_DATA, EOS_MONOTONIC_IN_Y
+Loading Options: EOS_INSERT_DATA=4
 Description = Total Pressure (GPa) (Density (Mg/m^3)- and Temperature (K)-dependent)
   fconv =   1.000000000000000E+00         xconv =   1.000000000000000E+00         yconv =   1.000000000000000E+00
 
@@ -5116,7 +5116,7 @@ Description = Total Pressure (GPa) (Density (Mg/m^3)- and Temperature (K)-depend
 
 TableHandle=0 matid =  2140 source = /opt/local/codes/data/eos/sesame page = 11
 Data Type = EOS_Pt_DT
-Loading Options: EOS_INSERT_DATA, EOS_MONOTONIC_IN_Y
+Loading Options: EOS_INSERT_DATA=4
 Description = Total Pressure (GPa) (Density (Mg/m^3)- and Temperature (K)-dependent)
   fconv =   1.000000000000000E+00         xconv =   1.000000000000000E+00         yconv =   1.000000000000000E+00
 
@@ -5626,7 +5626,7 @@ Description = Total Pressure (GPa) (Density (Mg/m^3)- and Temperature (K)-depend
 
 TableHandle=0 matid =  2140 source = /opt/local/codes/data/eos/sesame page = 12
 Data Type = EOS_Pt_DT
-Loading Options: EOS_INSERT_DATA, EOS_MONOTONIC_IN_Y
+Loading Options: EOS_INSERT_DATA=4
 Description = Total Pressure (GPa) (Density (Mg/m^3)- and Temperature (K)-dependent)
   fconv =   1.000000000000000E+00         xconv =   1.000000000000000E+00         yconv =   1.000000000000000E+00
 

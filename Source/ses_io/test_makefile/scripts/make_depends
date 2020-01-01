@@ -16,43 +16,53 @@ eval '(exit $?0)' && eval 'exec perl -S $0 ${1+"$@"}'
 @include_dirs = (".");
 
 # Process Switches
+use Getopt::Long qw(:config no_ignore_case);		# option parser
+my $options={};
+GetOptions($options,
+	   "DEFINES=s",
+	   "Includedirs=s@",
+	   "directory=s",
+	   "verbose+"
+	  );
 
-while ( $ARGV[0] =~ /^-/ ) {
-  $_ = shift;
-  if (/^-D(.*)/) {
-    $defines .= " -D" . ($1 ? $1 : shift);
-  } elsif (/^-I(.*)/) {
-    push(@include_dirs,($1 ? $1 : shift));
-  } elsif (/^-d(.*)/) {
-    $dir = ($1 ? $1 : shift);
-  } else {
-    die "Unrecognized switch: $_\n";
-  }
+if ($options->{verbose} > 1) {
+  eval 'use diagnostics -verbose';
+  enable  diagnostics;
 }
 
-print "\nInclude Directories:\n";
-&print_list(@include_dirs);
+$defines = $options->{DEFINES} ? $options->{DEFINES} : "";
+@include_dirs = @{$options->{Includedirs}} ? @{$options->{Includedirs}} : ();
+$dir = $options->{directory} ? $options->{directory} : "";
 
-print "Defines:   $defines \n";
-print "Directory: $dir \n\n";
+if ($options->{verbose}) {
+  print "\nInclude Directories:\n";
+  print join("\n",@include_dirs), "\n";
+
+  print "Defines:   $defines \n";
+  print "Directory: $dir \n\n";
+}
 
 # first find include files in list of arguments
 mkdir(".depends",0777) if (! -d ".depends");
 foreach $file (@ARGV) {
+  my $DEPEND_FH;
   $rootname = $file;
   $rootname =~ s/\.\w+$//;
-  open(DEPEND_FILE,"> .depends/${rootname}.d");
-  print "$file \n\n";
+  open($DEPEND_FH,"> .depends/${rootname}.d");
+  print "$file \n\n"
+    if $options->{verbose};
   @ilist1 = &find_includes($file);
   @ilist2 = &remove_dups(@ilist1);
-  #  &print_list(@ilist2);
+  # print join("\n",@ilist2), "\n"
+  #   if $options->{verbose};
 
   # now find include files brought in by header files
 
   while (1) {
     @t2_list = ();
     foreach $ifile (@ilist1) {
-      #      print "   $ifile \n\n";
+      # print "   $ifile \n\n"
+      #   if $options->{verbose};
       @t1_list = &find_includes($ifile);
       @t2_list = (@t2_list, @t1_list);
     }
@@ -63,7 +73,8 @@ foreach $file (@ARGV) {
     @ilist2 = (@ilist2, @ilist1);
   }
   @ilist1 = &remove_dups(@ilist2);
-  &print_list(@ilist1);
+  print join("\n",@ilist1), "\n"
+    if $options->{verbose};
 
   # now create dependency lists
   $i = rindex($file,'.');
@@ -73,38 +84,28 @@ foreach $file (@ARGV) {
   $obj_name = "$dir/$obj_name" if $dir;
 
   $ilist1_cntr=0;
-  print DEPEND_FILE "# ", scalar(@ilist1)+1," file dependencies found for $obj_name\n";
-  print DEPEND_FILE "\n$obj_name: \\\n";
-    print DEPEND_FILE "         $file",
-      ((scalar(@ilist1)<=0)?"":" \\"), "\n";
-  foreach $dep (@ilist1) {
-    $ilist1_cntr++;
-    print DEPEND_FILE "         $dep",
-      (($ilist1_cntr>=scalar(@ilist1))?"":" \\"), "\n";
-  }
-#  $ilist1_cntr=0;
-#  print DEPEND_FILE "\n$file: \\\n";
-#  foreach $dep (@ilist1) {
-#    $ilist1_cntr++;
-#    print DEPEND_FILE "         $dep",
-#      (($ilist1_cntr>=scalar(@ilist1))?"":" \\"), "\n";
-#  }
+  print $DEPEND_FH "# ", scalar(@ilist1)+1," file dependencies found for $obj_name\n";
+  print $DEPEND_FH "\n$obj_name: \\\n";
+  print $DEPEND_FH "         $file", ((scalar(@ilist1)<=0)?"":" \\"), "\n";
+  print $DEPEND_FH "         ",join("\n         ",@ilist1), "\n";
 
-  close(DEPEND_FILE);
+  close($DEPEND_FH);
 }
 
 sub find_includes {
   local($filename)=@_;
   local(@list);
   @list=();
-  open(FILE,"$filename");
-  while (<FILE>) {
+  my $FH;
+  open($FH,"$filename");
+  while (<$FH>) {
     if (/^m4_include[(]<</) {
       s/m4_include[(]<<//;
       s/>>[)]m4_dnl//;
       s/>>[)]//;
       s/[ ]*$//;
-      #      print $_;
+      # print $_
+      #   if $options->{verbose};
       $a = $_;
       chomp($a);
       $a =~ s/\r+$//; # remove any trailing carriage returns; for Windows OS
@@ -112,7 +113,8 @@ sub find_includes {
       foreach $idir (@include_dirs) {
         $full_name = $idir.'/'.$a;
 	if (-e $full_name) {
-	  #          print "Found $full_name\n";
+	  # print "Found $full_name\n"
+	  #   if $options->{verbose};
           $sdir = $idir;
           last;
         }
@@ -123,7 +125,8 @@ sub find_includes {
         }
       } else {
         if (! /<(.*)>/) {
-          print "Warning 1: Could not find file: $a in $filename (",__LINE__,")\n";
+          print "Warning 1: Could not find file: $a in $filename (",__LINE__,")\n"
+	    if $options->{verbose};
         }
       }
     }
@@ -133,7 +136,8 @@ sub find_includes {
       s/'[)]m4_dnl//;
       s/'[)]//;
       s/[ ]*$//;
-      #      print $_;
+      # print $_
+      #   if $options->{verbose};
       $a = $_;
       chomp($a);
       $a =~ s/\r+$//; # remove any trailing carriage returns; for Windows OS
@@ -141,7 +145,8 @@ sub find_includes {
       foreach $idir (@include_dirs) {
         $full_name = $idir.'/'.$a;
 	if (-e $full_name) {
-	  #          print "Found $full_name\n";
+	  # print "Found $full_name\n"
+	  #   if $options->{verbose};
           $sdir = $idir;
           last;
         }
@@ -152,24 +157,31 @@ sub find_includes {
         }
       } else {
         if (! /<(.*)>/) {
-          print "Warning 2: Could not find file: $a in $filename (",__LINE__,")\n";
+          print "Warning 2: Could not find file: $a in $filename (",__LINE__,")\n"
+	    if $options->{verbose};
         }
       }
     }
 
-    if (/^#include/) {
+    if (/^#include/ or ($filename =~ m/\.f.?.?$/i and (/^\s*include / or /^\s*use /))) {
       s/#include //;
-      s/"//g;
+      s/\s*include //;
+      my $iamfortran=0;
+      s/\s*use // and $iamfortran++;
+      s/["']//g;
       s/[ ]*$//;
-      #      print $_;
+      # print $_
+      #   if $options->{verbose};
       $a = $_;
       chomp($a);
       $a =~ s/\r+$//; # remove any trailing carriage returns; for Windows OS
       $sdir='';
       foreach $idir (@include_dirs) {
         $full_name = $idir.'/'.$a;
+	$full_name = glob "$idir/$a.[fF]*" if $iamfortran;
 	if (-e $full_name) {
-	  #          print "Found $full_name\n";
+	  # print "Found $full_name\n"
+	  #   if $options->{verbose};
           $sdir = $idir;
           last;
         }
@@ -180,22 +192,15 @@ sub find_includes {
         }
       } else {
         if (! /<(.*)>/) {
-          print "Warning 3: Could not find file: $a in $filename (",__LINE__,")\n";
+          print "Warning 3: Could not find file: $a in $filename (",__LINE__,")\n"
+	    if $options->{verbose};
         }
       }
     }
   }
-  close(FILE);
+  close($FH);
   @list;
 }
-
-sub print_list {
-  local(@list) = @_;
-  foreach $name (@list) {
-    print "$name\n";
-  }
-}
-
 
 sub remove_dups {
   local(@list1,@list2);

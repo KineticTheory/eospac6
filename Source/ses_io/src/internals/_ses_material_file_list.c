@@ -70,7 +70,7 @@ struct _ses_material_file_list* _copy_material_file_list(struct _ses_material_fi
   return_value->_head = (struct _ses_material_file*)NULL;
   struct _ses_material_file* tmp = the_list->_head;
   struct _ses_material_file* new = (struct _ses_material_file*)NULL;
-  ses_boolean didit_add = SES_FALSE;
+  /* ses_boolean didit_add = SES_FALSE; */
 
   while (tmp != NULL) {
 
@@ -82,13 +82,13 @@ struct _ses_material_file_list* _copy_material_file_list(struct _ses_material_fi
       _set_latest_error(SES_OBJECT_COPY_ERROR);
 
       /*  release memory on error */
-      ses_boolean didit_destruct = SES_FALSE;
-      didit_destruct = _destruct_material_file_list(return_value);
+      /* ses_boolean didit_destruct = SES_FALSE; */
+      /* didit_destruct = */ _destruct_material_file_list(return_value);
       free(return_value);
       return (struct _ses_material_file_list*)NULL;
     }
 
-    didit_add = _add_to_list(return_value, new);
+    /* didit_add = */ _add_to_list(return_value, new);
     tmp = tmp->_next;
   }
 
@@ -661,7 +661,7 @@ ses_boolean _sort_material_file_list(struct _ses_material_file_list* the_list) {
   
   struct _ses_material_file* current_low = the_list->_head;
   struct _ses_material_file* current_high = the_list->_head;
-  struct _ses_material_file* prev_tmp = current_high;
+  /* struct _ses_material_file* prev_tmp = current_high; */
   struct _ses_material_file* tmp = (struct _ses_material_file*)NULL;
   if (current_high != (struct _ses_material_file*)NULL) {
      tmp = current_high->_next;
@@ -719,7 +719,7 @@ ses_boolean _sort_material_file_list(struct _ses_material_file_list* the_list) {
        }     
 	    
      
-       prev_tmp = tmp;
+       /* prev_tmp = tmp; */
        tmp = tmp->_next;
 #ifdef DEBUG_SORT
 if (tmp != NULL) {

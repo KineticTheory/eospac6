@@ -118,6 +118,12 @@ ses_error_flag parse_my_material_tag(struct _ses_index_record* the_index_record,
 
     char* docname = pSFH->_material_filename;
     xmlDoc* doc = xmlReadFile(docname, NULL, 0);
+#define DEBUG_LLNL_NULL_FILE
+#ifdef DEBUG_LLNL_NULL_FILE
+    if (doc == (xmlDoc*)NULL) {
+	return SES_READ_ERROR;
+    }
+#endif
 
     // Get the root element node -- the material
 
@@ -639,8 +645,8 @@ long _get_temperature_address(char* filename) {
 	tag = _skip_tag(pFILE, "/axis");
 	free(tag);
 	tag = (char*)NULL;
-	ses_boolean didit = SES_FALSE;
-        didit = _find_tag_data(pFILE, "axis");
+	/* ses_boolean didit = SES_FALSE; */
+        /* didit = */ _find_tag_data(pFILE, "axis");
 	long return_value = ftell(pFILE);
 	fclose(pFILE);
 	return return_value;

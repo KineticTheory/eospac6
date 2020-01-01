@@ -6,7 +6,7 @@
 
 #include <stdlib.h>
 
-#define FIX_GET_IDS_WITH_NO_201
+#undef DEBUG_PRINT
 
 ses_table_id_reference ses_get_table_ids(ses_file_handle the_handle, ses_material_id mid, long* size) {
 
@@ -31,20 +31,15 @@ ses_table_id_reference ses_get_table_ids(ses_file_handle the_handle, ses_materia
 	ses_error_flag didit_setup = ses_setup(the_handle, mid, 201);
 	if (didit_setup != SES_NO_ERROR) {
 
-#ifdef FIX_GET_IDS_WITH_NO_201
-
 	   didit_setup = ses_setup(the_handle, mid, 101);
 	   if (didit_setup != SES_NO_ERROR) {
-#endif
 #ifdef DEBUG_PRINT
            	printf("ses_get_table_ids:  not setup and did not set up to 201 table for mid %ld\n", (long)mid);
 #endif
 	   	_set_latest_error(didit_setup);
 	   	return SES_NULL_TABLES;
-#ifdef FIX_GET_IDS_WITH_NO_201
 
 	   }   
-#endif
 	}
 
   }
@@ -133,11 +128,6 @@ ses_table_id_reference ses_get_table_ids(ses_file_handle the_handle, ses_materia
   pIR = (struct _ses_index_record*)NULL;
 
   _releasePFILE(pSFH); 
-
-  //FILE_LIST[the_handle]->_current_index_record = _copy_index_record(original);
-
-  //free(original);
-  //original = (struct _ses_index_record*)NULL;
 
   return return_value;
 }

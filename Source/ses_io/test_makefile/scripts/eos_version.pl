@@ -84,7 +84,7 @@ else
     exit;
   }
 
-$cvs_cmd = "cvs -d :ext:sf4.lanl.gov:/cvsroot/eospac6";
+$cvs_cmd = "cvs -d :ext:tf.lanl.gov:/cvsroot/eospac6";
 
 #............................................................................
 #....................assign default variables................................
@@ -208,6 +208,7 @@ while ( $done eq "false" )
     $section_output{$section} = <<EOS;
 #include "eos_types.h"
 #include "eos_wrappers.h"
+#include <string.h>
 
 #ifdef __cplusplus
 extern "C"

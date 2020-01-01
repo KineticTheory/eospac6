@@ -165,8 +165,8 @@ char* get_substring_for_pair_members(char* the_string, char direction, char deli
 	if (string_at_first_delimeter != (char*)NULL) {
 		if (direction == 'b') {
 			int length = (string_at_first_delimeter  - the_string)/sizeof(char);
-			int strlength = 0;
-			strlength = strlen(the_string);
+			/* int strlength = 0; */
+			/* strlength = strlen(the_string); */
 			if (length <= 1) {
 				return_value = calloc((strlen(the_string) + 1), sizeof(char));
 				strcpy(return_value, the_string);

@@ -130,84 +130,10 @@ void eos_CreateRecordType6 (void *ptr, EOS_INTEGER th)
 {
   eos_RecordType6 *me;
 
-#if 0 // no_SetFileIndexesRecordType
-
-  EOS_INTEGER matid, count;
-  EOS_INTEGER ierr = EOS_OK;
-  EOS_REAL *read_data;
-
-#ifdef DEBUG
-  printf ("creating record type 6... \n");
-#endif
-  me = (eos_RecordType6 *) ptr;
-  matid = me->eosData.materialID;
-  read_data = NULL;
-
-  /* check handle's error code; this was moved from Create upon the introduction
-   * of the eos_SetDataFileName function */
-  if (eos_GetStandardErrorCodeFromCustomErrorCode(gEosDataMap.errorCodes[th]) == EOS_MATERIAL_NOT_FOUND) {
-    ierr = gEosDataMap.errorCodes[th];
-    ((eos_ErrorHandler *) me)->HandleError (me, th, ierr);
-    return;
-  }
-
-  /* get the file offset for reading data and get back 5 reals: NT, NR, date1, date2 and vers  */
-  ierr =
-    eos_SeekToDataTable (matid, me->eosData.tableNum, &read_data, 5,
-                         &(me->eosData.dataFileOffset),
-                         &(me->eosData.dataFileIndex),
-                         &(me->eosData.dataSize),
-			 me->eosData.userDefinedDataFile);
-  if (ierr) {
-#ifdef DEBUG
-    printf ("error seeking to table! ERROR %d\n", ierr);
-#endif
-    ((eos_ErrorHandler *) me)->HandleError (me, th, ierr);
-    return;
-  }
-
-  // determine how many subtables (a.k.a. material phases) are available;
-  // return error code if requested is not available
-  count = 0;
-  me->NR = (EOS_INTEGER) read_data[count++];    /* count = 0 */
-  me->NT = (EOS_INTEGER) read_data[count++];    /* count = 1 */
-  /* read creation date */
-  me->eosData.creationDate = (EOS_INTEGER) read_data[count++];     /* 2 */
-  /* read modification date */
-  me->eosData.modificationDate = (EOS_INTEGER) read_data[count++]; /* 3 */
-  if (me->eosData.modificationDate == 0)
-    me->eosData.modificationDate = me->eosData.creationDate;
-  /* read version number */
-  me->eosData.latestVersion = (EOS_INTEGER) read_data[count++];    /* 4 */
-  /* NW = 1 + 1 + NR + NT + NR*NT*NP
-   * NP = ( NW - 2 - NR - NT ) / ( NR*NT )
-   *  where NW = me->eosData.dataSize
-   */
-  me->NP = ( me->eosData.dataSize - 2 - me->NR - me->NT ) / ( me->NR * me->NT );
-#ifdef DEBUG
-  fprintf (stderr, "NR:              %d\n", me->NR);
-  fprintf (stderr, "NT:              %d\n", me->NT);
-  fprintf (stderr, "NP:              %d\n", me->NP);
-#endif
-
-  /* check if there is enough data -- at least 1 subtable is required! */
-  if (me->eosData.dataSize < 2 + me->NR + me->NT + me->NR * me->NT) {
-#ifdef DEBUG
-    printf ("wrong amount of data read! %d must be at least %d\n",
-            me->eosData.dataSize, 2 + me->NR + me->NT + me->NR * me->NT);
-#endif
-    ((eos_ErrorHandler *) me)->HandleError (me, th, EOS_READ_DATA_FAILED);
-    EOS_FREE (read_data);
-    return;                     /* wrong amount of data read! */
-  }
-
-  /* deallocate read_data[], which was allocated by eos_SeekToDataTable() above */
-  EOS_FREE (read_data);
-
-#else // end no_SetFileIndexesRecordType
-
   me = (eos_RecordType6 *) ptr;
 
+  gEosDataMap.errorCodes[th] = EOS_OK; /* reset previous error */
+ 
   /* set the sesame file indexes and offsets for RecordType6 */
   eos_SetFileIndexesRecordType6 (me, th);
 
@@ -219,8 +145,6 @@ void eos_CreateRecordType6 (void *ptr, EOS_INTEGER th)
     ((eos_ErrorHandler *) me)->HandleError (me, th, EOS_READ_DATA_FAILED);
     return;
   }
-
-#endif
 
   // allocate enough memory
   eos_SetSizeRecordType6 (me, me->NR, me->NT, me->NP, me->eosData.tableNum);
@@ -300,7 +224,7 @@ void eos_SetFileIndexesRecordType6 (void *ptr, EOS_INTEGER th)
     return;                     /* wrong amount of data read! */
   }
 
-  /* deallocate read_data[], which was allocated by eos_SeekToDataTable() above */
+  /* deallocate read_data[], which was allocated by eos_SesSeekToDataTable() above */
   EOS_FREE (read_data);
 }
 
@@ -474,11 +398,11 @@ void eos_SetSizeRecordType6 (eos_RecordType6 *me, EOS_INTEGER NR,
     // table[i:0..(NP-1)][j:0..(NT-1)][k:0..(NR-1)]
     table = (EOS_REAL ***) malloc( NP * sizeof(EOS_REAL **) );
     for ( i = 0 ; i < NP ; ++i ) {
-      table[i] = (EOS_REAL **) malloc( NT * sizeof(EOS_REAL *) );
-      for ( j = 0 ; j < NT ; ++j ) {
-        table[i][j] = (EOS_REAL *) malloc( NR * sizeof(EOS_REAL) );
+    table[i] = (EOS_REAL **) malloc( NT * sizeof(EOS_REAL *) );
+    for ( j = 0 ; j < NT ; ++j ) {
+    table[i][j] = (EOS_REAL *) malloc( NR * sizeof(EOS_REAL) );
     }
-  }
+    }
   */
 
   /* allocate memory continuously for R[NR] and T[NT] */
@@ -495,11 +419,17 @@ void eos_SetSizeRecordType6 (eos_RecordType6 *me, EOS_INTEGER NR,
 
   /* allocate memory continuously for NP subtables with NR*NT dimension */
   ptr = (unsigned char *) malloc (d3_size /* pointers to subtables */
-				  + d2_size /* pointers to subtable rows */
-				  + d1_size /* data values */
-				  );
+                                  + d2_size /* pointers to subtable rows */
+                                  + d1_size /* data values */
+                                  );
   if (!ptr) {
-    /* do something */
+    me->eosData.isAllocated = 0;
+    EOS_FREE(me->R);
+    me->T = NULL;
+    me->NR = 0;
+    me->NT = 0;
+    me->NP = 0;
+    return;
   }
 
   me->table = (EOS_REAL ***) ptr;
@@ -521,11 +451,12 @@ void eos_SetSizeRecordType6 (eos_RecordType6 *me, EOS_INTEGER NR,
   for (k = 0; k < me->NP; k++) {
     for (j = 0; j < me->NT; j++) {
       for (i = 0; i < me->NR; i++) {
-	me->table[k][j][i] = (EOS_REAL) count++;
+        me->table[k][j][i] = (EOS_REAL) count++;
       }
     }
   }
 
+  me->eosData.isAllocated = 1;
 }
 
 void eos_GetSizeRecordType6 (eos_RecordType6 *me, EOS_INTEGER *NR,
@@ -893,7 +824,7 @@ void eos_SetPackedTableRecordType6 (void *ptr, EOS_INTEGER th,
   memcpy (&(me->eosData.dataSize), packedTable + byteCount,
           sizeof (EOS_INTEGER));
   byteCount += sizeof (EOS_INTEGER);
-  me->eosData.isLoaded = (me->eosData.numSubtablesLoaded > 0);
+  me->eosData.isLoaded = (me->eosData.numSubtablesLoaded > 0) ? 1 : 0;
 
 }
 

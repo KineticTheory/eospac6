@@ -5,28 +5,40 @@
 
 #include "_file_list_ascii.h"
 
-
+#undef DEBUG_PRINT
 ses_boolean _isit_my_format_ascii(FILE* pFILE) {
-
-
-	ses_boolean return_value = SES_FALSE;
-	if (pFILE != (FILE*)NULL) {
-
-		  rewind(pFILE);
-
-		  ses_boolean needs_flip = SES_FALSE;
-
-		  long nfiles = 0;
-		  nfiles = _read_long_pFILE_ascii(pFILE, needs_flip);
-		  long matid = 0;
-		  matid = _read_long_pFILE_ascii(pFILE, needs_flip);
-
-		  if (matid > 0) {
-			return_value = SES_TRUE;
-		  }
-		  rewind(pFILE);
-
-	}
-
-	return return_value;
+    
+    ses_boolean return_value = SES_FALSE;
+    if (pFILE != (FILE*)NULL) {
+        
+        rewind(pFILE);
+        
+        ses_boolean needs_flip = SES_FALSE;
+        
+        long nfiles = 0;
+        nfiles = _read_long_pFILE_ascii(pFILE, needs_flip);
+#ifdef DEBUG_PRINT
+        printf("_isit_my_format_ascii:  nfiles is %ld\n", nfiles);
+#endif
+        if (nfiles == 0) {
+            
+            //  read the next long, which should be the Table ID with 6 characters:
+            
+            long dummy = _read_long_tomax_pFILE_ascii(pFILE, 6, needs_flip);
+#ifdef DEBUG_PRINT
+            printf("_isit_my_format_ascii:  dummy is %ld\n", dummy);
+#endif
+            
+            if (dummy != 0) {
+                return_value = SES_TRUE;
+            }
+            
+            
+        }
+        rewind(pFILE);
+        
+    }
+    
+    
+    return return_value;
 }

@@ -1,0 +1,23 @@
+﻿{
+  "configurations": [
+    {
+      "name": "x64-Debug",
+      "generator": "Visual Studio 16 2019 Win64",
+      "configurationType": "Debug",
+      "inheritEnvironments": [ "msvc_x64_x64" ],
+      "buildRoot": "c:/work/vs2019-${name}/eospac64",
+      "installRoot": "c:/work/vs2019-${name}/install",
+      "cmakeCommandArgs": "",
+      "buildCommandArgs": "-verbosity:minimal",
+      "ctestCommandArgs": "-j 8 --output-on-failures",
+      "cmakeExecutable": "C:/Program Files/CMake/bin/cmake.exe",
+      "variables": [
+        {
+          "name": "CMAKE_INSTALL_PREFIX2",
+          "value": "c:/work/vendors64/eospac-6.4.0",
+          "type": "PATH"
+        }
+      ]
+    }
+  ]
+}

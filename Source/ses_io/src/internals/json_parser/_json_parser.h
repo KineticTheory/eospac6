@@ -33,6 +33,8 @@
 #define get_node_for_index HEADER(get_node_for_index)
 #define convert_to_value HEADER(convert_to_value)
 
+#define detect_object_divider HEADER(detect_object_divider)
+
 
 
 enum node_type { OBJECT, MEMBERS, PAIR, KEY,  KVALUE, VALUE, ARRAYVALUE, STRING, NUMBER, ARRAY, ELEMENT, BOOLEAN, MYNULL, EXPRESSION, NOT_VALID };

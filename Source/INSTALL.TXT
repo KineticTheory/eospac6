@@ -14,20 +14,18 @@ CONTENTS
 
 1. INTRODUCTION
 
-The installation of EOSPAC 6 is fairly straight-forward. The basic directory structure of this package requires multiple Makefiles:
+The installation of EOSPAC 6 is fairly straight-forward. The basic directory structure of this package requires
+multiple Makefiles:
 
-Source/Makefile
-  - This is the master Makefile that drives the others, and it is further described below.
+Source/Makefile - This is the master Makefile that drives the others, and it is further described below.
 
-Source/src/Makefile
-  - This Makefile will build libeospac6.a and other related files.
+Source/src/Makefile - This Makefile will build libeospac6.a and other related files.
 
-Source/tests/Makefile
-  - This Makefile will build and excute the test suite(s).
+Source/tests/Makefile - This Makefile will build and excute the test suite(s).
 
-NOTES:
-  - All of the Makefiles require gmake (gmake version 3.78 or later is recommended, but no testing has been performed to determine the actual requirement). 
-  - Perl is required for successful usage of the existing Makefiles' targets.
+NOTES: - All of the Makefiles require gmake (gmake version 3.78 or later is recommended, but no testing has been
+performed to determine the actual requirement).  - Perl is required for successful usage of the existing Makefiles'
+targets.
 
 
 The Source/src/Makefile contains a target named 'help' that produces output like the following:
@@ -76,17 +74,21 @@ make check
 make install
 
 The first command (make) builds all of the binary files, including all example and test executables.
-The second command (make check) builds all of the binary files if the first command was not run, and then all of the executables are run.
-The third command will install the package in the default location that is defined as the first of the following locations that found on the current machine:
+The second command (make check) builds all of the binary files if the first command was not run, and then all of the
+executables are run.
+The third command will install the package in the default location that is defined as the first of the following
+locations that found on the current machine:
 
 /usr/projects/data/eos/eospac/$(CVS_BASE_TAG_NAME)
 /usr/local/codes/data/eos/eospac/$(CVS_BASE_TAG_NAME)
 /usr/gapps/lanl-data/eos/eospac/$(CVS_BASE_TAG_NAME)
 /usr/local/eos/eospac/$(CVS_BASE_TAG_NAME)
 
-where $(CVS_BASE_TAG_NAME) is a variation of the CVS tag, $Name, that is assigned to the current release of EOSPAC 6 (see Makefile.compile_opts for details).
+where $(CVS_BASE_TAG_NAME) is a variation of the CVS tag, $Name, that is assigned to the current release of EOSPAC 6
+(see Makefile.compile_opts for details).
 
-If you want to specify an alternative installation directory, the prefix variable may be overridden on the command line as follows:
+If you want to specify an alternative installation directory, the prefix variable may be overridden on the command
+line as follows:
 
 make install prefix=/your/custom/path
 
@@ -100,9 +102,13 @@ which will create the following directories containing the installed files:
 
 3. COMPILERS
 
-The 'Source/Makefile.compile_opts' file contains the platform-specific definitions of the F77, F90, C and C++ compilers. Any of the default compilers may be redefined on the command line by overriding the values of the F77, F90, CC and CXX variables (i.e., 'make CXX=g++'). This overriding is especially necessary on the various Linux machines due to the fact that so many different compilers are available. The contents of libeospac6.a are typically compiled using gcc; however, some exceptions exist (see Makefile.compile_opts for details).
+The 'Source/Makefile.compile_opts' file contains the platform-specific definitions of the F77, F90, C and C++
+compilers. Any of the default compilers may be redefined on the command line by overriding the values of the F77, F90,
+CC and CXX variables (i.e., 'make CXX=g++'). This overriding is especially necessary on the various Linux machines due
+to the fact that so many different compilers are available. The contents of libeospac6.a are typically compiled using
+gcc; however, some exceptions exist (see Makefile.compile_opts for details).
 
-The currently-supported platform/OS configurations are defined as follows:
+The currently-supported platform/OS configurations are defined as, but not limited to the following:
 
 alphaev68-dec-osf
 i686-pc-cygwin
@@ -112,3 +118,19 @@ powerpc-apple-darwin
 powerpc-ibm-aix
 sparc-sun-solaris
 x86_64-unknown-linux-gnu
+
+The aforementioned supported platform/OS configurations are determined by the output of the included pair of scripts
+named Source/scripts/config.guess and Source/scripts/config.guess.wrapper. Some additional, specific configuration
+strings are listed as follows:
+
+x86_64-avx2-sles12-linux-gnu
+x86_64-avx512pf-sles12-linux-gnu
+x86_64-avx2-centos7-linux-gnu
+x86_64-avx2-opensuse42-linux-gnu
+x86_64-avx-fedora29-linux-gnu
+x86_64-avx2-rhel7_toss3.3-5-linux-gnu
+x86_64-apple-darwin15.6.0
+power9pc64le-rhel7-linux-gnu
+power8pc64le-rhel7-linux-gnu
+
+The user's system may produce a completely-different value than the limited set listed here.

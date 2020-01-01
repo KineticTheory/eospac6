@@ -24,7 +24,7 @@ eval '(exit $?0)' && eval 'exec perl -S "$0" ${1+"$@"}'
 # Return either a list of the baseline exception file(s) or a directory name if the
 # "--directory" option is specified.
 #
-
+my $cmd = "$0 @ARGV";
 #
 # Parse all options
 use Getopt::Long;
@@ -53,20 +53,22 @@ if ( not $options->{"all"} ) {
   }
 }
 
-print STDERR __LINE__, ": \@ARGV = [ @ARGV ]\n" if $options->{"verbose"};
-print STDERR __LINE__, ": \@_baseline_exception_files = [ @_baseline_exception_files ]\n" if $options->{"verbose"};
+print STDERR "\n", "debug", $$, "::", __LINE__, ": CMD: $cmd\n" if $options->{"verbose"};
+
+print STDERR "debug", $$, "::", __LINE__, ": \@ARGV = [ @ARGV ]\n" if $options->{"verbose"};
+print STDERR "debug", $$, "::", __LINE__, ": \@_baseline_exception_files = [ @_baseline_exception_files ]\n" if $options->{"verbose"};
 
 OUTER: while ( $REGRESSION_DATA_EXCEPTIONS_DIR = shift ) {
 
   $REGRESSION_DATA_EXCEPTIONS_DIR2 = $REGRESSION_DATA_EXCEPTIONS_DIR;
   $REGRESSION_DATA_EXCEPTIONS_DIR2 =~ s/[0-9\.]+$//;
 
-  print STDERR __LINE__, ": \$REGRESSION_DATA_EXCEPTIONS_DIR = $REGRESSION_DATA_EXCEPTIONS_DIR\n" if $options->{"verbose"};
-  print STDERR __LINE__, ": \$REGRESSION_DATA_EXCEPTIONS_DIR2 = $REGRESSION_DATA_EXCEPTIONS_DIR2\n" if $options->{"verbose"};
+  print STDERR "debug", $$, "::", __LINE__, ": \$REGRESSION_DATA_EXCEPTIONS_DIR = $REGRESSION_DATA_EXCEPTIONS_DIR\n" if $options->{"verbose"};
+  print STDERR "debug", $$, "::", __LINE__, ": \$REGRESSION_DATA_EXCEPTIONS_DIR2 = $REGRESSION_DATA_EXCEPTIONS_DIR2\n" if $options->{"verbose"};
 
   unless (-d $REGRESSION_DATA_EXCEPTIONS_DIR or -d $REGRESSION_DATA_EXCEPTIONS_DIR2) {
-    print STDERR __LINE__, ": directory missing $REGRESSION_DATA_EXCEPTIONS_DIR\n" if $options->{"verbose"};
-    print STDERR __LINE__, ": directory missing $REGRESSION_DATA_EXCEPTIONS_DIR2\n" if $options->{"verbose"};
+    print STDERR "debug", $$, "::", __LINE__, ": directory missing $REGRESSION_DATA_EXCEPTIONS_DIR\n" if $options->{"verbose"};
+    print STDERR "debug", $$, "::", __LINE__, ": directory missing $REGRESSION_DATA_EXCEPTIONS_DIR2\n" if $options->{"verbose"};
     next;
   }
 
@@ -75,7 +77,7 @@ OUTER: while ( $REGRESSION_DATA_EXCEPTIONS_DIR = shift ) {
     push( @baseline_exception_files, glob($REGRESSION_DATA_EXCEPTIONS_DIR2 . '/*.{ed,?diff}') );
     my $d = dirname $REGRESSION_DATA_EXCEPTIONS_DIR;
     while ( $d !~ m|/data$| ) {
-      print STDERR __LINE__, ": \$d = $d\n" if $options->{"verbose"};
+      print STDERR "debug", $$, "::", __LINE__, ": \$d = $d\n" if $options->{"verbose"};
       my $d2 = $d;
       $d2 =~ s/([^\/])[0-9\.]+$/$1/;
       push( @baseline_exception_files, glob($d . '/*.{ed,?diff}') );
@@ -87,12 +89,12 @@ OUTER: while ( $REGRESSION_DATA_EXCEPTIONS_DIR = shift ) {
     @baseline_exception_files = @_baseline_exception_files;
   }
 
-  print STDERR __LINE__, ": \@baseline_exception_files = [ @baseline_exception_files ]\n" if $options->{"verbose"};
+  print STDERR "debug", $$, "::", __LINE__, ": \@baseline_exception_files = [ @baseline_exception_files ]\n" if $options->{"verbose"};
 
  BASELINE_EXCEPTION_FILES: for $file (@baseline_exception_files) {
 
     if ($seen{$file}) {
-      print STDERR __LINE__, ": BTDT! skipping $file\n" if $options->{"verbose"};
+      print STDERR "debug", $$, "::", __LINE__, ": BTDT! skipping $file\n" if $options->{"verbose"};
       next;
     }
 
@@ -100,7 +102,7 @@ OUTER: while ( $REGRESSION_DATA_EXCEPTIONS_DIR = shift ) {
 
     $baseline_exception_file = basename($file);
 
-    print STDERR __LINE__, ": \$baseline_exception_file = $baseline_exception_file\n" if $options->{"verbose"};
+    print STDERR "debug", $$, "::", __LINE__, ": \$baseline_exception_file = $baseline_exception_file\n" if $options->{"verbose"};
 
     $baseline_dir = "";
 
@@ -108,39 +110,41 @@ OUTER: while ( $REGRESSION_DATA_EXCEPTIONS_DIR = shift ) {
     $cwd = `pwd`;
     chomp $cwd;
 
-    print STDERR __LINE__, ": \$cwd = $cwd\n" if $options->{"verbose"};
+    print STDERR "debug", $$, "::", __LINE__, ": \$cwd = $cwd\n" if $options->{"verbose"};
 
     my $min_length = 1;
     $min_length = length($options->{"rootdir"}) if $options->{"rootdir"};
 
+    print STDERR "debug", $$, "::", __LINE__, ": \$min_length = $min_length\n" if $options->{"verbose"};
+
   SUBDIRS: while (length($dir_) > $min_length) {	# ignore "/" or $options->{"rootdir"}
 
-      print STDERR __LINE__, ": \$dir_ = $dir_\n" if $options->{"verbose"};
+      print STDERR "debug", $$, "::", __LINE__, ": \$dir_ = $dir_\n" if $options->{"verbose"};
 
       # check specific platform directory
       if (-s "$dir_/$baseline_exception_file") {
 	$baseline_dir=$dir_;
 	push @list, "$dir_/$baseline_exception_file";
-	print STDERR __LINE__, ": \$baseline_dir = $baseline_dir\n" if $options->{"verbose"};
+	print STDERR "debug", $$, "::", __LINE__, ": \$baseline_dir = $baseline_dir\n" if $options->{"verbose"};
 	last BASELINE_EXCEPTION_FILES if not $options->{"all"};
 	last SUBDIRS;
       }
 
       if (-z "$dir_/$baseline_exception_file") {
 	$baseline_dir="";
-	print STDERR __LINE__, ": \$baseline_dir = $baseline_dir\n" if $options->{"verbose"};
+	print STDERR "debug", $$, "::", __LINE__, ": \$baseline_dir = $baseline_dir\n" if $options->{"verbose"};
 	last BASELINE_EXCEPTION_FILES if not $options->{"all"};
 	last SUBDIRS;
       }
 
       # check generic platform directory (i.e., i386-apple-darwin instead of i386-apple-darwin9.8.0)
       $dir2 = $dir_;
-      $dir2 =~ s/([^\/])[0-9\.]+$/$1/;
-      print STDERR __LINE__, ": \$dir2 = $dir2\n" if $options->{"verbose"};
+      $dir2 =~ s/([^0-9\.\/])[0-9\.]+$/$1/;
+      print STDERR "debug", $$, "::", __LINE__, ": \$dir2 = $dir2\n" if $options->{"verbose"};
       if (-s "$dir2/$baseline_exception_file") {
 	$baseline_dir=$dir2;
 	push @list, "$dir2/$baseline_exception_file";
-	print STDERR __LINE__, ": \$baseline_dir = $baseline_dir\n" if $options->{"verbose"};
+	print STDERR "debug", $$, "::", __LINE__, ": \$baseline_dir = $baseline_dir\n" if $options->{"verbose"};
 	last BASELINE_EXCEPTION_FILES if not $options->{"all"};
 	last SUBDIRS;
       }
@@ -162,3 +166,5 @@ else {
 
 $rval =~ s:/+:/:g;
 print $rval;
+
+print STDERR "\n" if $options->{"verbose"};

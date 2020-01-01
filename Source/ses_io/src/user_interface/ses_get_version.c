@@ -25,16 +25,16 @@ long  ses_get_version(ses_file_handle the_handle) {
 
   struct _ses_file_handle* pSFH = FILE_LIST[the_handle]->_the_handle;
 
-  FILE* pFILE = 0;
-  pFILE = _getPFILE(pSFH);
+  /* FILE* pFILE = 0; */
+  /* pFILE = */ _getPFILE(pSFH);
 
   struct _ses_directory* ptDIR = FILE_LIST[the_handle]->_directory;
 
-  ses_boolean read_dir = SES_FALSE;
+  /* ses_boolean read_dir = SES_FALSE; */
   if (ptDIR == (struct _ses_directory*)NULL) {
 
     ptDIR  = _read_directory(pSFH);
-    read_dir = SES_TRUE;
+    /* read_dir = SES_TRUE; */
     if (ptDIR == (struct _ses_directory*)NULL) {
 #ifdef DEBUG_PRINT
       printf("SES_GET_VERSION: did not read directory \n");

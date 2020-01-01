@@ -26,7 +26,7 @@ F90_List = f90
 F90_Found_List = $(foreach compiler,$(F90_List),$(call pathsearch,$(compiler)))
 F90 = $(firstword $(notdir $(F90_Found_List)))
 ifeq ($(strip $(F90))$(strip $(F90_Found_List)),)
-  $(error No supported Fortran compiler was found in your PATH for this machine. (supported: $(F90_List)))
+#  $(error No supported Fortran compiler was found in your PATH for this machine. (supported: $(F90_List)))
 endif
 
 ##################################################################
@@ -46,6 +46,9 @@ $(call set,_F77,f90,f77)   # DEC
 CC  = $(firstword $(foreach compiler,$(call get,_CC,$(F90_Key)),$(call pathsearch,$(compiler))))
 CXX = $(firstword $(foreach compiler,$(call get,_CXX,$(F90_Key)),$(call pathsearch,$(compiler))))
 F77 = $(firstword $(foreach compiler,$(call get,_F77,$(F90_Key)),$(call pathsearch,$(compiler))))
+
+# compiler check for CC, CXX, F90 and F77
+include $(BASEDIR)/config/Makefile.check_compilers
 
 ##################################################################
 ### Define selected variable values according to $(F90).       ###

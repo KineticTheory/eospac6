@@ -7,37 +7,38 @@
 ### Platform-dependent system configuration for an ARCH value  ###
 ### containing the following pattern:                          ###
 ###    i386-apple
+###    x86_64-apple
 ##################################################################
 #
 # GMSL function dependencies exist (see $(BASEDIR)/config/gmsl).
 #
-# i386 and MacOS
+# (i386 or x86_64) and MacOS
 
 ##################################################################
 ### Assign values to associative arrays, which hold C, C++ and ###
 ### F77 compiler names in preferential order according to      ###
 ### the possible values of $(F90).                             ###
 ##################################################################
-$(call set,_CC,f90,     gcc            )   # Absoft
-$(call set,_CC,pgf90,   pgcc     gcc   )   # PGI
-$(call set,_CC,ifort,   icc      gcc   )   # Intel
-$(call set,_CC,g95,     gcc            )   # G95
-$(call set,_CC,gfortran,gcc            )   # gfortran
-$(call set,_CC,nagfor,  gcc            )   # NAG
+$(call set,_CC,f90,     gcc                    )   # Absoft
+$(call set,_CC,pgf90,   pgcc     gcc           )   # PGI
+$(call set,_CC,ifort,   icc      gcc           )   # Intel
+$(call set,_CC,g95,     gcc                    )   # G95
+$(call set,_CC,gfortran,gcc                    )   # gfortran
+$(call set,_CC,nagfor,  gcc                    )   # NAG
 
-$(call set,_CXX,f90,     g++           )   # Absoft
-$(call set,_CXX,pgf90,   pgcpp   g++   )   # PGI
-$(call set,_CXX,ifort,   icpc    g++   )   # Intel
-$(call set,_CXX,g95,     g++           )   # G95
-$(call set,_CXX,gfortran,g++           )   # gfortran
-$(call set,_CXX,nagfor,  g++           )   # NAG
+$(call set,_CXX,f90,     g++                   )   # Absoft
+$(call set,_CXX,pgf90,   pgcpp   pgc++   g++   )   # PGI
+$(call set,_CXX,ifort,   icpc    g++           )   # Intel
+$(call set,_CXX,g95,     g++                   )   # G95
+$(call set,_CXX,gfortran,g++                   )   # gfortran
+$(call set,_CXX,nagfor,  g++                   )   # NAG
 
-$(call set,_F77,f90,     f77     $(F90))   # Absoft
-$(call set,_F77,pgf90,   pgf77   $(F90))   # PGI
-$(call set,_F77,ifort,   $(F90)        )   # Intel
-$(call set,_F77,g95,     $(F90)        )   # G95
-$(call set,_F77,gfortran,$(F90)        )   # gfortran
-$(call set,_F77,nagfor,  $(F90)        )   # NAG
+$(call set,_F77,f90,     f77     $(F90)        )   # Absoft
+$(call set,_F77,pgf90,   pgf77   $(F90)        )   # PGI
+$(call set,_F77,ifort,   $(F90)                )   # Intel
+$(call set,_F77,g95,     $(F90)                )   # G95
+$(call set,_F77,gfortran,$(F90)                )   # gfortran
+$(call set,_F77,nagfor,  $(F90)                )   # NAG
 
 ##################################################################
 ### Define CC, CXX and  F77 according to $(F90).               ###
@@ -45,6 +46,9 @@ $(call set,_F77,nagfor,  $(F90)        )   # NAG
 CC  = $(firstword $(foreach compiler,$(call get,_CC,$(F90_Key)),$(call pathsearch,$(compiler))))
 CXX = $(firstword $(foreach compiler,$(call get,_CXX,$(F90_Key)),$(call pathsearch,$(compiler))))
 F77 = $(firstword $(foreach compiler,$(call get,_F77,$(F90_Key)),$(call pathsearch,$(compiler))))
+
+# compiler check for CC, CXX, F90 and F77
+include $(BASEDIR)/config/Makefile.check_compilers
 
 ##################################################################
 ### Assign values to associative arrays, which hold various    ###
@@ -92,6 +96,15 @@ $(call set,_DEFINE_MODULE_SUBDIR_FLAGS,ifort,intel)
 $(call set,_DEFINE_MODULE_SUBDIR_FLAGS,g95,$(F90_Key))
 $(call set,_DEFINE_MODULE_SUBDIR_FLAGS,gfortran,gcc)
 $(call set,_DEFINE_MODULE_SUBDIR_FLAGS,nagfor,$(F90_Key))
+
+
+##################################################################
+### Define selected variable values according to $(F90_Key).   ###
+##################################################################
+ifeq ($(strip $(F90_Key)),g95)
+  G95_MEM_SEGMENTS = 0
+  export G95_MEM_SEGMENTS
+endif
 
 # define selected variable values according to $(F90_Key).
 ALT_SUBDIR := $(shell $(BASEDIR)/scripts/define_module_subdir $(call get,_DEFINE_MODULE_SUBDIR_FLAGS,$(F90_Key)))

@@ -37,32 +37,49 @@ ifeq ($(USE_C),TRUE)
 
   SRCS = eos_Access.c \
          eos_RecordType1.c \
+         eos_RecordType1Interp.c \
          eos_RecordType2.c \
+         eos_RecordType2Interp.c \
          eos_RecordType3.c \
          eos_RecordType4.c \
          eos_RecordType5.c \
          eos_RecordType6.c \
+         eos_RecordType6Interp.c \
          eos_Data.c \
          eos_DataMap.c \
          eos_ErrorHandler.c \
          eos_Utils.c \
          eos_UtilsRage.c \
-	 TEST_FUNCTIONS.c \
+         TEST_FUNCTIONS.c \
          eos_Interpolation.c \
          eos_Taylor.c \
+         eos_SaferMemoryAllocation.c \
          $(notdir $(SESIO_SRCS))
 
-  INCS = eos_Interface.f90 eos_Interface2003.f90 \
-	 eos_Interface.fi \
-	 TEST_FUNCTIONS.h \
-	 eos_universal_types.h \
+  INCS = eos_Interface.f90 eos_Interface2003.f90 eos_InterfaceFortranCommon.f90 \
+         eos_Interface.fi \
+         eos_universal_types.h \
          eos_Interface.h \
+         eos_Interface.proto.h \
+         eos_SaferMemoryAllocation.h \
+         eos_SaferMemoryAllocation.proto.h \
          $(SESIOINC)/ses_defines.h
 endif
 ifeq ($(USE_F90),TRUE)
   SRCS_F90 = eos_Interface.f90
   SRCS_F03 = $(notdir $(shell egrep -l eos_Interface2003 $(SRCDIR)/*.f*))
 endif
+
+# -----------------------------------------------------------------------------------------------
+# Define which source files require AVX optimizations.
+# This is necessary to avoid unwanted vectorization in much of the setup code in EOSPAC, that has
+#proved to be not easily vectorized. This list may grow as code is reworked in the future.
+$(call set,_APPLY_CPUINFO_COMP_FLAGS,eos_Interpolation.c, $(CPUFLAGS))
+$(call set,_APPLY_CPUINFO_COMP_FLAGS,eos_RecordType1Interp.c, $(CPUFLAGS))
+$(call set,_APPLY_CPUINFO_COMP_FLAGS,eos_RecordType2Interp.c, $(CPUFLAGS))
+$(call set,_APPLY_CPUINFO_COMP_FLAGS,eos_RecordType6Interp.c, $(CPUFLAGS))
+$(call set,_APPLY_CPUINFO_COMP_FLAGS,eos_Utils.c, $(CPUFLAGS))
+# -----------------------------------------------------------------------------------------------
 
 INTERFACE_OBJS = $(INTERFACE_SRCS:%.c=$(OBJDIR)/%.o)
 OBJS     = $(SRCS:%.c=$(OBJDIR)/%.o)
@@ -98,22 +115,22 @@ EOS_VERSION_SRC = $(if $(wildcard eos_version.c),eos_version.c,)
 ### Create dependency lists, and build object/executable files ###
 ##################################################################
 DEPDIR = $(BASEDIR)/src/.depends
-MAKEDEPEND = $(BASEDIR)/scripts/make_depends -o $(OBJDIR) -d $(DEPDIR) -I $(BASEDIR)/src -I $(SESIOINC) $<
+MAKEDEPEND = $(BASEDIR)/scripts/make_depends -o $(OBJDIR) -d $(DEPDIR) -I $(SRCDIR) -I $(SESIOINC) $<
 
 $(OBJDIR)/%.o : $(CPPDIR)/%.c
 	$(MAKEDEPEND)
-	${CC} -I$(SRCDIR) $(SESIO_IDIRS) ${CFLAGS} $(if $(MANGLE_DEF),-D$(MANGLE_DEF),) $(SESIO_DEF) -c $< -o $@
+	${CC} -I$(SRCDIR) $(SESIO_IDIRS) ${CFLAGS} $(call get,_APPLY_CPUINFO_COMP_FLAGS,$(notdir $<)) $(MORE_COMPILE_OPTS) $(if $(MANGLE_DEF),-D$(MANGLE_DEF),) $(SESIO_DEF) -c $< -o $@
 
 $(OBJDIR)/%.o : %.c
 	$(MAKEDEPEND)
-	${CC} ${CFLAGS} $(SESIO_IDIRS) $(if $(MANGLE_DEF),-D$(MANGLE_DEF),) $(SESIO_DEF) -c $< -o $@
+	${CC} ${CFLAGS} $(call get,_APPLY_CPUINFO_COMP_FLAGS,$(notdir $<)) $(MORE_COMPILE_OPTS) $(SESIO_IDIRS) $(if $(MANGLE_DEF),-D$(MANGLE_DEF),) $(SESIO_DEF) -c $< -o $@
 
 $(OBJDIR)/%2003.f90.o : %2003.f90
 	$(MAKEDEPEND)
 	@which cp
 	-cp $< $(INCDIR)
 	@-(popdir=`pwd`; cd $(INCDIR); echo 'popdir:' $$popdir; echo 'CWD:' `pwd`; set -x; \
-         ${F90} ${F90FLAGS} -I"$$popdir" $(if $(MANGLE_DEF),-D$(MANGLE_DEF),) $(SESIO_DEF) -c "$<" -o "$@" )
+         ${F90} ${F90FLAGS} $(call get,_APPLY_CPUINFO_COMP_FLAGS,$(notdir $<)) -I"$$popdir" $(if $(MANGLE_DEF),-D$(MANGLE_DEF),) $(SESIO_DEF) -c "$<" -o "$@" )
 	@-if [ -f $(OBJDIR)/*.[Mm][Oo][Dd] ]; then set -x; mv $(OBJDIR)/*.[Mm][Oo][Dd] $(INCDIR); fi
 
 $(OBJDIR)/%.f90.o : %.f90
@@ -121,7 +138,7 @@ $(OBJDIR)/%.f90.o : %.f90
 	@which cp
 	-cp $< $(INCDIR)
 	@(popdir=`pwd`; cd $(INCDIR); echo 'popdir:' $$popdir; echo 'CWD:' `pwd`; set -x; \
-         ${F90} ${F90FLAGS} -I"$$popdir" $(if $(MANGLE_DEF),-D$(MANGLE_DEF),) $(SESIO_DEF) -c "$<" -o "$@" )
+         ${F90} ${F90FLAGS} $(call get,_APPLY_CPUINFO_COMP_FLAGS,$(notdir $<)) -I"$$popdir" $(if $(MANGLE_DEF),-D$(MANGLE_DEF),) $(SESIO_DEF) -c "$<" -o "$@" )
 	@-if [ -f $(OBJDIR)/*.[Mm][Oo][Dd] ]; then set -x; mv $(OBJDIR)/*.[Mm][Oo][Dd] $(INCDIR); fi
 
 ##################################################################
@@ -257,7 +274,7 @@ ifeq (0,${MAKELEVEL})
 	@$(MAKE) -C $(BASEDIR)/Examples clean
 else
 	-rm -fr $(INCDIR) $(DEPDIR) $(OBJDIR) $(LIBDIR) \
-                $(MANGLED_SRCS) core* *.stackdump
+                $(MANGLED_SRCS) core* *.stackdump *.lst $(JUNKFILE) $(BUILD_LOG)
 endif
 	-$(MAKE) -C $(BASEDIR)/ses_io/src clean
 
@@ -278,7 +295,7 @@ DISTCLEAN_DIRS = $(patsubst %/.distclean,%,$(wildcard $(BASEDIR)/src/*/.distclea
 DISTCLEAN_SUBDIRS = $(notdir $(DISTCLEAN_DIRS))
 
 distclean: $(addprefix distclean_,$(DISTCLEAN_SUBDIRS))
-	-rm -fr $(DEPDIR) $(BUILD_LOG) core* *.stackdump
+	-rm -fr $(DEPDIR) $(JUNKFILE) $(BUILD_LOG) core* *.stackdump *.lst
 
 distclean_%:
 	@(loc=`pwd`; \

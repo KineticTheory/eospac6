@@ -1,12 +1,12 @@
-#-*-perl-*-
+eval '(exit $?0)' && eval 'exec perl -S "$0" ${1+"$@"}' #-*-perl-*-
+& eval 'exec perl -S "$0" $argv:q'
+        if 0;
+#
 ##################################################################
 #
 #  Copyright -- see file named COPYRIGHTNOTICE
 #
 ##################################################################
-eval '(exit $?0)' && eval 'exec perl -S "$0" ${1+"$@"}'
-& eval 'exec perl -S "$0" $argv:q'
-        if 0;
 #
 # Convert selected Doxygen comments to README text output, which is sent to STDOUT.
 #
@@ -88,12 +88,23 @@ foreach $file (@ARGV) {
     }
     elsif (/[\\\@\$](date):*\s*(.*)\s*\$/i) {
       ($doxytag, $s) = ($1, $2);
+      print STDERR __LINE__,": (\$doxytag,\$s) = ($doxytag,$s)\n" if $options->{"verbose"};
       $doxytag = uc($doxytag);
 
-      use Time::Local; # convert GMT to my locale
+      use Time::Local; # convert time to my locale
       use POSIX;
-      my ($Y,$M,$D,$h,$m,$s,$z)=split(/[\s\/:]+/,$s);
-      $s = strftime("%F %T %Z",localtime(timegm($s,$m,$h,$D,$M-1,$Y-1900)));
+      my ($Y,$M,$D,$h,$m,$s,$z)=split(/[\s\/:]+/,$s); # split time string
+      if ($s !~ /\S/) { # no time string available
+	$s = strftime("%F %T %Z",localtime(time()));
+      }
+      elsif ($z =~ /\S/) { # time zone specified in $z
+	# use content of $s as provided
+	$s = "$Y-$M-$D $h:$m:$s $z";
+      }
+      else { # convert GMT to my locale
+	print STDERR __LINE__,": (\$s,\$m,\$h,\$D,\$M-1,\$Y-1900,\$z) = ($s,$m,$h,$D,".($M-1).",".($Y-1900).",$z)\n" if $options->{"verbose"};
+	$s = strftime("%F %T %Z",localtime(timegm($s,$m,$h,$D,$M-1,$Y-1900)));
+      }
 
       $sorted_hashkeys .= ($sorted_hashkeys?"|":"") . "$doxytag" if $sorted_hashkeys !~ /$doxytag/;
       $s =~ s/^\s+//;

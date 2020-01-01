@@ -8,7 +8,7 @@ c
 c********************************************************************
 
 c> \file
-c>  \ingroup tests
+c>  \ingroup Fortran77 tests
 c>  \brief Verify that EOS_V_PtT is available via the eos_Interface F77 header.
 c>
 c> \note

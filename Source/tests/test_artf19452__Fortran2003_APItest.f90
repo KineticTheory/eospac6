@@ -8,7 +8,7 @@
 !********************************************************************
 
 !> @file
-!! @ingroup tests quick
+!! @ingroup Fortran2003 tests quick
 !! @brief Ensure the new eos_SetDataFileName and eos_GetMaxDataFileNameLength
 !!        work as expected. See SourceForge© Issue #artf19452 for more details:
 !!        https://tf.lanl.gov/sf/go/artf19452
@@ -37,7 +37,7 @@ program TestF90
   character(kind=EOS_CHAR,len=4096) :: file_str(MAX_ARRAY_DIM)
 
   integer :: stat, line_cnt = 0
-  logical(kind=EOS_BOOLEAN) :: lexist
+  logical :: lexist
 
   tableType  = EOS_Pt_DT
   matID      = 93720
@@ -89,9 +89,12 @@ program TestF90
   !
   call eos_LoadTables ( nTables, tableHandle, errorCode)
   if (errorCode /= EOS_OK) then
-     call eos_GetErrorMessage ( errorCode, errorMessage )
-     write(*,998) 'eos_LoadTables ERROR ', errorCode, ': ', &
-                   errorMessage(1:(len_trim(errorMessage)-1))
+     do i=1, nTables
+        call eos_GetErrorCode (tableHandle(i), errorCode);
+        call eos_GetErrorMessage ( errorCode, errorMessage )
+        write(*,998) 'eos_LoadTables ERROR ', errorCode, ': ', &
+                     errorMessage(1:(len_trim(errorMessage)-1))
+     enddo
   endif
 
   !

@@ -67,8 +67,8 @@ ses_error_flag ses_change_next(ses_file_handle the_handle, ses_word_reference th
   }
   
 
-  ses_boolean didit_write =  SES_FALSE;
-  didit_write = _write_ses_word_array(pSFH, the_buffer, dim, 0, SES_FALSE);
+  /* ses_boolean didit_write =  SES_FALSE; */
+  /* didit_write = */ _write_ses_word_array(pSFH, the_buffer, dim, 0, SES_FALSE);
 
   struct _ses_iterator* pIT = FILE_LIST[the_handle]->_current_data_record->_the_iterator;
   pIT->_current_array++;

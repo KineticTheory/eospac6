@@ -8,7 +8,7 @@
 !*********************************************************************
 
 !>  \file
-!!  \ingroup tests
+!!  \ingroup Fortran2003 tests
 !!  \brief Verify the new public function, eos_GetTableMetaData, returns meta data,
 !!         per a user's specific request, functions as advertised within a Fortran code.
 !!
@@ -18,6 +18,8 @@
 !!
 !! \note
 !! MATIDS TO TEST: 3720 3721 3722
+!! REQUIRED FILE: data/ses003721
+!! REQUIRED FILE: data/ses003722
 
 program main
 
@@ -39,7 +41,7 @@ program main
   integer i, j, k, count
 
   logical lexist
-  logical equal
+  logical(EOS_BOOLEAN) :: equal
 
   ntables = 1
   count = 0
@@ -290,5 +292,7 @@ program main
 
   write(*,'(a)') ''
   write(*,'(i2,1x,a)') count, 'tests passed'
+
+  call eos_DestroyAll (errorCode)
 
 end program main
