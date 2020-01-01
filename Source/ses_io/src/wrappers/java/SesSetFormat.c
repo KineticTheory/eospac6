@@ -6,10 +6,11 @@
 #include "stdio.h"
 #include <stdlib.h>
 
+#define TRY_OPTIONAL
+
 #undef DEBUG_WRAP
 
- 
-JNIEXPORT jint JNICALL Java_MySesIO_SesIO_SesSetFormat(JNIEnv *env, jobject obj, jint jhandle, jchar jformat)
+JNIEXPORT jint JNICALL Java_MySesIO_SesIO_SesSetFormat(JNIEnv *env, jobject obj, jint jhandle, jchar jformat, jchar ascii_format)
 {
 
   ses_error_flag return_value = SES_NO_ERROR;
@@ -21,7 +22,12 @@ JNIEXPORT jint JNICALL Java_MySesIO_SesIO_SesSetFormat(JNIEnv *env, jobject obj,
   printf("SesSetFormat.c:  the_handle is %d\n", handle);
 #endif
 
-  return_value = ses_set_format(handle, format);
+#ifdef TRY_OPTIONAL
+  return_value = ses_set_format(3, handle, format, ascii_format);
+#else
+    return_value = ses_set_format(handle, format, ascii_format);
+#endif
+    
 #ifdef DEBUG_WRAP 
   printf("SesSetFormat.c:  return_value is %d\n", return_value);
 #endif

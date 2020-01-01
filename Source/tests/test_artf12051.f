@@ -8,7 +8,7 @@ c
 c********************************************************************
 
 c> \file
-c> \ingroup tests
+c> \ingroup Fortran77 tests
 c> \brief Perform the following tests:
 c>   -# Verify resolution of issue artf12051.
 c>      See SourceForge<A9> for more details:
@@ -67,13 +67,14 @@ c> MATIDS TO TEST: 3717
      &        'value(i)','sval(i)','diff','extrap1','extrap2'
          do i=1,num
             err2=EOS_OK
+            xybound=EOS_OK
             call eos_Interpolate(eoshandle,1,x(i),y(i),
      &           sval(i),dfx,dfy,err2)
-            call eos_ErrorCodesEqual(EOS_INTERP_EXTRAPOLATED, err1,
+            call eos_ErrorCodesEqual(EOS_INTERP_EXTRAPOLATED, err2,
      &                               equal)
             if (equal) then
                ierr=EOS_OK
-               call eos_CheckExtrap(eoshandle,1,x,y,xybound,ierr)
+               call eos_CheckExtrap(eoshandle,1,x(i),y(i),xybound,ierr)
             endif
             denom = value(i)
             if (denom.eq.0.) denom = 1.0
@@ -87,5 +88,7 @@ c> MATIDS TO TEST: 3717
          enddo
       enddo
       print *," icount=",icount
+
+      call eos_DestroyAll (err1);
 
       end

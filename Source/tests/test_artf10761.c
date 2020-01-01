@@ -95,7 +95,7 @@ int main ()
 		  tableHandle[i], tableHandleErrorCode, errorMessage);
 	}
       }
-      return 0;
+      goto CLEANUP;
     }
 
     if (j == 0)
@@ -107,7 +107,7 @@ int main ()
       if (errorCode != EOS_OK) {
 	eos_GetErrorMessage (&errorCode, errorMessage);
 	printf ("eos_SetOption ERROR %i: %s (fcmp_ignore)\n", errorCode, errorMessage);
-	return 0;
+	goto CLEANUP;
       }
       optionFlag = EOS_APPEND_DATA;
 
@@ -117,7 +117,7 @@ int main ()
       if (errorCode != EOS_OK) {
 	eos_GetErrorMessage (&errorCode, errorMessage);
 	printf ("eos_SetOption ERROR %i: %s (fcmp_ignore)\n", errorCode, errorMessage);
-	return 0;
+	goto CLEANUP;
       }
     }
 
@@ -134,7 +134,7 @@ int main ()
 		  tableHandle[i], tableHandleErrorCode, errorMessage);
 	}
       }
-      return 0;
+      goto CLEANUP;
     }
 
     printf("Mixture for table type %s\n", get_tableType_str(tableType[0]));
@@ -235,6 +235,12 @@ int main ()
     }
     printf("\n");
 
+  }
+
+ CLEANUP:
+  {
+    EOS_INTEGER err;
+    eos_DestroyAll (&err);
   }
 
   return 0;

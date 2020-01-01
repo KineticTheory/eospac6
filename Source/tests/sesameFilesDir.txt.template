@@ -25,3 +25,6 @@
 
 # Sesame test data file containing little endian version of material 3720
 <BASEDIR_PATTERN>/tests/data/93270littlebin
+
+# ses003720 test data file list
+<BASEDIR_PATTERN>/tests/data/ses003720

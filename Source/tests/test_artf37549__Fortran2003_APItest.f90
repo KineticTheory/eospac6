@@ -8,7 +8,7 @@
 !********************************************************************
 
 !> @file
-!! @ingroup tests quick
+!! @ingroup Fortran2003 tests quick
 !! @brief Ensure the new eos_SetDataFileName error handling works as expected,
 !!        and that invalid table handles are not allowed to be used internally.
 !!        See SourceForge© Issue #artf37549 for more details:
@@ -122,5 +122,7 @@ program test_artf37549
 
   call eos_LoadTables(numtabs,itablehandle,errorcode)
   call eos_GetPackedTablesSize(numtabs,itablehandle,PACKEDTABLESSIZE,errorcode)
+
+  call eos_DestroyAll (errorCode)
 
 end program test_artf37549

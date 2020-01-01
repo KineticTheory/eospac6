@@ -8,7 +8,7 @@ c
 c********************************************************************
 
 c> \file
-c> \ingroup tests
+c> \ingroup Fortran77 tests
 c> \brief Perform the following tests:
 c>   -# Verify resolution of issue artf11958.
 c>      See SourceForge<A9> Issue #artf11958 for more details:
@@ -56,4 +56,7 @@ c> MATIDS TO TEST: 7760
      &           " i=",i," x=",x(i)," y=",y(i),"   sval=",sval(i)
          enddo
       enddo
+
+      call eos_DestroyAll (err1);
+
       end

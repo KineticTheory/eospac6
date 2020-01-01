@@ -2,7 +2,7 @@ eos_CreateTables error EOS_OK
 eos_SetOption error EOS_OK
 eos_LoadTables error EOS_OK
 eos_SetOption error EOS_OK
-eos_Interpolate ERROR 12008: EOS_INTERP_EXTRAPOLATED: Interpolation caused extrapolation beyond data table boundaries (Newton-Bisection method exceeded 100 iterations given convergence criterion 1.818989e-12 #err=9474.587158))
+eos_Interpolate error EOS_OK
 input density value is 9.000000
 input pressure value is 27.000000
 interpolated value is 866.860721

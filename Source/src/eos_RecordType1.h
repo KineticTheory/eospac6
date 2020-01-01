@@ -19,23 +19,6 @@
  * 432, 502-505, and 601-605.
  */
 
-/* This container is designed to hold the data range boundaries based upon the non-inverted tables.
- * This container is only used when the ((eos_RecordType1*)me)->isInvertedAtSetup=EOS_TRUE.
- */
-typedef struct
-{
-    EOS_BOOLEAN stored;
-    EOS_INTEGER nx;
-    EOS_INTEGER ny;
-    EOS_REAL *x; /* independent variable conditionally used for for either x or y bounds
-		    defined in the next 4 arrays; the following 4 arrays may contain either
-		    a constant or a list of values depending upon the associated table type: */
-    EOS_REAL *xLo; /* lower bound for table type's x-independent variable; */
-    EOS_REAL *yLo; /* lower bound for table type's y-independent variable; */
-    EOS_REAL *xHi; /* upper bound for table type's x-independent variable; */
-    EOS_REAL *yHi; /* upper bound for table type's y-independent variable; */
-} eos_ExtrapolationBoundsRecordType1;
-
 /* This container is designed to contain the following number of 2-D tables: */
 #define MAX_TABLES_RECORDTYPE1 4
 
@@ -64,8 +47,6 @@ typedef struct
   EOS_REAL *coldCurve2;         /* [NR} */
   EOS_REAL *coldCurve3;         /* [NR} */
   EOS_REAL *coldCurve4;         /* [NR} */
-
-  eos_ExtrapolationBoundsRecordType1 extrapolationBounds;
 
   EOS_REAL *temporary; /* a temporary array for internal data exchange */
 

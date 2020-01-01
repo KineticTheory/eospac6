@@ -16,7 +16,7 @@ Ordered list of Sesame files searched:
 
 TableHandle=0 matid =  3720 source = Analytical Cowan Model page =  1
 Data Type = EOS_Aic_DT
-Loading Options: EOS_MONOTONIC_IN_Y, EOS_SPLIT_FORCED
+Loading Options: EOS_SPLIT_FORCED
 Description = Ion Specific-Free-Energy plus Cold Curve Specific-Free-Energy (MJ/kg) (Density (Mg/m^3)- and Temperature (K)-dependent)
   fconv =   1.000000000000000E+00         xconv =   1.000000000000000E+00         yconv =   1.000000000000000E+00
 
@@ -136,7 +136,7 @@ Description = Ion Specific-Free-Energy plus Cold Curve Specific-Free-Energy (MJ/
 
 TableHandle=0 matid =  3720 source = Analytical Cowan Model page =  2
 Data Type = EOS_Aic_DT
-Loading Options: EOS_MONOTONIC_IN_Y, EOS_SPLIT_FORCED
+Loading Options: EOS_SPLIT_FORCED
 Description = Ion Specific-Free-Energy plus Cold Curve Specific-Free-Energy (MJ/kg) (Density (Mg/m^3)- and Temperature (K)-dependent)
   fconv =   1.000000000000000E+00         xconv =   1.000000000000000E+00         yconv =   1.000000000000000E+00
 
@@ -256,7 +256,7 @@ Description = Ion Specific-Free-Energy plus Cold Curve Specific-Free-Energy (MJ/
 
 TableHandle=0 matid =  3720 source = Analytical Cowan Model page =  3
 Data Type = EOS_Aic_DT
-Loading Options: EOS_MONOTONIC_IN_Y, EOS_SPLIT_FORCED
+Loading Options: EOS_SPLIT_FORCED
 Description = Ion Specific-Free-Energy plus Cold Curve Specific-Free-Energy (MJ/kg) (Density (Mg/m^3)- and Temperature (K)-dependent)
   fconv =   1.000000000000000E+00         xconv =   1.000000000000000E+00         yconv =   1.000000000000000E+00
 
@@ -376,7 +376,7 @@ Description = Ion Specific-Free-Energy plus Cold Curve Specific-Free-Energy (MJ/
 
 TableHandle=0 matid =  3720 source = Analytical Cowan Model page =  4
 Data Type = EOS_Aic_DT
-Loading Options: EOS_MONOTONIC_IN_Y, EOS_SPLIT_FORCED
+Loading Options: EOS_SPLIT_FORCED
 Description = Ion Specific-Free-Energy plus Cold Curve Specific-Free-Energy (MJ/kg) (Density (Mg/m^3)- and Temperature (K)-dependent)
   fconv =   1.000000000000000E+00         xconv =   1.000000000000000E+00         yconv =   1.000000000000000E+00
 
@@ -442,8 +442,8 @@ Description = Ion Specific-Free-Energy plus Cold Curve Specific-Free-Energy (MJ/
    4.320000000000000E+00  -4.930758859225317E+00  -6.641971932925546E+00  -8.458707390639317E+00  -1.039594919967046E+01  -1.240523299621162E+01  -1.658154158202830E+01  -2.094622909983134E+01  -2.547868892749969E+01  -3.016288232549554E+01  -3.498595199307687E+01
    4.590000000000000E+00  -3.118771873754055E+00  -4.779433022049343E+00  -6.509464397593294E+00  -8.319552125477559E+00  -1.023940388112945E+01  -1.431395862215723E+01  -1.857907424987334E+01  -2.301259998692947E+01  -2.759851819199174E+01  -3.232400197353627E+01
    4.860000000000000E+00  -1.167493907157907E+00  -2.783004284312465E+00  -4.467564340346017E+00  -6.215209324773247E+00  -8.026532070056101E+00  -1.193418382893760E+01  -1.610810082171568E+01  -2.045073648242288E+01  -2.494609090216604E+01  -2.958135438521958E+01
-   5.130000000000000E+00   8.736713752005976E-01  -7.001098173075673E-01  -2.343760672353392E+00  -4.050204578102858E+00  -5.814564038829545E+00  -9.530800242716509E+00  -1.358182032070864E+01  -1.784127798585312E+01  -2.225354907035914E+01  -2.680584166146187E+01
-   5.400000000000000E+00   3.053059404403796E+00   1.510914572071853E+00  -9.180430845182497E-02  -1.760994694140982E+00  -3.487833058970053E+00  -7.098822939011814E+00  -1.096840901760728E+01  -1.513606019614066E+01  -1.947206537176934E+01  -2.394804199913326E+01
+   5.130000000000000E+00   8.735617471260007E-01  -7.001098173075673E-01  -2.343760672353392E+00  -4.050204578102858E+00  -5.814564038829545E+00  -9.530800242716509E+00  -1.358182032070864E+01  -1.784127798585312E+01  -2.225354907035914E+01  -2.680584166146187E+01
+   5.400000000000000E+00   3.053059404403796E+00   1.510791665810384E+00  -9.180430845182497E-02  -1.760994694140982E+00  -3.487833058970053E+00  -7.098822939011814E+00  -1.096840901760728E+01  -1.513606019614066E+01  -1.947206537176934E+01  -2.394804199913326E+01
    6.075000000000000E+00   8.895378425029666E+00   7.435626242715234E+00   5.908020758151840E+00   4.318499227427615E+00   2.671924302938471E+00  -7.767847175692362E-01  -4.412356380096113E+00  -8.226722533127671E+00  -1.229760055743342E+01  -1.660161345082254E+01
    6.750000000000000E+00   1.527119550048093E+01   1.387447988373799E+01   1.241044615266281E+01   1.088501620719616E+01   9.303041978367450E+00   5.985033493793163E+00   2.482127868602941E+00  -1.186408883256675E+00  -5.005646155643245E+00  -9.020545420809054E+00
    7.425000000000001E+00   2.211114137001021E+01   2.076503918676471E+01   1.935208553145991E+01   1.787818756126943E+01   1.634818718753975E+01   1.313542483325008E+01   9.739466017383357E+00   6.179551637808356E+00   2.470645860574867E+00  -1.375278512192202E+00
@@ -496,7 +496,7 @@ Description = Ion Specific-Free-Energy plus Cold Curve Specific-Free-Energy (MJ/
 
 TableHandle=0 matid =  3720 source = Analytical Cowan Model page =  5
 Data Type = EOS_Aic_DT
-Loading Options: EOS_MONOTONIC_IN_Y, EOS_SPLIT_FORCED
+Loading Options: EOS_SPLIT_FORCED
 Description = Ion Specific-Free-Energy plus Cold Curve Specific-Free-Energy (MJ/kg) (Density (Mg/m^3)- and Temperature (K)-dependent)
   fconv =   1.000000000000000E+00         xconv =   1.000000000000000E+00         yconv =   1.000000000000000E+00
 
@@ -616,7 +616,7 @@ Description = Ion Specific-Free-Energy plus Cold Curve Specific-Free-Energy (MJ/
 
 TableHandle=0 matid =  3720 source = Analytical Cowan Model page =  6
 Data Type = EOS_Aic_DT
-Loading Options: EOS_MONOTONIC_IN_Y, EOS_SPLIT_FORCED
+Loading Options: EOS_SPLIT_FORCED
 Description = Ion Specific-Free-Energy plus Cold Curve Specific-Free-Energy (MJ/kg) (Density (Mg/m^3)- and Temperature (K)-dependent)
   fconv =   1.000000000000000E+00         xconv =   1.000000000000000E+00         yconv =   1.000000000000000E+00
 
@@ -736,7 +736,7 @@ Description = Ion Specific-Free-Energy plus Cold Curve Specific-Free-Energy (MJ/
 
 TableHandle=0 matid =  3720 source = Analytical Cowan Model page =  7
 Data Type = EOS_Aic_DT
-Loading Options: EOS_MONOTONIC_IN_Y, EOS_SPLIT_FORCED
+Loading Options: EOS_SPLIT_FORCED
 Description = Ion Specific-Free-Energy plus Cold Curve Specific-Free-Energy (MJ/kg) (Density (Mg/m^3)- and Temperature (K)-dependent)
   fconv =   1.000000000000000E+00         xconv =   1.000000000000000E+00         yconv =   1.000000000000000E+00
 
@@ -856,7 +856,7 @@ Description = Ion Specific-Free-Energy plus Cold Curve Specific-Free-Energy (MJ/
 
 TableHandle=0 matid =  3720 source = Analytical Cowan Model page =  8
 Data Type = EOS_Aic_DT
-Loading Options: EOS_MONOTONIC_IN_Y, EOS_SPLIT_FORCED
+Loading Options: EOS_SPLIT_FORCED
 Description = Ion Specific-Free-Energy plus Cold Curve Specific-Free-Energy (MJ/kg) (Density (Mg/m^3)- and Temperature (K)-dependent)
   fconv =   1.000000000000000E+00         xconv =   1.000000000000000E+00         yconv =   1.000000000000000E+00
 

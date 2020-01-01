@@ -33,6 +33,7 @@
 #include "../src/eos_types_internal.h"
 #include "../src/eos_Taylor.h"
 #include "../src/eos_Utils.h"
+#include "TEST_FUNCTIONS.proto.h"
 
 EOS_INTEGER main() {
 
@@ -57,7 +58,7 @@ EOS_INTEGER main() {
   EOS_INTEGER n = 4;
   eos_Taylor *S = _eos_Create1DTaylor(n); // n-order univariate polynomial
   B = (EOS_REAL*) malloc(n * sizeof(EOS_REAL));
-  printf("main::B (0x%x)\n{ ", (unsigned int)B);
+  printf("main::B (0x%lx)\n{ ", (unsigned long)B);
   for (i=0; i<n; i++) {
     B[i] = (!i)?5:i;
     printf("%g%s", B[i], ((i==n-1)?" }":", "));
@@ -94,7 +95,7 @@ EOS_INTEGER main() {
   EOS_INTEGER nx = n, ny = 3;
   eos_Taylor *T = _eos_Create2DTaylor(nx, ny); // nx- by ny-order bivariate polynomial
   C = T->GetCoefficients(T);
-  printf("main::C (0x%x) %dx%d\n{\n", (unsigned int)C, nx, ny);
+  printf("main::C (0x%lx) %dx%d\n{\n", (unsigned long)C, nx, ny);
   for (i=0; i<nx; i++) {
     printf(" { ");
     for (j=0; j<ny; j++) {
@@ -162,6 +163,8 @@ EOS_INTEGER main() {
   T->Destroy(T);
   EOS_FREE(x);
   EOS_FREE(y);
+
+  eos_DestroyTableListReverseMap();
 
   return 0;
 

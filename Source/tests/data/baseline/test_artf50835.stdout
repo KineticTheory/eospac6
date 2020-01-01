@@ -1,0 +1,8 @@
+  errorcode =           0
+  invert errorCode=           0
+  errorcode =           0
+  invert errorCode=           0
+  errorcode =           0
+  errorcode =           0
+  itablehandle=           0           1           2           3
+  load table handle errorcode=       42011

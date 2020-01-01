@@ -67,23 +67,25 @@ int main ()
 
   int i, j, k, passed = 0, failed = 0;
 
-  EOS_INTEGER infoTypes[7] = {
+  EOS_INTEGER infoTypes[8] = {
     EOS_Material_Name,
     EOS_Material_Source,
     EOS_Material_Date,
     EOS_Material_Ref,
     EOS_Material_Composition,
     EOS_Material_Codes,
-    EOS_Material_Phases
+    EOS_Material_Phases,
+    EOS_Material_Classification
   };
-  EOS_CHAR *infoTypes_str[7] = {
-    "EOS_Material_Name       ",
-    "EOS_Material_Source     ",
-    "EOS_Material_Date       ",
-    "EOS_Material_Ref        ",
-    "EOS_Material_Composition",
-    "EOS_Material_Codes      ",
-    "EOS_Material_Phases     "
+  EOS_CHAR *infoTypes_str[8] = {
+    "EOS_Material_Name          ",
+    "EOS_Material_Source        ",
+    "EOS_Material_Date          ",
+    "EOS_Material_Ref           ",
+    "EOS_Material_Composition   ",
+    "EOS_Material_Codes         ",
+    "EOS_Material_Phases        ",
+    "EOS_Material_Classification"
   };
 
   for (j=0; j<sizeof(matidList)/sizeof(matidList[0]); j++) {
@@ -100,10 +102,10 @@ int main ()
       eos_GetErrorMessage (&err1, errorMessage);
       printf("eos_CreateTables ERROR %d: %s\n", err1, errorMessage);
       for (i=0; i<ntables; i++) {
-	eos_GetErrorCode (&tablehandles[i], &err2);
-	if (err2 == EOS_OK) continue;
-	eos_GetErrorMessage (&err2, errorMessage);
-	printf("     TH %-3d ERROR %d: %s\n", tablehandles[i], err2, errorMessage);
+        eos_GetErrorCode (&tablehandles[i], &err2);
+        if (err2 == EOS_OK) continue;
+        eos_GetErrorMessage (&err2, errorMessage);
+        printf("     TH %-3d ERROR %d: %s\n", tablehandles[i], err2, errorMessage);
       }
       failed++; /* increment failed test counter */
     }
@@ -121,10 +123,10 @@ int main ()
       eos_GetErrorMessage (&err1, errorMessage);
       printf("eos_LoadTables ERROR %d: %s\n", err1, errorMessage);
       for (i=0; i<ntables; i++) {
-	eos_GetErrorCode (&tablehandles[i], &err2);
-	if (err2 == EOS_OK) continue;
-	eos_GetErrorMessage (&err2, errorMessage);
-	printf("     TH %-3d ERROR %d: %s\n", tablehandles[i], err2, errorMessage);
+        eos_GetErrorCode (&tablehandles[i], &err2);
+        if (err2 == EOS_OK) continue;
+        eos_GetErrorMessage (&err2, errorMessage);
+        printf("     TH %-3d ERROR %d: %s\n", tablehandles[i], err2, errorMessage);
       }
       failed++; /* increment failed test counter */
     }
@@ -144,24 +146,24 @@ int main ()
       EOS_INTEGER category = EOS_Table_Type;
       eos_GetMetaData (&itabletypes[k], &category, infoString, &err1);
       if (err1 == EOS_OK)
-	printf("\n     --- %s ---\n", infoString);
+        printf("\n     --- %s ---\n", infoString);
 
       for (i=0; i<sizeof(infoTypes)/sizeof(infoTypes[0]); i++) {
 
-	/* fetch meta data for tablehandles[k] */
-	infoString[0] = '\0';
-	eos_GetTableMetaData (&tablehandles[k], &infoTypes[i], infoString, &err1);
-	if (err1 == EOS_OK) {
-	  errorMessage[0] = '\0';
-	  printf("     %s: %s\n", infoTypes_str[i], infoString);
-	}
-	else {
-	  eos_GetErrorMessage(&err1, errorMessage);
-	  printf("     %s: %s\n", infoTypes_str[i], errorMessage);
-	  failed++; /* increment failed test counter */
-	  continue;
-	}
-	passed++; /* increment passed test counter */
+        /* fetch meta data for tablehandles[k] */
+        infoString[0] = '\0';
+        eos_GetTableMetaData (&tablehandles[k], &infoTypes[i], infoString, &err1);
+        if (err1 == EOS_OK) {
+          errorMessage[0] = '\0';
+          printf("     %s: %s\n", infoTypes_str[i], infoString);
+        }
+        else {
+          eos_GetErrorMessage(&err1, errorMessage);
+          printf("     %s: %s\n", infoTypes_str[i], errorMessage);
+          failed++; /* increment failed test counter */
+          continue;
+        }
+        passed++; /* increment passed test counter */
 
       }
 
@@ -177,4 +179,3 @@ int main ()
 
   return(0);
 }
-

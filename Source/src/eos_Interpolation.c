@@ -14,11 +14,10 @@
 
 #define _EOS_INTERPOLATION_INTERNAL_PROTOTYPES
 #include "eos_types_internal.h"
-#include "eos_Data.h"
-#include "eos_Utils.h"
-
 #include "eos_Interpolation.h"
 
+#include "eos_Utils.h"
+#include "eos_Data.h"
 #include "eos_DataMap.h"
 #include "eos_RecordType1.h"
 #include "eos_RecordType2.h"
@@ -580,10 +579,10 @@ void eos_RationalInterpolate4 (EOS_REAL srchX, EOS_REAL *X, EOS_REAL *F,
  *                     function f(x,y) holding y fixed. Uses linear
  *                     extrapolation.
  *       nsrch    = input  integer length of search vectors.
- *       nxtbl    = input  integer number of data table x values (y if y is fixed).
- *       nytbl    = input  integer number of data table y values (x if y is fixed).
+ *       nxtbl    = input  integer number of data table x values (1 if x is fixed).
+ *       nytbl    = input  integer number of data table y values (1 if y is fixed).
  *       ixtbl    = input  integer index of data table x (y if y is fixed) value.
- *       ytbls    = input  real array containing data table y values. (x is y is fixed)
+ *       ytbls    = input  real array containing data table y values. (x if y is fixed)
  *       ftbls    = input  real array containing data table f values.
  *       yvalv    = input  real search vector containing y (x if x is fixed) values.
  *       fvalv    = output real array containing interpolated values of
@@ -632,7 +631,6 @@ void eos_RationalInterpolate (EOS_INTEGER nsrch, EOS_INTEGER nxtbl,
                               EOS_REAL *dfvalv, char fixedVar,
                               EOS_INTEGER *xyBounds, EOS_INTEGER *err)
 {
-
   EOS_INTEGER err1, jx, jv, jy, j, vect_size;
   EOS_REAL interpX[4], interpF[4], *df;
   EOS_INTEGER *iyv = (EOS_INTEGER *) malloc (nsrch * sizeof (EOS_INTEGER));
@@ -926,12 +924,12 @@ void eos_InterpolateEosInterpolation (eos_Interpolation *me,
     /* determine the current machine's floating point precision */
     _eos_machinePrecisionData.gotMachinePrecision = 1;
     eos_GetMachinePrecision (&_eos_machinePrecisionData.eps,
-			     &_eos_machinePrecisionData.epsneg);
+                             &_eos_machinePrecisionData.epsneg);
     _eos_machinePrecisionData.maxIter = 100;
     _eos_machinePrecisionData.maxErr =
       pow (MAX
-	   (_eos_machinePrecisionData.eps, _eos_machinePrecisionData.epsneg),
-	   0.75);
+           (_eos_machinePrecisionData.eps, _eos_machinePrecisionData.epsneg),
+           0.75);
   }
 
   /* get eos Data pointer and the dataType from global data map */
@@ -1004,20 +1002,20 @@ void eos_InterpolateEosInterpolation (eos_Interpolation *me,
        Enforce temperature and density minimums. */
     for (i = 0; i < nXYPairs; i++) {
       if (! logAxes && EOS_TYPE_TO_INDEP_VAR1(dataType) == EOS_D && xVals[i] < 0.0)
-	X[i] = 0.0;
+        X[i] = 0.0;
       else
-	X[i] = xVals[i] / FLOOR (xconv);
+        X[i] = xVals[i] / FLOOR (xconv);
       if (! logAxes && EOS_TYPE_TO_INDEP_VAR2(dataType) == EOS_T && yVals[i] < 0.0)
-	Y[i] = 0.0;
+        Y[i] = 0.0;
       else
-	Y[i] = yVals[i] / FLOOR (yconv);
+        Y[i] = yVals[i] / FLOOR (yconv);
     }
 
     /* Convert input to log10 values for 500 and 600 Sesame tables if necessary */
     if (logAxes) {
       for (i = 0; i < nXYPairs; i++) {
-	X[i] = log10 (MAX (TINY_D, X[i]));
-	Y[i] = log10 (MAX (TINY_D, Y[i]));
+        X[i] = log10 (MAX (TINY_D, X[i]));
+        Y[i] = log10 (MAX (TINY_D, Y[i]));
       }
     }
 
@@ -1026,20 +1024,20 @@ void eos_InterpolateEosInterpolation (eos_Interpolation *me,
   { /* Interpolate the data according to recordType */
     if (eosData->recordType == EOS_RECORD_TYPE6) {
       for (i = 0; i < nXYPairs; i++) {
-	fVals[i] = 0.0;
-	/* dFx and dFy are ignored for this record type */
+        fVals[i] = 0.0;
+        /* dFx and dFy are ignored for this record type */
       }
     }
     else {
       for (i = 0; i < nXYPairs; i++) {
-	fVals[i] = 0.0;
-	dFx[i] = 0.0;
-	dFy[i] = 0.0;
+        fVals[i] = 0.0;
+        dFx[i] = 0.0;
+        dFy[i] = 0.0;
       }
     }
     if (eosData->Interpolate)
       eosData->Interpolate (eosData, tableHandle, dataType, nXYPairs, X, Y, fVals, dFx, dFy,
-			    me->interpolationDataList[tableHandle]->xyBounds, &err);
+                            me->interpolationDataList[tableHandle]->xyBounds, &err);
     else /* wrong record type */
       err = EOS_INVALID_DATA_TYPE;
   }
@@ -1048,8 +1046,12 @@ void eos_InterpolateEosInterpolation (eos_Interpolation *me,
   if (logAxes) {
     for (i = 0; i < nXYPairs; i++) {
       fVals[i] = pow (10.0, MIN (HUGE_LOG_D, fVals[i]));
-      dFx[i] = fVals[i] / MAX (TINY_D, xVals[i]) * dFx[i];
-      dFy[i] = fVals[i] / MAX (TINY_D, yVals[i]) * dFy[i];
+    }
+    if (eosData->recordType != EOS_RECORD_TYPE6) {
+      for (i = 0; i < nXYPairs; i++) {
+        dFx[i] = fVals[i] / MAX (TINY_D, xVals[i]) * dFx[i];
+        dFy[i] = fVals[i] / MAX (TINY_D, yVals[i]) * dFy[i];
+      }
     }
   }
 
@@ -1057,18 +1059,24 @@ void eos_InterpolateEosInterpolation (eos_Interpolation *me,
   if (fconv != 1.0) {
     for (i = 0; i < nXYPairs; i++) {
       fVals[i] *= fconv;
-      dFx[i] *= fconv;
-      dFy[i] *= fconv;
+    }
+    if (eosData->recordType != EOS_RECORD_TYPE6) {
+      for (i = 0; i < nXYPairs; i++) {
+        dFx[i] *= fconv;
+        dFy[i] *= fconv;
+      }
     }
   }
 
-  if (xconv != 1.0) {
-    for (i = 0; i < nXYPairs; i++)
-      dFx[i] /= FLOOR (xconv);
-  }
-  if (yconv != 1.0) {
-    for (i = 0; i < nXYPairs; i++)
-      dFy[i] /= FLOOR (yconv);
+  if (eosData->recordType != EOS_RECORD_TYPE6) {
+    if (xconv != 1.0) {
+      for (i = 0; i < nXYPairs; i++)
+        dFx[i] /= FLOOR (xconv);
+    }
+    if (yconv != 1.0) {
+      for (i = 0; i < nXYPairs; i++)
+        dFy[i] /= FLOOR (yconv);
+    }
   }
 
   /* Set extrapolation error codes if input less than temperature
@@ -1518,7 +1526,7 @@ void eos_CheckExtrapEosInterpolation (eos_Interpolation *me,
 
   /* first check last interpolation error for this handle. If the error was not EOS_OK,
      then return the cached in xyBounds values */
-  if (eos_GetStandardErrorCodeFromCustomErrorCode(me->interpolationDataList[tableHandle]->lastErrorCode) != EOS_OK &&
+  if (0 && eos_GetStandardErrorCodeFromCustomErrorCode(me->interpolationDataList[tableHandle]->lastErrorCode) != EOS_OK &&
       nXYPairs == me->interpolationDataList[tableHandle]->nXYPairs) {
     for (i = 0; i < nXYPairs; i++)
       xyBounds[i] = me->interpolationDataList[tableHandle]->xyBounds[i];
@@ -2273,6 +2281,9 @@ void eos_InverseBilinearInterpolateFY (EOS_INTEGER numZones,
 #endif
 
  
+/* #ifndef DISABLE_OMP_SIMD_PRAGMA */
+/* #pragma omp simd */
+/* #endif */
  for (i = 0; i < numZones; i++) {
 
     F11 =
@@ -2509,6 +2520,9 @@ void eos_InverseBilinearInterpolateXF (EOS_INTEGER numZones,
 			  ix_low, iy_low, NULL, NULL);
 #endif
 
+/* #ifndef DISABLE_OMP_SIMD_PRAGMA */
+/* #pragma omp simd */
+/* #endif */
   for (i = 0; i < numZones; i++) {
     F11 = F[iy_low[i]][ix_low[i]];
     F22 = F[iy_low[i]+1][ix_low[i]+1];
@@ -3023,11 +3037,11 @@ void eos_InverseRationalInterpolateFY (EOS_INTEGER nsrch, EOS_REAL *searchY,
     for (j=0; j<nsrch; j++) {
       found_zero[j] = EOS_TRUE; /* reset flag */
       if (searchF[j] < fvals1[j]) /* change upperbound index */
-	ix_low2[j] = MAX(AVERAGE (ix_low[j], ix_low2[j], EOS_INTEGER), 1);
+	ix_low2[j] = MAX(AVERAGE (EOS_INTEGER, ix_low[j], ix_low2[j]), 1);
       else /* change lowerbound index */
-	ix_low[j]  = MAX(AVERAGE (ix_low[j], ix_low2[j], EOS_INTEGER), 1);
+	ix_low[j]  = MAX(AVERAGE (EOS_INTEGER, ix_low[j], ix_low2[j]), 1);
 
-      ix_low1[j] = MAX(AVERAGE (ix_low[j], ix_low2[j], EOS_INTEGER), 1); /* change middle index */
+      ix_low1[j] = MAX(AVERAGE (EOS_INTEGER, ix_low[j], ix_low2[j]), 1); /* change middle index */
 
       if ((searchF[j] < fvals[j]) ||
 	  (searchF[j] > fvals2[j]) ||
@@ -3183,7 +3197,7 @@ void eos_InverseRationalInterpolateFY (EOS_INTEGER nsrch, EOS_REAL *searchY,
       if (eos_GetStandardErrorCodeFromCustomErrorCode(returnErr) == EOS_CONVERGENCE_FAILED) {
 	/* send user a modified error message */
 	eos_SetCustomMsg_str (errMsg,
-			      "EOS_INTERP_EXTRAPOLATED: Interpolation caused extrapolation beyond data table boundaries (Newton-Bisection method exceeded %i iterations given convergence criterion %e (err=%f))",
+			      "EOS_INTERP_EXTRAPOLATED: Interpolation caused extrapolation beyond data table boundaries (Newton-Bisection method exceeded %i iterations given convergence criterion %e (rel.err=%g))",
 			      _eos_machinePrecisionData.maxIter,
 			      _eos_machinePrecisionData.maxErr, ferr);
       }
@@ -3192,7 +3206,7 @@ void eos_InverseRationalInterpolateFY (EOS_INTEGER nsrch, EOS_REAL *searchY,
       *err = EOS_CONVERGENCE_FAILED;
       /* send user a warning message */
       eos_SetCustomMsg_str (errMsg,
-			    "EOSPAC WARNING: Newton-Bisection method exceeded %i iterations given convergence criterion %e (err=%f)",
+			    "EOSPAC WARNING: Newton-Bisection method exceeded %i iterations given convergence criterion %e (rel.err=%g)",
 			    _eos_machinePrecisionData.maxIter,
 			    _eos_machinePrecisionData.maxErr, ferr);
     }
@@ -3251,7 +3265,8 @@ void eos_InverseRationalInterpolateXF (EOS_INTEGER nsrch, EOS_REAL *searchX,
                                        EOS_INTEGER nxtbl, EOS_INTEGER nytbl,
                                        EOS_REAL *xtbls, EOS_REAL *ytbls,
                                        EOS_REAL **ftbls, EOS_INTEGER nGhostData,
-                                       EOS_INTEGER *xyBounds,
+                                       EOS_INTEGER *xyBounds, EOS_INTEGER dataType,
+				       EOS_BOOLEAN invertAtSetup,
                                        EOS_INTEGER *err, EOS_CHAR **errMsg)
 {
   /* macros to enable debugging output in this function;
@@ -3362,11 +3377,11 @@ void eos_InverseRationalInterpolateXF (EOS_INTEGER nsrch, EOS_REAL *searchX,
     for (j=0; j<nsrch; j++) {
       found_zero[j] = EOS_TRUE; /* reset flag */
       if (searchF[j] < fvals1[j]) /* change upperbound index */
-	iy_low2[j] = MAX(AVERAGE (iy_low[j], iy_low2[j], EOS_INTEGER), 1);
+	iy_low2[j] = MAX(AVERAGE (EOS_INTEGER, iy_low[j], iy_low2[j]), 1);
       else /* change lowerbound index */
-	iy_low[j]  = MAX(AVERAGE (iy_low[j], iy_low2[j], EOS_INTEGER), 1);
+	iy_low[j]  = MAX(AVERAGE (EOS_INTEGER, iy_low[j], iy_low2[j]), 1);
 
-      iy_low1[j] = MAX(AVERAGE (iy_low[j], iy_low2[j], EOS_INTEGER), 1); /* change middle index */
+      iy_low1[j] = MAX(AVERAGE (EOS_INTEGER, iy_low[j], iy_low2[j]), 1); /* change middle index */
 
       if ((searchF[j] < fvals[j]) ||
 	  (searchF[j] > fvals2[j]) ||
@@ -3398,9 +3413,14 @@ void eos_InverseRationalInterpolateXF (EOS_INTEGER nsrch, EOS_REAL *searchX,
       eos_GetStandardErrorCodeFromCustomErrorCode(*err) == EOS_UNDEFINED)
     returnErr = EOS_INTERP_EXTRAPOLATED;
 
-  /* reset upperbound if necessary to allow for extrapolation */
+#ifndef __DISALLOW_POSITIVE_XF_EXTRAPOLATION_IF_INVERTATSETUP__
+#  define __ALLOW_POSITIVE_EXTRAPOLATION_IF_INVERTATSETUP__
+#endif
+#ifdef __ALLOW_POSITIVE_EXTRAPOLATION_IF_INVERTATSETUP__
   i = 1;
   do {
+
+  /* reset upperbound if necessary to allow for extrapolation */
 
     foundRoot = EOS_TRUE;
     eos_BiRationalInterpolate (nsrch, nxtbl, nytbl, xtbls, ytbls, ftbls, ix_low, iy_low2,
@@ -3415,6 +3435,25 @@ void eos_InverseRationalInterpolateXF (EOS_INTEGER nsrch, EOS_REAL *searchX,
     i++; /* increment iteration counter */
 
   } while (! foundRoot && i <= 100);
+#endif
+
+#ifndef __DISALLOW_NEGATIVE_XF_EXTRAPOLATION_IF_INVERTATSETUP__
+#  define __ALLOW_NEGATIVE_EXTRAPOLATION_IF_INVERTATSETUP__
+#endif
+#ifdef __ALLOW_NEGATIVE_EXTRAPOLATION_IF_INVERTATSETUP__
+  if (invertAtSetup) {
+    /* reset lowerbound if necessary to allow for extrapolation */
+
+    eos_BiRationalInterpolate (nsrch, nxtbl, nytbl, xtbls, ytbls, ftbls, ix_low, iy_low,
+			       searchX, lowerbound, fvals, searchDFx, searchDFy, xyBounds, err);
+    for (j=0; j<nsrch; j++) {
+      if (searchF[j] < fvals[j]) { /* change lowerbound value */
+	lowerbound[j] = - ytbls[nytbl-1-2*nGhostData];
+      }
+    } /* end for (j=0; j<nsrch; j++) */
+
+  }
+#endif
 
   /* initial estimates of resultY[] values are averages of search interval's
      lower and upper bounds */
@@ -3519,7 +3558,7 @@ void eos_InverseRationalInterpolateXF (EOS_INTEGER nsrch, EOS_REAL *searchX,
       if (eos_GetStandardErrorCodeFromCustomErrorCode(returnErr) == EOS_CONVERGENCE_FAILED) {
 	/* send user a modified error message */
 	eos_SetCustomMsg_str (errMsg,
-			      "EOS_INTERP_EXTRAPOLATED: Interpolation caused extrapolation beyond data table boundaries (Newton-Bisection method exceeded %i iterations given convergence criterion %e (err=%f))",
+			      "EOS_INTERP_EXTRAPOLATED: Interpolation caused extrapolation beyond data table boundaries (Newton-Bisection method exceeded %i iterations given convergence criterion %e (rel.err=%g))",
 			      _eos_machinePrecisionData.maxIter,
 			      _eos_machinePrecisionData.maxErr, ferr);
       }
@@ -3528,7 +3567,7 @@ void eos_InverseRationalInterpolateXF (EOS_INTEGER nsrch, EOS_REAL *searchX,
       *err = EOS_CONVERGENCE_FAILED;
       /* send user a warning message */
       eos_SetCustomMsg_str (errMsg,
-			    "EOSPAC WARNING: Newton-Bisection method exceeded %i iterations given convergence criterion %e (err=%f)",
+			    "EOSPAC WARNING: Newton-Bisection method exceeded %i iterations given convergence criterion %e (rel.err=%g)",
 			    _eos_machinePrecisionData.maxIter,
 			    _eos_machinePrecisionData.maxErr, ferr);
     }
@@ -3621,6 +3660,9 @@ void eos_BiRationalInterpolate (EOS_INTEGER numZones, EOS_INTEGER numXVals,
   if (numYVals <= 1)
     return;
 
+#ifndef DISABLE_OMP_SIMD_PRAGMA
+#pragma omp simd
+#endif
   for (i = 0; i < numZones; i++) {
     if (xyBounds[i] == EOS_UNDEFINED)
         continue;               /* move to another point */

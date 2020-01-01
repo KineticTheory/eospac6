@@ -1,5 +1,3 @@
-eos_LoadTables ERROR 102032: EOS_INVALID_DATA_TYPE: Cannot load data for EOS_Ut_PtT unless EOS_PT_SMOOTHING option is set for this table handle, 9
-9: eos_LoadTables ERROR 102021: EOS_INVALID_TABLE_HANDLE: Invalid table handle because EOS_INVALID_DATA_TYPE: Cannot load data for EOS_Ut_PtT unless EOS_PT_SMOOTHING option is set for this table handle, 9
 tableHandle[0..21] = ( 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 )
 
 TableHandle: 0	DataType: EOS_At_DT	MaterialID: 5212
@@ -34976,7 +34974,7 @@ Description: Total Specific-Internal-Energy (MJ/kg) (Density (Mg/m^3)- and Tempe
 
 92038: Invalid info flag. This info flag is only valid for simple, non-inverted data types.
 
-102021: EOS_INVALID_TABLE_HANDLE: Invalid table handle because EOS_INVALID_DATA_TYPE: Cannot load data for EOS_Ut_PtT unless EOS_PT_SMOOTHING option is set for this table handle, 9
+102038: Invalid info flag. This info flag is only valid for simple, non-inverted data types.
 
 112038: Invalid info flag. This info flag is only valid for simple, non-inverted data types.
 

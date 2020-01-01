@@ -38,8 +38,8 @@ ses_error_flag ses_delete_table(ses_file_handle the_handle) {
   ses_table_id the_tid = pSET->_tid;
 
   struct _ses_file_handle* pSFH = FILE_LIST[the_handle]->_the_handle;
-  FILE* pFILE = 0;
-  pFILE =  _getPFILE(pSFH);
+  /* FILE* pFILE = 0; */
+  /* pFILE = */  _getPFILE(pSFH);
  
   struct _ses_index_record* ptIR = 0;
   ptIR = FILE_LIST[the_handle]->_current_index_record;

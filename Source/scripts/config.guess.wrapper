@@ -13,40 +13,56 @@ if [ -n "${loc}" ]; then
     loc="${loc}/"
 fi
 
-if [ -n "$1" ]; then
-    gnu_canonical_name=$1
-else
-    gnu_canonical_name=`${loc}config.guess`
-fi
+# FUNCTIONS ------------------------------------------------------------------------------
 
-#
-# Beware, the order of all of the following conditional tests is important, since
-# often systems satisfy multiple conditions.
-#
-case "${gnu_canonical_name}" in
+get_avx_string()
+{
+    # Determine compatible AVX chipset flags
+    XCOMPILE=`modulecmd sh list -t 2>&1 | grep craype-mic-knl`
+    if [ "${XCOMPILE}" == "craype-mic-knl" ]; then
 
-    *-*-linux-*)
+        # Hardwire the return value for cross-compilation.
+        # This is done for expedient execution on Trinity and Trinitite, because compilation directly
+        # on the KNL is too slow.
+        job_cmd=`which sbatch msub 2>/dev/null | head -n1 | xargs basename`
+        case $job_cmd in
+            sbatch) AVX=avx512pf;;
+            msub)   AVX=avx512pf;;
+            *)      echo 'ERROR: A valid job launcher was not found';;
+        esac
 
-	if   [ -f /etc/redhat-release ]; then
+    else
 
-	    major=`sed -rn 's/.*([0-9])\.[0-9].*/\1/p' /etc/redhat-release`
-	    minor=`sed -rn 's/.*[0-9]\.([0-9]).*/\1/p' /etc/redhat-release`
+        AVX=`cat /proc/cpuinfo 2>/dev/null | grep flags -m 1 | sed 's/flags[ \t]*: *//;s/  */\n/g' | awk '/avx/{gsub("_","");print tolower($0)}' | egrep '^(avx|avx2|avx512|avx512f|avx512pf)$'`
+        if [ -z "${AVX}" ]; then
+            AVX=`gcc -march=native -dM -E - < /dev/null 2>/dev/null | perl -ne 's/_//g;if(/\s(AVX|AVX2|AVX512|AVX512F|AVX512PF)\s/){@a=split " ";print lc($a[1]),"\n"}' | sort`
+        fi
+        if [ -n "${AVX}" ]; then
+            AVX=`echo ${AVX} | awk '{print $NF}'`
+        fi
 
-	    if   [ -f /etc/toss-release ]; then
+    fi
+}
 
-		toss=`sed -rn 's/^ *#.*//;s/^[^0-9]*([0-9].*)/\1/p' /etc/toss-release`
+common_linux_operations()
+{
+    if [ ${GETAVX} -ge 1 ]; then
+        get_avx_string
+    fi
+    if [ -n "${AVX}" ]; then
+        AVX="-${AVX}"
+    fi
 
-		if [ -n "${toss}" ]; then
-		    : toss
-		    echo "${gnu_canonical_name}" | awk -v toss=${toss} -v major=${major} -F\- '{print $1 "-rhel" major "_toss" toss "-" $3 "-" $4}' | tr '[:upper:]' '[:lower:]'
-		    exit
-		fi
+	if   [ -f /etc/toss-release ]; then
 
-	    fi
+	    major=`sed -rn 's/.* ([0-9])\.[0-9].*/\1/p' /etc/redhat-release`
+	    minor=`sed -rn 's/.* [0-9]\.([0-9]).*/\1/p' /etc/redhat-release`
 
-	    if [ -n "${major}" ]; then
-		: rhel
-		echo "${gnu_canonical_name}" | awk -v major=${major} -F\- '{print $1 "-rhel" major "-" $3 "-" $4}' | tr '[:upper:]' '[:lower:]'
+	    toss=`sed -rn 's/^ *#.*//;s/^[^0-9]*([0-9].*)/\1/p' /etc/toss-release`
+
+	    if [ -n "${toss}" ]; then
+		: toss
+		echo "${gnu_canonical_name}" | awk -v toss=${toss} -v major=${major} -v avx=${AVX} -F\- '{print $1  avx "-rhel" major "_toss" toss "-" $3 "-" $4}' | tr '[:upper:]' '[:lower:]'
 		exit
 	    fi
 
@@ -63,10 +79,87 @@ case "${gnu_canonical_name}" in
 	    if [ -z "${major}" ]; then major=`echo ${VERSION} | awk -F\. '{print $1}'`; fi
 
 	    if [ -n "${name}${major}" ]; then
-		echo "${gnu_canonical_name}" | awk -v name=${name} -v major=${major} -F\- '{print $1 "-" name major "-" $3 "-" $4}' | tr '[:upper:]' '[:lower:]'
+		echo "${gnu_canonical_name}" | awk -v name=${name} -v major=${major} -v avx=${AVX} -F\- '{print $1 avx "-" name major "-" $3 "-" $4}' | tr '[:upper:]' '[:lower:]'
 		exit
 	    fi
 	fi
+
+	if   [ -f /etc/redhat-release ]; then
+
+	    major=`sed -rn 's/.* ([0-9])\.[0-9].*/\1/p' /etc/redhat-release`
+	    minor=`sed -rn 's/.* [0-9]\.([0-9]).*/\1/p' /etc/redhat-release`
+
+	    osname="rhel"
+
+	    if   [ -f /etc/centos-release ]; then
+		osname="centos"
+	    fi
+
+	    if [ -n "${major}" ]; then
+		: ${osname}
+		echo "${gnu_canonical_name}" | awk -v osname=${osname} -v major=${major} -v avx=${AVX} -F\- '{print $1 avx "-" osname major "-" $3 "-" $4}' | tr '[:upper:]' '[:lower:]'
+		exit
+	    fi
+
+	fi
+}
+
+# PROCESS COMMAND LINE OPTIONS -----------------------------------------------------------
+
+GETAVX=1
+while getopts ahn option;
+do
+
+  case "$option"
+  in
+
+    a)  get_avx_string;echo ${AVX}; exit;;
+    n)  GETAVX=0;;
+    h)  cat <<EOF >&2
+
+Usage: ${me} [options]
+   -a        return the AVX substring found for the current platform
+   -n        return the result without the AVX string for the current platform
+   -h        display this help
+
+EOF
+        exit 2
+        ;;
+
+  esac
+
+done
+
+shiftcount=`expr $OPTIND - 1`
+shift $shiftcount
+
+# INITIALIZATION -------------------------------------------------------------------------
+
+if [ -n "$1" ]; then
+    gnu_canonical_name=$1
+else
+    gnu_canonical_name=`${loc}config.guess`
+fi
+
+# MAIN -----------------------------------------------------------------------------------
+#
+# Beware, the order of all of the following conditional tests is important, since
+# often systems satisfy multiple conditions.
+#
+case "${gnu_canonical_name}" in
+
+    powerpc*-*-linux-*)
+        CPU=`grep '^cpu[^a-z]*:' /proc/cpuinfo 2>/dev/null | cut -d' ' -f2 | uniq | sed -e 's/[^0-9]*$//' | tr '[A-Z]' '[a-z]'`
+        case ${CPU} in
+	        power*) gnu_canonical_name=`echo ${gnu_canonical_name} | sed "s/power/${CPU}/"`;;
+	        *)      echo ${gnu_canonical_name};;
+	    esac
+        common_linux_operations
+        exit
+        ;;
+
+    *-*-linux-*)
+        common_linux_operations
 	;;
 
 esac

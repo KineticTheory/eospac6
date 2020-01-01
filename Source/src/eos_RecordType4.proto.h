@@ -13,16 +13,17 @@
 
 /*
  * ---------------------------------------------------
- * 1 PUBLIC FUNCTION PROTOTYPES FOR eos_RecordType4.c
+ * 2 PUBLIC FUNCTION PROTOTYPES FOR eos_RecordType4.c
  * ---------------------------------------------------
  */
 void eos_ConstructRecordType4 (eos_RecordType4 * me, EOS_INTEGER th, EOS_INTEGER materialID);
+int _eos_get_field_value(EOS_CHAR *str, EOS_CHAR *keyword, EOS_CHAR *oStr);
 
 #ifdef _EOS_RECORDTYPE4_INTERNAL_PROTOTYPES
 
 /*
  * -----------------------------------------------------
- * 21 PRIVATE FUNCTION PROTOTYPES FOR eos_RecordType4.c
+ * 20 PRIVATE FUNCTION PROTOTYPES FOR eos_RecordType4.c
  * -----------------------------------------------------
  */
 void eos_AreMonotonicRequirementsCompatibleRecordType4 (void *me, EOS_INTEGER dataType, EOS_INTEGER inX,
@@ -57,7 +58,6 @@ void eos_SetMonotonicityRecordType4 (void *me, EOS_INTEGER dataType, EOS_INTEGER
 void eos_SetPackedTableRecordType4 (void *ptr, EOS_INTEGER th, EOS_CHAR * packedTable, EOS_INTEGER * err);
 void eos_SetSmoothingRecordType4 (void *me, EOS_INTEGER dataType, EOS_INTEGER makeSmooth,
 				  EOS_INTEGER makePtSmooth);
-int _eos_get_field_value(EOS_CHAR *str, EOS_CHAR *keyword, EOS_CHAR *oStr);
 
 #endif /* _EOS_RECORDTYPE4_INTERNAL_PROTOTYPES */
 

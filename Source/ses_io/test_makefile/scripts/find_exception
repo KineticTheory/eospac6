@@ -5,49 +5,109 @@
 #
 ##################################################################
 eval '(exit $?0)' && eval 'exec perl -S "$0" ${1+"$@"}'
-& eval 'exec perl -S "$0" $argv:q'
-        if 0;
+  & eval 'exec perl -S "$0" $argv:q'
+  if 0;
 #
-# Given the default REGRESSION_DATA_EXCEPTIONS_DIR ($ARGV[0]), find the most
-# specific instance of the specified baseline exception file ($ARGV[1]).
+# Given the specified directory(ies) ($ARGV[0..($#ARGV-1)]), find the most
+# specific instance of the specified baseline exception file ($ARGV[$#ARGV]).
+# If the "--all" option is specified, then all arguments are assumed to be
+# specified directory(ies).
+# Return a list of the baseline exception file(s).
 #
 # Parse all options
 use Getopt::Long;
 $options={};
 GetOptions($options,
+	   "--all",
+	   "--directory",
 	   "--verbose"
 	  );
 
-$REGRESSION_DATA_EXCEPTIONS_DIR = shift;
-$baseline_exception_file = shift;
+use File::Basename;
 
-print __LINE__, ": \$REGRESSION_DATA_EXCEPTIONS_DIR = $REGRESSION_DATA_EXCEPTIONS_DIR\n" if $options->{"verbose"};
-print __LINE__, ": \$baseline_exception_file = $baseline_exception_file\n" if $options->{"verbose"};
+push (@baseline_exception_files, pop) if ! $options->{"all"};
 
-$baseline_dir = "";
+while ( $REGRESSION_DATA_EXCEPTIONS_DIR = shift ) {
 
-($dir_, @dirs) = split /\/+/, $REGRESSION_DATA_EXCEPTIONS_DIR;
+  $REGRESSION_DATA_EXCEPTIONS_DIR2 = $REGRESSION_DATA_EXCEPTIONS_DIR;
+  $REGRESSION_DATA_EXCEPTIONS_DIR2 =~ s/[0-9\.]+$//;
 
-foreach $d (@dirs) {
+  print STDERR __LINE__, ": \$REGRESSION_DATA_EXCEPTIONS_DIR = $REGRESSION_DATA_EXCEPTIONS_DIR\n" if $options->{"verbose"};
+  print STDERR __LINE__, ": \$REGRESSION_DATA_EXCEPTIONS_DIR2 = $REGRESSION_DATA_EXCEPTIONS_DIR2\n" if $options->{"verbose"};
 
-  $dir2 = $dir_;
-  $dir2 =~ s/[0-9\.]+$//;
-
-  print __LINE__, ": \$dir_ = $dir_\t\$dir2 = $dir2\n" if $options->{"verbose"};
-
-  # check generic platform directory (i.e., i386-apple-darwin instead of i386-apple-darwin9.8.0)
-  if (-s "$dir2/$baseline_exception_file") {
-    $baseline_dir=$dir2;
-    print __LINE__, ": \$baseline_dir = $baseline_dir\n" if $options->{"verbose"};
+  if ( $options->{"all"} ) {
+    push( @baseline_exception_files, glob($REGRESSION_DATA_EXCEPTIONS_DIR . '/*.ed') );
+    push( @baseline_exception_files, glob($REGRESSION_DATA_EXCEPTIONS_DIR2 . '/*.ed') );
+    my $d = dirname $REGRESSION_DATA_EXCEPTIONS_DIR;
+    while ( $d !~ m|/data$| ) {
+      print STDERR __LINE__, ": \$d = $d\n" if $options->{"verbose"};
+      my $d2 = $d;
+      $d2 =~ s/[0-9\.]+$//;
+      push( @baseline_exception_files, glob($d . '/*.ed') );
+      push( @baseline_exception_files, glob($d2 . '/*.ed') );
+      $d = dirname $d;
+    }
   }
 
-  if (-s "$dir_/$baseline_exception_file") {
-    $baseline_dir=$dir_;
-    print __LINE__, ": \$baseline_dir = $baseline_dir\n" if $options->{"verbose"};
-  }
+  @baseline_exception_files = grep { !$seen{$_}++ } @baseline_exception_files;
 
-  $dir_ .= "/$d";
+  print STDERR __LINE__, ": \@baseline_exception_files = [ @baseline_exception_files ]\n" if $options->{"verbose"};
+
+  for $file (@baseline_exception_files) {
+
+    $baseline_exception_file = basename($file);
+
+    print STDERR __LINE__, ": \$baseline_exception_file = $baseline_exception_file\n" if $options->{"verbose"};
+
+    $baseline_dir = "";
+
+    $dir_ = $REGRESSION_DATA_EXCEPTIONS_DIR;
+    $cwd = `pwd`;
+    chomp $cwd;
+
+    print STDERR __LINE__, ": \$cwd = $cwd\n" if $options->{"verbose"};
+
+    while (length($dir_) > 1) {	# ignore "/"
+
+      print STDERR __LINE__, ": \$dir_ = $dir_\n" if $options->{"verbose"};
+
+      # check specific platform directory
+      if (-s "$dir_/$baseline_exception_file") {
+	$baseline_dir=$dir_;
+	push @list, "$dir_/$baseline_exception_file";
+	print STDERR __LINE__, ": \$baseline_dir = $baseline_dir\n" if $options->{"verbose"};
+	last;
+      }
+
+      if (-z "$dir_/$baseline_exception_file") {
+	$baseline_dir="";
+	print STDERR __LINE__, ": \$baseline_dir = $baseline_dir\n" if $options->{"verbose"};
+	last;
+      }
+
+      # check generic platform directory (i.e., i386-apple-darwin instead of i386-apple-darwin9.8.0)
+      $dir2 = $dir_;
+      $dir2 =~ s/[0-9\.]+$//;
+      print STDERR __LINE__, ": \$dir2 = $dir2\n" if $options->{"verbose"};
+      if (-s "$dir2/$baseline_exception_file") {
+	$baseline_dir=$dir2;
+	push @list, "$dir2/$baseline_exception_file";
+	print STDERR __LINE__, ": \$baseline_dir = $baseline_dir\n" if $options->{"verbose"};
+	last;
+      }
+
+      $dir_ = dirname $dir_;
+
+    }
+
+  }
 
 }
 
-print $baseline_dir;
+if ( ! $options->{"directory"} ) {
+  print join " ", @list;
+}
+else {
+  print $baseline_dir;
+}
+

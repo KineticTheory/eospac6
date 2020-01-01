@@ -82,8 +82,8 @@ struct _standard_table* _construct_standard_table(ses_string the_string1) {
 
 	struct json_node* the_parse_node1 = (struct json_node*)NULL;   
 	the_parse_node1 = initialize_parser();
-	int parser_return = 0;
-	parser_return = parse_string(the_string1, the_parse_node1);
+	/* int parser_return = 0; */
+	/* parser_return = */ parse_string(the_string1, the_parse_node1);
 #ifdef DEBUG_CONSTRUCT_STANDARD_TABLE
 	print_json_node(the_parse_node1, 0);
 #endif

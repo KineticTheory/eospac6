@@ -38,23 +38,25 @@ int main ()
 
   int i, j, count = 0;
 
-  EOS_INTEGER infoTypes[7] = {
+  EOS_INTEGER infoTypes[8] = {
     EOS_Material_Name,
     EOS_Material_Source,
     EOS_Material_Date,
     EOS_Material_Ref,
     EOS_Material_Composition,
     EOS_Material_Codes,
-    EOS_Material_Phases
+    EOS_Material_Phases,
+    EOS_Material_Classification
   };
-  EOS_CHAR *infoTypes_str[7] = {
-    "EOS_Material_Name       ",
-    "EOS_Material_Source     ",
-    "EOS_Material_Date       ",
-    "EOS_Material_Ref        ",
-    "EOS_Material_Composition",
-    "EOS_Material_Codes      ",
-    "EOS_Material_Phases     "
+  EOS_CHAR *infoTypes_str[8] = {
+    "EOS_Material_Name          ",
+    "EOS_Material_Source        ",
+    "EOS_Material_Date          ",
+    "EOS_Material_Ref           ",
+    "EOS_Material_Composition   ",
+    "EOS_Material_Codes         ",
+    "EOS_Material_Phases        ",
+    "EOS_Material_Classification"
   };
 
   for (j=0; j<sizeof(matids)/sizeof(matids[0]); j++) {
@@ -101,14 +103,14 @@ int main ()
       infoString[0] = '\0';
       eos_GetTableMetaData (&tablehandle, &infoTypes[i], infoString, &err1);
       if (err1 != EOS_OK) {
-	eos_GetErrorMessage (&err1, errorMessage);
-	printf(" AFTER eos_GetTableMetaData err1=%6d: %s\n",err1,errorMessage);
-	printf("\n%2i %s\n", count, "tests passed");
-	return(-count-1);
+        eos_GetErrorMessage (&err1, errorMessage);
+        printf(" AFTER eos_GetTableMetaData err1=%6d: %s\n",err1,errorMessage);
+        printf("\n%2i %s\n", count, "tests passed");
+        return(-count-1);
       }
       else {
-	errorMessage[0] = '\0';
-	printf("     %s: %s\n", infoTypes_str[i], infoString);
+        errorMessage[0] = '\0';
+        printf("     %s: %s\n", infoTypes_str[i], infoString);
       }
       count++; /* increment passed test counter */
 
@@ -122,4 +124,3 @@ int main ()
 
   return(0);
 }
-

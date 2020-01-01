@@ -13,19 +13,19 @@
 #undef DEBUG_WRAP
 
 #ifdef LC_UNDER
-ses_error_flag ses_close_(ses_file_handle* pt_handle) {
+ses_error_flag ses_close_c_(ses_file_handle* pt_handle) {
 #else
 
 #ifdef UC_UNDER
-ses_error_flag SES_CLOSE_(ses_file_handle* pt_handle) {
+ses_error_flag SES_CLOSE_C_(ses_file_handle* pt_handle) {
 #else
 
 #ifdef LC_NOUNDER
-ses_error_flag ses_close(ses_file_handle* pt_handle) {
+ses_error_flag ses_close_c(ses_file_handle* pt_handle) {
 #else
 
 #ifdef UC_NOUNDER
-ses_error_flag SES_CLOSE(ses_file_handle* pt_handle) {
+ses_error_flag SES_CLOSE_C(ses_file_handle* pt_handle) {
 #endif
 
 #endif

@@ -88,7 +88,7 @@ static int getopt_internal(int argc, char **argv, char *opts) {
   if(sp == 1) {
     /* check for end of options */
     if(optind >= argc ||
-       argv[optind][1] == '\0') {
+       argv[optind][0] == '\0') {
       return(-1);
     }
     else if(!strcmp(argv[optind], "--")) {

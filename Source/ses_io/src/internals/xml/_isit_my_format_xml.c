@@ -11,7 +11,7 @@ ses_boolean _isit_my_format_xml(FILE* pFILE) {
 
   ses_boolean return_value = SES_FALSE;
 
-  /*  Determine whether the file is XML 'X' */
+  /*  Determine whether the file is XML_TYPE */
 
   /*  if the file is SESAME XML, it will contain the string "<directory>"  at the beginning of the file */
 

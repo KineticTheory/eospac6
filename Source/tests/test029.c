@@ -27,6 +27,8 @@
 #include "../src/eos_types_internal.h"
 #include "../src/eos_Utils.h"
 
+#define EOS_FREE(p) {if(p != NULL) free(p); p=NULL;}
+
 int main ()
 {
   enum
@@ -95,6 +97,7 @@ int main ()
     printf("_eos_CreateGhostData ERROR %i %s\n", err, errorMsg);
     return err;
   }
+  EOS_FREE(errorMsg);
 
   if (! (xtbls && ytbls && ftbls && coldCurve)) {
     printf("memory allocation failed in _eos_CreateGhostData\n");
@@ -153,6 +156,7 @@ int main ()
     printf("_eos_CreateGhostData ERROR %i %s\n", err, errorMsg);
     return err;
   }
+  EOS_FREE(errorMsg);
 
   if (! (xtbls && ytbls && ftbls)) {
     printf("memory allocation failed in _eos_CreateGhostData\n");
@@ -196,6 +200,7 @@ int main ()
     printf("_eos_CreateGhostData ERROR %i %s\n", err, errorMsg);
     return err;
   }
+  EOS_FREE(errorMsg);
 
   if (! (xtbls && ytbls && ftbls)) {
     printf("memory allocation failed in _eos_CreateGhostData\n");
@@ -222,6 +227,7 @@ int main ()
   if (err != EOS_OK) {
     printf("_eos_CreateGhostData ERROR %i %s\n", err, errorMsg);
   }
+  EOS_FREE(errorMsg);
 
   /* free memory used to store expanded table */
   _eos_DestroyGhostData (&nGhostData, &xtbls, &ytbls, &ftbls, &coldCurve);
@@ -234,6 +240,7 @@ int main ()
   if (err != EOS_OK) {
     printf("_eos_CreateGhostData ERROR %i %s\n", err, errorMsg);
   }
+  EOS_FREE(errorMsg);
 
   /* free memory used to store expanded table */
   _eos_DestroyGhostData (&nGhostData, &xtbls, &ytbls, &ftbls, &coldCurve);

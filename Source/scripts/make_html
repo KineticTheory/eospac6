@@ -1,12 +1,12 @@
-#-*-perl-*-
+eval '(exit $?0)' && eval 'exec perl -S "$0" ${1+"$@"}' #-*-perl-*-
+& eval 'exec perl -S "$0" $argv:q'
+        if 0;
+#
 ##################################################################
 #
 #  Copyright -- see file named COPYRIGHTNOTICE
 #
 ##################################################################
-eval '(exit $?0)' && eval 'exec perl -S "$0" ${1+"$@"}'
-& eval 'exec perl -S "$0" $argv:q'
-        if 0;
 #
 # Convert compare target's stdout file to either HTML or XML.
 # Append summary data to stdout file, and send HTML to stdout.
@@ -16,13 +16,13 @@ BEGIN {
   use Getopt::Long;
   $options={};
   GetOptions($options,
-	     "--xml",
-	     "--compiler_info_file=s",
-	     "--preamble=s",
-	     "--test_times_file=s",
-	     "--verbose",
-	     "--totaltests=i",
-	     "--failedonly");
+             "--xml",
+             "--compiler_info_file=s",
+             "--preamble=s",
+             "--test_times_file=s",
+             "--verbose",
+             "--totaltests=i",
+             "--failedonly");
 
   # open the log file for verbose output
   use File::Basename;
@@ -36,7 +36,7 @@ BEGIN {
     }
   }
 
-  $sleep_time = 5; # seconds
+  $sleep_time = 5;              # seconds
   $max_attempts = 12;
 
   # Make several attempts, if necessary, to find the END_PASSFAILOUTPUT
@@ -52,14 +52,14 @@ BEGIN {
     last if ($cnt >= ($#ARGV + 1));
     if ($attempt >= $max_attempts) {
       print LOG "$0(".__LINE__.") ERROR 3: END_PASSFAILOUTPUT not found in input file(s): ",
-	join(", ",@ARGV)," ($attempt attempts made at ${sleep_time}-second intervals)\n",
-	  if ($options->{"verbose"});
+        join(", ",@ARGV)," ($attempt attempts made at ${sleep_time}-second intervals)\n",
+        if ($options->{"verbose"});
       exit 3;
     }
     else {
       print LOG "$0(".__LINE__.") INFO: END_PASSFAILOUTPUT not found in input file(s) (attempt $attempt); sleeping for ${sleep_time} seconds\n",
-	if ($options->{"verbose"});
-      sleep $sleep_time; # try again in $sleep_time seconds
+        if ($options->{"verbose"});
+      sleep $sleep_time;        # try again in $sleep_time seconds
     }
   };
 }
@@ -69,15 +69,15 @@ if ($options->{"test_times_file"}) {
   if (-e $options->{"test_times_file"}) {
     if (open(FH,$options->{"test_times_file"})) {
       while (<FH>) {
-	s/^\s+//; s/\s+$//;
-	chomp;
-	if (m/^#+/) { # skip comments
-	  print LOG "$0(".__LINE__.") INFO: Skipping comment '$_'\n";
-	  next;
-	}
-	my @a = split("\t");
-	$test_times_hash{"$a[0].stdout"} = $a[1];
-	$test_times_hash{"$a[0].TablesLoaded.dat"} = "";
+        s/^\s+//; s/\s+$//;
+        chomp;
+        if (m/^#+/) {           # skip comments
+          print LOG "$0(".__LINE__.") INFO: Skipping comment '$_'\n";
+          next;
+        }
+        my @a = split("\t");
+        $test_times_hash{"$a[0].stdout"} = $a[1];
+        $test_times_hash{"$a[0].TablesLoaded.dat"} = "";
       }
     }
     print LOG "\$test_times_hash:\n";
@@ -94,99 +94,7 @@ if ($options->{"test_times_file"}) {
 $docType = '<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">';
 $docType = '<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">';
 
-$header =<<END_HEADER;
-$docType
-<html>
-<head>
-<title>EOSPAC 6 Testing Status Report</title>
-<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
-<style type="text/css">
-<!--
-body {
-  background-color: #FFFFFF;
-}
-div#main {
-}
-div#summary_table_style {
-  font-size: large;
-  border: thin solid #000000;
-  float: right;
-  padding: 1em;
-  margin: 0 0 0 0;
-  background-color: #FFFFFF;
-}
-div#preamble {
-  font-size: large;
-  border: thin solid #000000;
-  float: right;
-  padding: 1em;
-  margin: 0 0 0 0;
-  background-color: #FFFFFF;
-}
-div#item_list {
-  background-color: #FFFFFF;
-}
-.red_item {
-  background-color: #FF6666;
-}
-.green_item {
-  background-color: #99FF99;
-}
-.yellow_item {
-  background-color: #FFFF99;
-}
-.gray_item {
-  background-color: #CCCCCC;
-}
-.red_item, .green_item, .yellow_item, .gray_item {
-  border: none;
-  border-bottom-style: solid;
-  border-bottom-color: #8C8C8C;
-  border-bottom-width: 1px;
-}
-.bold_item {
-  font-size: large;
-  font-weight: bold;
-}
-.border_item {
-  border: solid #000000;
-}
-.border_bottom_item {
-  border: none;
-  border-bottom-style: solid;
-  border-bottom-color: #000000;
-  border-bottom-width: thin;
-}
-.extra_pad {
-  padding: 0.25em;
-}
-.logo {
- /*
-  background: url('https://tf.lanl.gov/sf/page/do/viewImage/projects.eospac6?id=atch18174') no-repeat top right;
-  height: 100px;
-  line-height:33px;
- */
-}
-\@media print {
-  .red_item { color: #FF0000; }
-  .green_item { color: #66FF66; }
-  .yellow_item { color: #FFFF99; }
-  .gray_item { color: gray; }
-  .red_item, .green_item, .yellow_item, .gray_item { background-color: #FFFFFF; }
-  div#summary_table_style { float: none; border: thin solid #000000; padding: 0.25em; text-align: center; }
-  .extra_pad { padding: 0; }
-}
--->
-</style>
-</head>
-
-<body>
-END_HEADER
-
-$footer =<<END_FOOTER;
-</body>
-</html>
-END_FOOTER
+create_HEREDOCS();
 
 print "$header\n" if (! $options->{"xml"});
 
@@ -220,6 +128,9 @@ $logo_section .= "</div><!-- LOGO DIV BLOCK -->\n\n";
 $item_list_section = ($options->{"xml"})
   ? ""
   : "<div id='item_list'><!-- LIST DIV BLOCK -->\n\n";
+$note_list_section = ($options->{"xml"})
+  ? ""
+  : "<div id='note_list'><!-- NOTE DIV BLOCK -->\n  <ul>\n";
 
 print LOG "$0(".__LINE__.") INFO: Begin parsing input files\n" if ($options->{"verbose"});
 
@@ -227,115 +138,128 @@ while (<>) {
   chomp;
   print LOG "$0(".__LINE__.") INFO: $ARGV:$.:$_\n" if ($options->{"verbose"});
  SWITCH: {
-    /^END_PASSFAILOUTPUT$/ && do { # do nothing and quit file
-      $end_found = 1;
-      close(ARGV);
-      last SWITCH;
-    };
-    /^FAILED\:\s*/ && do {
-      if (! $options->{"xml"}) {
-	$item_list_section .= "<div class='red_item'>$_</div>\n";
-	print LOG " "x(length("$0")),"            :$.:<div class='red_item'>$_</div>\n"
-	  if ($options->{"verbose"});
-      }
-      else {
-	($result, $name, $other) = split(/[\s:,]+/, $_, 3);
-	$fcmp_options = "";
-	$fcmp_options = $1 if ($other =~ s/\(fcmp\s+options:\s+([^\)]+)\)[\s,]*//);
-	$note = $other;
-	$item_list_section .= "\t<test>\n";
-	$item_list_section .= "\t\t<name>$name</name>\n";
-	$item_list_section .= "\t\t<result>$result</result>\n";
-	$item_list_section .= "\t\t<note>$note</note>\n";
-	$item_list_section .= "\t\t<fcmp_options>$fcmp_options</fcmp_options>\n";
-	# $name = basename($name, ".stdout", ".TablesLoaded.dat");
-	$item_list_section .= "\t\t<run_time>".$test_times_hash{$name}."</run_time>\n";
-	$item_list_section .= "\t</test>\n";
-      }
-      $items_failed++;
-      last SWITCH;
-    };
-    /^PASSED\:\s*/ && do {
-      if (! $options->{"failedonly"}) {
-	($result, $name, $other) = split(/[\s:,]+/, $_, 3);
-	if (! $options->{"xml"}) {
-	  $items_exceptions++ if $other =~ /baseline exception/;
-	  $item_list_section .= "<div class='green_item'>$_</div>\n";
-	  print LOG " "x(length("$0")),"            :$.:<div class='green_item'>$_</div>\n"
-	    if ($options->{"verbose"});
-	} else {
-	  $fcmp_options = "";
-	  $fcmp_options = $1 if ($other =~ s/\(fcmp\s+options:\s+([^\)]+)\)[\s,]*//);
-	  $note = $other;
-	  $item_list_section .= "\t<test>\n";
-	  $item_list_section .= "\t\t<name>$name</name>\n";
-	  $item_list_section .= "\t\t<result>$result</result>\n";
-	  $item_list_section .= "\t\t<note>$note</note>\n";
-	  $item_list_section .= "\t\t<fcmp_options>$fcmp_options</fcmp_options>\n";
-	  # $name = basename($name, ".stdout", ".TablesLoaded.dat");
-	  $item_list_section .= "\t\t<run_time>".$test_times_hash{$name}."</run_time>\n";
-	  $item_list_section .= "\t</test>\n";
-	}
-      }
-      $items_passed++;
-      last SWITCH;
-    };
-    (/^WARNING\:\s*/ || /^IGNORED\:\s*/) && do {
-      if (! $options->{"failedonly"}) {
-	if (! $options->{"xml"}) {
-	  $item_list_section .= "<div class='yellow_item'>$_</div>\n";
-	  print LOG " "x(length("$0")),"            :$.:<div class='yellow_item'>$_</div>\n"
-	    if ($options->{"verbose"});
-	} else {
-	  ($result, $name, $other) = split(/[\s:,]+/, $_, 3);
-	  $fcmp_options = "";
-	  $fcmp_options = $1 if ($other =~ s/\(fcmp\s+options:\s+([^\)]+)\)[\s,]*//);
-	  $note = $other;
-	  $item_list_section .= "\t<test>\n";
-	  $item_list_section .= "\t\t<name>$name</name>\n";
-	  $item_list_section .= "\t\t<result>$result</result>\n";
-	  $item_list_section .= "\t\t<note>$note</note>\n";
-	  $item_list_section .= "\t\t<fcmp_options>$fcmp_options</fcmp_options>\n";
-	  # $name = basename($name, ".stdout", ".TablesLoaded.dat");
-	  $item_list_section .= "\t\t<run_time>".$test_times_hash{$name}."</run_time>\n";
-	  $item_list_section .= "\t</test>\n";
-	}
-      }
-      $items_ignored++;
-      $items_ignored++ if /^IGNORED\:\s*/; # double count so $tot is correct below
-      last SWITCH;
-    };
-    /^excluded\:\s*/ && do {
-      if (! $options->{"failedonly"}) {
-	if (! $options->{"xml"}) {
-	  $item_list_section .= "<div class='gray_item'>$_</div>\n";
-	  print LOG " "x(length("$0")),"            :$.:<div class='gray_item'>$_</div>\n"
-	    if ($options->{"verbose"});
-	} else {
-	  ($result, $name, $other) = split(/[\s:,]+/, $_, 3);
-	  $fcmp_options = "";
-	  $fcmp_options = $1 if ($other =~ s/\(fcmp\s+options:\s+([^\)]+)\)[\s,]*//);
-	  $note = $other;
-	  $item_list_section .= "\t<test>\n";
-	  $item_list_section .= "\t\t<name>$name</name>\n";
-	  $item_list_section .= "\t\t<result>$result</result>\n";
-	  $item_list_section .= "\t\t<note>$result $note</note>\n";
-	  $item_list_section .= "\t\t<fcmp_options>$fcmp_options</fcmp_options>\n";
-	  # $name = basename($name, ".stdout", ".TablesLoaded.dat");
-	  $item_list_section .= "\t\t<run_time>".$test_times_hash{$name}."</run_time>\n";
-	  $item_list_section .= "\t</test>\n";
-	}
-      }
-      $items_excluded++;
-      last SWITCH;
-    };
-    /^SUMMARY\-\-/ && do { last SWITCH; # ignore previously-existing summary data
-			      };
-    /^\s+$/ && do {
-      print LOG " "x(length("$0")),"            :$.:SUMMARY:$_\n"
-	if ($options->{"verbose"});
-      last SWITCH; # nothing
-    };
+   /^END_PASSFAILOUTPUT$/ && do { # do nothing and quit file
+     $end_found = 1;
+     close(ARGV);
+     last SWITCH;
+   };
+   /^FAILED\:\s*/ && do {
+     if (! $options->{"xml"}) {
+       $item_list_section .= "<div class='red_item'>$_</div>\n";
+       print LOG " "x(length("$0")),"            :$.:<div class='red_item'>$_</div>\n"
+         if ($options->{"verbose"});
+     }
+     else {
+       ($result, $name, $other) = split(/[\s:,]+/, $_, 3);
+       $fcmp_options = "";
+       $fcmp_options = $1 if ($other =~ s/\(fcmp\s+options:\s+([^\)]+)\)[\s,]*//);
+       $note = $other;
+       $item_list_section .= "\t<test>\n";
+       $item_list_section .= "\t\t<name>$name</name>\n";
+       $item_list_section .= "\t\t<result>$result</result>\n";
+       $item_list_section .= "\t\t<note>$note</note>\n";
+       $item_list_section .= "\t\t<fcmp_options>$fcmp_options</fcmp_options>\n";
+       # $name = basename($name, ".stdout", ".TablesLoaded.dat");
+       $item_list_section .= "\t\t<run_time>".$test_times_hash{$name}."</run_time>\n";
+       $item_list_section .= "\t</test>\n";
+     }
+     $items_failed++;
+     last SWITCH;
+   };
+   /^PASSED\:\s*/ && do {
+     if (! $options->{"failedonly"}) {
+       ($result, $name, $other) = split(/[\s:,]+/, $_, 3);
+       if (! $options->{"xml"}) {
+         $items_exceptions++ if $other =~ /baseline exception/;
+         $item_list_section .= "<div class='green_item'>$_</div>\n";
+         print LOG " "x(length("$0")),"            :$.:<div class='green_item'>$_</div>\n"
+           if ($options->{"verbose"});
+       } else {
+         $fcmp_options = "";
+         $fcmp_options = $1 if ($other =~ s/\(fcmp\s+options:\s+([^\)]+)\)[\s,]*//);
+         $note = $other;
+         $item_list_section .= "\t<test>\n";
+         $item_list_section .= "\t\t<name>$name</name>\n";
+         $item_list_section .= "\t\t<result>$result</result>\n";
+         $item_list_section .= "\t\t<note>$note</note>\n";
+         $item_list_section .= "\t\t<fcmp_options>$fcmp_options</fcmp_options>\n";
+         # $name = basename($name, ".stdout", ".TablesLoaded.dat");
+         $item_list_section .= "\t\t<run_time>".$test_times_hash{$name}."</run_time>\n";
+         $item_list_section .= "\t</test>\n";
+       }
+     }
+     $items_passed++;
+     last SWITCH;
+   };
+   (/^WARNING\:\s*/ || /^IGNORED\:\s*/) && do {
+     if (! $options->{"failedonly"}) {
+       if (! $options->{"xml"}) {
+         $item_list_section .= "<div class='yellow_item'>$_</div>\n";
+         print LOG " "x(length("$0")),"            :$.:<div class='yellow_item'>$_</div>\n"
+           if ($options->{"verbose"});
+       } else {
+         ($result, $name, $other) = split(/[\s:,]+/, $_, 3);
+         $fcmp_options = "";
+         $fcmp_options = $1 if ($other =~ s/\(fcmp\s+options:\s+([^\)]+)\)[\s,]*//);
+         $note = $other;
+         $item_list_section .= "\t<test>\n";
+         $item_list_section .= "\t\t<name>$name</name>\n";
+         $item_list_section .= "\t\t<result>$result</result>\n";
+         $item_list_section .= "\t\t<note>$note</note>\n";
+         $item_list_section .= "\t\t<fcmp_options>$fcmp_options</fcmp_options>\n";
+         # $name = basename($name, ".stdout", ".TablesLoaded.dat");
+         $item_list_section .= "\t\t<run_time>".$test_times_hash{$name}."</run_time>\n";
+         $item_list_section .= "\t</test>\n";
+       }
+     }
+     $items_ignored++;
+     $items_ignored++ if /^IGNORED\:\s*/; # double count so $tot is correct below
+     last SWITCH;
+   };
+   /^excluded\:\s*/ && do {
+     if (! $options->{"failedonly"}) {
+       if (! $options->{"xml"}) {
+         $item_list_section .= "<div class='gray_item'>$_</div>\n";
+         print LOG " "x(length("$0")),"            :$.:<div class='gray_item'>$_</div>\n"
+           if ($options->{"verbose"});
+       } else {
+         ($result, $name, $other) = split(/[\s:,]+/, $_, 3);
+         $fcmp_options = "";
+         $fcmp_options = $1 if ($other =~ s/\(fcmp\s+options:\s+([^\)]+)\)[\s,]*//);
+         $note = $other;
+         $item_list_section .= "\t<test>\n";
+         $item_list_section .= "\t\t<name>$name</name>\n";
+         $item_list_section .= "\t\t<result>$result</result>\n";
+         $item_list_section .= "\t\t<note>$result $note</note>\n";
+         $item_list_section .= "\t\t<fcmp_options>$fcmp_options</fcmp_options>\n";
+         # $name = basename($name, ".stdout", ".TablesLoaded.dat");
+         $item_list_section .= "\t\t<run_time>".$test_times_hash{$name}."</run_time>\n";
+         $item_list_section .= "\t</test>\n";
+       }
+     }
+     $items_excluded++;
+     last SWITCH;
+   };
+   /^\s*NOTE:\s*(.+)$/ && do {
+     s/\s*NOTE:\s*//;
+     s/\s*$//;
+     if (! $options->{"xml"}) {
+       $note_list_section .= "    <li>$_</li>\n";
+       print LOG " "x(length("$0")),"            :$.:<div>$_</div>\n"
+         if ($options->{"verbose"});
+     }
+     else {
+       $note_list_section .= "\t<notes>$_</notes>\n";
+     }
+     last SWITCH;
+   };
+   /^SUMMARY\-\-/ && do { last SWITCH; # ignore previously-existing summary data
+   };
+   /^\s+$/ && do {
+     print LOG " "x(length("$0")),"            :$.:SUMMARY:$_\n"
+       if ($options->{"verbose"});
+     last SWITCH;               # nothing
+   };
   }
 
   # close input file so that we can open it again later
@@ -351,6 +275,7 @@ if (! $options->{"xml"}) {
   exit($err) if ($err);
 
   $item_list_section .= "</div><!-- LIST DIV BLOCK -->\n\n";
+  $note_list_section .= "  </ul>\n</div><!-- NOTE DIV BLOCK -->\n\n";
 
   print "<div id='main'><!-- MAIN DIV BLOCK -->\n\n";
 
@@ -365,6 +290,7 @@ if (! $options->{"xml"}) {
   }
 
   print "$main_section";
+  print "$note_list_section";
 
   print "<div id='summary_table_style'><!-- SUMMARY DIV BLOCK -->\n\n";
 
@@ -478,8 +404,8 @@ sub validate() {
     my $tot = $items_failed + $items_passed + $items_ignored + $items_excluded;
     if ($tot != $options->{"totaltests"}) {
       print LOG "$0(".__LINE__.") ERROR 2: $tot test items found, not the required ",$options->{"totaltests"},
-	" (F($items_failed) + P($items_passed) + I($items_ignored) + E($items_excluded))\n"
-	  if ($options->{"verbose"});
+        " (F($items_failed) + P($items_passed) + I($items_ignored) + E($items_excluded))\n"
+        if ($options->{"verbose"});
       return 2;
     }
     else {
@@ -488,4 +414,107 @@ sub validate() {
   }
 
   return 0;
+}
+
+sub create_HEREDOCS() {
+  $header =<<END_HEADER;
+$docType
+<html>
+<head>
+<title>EOSPAC 6 Testing Status Report</title>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<style type="text/css">
+<!--
+body {
+  background-color: #FFFFFF;
+}
+div#main {
+}
+div#summary_table_style {
+  font-size: large;
+  border: thin solid #000000;
+  float: right;
+  padding: 1em;
+  margin: 0 0 0 0;
+  background-color: #FFFFFF;
+}
+div#preamble {
+  font-size: large;
+  border: thin solid #000000;
+  float: right;
+  padding: 1em;
+  margin: 0 0 0 0;
+  background-color: #FFFFFF;
+}
+div#note_list {
+  font-size: large;
+  border: thin solid #000000;
+  padding: 0;
+  margin: 0 0 0 0;
+  background-color: #FFFFFF;
+}
+div#item_list {
+  background-color: #FFFFFF;
+}
+.red_item {
+  background-color: #FF6666;
+}
+.green_item {
+  background-color: #99FF99;
+}
+.yellow_item {
+  background-color: #FFFF99;
+}
+.gray_item {
+  background-color: #CCCCCC;
+}
+.red_item, .green_item, .yellow_item, .gray_item {
+  border: none;
+  border-bottom-style: solid;
+  border-bottom-color: #8C8C8C;
+  border-bottom-width: 1px;
+}
+.bold_item {
+  font-size: large;
+  font-weight: bold;
+}
+.border_item {
+  border: solid #000000;
+}
+.border_bottom_item {
+  border: none;
+  border-bottom-style: solid;
+  border-bottom-color: #000000;
+  border-bottom-width: thin;
+}
+.extra_pad {
+  padding: 0.25em;
+}
+.logo {
+ /*
+  background: url('https://tf.lanl.gov/sf/page/do/viewImage/projects.eospac6?id=atch18174') no-repeat top right;
+  height: 100px;
+  line-height:33px;
+ */
+}
+\@media print {
+  .red_item { color: #FF0000; }
+  .green_item { color: #66FF66; }
+  .yellow_item { color: #FFFF99; }
+  .gray_item { color: gray; }
+  .red_item, .green_item, .yellow_item, .gray_item { background-color: #FFFFFF; }
+  div#summary_table_style { float: none; border: thin solid #000000; padding: 0.25em; text-align: center; }
+  .extra_pad { padding: 0; }
+}
+-->
+</style>
+</head>
+
+<body>
+END_HEADER
+
+  $footer =<<END_FOOTER;
+</body>
+</html>
+END_FOOTER
 }

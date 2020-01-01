@@ -8,7 +8,7 @@
 !*********************************************************************
 
 !*  \file
-!*  \ingroup tests
+!*  \ingroup Fortran2003 tests
 !*  \brief Verify the new public function, eos_GetMetaData, to return internal meta data
 !*         per a user's specific request functions as advertised within a Fortran code.
 !*
@@ -141,5 +141,7 @@ program main
      enddo
 
   enddo
+
+  call eos_DestroyAll (errorCode)
 
 end program main

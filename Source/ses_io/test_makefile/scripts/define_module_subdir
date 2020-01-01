@@ -1,7 +1,7 @@
 #! /bin/sh
 (shopt -s igncr) 2>/dev/null && eval 'shopt -s igncr';#
 
-# $Date: 2015/05/22 23:52:35 $
+# $Date: 2017/02/07 16:15:53 MST $
 #
 # This script is used to define a subdirectory name specific
 # to the currently-loaded fortran compiler module. If modulecmd is not found
@@ -9,20 +9,48 @@
 # prepended "/".
 #
 
-if [ $# -le 0 ]; then
-    cat <<EOF
+usage ()
+{
+   cat <<EOF
 
  Usage:
-   define_module_subdir <PATT> [<LOC>]
+   define_module_subdir [-h] [-d val] <PATT> [<LOC>]
 
-   <PATT>  is the specific F90 compiler module name pattern (i.e., absoft,
-           pgi, pathscale, intel-f, ...)
+   -h      Show this help
+   -d val  Define the default return string, val, in case PATT is not found
 
-   <LOC>   is the optional location of prerequisite script(s)
+   <PATT>  Specify the F90 compiler module name pattern {i.e., absoft, pgi,
+           pathscale, intel-f, '^intel(-f)?/', ...}.
+           Note that Perl regular expressions are valid, but it is strongly
+           recommended that the -d option is used in tandem with any regular
+           expression.
+
+   <LOC>   Optionally specify the location of prerequisite script(s).
 
 EOF
-    exit 1
+}
+
+if [ $# -le 0 ]; then
+  usage
+  exit 1
 fi
+
+# Parse options -- ":d:h"
+# initial colon
+#    * means getopts should not produce an internal error message if the user passes an option which is not declared in the string 
+# d: means -d is legal
+#    * furthermore -d takes an additional parameter
+#          o obtained via: $OPTARG 
+# h means -h is legal 
+while getopts ":d:h" opt; do
+    case $opt in
+        d )  default=$OPTARG ;;
+        h )  usage; exit 0;;
+        \?)  usage; exit 0;;
+    esac
+done
+
+shift `expr $OPTIND - 1`
 
 if [ $# -le 1 ]; then
   loc=`dirname $0`
@@ -35,20 +63,7 @@ PATT=$1
 shift
 
 # define known possible locations for modulecmd
-if   [ -x /usr/bin/modulecmd ] ; then
-  MODULECMD=/usr/bin/modulecmd
-
-elif [ -x /usr/local/modules/$MODULE_VERSION/bin/modulecmd ] ; then
-  MODULECMD=/usr/local/modules/$MODULE_VERSION/bin/modulecmd
-
-elif [ -x /opt/modules/$MODULE_VERSION/bin/modulecmd ] ; then
-  MODULECMD=/opt/modules/$MODULE_VERSION/bin/modulecmd
-
-else
-  MODULECMD=modulecmd_does_not_exist
-
-fi
-export MODULECMD
+. ${loc}/setup_modulecmd
 
 # return name of the loaded fortran module matching PATT
 if [ -x ${MODULECMD} ]; then
@@ -65,11 +80,19 @@ if [ -x ${MODULECMD} ]; then
    if [ "x${loadedfortranmodules}" != "x" ]; then
       echo "/${loadedfortranmodules}"
    else
-      echo "/${PATT}"
+     if [ "${default:+true}" = "true" ]; then
+        echo "/${default}"
+     else
+        echo "/${PATT}"
+     fi
    fi
 
 else
 
-   echo "/${PATT}"
+   if [ "${default:+true}" = "true" ]; then
+      echo "/${default}"
+   else
+      echo "/${PATT}"
+   fi
 
 fi

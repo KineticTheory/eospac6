@@ -217,6 +217,7 @@ int main ()
   }
 
   printf ("\nCOMMENTS:\n%s\n\n", comment_str);
+  free (comment_str);
 
   for (i = 0; i < nTables; i++) if (tableType[i] == EOS_Info) break;
   assert(i < nTables);
@@ -299,6 +300,7 @@ int main ()
   }
 
   printf ("\nCOMMENTS:\n%s\n\n", comment_str);
+  free (comment_str);
 
   for (i = 0; i < nTables; i++) if (tableType[i] == EOS_Info) break;
   assert(i < nTables);

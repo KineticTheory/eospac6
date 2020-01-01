@@ -24,17 +24,6 @@
 
 #define EOS_FREE(p) { assert(p != NULL); free(p); p=NULL; }
 
-void* safe_malloc(int bytes) {
-  void *p=NULL;
-  assert (p == NULL);
-  
-  p = malloc(bytes);
-  if (p == NULL) {
-    printf("safe_malloc failed to allocate %i bytes\n", bytes);
-    assert(p != NULL);
-  }
-  return p;
-}
 
 int main ()
 {
@@ -118,12 +107,12 @@ int main ()
     /* attempt to mix data associated with each table handle */
     for (i = 0; i < nTables; i++) {
 
-      X = (EOS_REAL *) safe_malloc (sizeof (EOS_REAL) * nXYPairs);
-      Y = (EOS_REAL *) safe_malloc (sizeof (EOS_REAL) * nXYPairs);
-      F = (EOS_REAL *) safe_malloc (sizeof (EOS_REAL) * nXYPairs);
-      dFx = (EOS_REAL *) safe_malloc (sizeof (EOS_REAL) * nXYPairs);
-      dFy = (EOS_REAL *) safe_malloc (sizeof (EOS_REAL) * nXYPairs);
-      concInMix = (EOS_REAL *) safe_malloc (sizeof (EOS_REAL) * nXYPairs);
+      X = (EOS_REAL *) safe_malloc (nXYPairs, sizeof (EOS_REAL));
+      Y = (EOS_REAL *) safe_malloc (nXYPairs, sizeof (EOS_REAL));
+      F = (EOS_REAL *) safe_malloc (nXYPairs, sizeof (EOS_REAL));
+      dFx = (EOS_REAL *) safe_malloc (nXYPairs, sizeof (EOS_REAL));
+      dFy = (EOS_REAL *) safe_malloc (nXYPairs, sizeof (EOS_REAL));
+      concInMix = (EOS_REAL *) safe_malloc (nXYPairs, sizeof (EOS_REAL));
 
       for (j = 0; j < nXYPairs; j++)
 	concInMix[j] = 1.0;
@@ -144,6 +133,7 @@ int main ()
 	printf ("valid data type %d, %s\n", tableType, get_tableType_str(tableType));
 
       /* deallocate memory */
+      if (X) EOS_FREE(X);
       if (Y) EOS_FREE(Y);
       if (F) EOS_FREE(F);
       if (dFx) EOS_FREE(dFx);

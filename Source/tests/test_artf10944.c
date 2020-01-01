@@ -136,7 +136,7 @@ int main ()
                 tableHandle[i], tableHandleErrorCode, errorMessage);
       }
     }
-    return 0;
+    goto CLEANUP;
   }
 
   /* Enable data dump to file */
@@ -164,7 +164,7 @@ int main ()
                 tableHandle[i], tableHandleErrorCode, errorMessage);
       }
     }
-    return 0;
+    goto CLEANUP;
   }
 
   for (i = 0; i < nTables; i++) {
@@ -185,6 +185,13 @@ int main ()
 	printf ("%20s: %22.15e\n", infoItems_str[j], infoVals[j]);
     }
   }
+
+ CLEANUP:
+  {
+    EOS_INTEGER err;
+    eos_DestroyAll (&err);
+  }
+
   return 0;
 
 }

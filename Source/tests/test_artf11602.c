@@ -21,11 +21,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
+#include "TEST_FUNCTIONS.h"
 #include "eos_Interface.h"
 
 #define EOS_FREE(p) {if(p != NULL) free(p); p=NULL;}
-
-static const EOS_INTEGER EOS_ALLOW_ALL_INFO_ITEMS = 11002;  /* Override category restrictions related to selected table information parameters */
 
 int main ()
 {

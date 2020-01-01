@@ -16,7 +16,7 @@ Ordered list of Sesame files searched:
 
 TableHandle=0 matid =  3720 source = Analytical Cowan Model page =  1
 Data Type = EOS_Aiz_DT
-Loading Options: EOS_MONOTONIC_IN_Y, EOS_SPLIT_FORCED
+Loading Options: EOS_SPLIT_FORCED
 Description = Ion Specific-Free-Energy Including Zero Point (MJ/kg) (Density (Mg/m^3)- and Temperature (K)-dependent)
   fconv =   1.000000000000000E+00         xconv =   1.000000000000000E+00         yconv =   1.000000000000000E+00
 
@@ -136,7 +136,7 @@ Description = Ion Specific-Free-Energy Including Zero Point (MJ/kg) (Density (Mg
 
 TableHandle=0 matid =  3720 source = Analytical Cowan Model page =  2
 Data Type = EOS_Aiz_DT
-Loading Options: EOS_MONOTONIC_IN_Y, EOS_SPLIT_FORCED
+Loading Options: EOS_SPLIT_FORCED
 Description = Ion Specific-Free-Energy Including Zero Point (MJ/kg) (Density (Mg/m^3)- and Temperature (K)-dependent)
   fconv =   1.000000000000000E+00         xconv =   1.000000000000000E+00         yconv =   1.000000000000000E+00
 
@@ -256,7 +256,7 @@ Description = Ion Specific-Free-Energy Including Zero Point (MJ/kg) (Density (Mg
 
 TableHandle=0 matid =  3720 source = Analytical Cowan Model page =  3
 Data Type = EOS_Aiz_DT
-Loading Options: EOS_MONOTONIC_IN_Y, EOS_SPLIT_FORCED
+Loading Options: EOS_SPLIT_FORCED
 Description = Ion Specific-Free-Energy Including Zero Point (MJ/kg) (Density (Mg/m^3)- and Temperature (K)-dependent)
   fconv =   1.000000000000000E+00         xconv =   1.000000000000000E+00         yconv =   1.000000000000000E+00
 
@@ -376,7 +376,7 @@ Description = Ion Specific-Free-Energy Including Zero Point (MJ/kg) (Density (Mg
 
 TableHandle=0 matid =  3720 source = Analytical Cowan Model page =  4
 Data Type = EOS_Aiz_DT
-Loading Options: EOS_MONOTONIC_IN_Y, EOS_SPLIT_FORCED
+Loading Options: EOS_SPLIT_FORCED
 Description = Ion Specific-Free-Energy Including Zero Point (MJ/kg) (Density (Mg/m^3)- and Temperature (K)-dependent)
   fconv =   1.000000000000000E+00         xconv =   1.000000000000000E+00         yconv =   1.000000000000000E+00
 
@@ -442,8 +442,8 @@ Description = Ion Specific-Free-Energy Including Zero Point (MJ/kg) (Density (Mg
    4.320000000000000E+00  -9.080659848490280E+00  -1.079187292219051E+01  -1.260860837990428E+01  -1.454585018893542E+01  -1.655513398547658E+01  -2.073144257129326E+01  -2.509613008909630E+01  -2.962858991676465E+01  -3.431278331476050E+01  -3.913585298234183E+01
    4.590000000000000E+00  -8.718178391151550E+00  -1.037883953944684E+01  -1.210887091499079E+01  -1.391895864287505E+01  -1.583881039852695E+01  -1.991336513955472E+01  -2.417848076727083E+01  -2.861200650432696E+01  -3.319792470938923E+01  -3.792340849093377E+01
    4.860000000000000E+00  -8.394700749198270E+00  -1.001021112635283E+01  -1.169477118238638E+01  -1.344241616681361E+01  -1.525373891209646E+01  -1.916139067097796E+01  -2.333530766375604E+01  -2.767794332446324E+01  -3.217329774420640E+01  -3.680856122725994E+01
-   5.130000000000000E+00  -8.106838749772656E+00  -9.680619942280821E+00  -1.132427079732665E+01  -1.303071470307611E+01  -1.479507416380280E+01  -1.851131036768976E+01  -2.256233044568189E+01  -2.682178811082638E+01  -3.123405919533239E+01  -3.578635178643512E+01
-   5.400000000000000E+00  -7.846258472915244E+00  -9.388403305247188E+00  -1.099112218577087E+01  -1.266031257146002E+01  -1.438715093628909E+01  -1.799814081633085E+01  -2.186772689492632E+01  -2.603537807345970E+01  -3.037138324908838E+01  -3.484735987645230E+01
+   5.130000000000000E+00  -8.106948377847253E+00  -9.680619942280821E+00  -1.132427079732665E+01  -1.303071470307611E+01  -1.479507416380280E+01  -1.851131036768976E+01  -2.256233044568189E+01  -2.682178811082638E+01  -3.123405919533239E+01  -3.578635178643512E+01
+   5.400000000000000E+00  -7.846258472915244E+00  -9.388526211508657E+00  -1.099112218577087E+01  -1.266031257146002E+01  -1.438715093628909E+01  -1.799814081633085E+01  -2.186772689492632E+01  -2.603537807345970E+01  -3.037138324908838E+01  -3.484735987645230E+01
    6.075000000000000E+00  -7.297536250336215E+00  -8.757288432650647E+00  -1.028489391721404E+01  -1.187441544793827E+01  -1.352099037242741E+01  -1.696969939293512E+01  -2.060527105546199E+01  -2.441963720849355E+01  -2.849051523279930E+01  -3.279452812618842E+01
    6.750000000000000E+00  -6.862966500671169E+00  -8.259682117414108E+00  -9.723715848489288E+00  -1.124914579395594E+01  -1.283112002278465E+01  -1.614912850735893E+01  -1.965203413254916E+01  -2.332057088440877E+01  -2.713980815679534E+01  -3.115470742196115E+01
    7.425000000000001E+00  -6.518810406303210E+00  -7.864912589548709E+00  -9.277866244853509E+00  -1.075176421504399E+01  -1.228176458877367E+01  -1.549452694306334E+01  -1.889048575893006E+01  -2.245040013850506E+01  -2.615930591573855E+01  -3.000523028850562E+01
@@ -496,7 +496,7 @@ Description = Ion Specific-Free-Energy Including Zero Point (MJ/kg) (Density (Mg
 
 TableHandle=0 matid =  3720 source = Analytical Cowan Model page =  5
 Data Type = EOS_Aiz_DT
-Loading Options: EOS_MONOTONIC_IN_Y, EOS_SPLIT_FORCED
+Loading Options: EOS_SPLIT_FORCED
 Description = Ion Specific-Free-Energy Including Zero Point (MJ/kg) (Density (Mg/m^3)- and Temperature (K)-dependent)
   fconv =   1.000000000000000E+00         xconv =   1.000000000000000E+00         yconv =   1.000000000000000E+00
 
@@ -616,7 +616,7 @@ Description = Ion Specific-Free-Energy Including Zero Point (MJ/kg) (Density (Mg
 
 TableHandle=0 matid =  3720 source = Analytical Cowan Model page =  6
 Data Type = EOS_Aiz_DT
-Loading Options: EOS_MONOTONIC_IN_Y, EOS_SPLIT_FORCED
+Loading Options: EOS_SPLIT_FORCED
 Description = Ion Specific-Free-Energy Including Zero Point (MJ/kg) (Density (Mg/m^3)- and Temperature (K)-dependent)
   fconv =   1.000000000000000E+00         xconv =   1.000000000000000E+00         yconv =   1.000000000000000E+00
 
@@ -736,7 +736,7 @@ Description = Ion Specific-Free-Energy Including Zero Point (MJ/kg) (Density (Mg
 
 TableHandle=0 matid =  3720 source = Analytical Cowan Model page =  7
 Data Type = EOS_Aiz_DT
-Loading Options: EOS_MONOTONIC_IN_Y, EOS_SPLIT_FORCED
+Loading Options: EOS_SPLIT_FORCED
 Description = Ion Specific-Free-Energy Including Zero Point (MJ/kg) (Density (Mg/m^3)- and Temperature (K)-dependent)
   fconv =   1.000000000000000E+00         xconv =   1.000000000000000E+00         yconv =   1.000000000000000E+00
 
@@ -856,7 +856,7 @@ Description = Ion Specific-Free-Energy Including Zero Point (MJ/kg) (Density (Mg
 
 TableHandle=0 matid =  3720 source = Analytical Cowan Model page =  8
 Data Type = EOS_Aiz_DT
-Loading Options: EOS_MONOTONIC_IN_Y, EOS_SPLIT_FORCED
+Loading Options: EOS_SPLIT_FORCED
 Description = Ion Specific-Free-Energy Including Zero Point (MJ/kg) (Density (Mg/m^3)- and Temperature (K)-dependent)
   fconv =   1.000000000000000E+00         xconv =   1.000000000000000E+00         yconv =   1.000000000000000E+00
 

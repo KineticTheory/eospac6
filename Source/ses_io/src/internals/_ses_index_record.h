@@ -19,6 +19,8 @@
 #define _read_index_record HEADER(_read_index_record)
 #define _write_index_record HEADER(_write_index_record)
 #define _ses_print_index_record HEADER(_print_index_record)
+#define _get_table_nwds HEADER(_get_table_nwds)
+
 
 
 /*  CONSTRUCTORS AND DESTRUCTORS */

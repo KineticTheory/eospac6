@@ -1,0 +1,23 @@
+c*********************************************************************
+c  Header for Fortran 77 code to set constants used by EOSPAC
+c  ----------------------------------------------------------
+c  Filetype: (HEADER)
+c  
+c  Copyright -- see file named COPYRIGHTNOTICE
+c  
+c*********************************************************************
+
+c Define hidden option flags that are currently not defined in the public interface.
+c  NOTE: If you want to use these in a test code, copy these defines into your code.
+      integer EOS_NUM_PRIVATE_OPTIONS
+      integer EOS_MIN_PRIVATE_OPTION_FLAG_VALUE
+      integer DISABLE_FTBLS_INVT_MASK
+      integer EOS_DEBUG_PRINT
+      integer EOS_DISABLE_GHOST_NODES
+      integer EOS_ALLOW_ALL_INFO_ITEMS
+      parameter( EOS_NUM_PRIVATE_OPTIONS = 4 )
+      parameter( EOS_MIN_PRIVATE_OPTION_FLAG_VALUE = 11000 )
+      parameter( DISABLE_FTBLS_INVT_MASK = 11000 )
+      parameter( EOS_DEBUG_PRINT = 11001 )
+      parameter( EOS_DISABLE_GHOST_NODES = 11002 )
+      parameter( EOS_ALLOW_ALL_INFO_ITEMS = 11003 )

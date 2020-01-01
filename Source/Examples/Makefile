@@ -18,24 +18,24 @@ EXEDIR = $(EXAMPLEDIR)
 ##################################################################
 DEPDIR = $(BASEDIR)/Examples/.depends
 df = $(DEPDIR)/$(*F)
-MAKEDEPEND = $(BASEDIR)/scripts/make_depends -d $(DEPDIR) -I $(BASEDIR)/src -I $(SESIOINC) $<
+MAKEDEPEND = $(BASEDIR)/scripts/make_depends -d $(DEPDIR) -I $(SRCDIR) -I $(SESIOINC) $<
 $(OBJDIR)/%.o : %.c
 	-$(MAKEDEPEND)
-	${CC} $(C_ADDRESS_FLAG) ${CPPFLAGS} ${CFLAGS} -c $< -o $@
+	${CC} $(C_ADDRESS_FLAG) ${CPPFLAGS} ${CFLAGS} -I$(SRCDIR) -c $< -o $@
 	$(PURIFY) $(CC) $(C_ADDRESS_FLAG) $(LDFLAGS) -o $(EXEDIR)/$* $@ $(LIBS)
 	-rm $@
 	@echo ' '
 
 $(OBJDIR)/%.o : %.cpp
 	-$(MAKEDEPEND)
-	${CXX} $(C_ADDRESS_FLAG) ${CPPFLAGS} ${CXXFLAGS} -c $< -o $@
+	${CXX} $(C_ADDRESS_FLAG) ${CPPFLAGS} ${CXXFLAGS} -I$(SRCDIR) -c $< -o $@
 	$(PURIFY) $(CXX) $(C_ADDRESS_FLAG) $(LDFLAGS) -o $(EXEDIR)/$* $@ $(LIBS)
 	-rm $@
 	@echo ' '
 
 $(OBJDIR)/%.o : %.f
 	-$(MAKEDEPEND)
-	${F77} $(F_ADDRESS_FLAG) ${FFLAGS} -c $< -o $@
+	${F77} $(F_ADDRESS_FLAG) ${FFLAGS} -I$(SRCDIR) -c $< -o $@
 	$(PURIFY) $(F77) $(F_ADDRESS_FLAG) $(LDFLAGS) -o $(EXEDIR)/$* $@ $(LIBS) $(F77_LIBS)
 	-rm $@
 	@echo ' '
@@ -44,7 +44,7 @@ $(OBJDIR)/%.o : %.f90
 	-$(MAKEDEPEND)
 	@(d=`pwd`; \
          cd $(OBJDIR); \
-         echo $(F90) $(F_ADDRESS_FLAG) ${F90FLAGS} -c $$d/$< -o $@; \
+         echo $(F90) $(F_ADDRESS_FLAG) ${F90FLAGS} -I$(SRCDIR) -c $$d/$< -o $@; \
          $(F90) $(F_ADDRESS_FLAG) ${F90FLAGS} -c $$d/$< -o $@; \
         )
 	$(PURIFY) $(F90) $(F_ADDRESS_FLAG) $(LDFLAGS) -o $(EXEDIR)/$* $@ $(PROFILE) $(LIBS) $(F90_LIBS)
@@ -224,10 +224,16 @@ INSTALLED_EXAMPLE_DIR = ${prefix}/example/$(ARCH)
 INSTALLED_BIN_DIR = ${prefix}/bin/$(ARCH)
 install: clean MAKEDIRS
 	( $(MAKE) DEBUG=-O install_child 2>&1 ) | tee ${EXEDIR}/$(BUILD_LOG) 2>&1
-	cp $(EXEDIR)/$(BUILD_LOG) ${INSTALLED_EXAMPLE_DIR}
-	chmod a+u,o-w ${INSTALLED_EXAMPLE_DIR}/$(BUILD_LOG)
+	@cp $(EXEDIR)/$(BUILD_LOG) ${INSTALLED_EXAMPLE_DIR}
+	@chmod a+u,o-w ${INSTALLED_EXAMPLE_DIR}/$(BUILD_LOG)
 ifneq ($(strip $(INSTALLEDFILESGROUP)),)
-	chgrp $(INSTALLEDFILESGROUP) ${INSTALLED_EXAMPLE_DIR}/$(BUILD_LOG)
+	@chgrp $(INSTALLEDFILESGROUP) ${INSTALLED_EXAMPLE_DIR}/$(BUILD_LOG)
+endif
+	@mkdir -p $(prefix0)/bin
+	@cp $(BASEDIR)/scripts/config.guess $(BASEDIR)/scripts/config.guess.wrapper $(prefix0)/bin
+	@chmod a+u,a+x,o-w $(prefix0)/bin/config.guess $(prefix0)/bin/config.guess.wrapper
+ifneq ($(strip $(INSTALLEDFILESGROUP)),)
+	@chgrp $(INSTALLEDFILESGROUP) $(prefix0)/bin/config.guess $(prefix0)/bin/config.guess.wrapper
 endif
 
 install_child: all_child check_child installdirs
@@ -322,7 +328,7 @@ clean:
 	@echo '***' Delete local build $(ARCH) directories.
 	@echo '***********************************************************'
 	-rm -fr $(EXEDIR) $(DEPDIR) \
-                `find . -name 'core*'` `find . -name '*.stackdump'`
+                `find . -name 'core*' -o -name '*.stackdump' -o -name '*.lst'` $(BUILD_LOG)
 	@(if [ -d $(BASEDIR)/src ]; then $(MAKE) -C $(BASEDIR)/src clean; fi)
 	@(if [ -d $(BASEDIR)/tests ]; then $(MAKE) -C $(BASEDIR)/tests clean; fi)
 	@(if [ -d $(BASEDIR)/utils ]; then $(MAKE) -C $(BASEDIR)/utils clean; fi)
@@ -333,10 +339,12 @@ ifeq (0,${MAKELEVEL})
 endif
 
 distclean:     distclean_msg rm_include rm_lib rm__OBJ rm_bin rm_example rm_MSVS distclean_src distclean_tests     distclean_utils
-	-rm -fr $(BUILD_LOG)
+	-rm -f $(BUILD_LOG)
+	-rm -rf $(DEPDIR)
 
 distcleanfast: distclean_msg rm_include rm_lib rm__OBJ rm_bin rm_example rm_MSVS distclean_src distcleanfast_tests distclean_utils
-	-rm -fr $(BUILD_LOG)
+	-rm -f $(BUILD_LOG)
+	-rm -rf $(DEPDIR)
 
 distclean_msg:
 	@echo ' '

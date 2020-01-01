@@ -1,0 +1,43 @@
+#! /bin/sh
+
+# $Id: corecount,v 1.3 2018/02/05 17:16:04 davidp Exp $
+
+OSname=`uname`
+enableVerbose=
+prefix=
+
+while getopts hmp:v option ; do
+    case "$option" in
+        m) mach=`hostname`": ";;
+        p) prefix="$OPTARG";;
+        v) enableVerbose='set -x';;
+        h) cat<<EOF
+
+Usage: ${me} [OPTION]... NAME...
+   -h        display this help; this disables all other options
+   -m        prefix output with hostname
+   -p <VAL>  prefix output with <VAL>
+   -v        enable verbose output
+
+EOF
+           exit 0;;
+    esac
+done
+
+shift `expr $OPTIND - 1`
+
+${enableVerbose}
+
+printf "%s%s" "${prefix}" "${mach}"
+
+case "${OSname}" in
+
+   IRIX)         hinv -v | grep '^ *CPU  *[0-9]' | wc -l | sed -e 's/^ *//';;
+   SunOS)        psrinfo -v | egrep '^ *Status of (virtual )?processor' | wc -l | sed -e 's/^ *//';;
+   Linux|CYGWIN) cat /proc/cpuinfo | grep '^ *processor' | wc -l | sed -e 's/^ *//';;
+   AIX)          lsdev -C | grep Process | wc -l | sed -e 's/^ *//';;
+   HPUX)         ioscan -C processor | grep processor | wc -l | sed -e 's/^ *//';;
+   Darwin)       system_profiler SPHardwareDataType | egrep -i 'Number Of (CPU|Core)s:' | sed -e 's/[^0-9]*//';;
+   *)            echo '1';;
+
+esac

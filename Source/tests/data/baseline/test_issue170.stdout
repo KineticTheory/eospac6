@@ -1,0 +1,97 @@
+
+--- TEST eos_CreateTables ---
+eos_CreateTables EOS_OK
+
+--- TEST eos_ResetOption and eos_SetOption with a negative handle ---
+eos_ResetOption ERROR 2021: EOS_INVALID_TABLE_HANDLE: Invalid table handle
+eos_SetOption ERROR 2021: EOS_INVALID_TABLE_HANDLE: Invalid table handle
+
+--- TEST eos_LoadTables with a negative handle ---
+eos_LoadTables ERROR 2021: EOS_INVALID_TABLE_HANDLE: Invalid table handle
+Table handle 0: eos_LoadTables error code EOS_OK
+Table handle 1: eos_LoadTables error code EOS_OK
+Table handle -2: eos_LoadTables ERROR 2021: EOS_INVALID_TABLE_HANDLE: Invalid table handle
+Table handle 3: eos_LoadTables error code EOS_OK
+
+--- TEST eos_GetErrorMessage with a Standard Error Code ---
+	eos with Standard Error Code, EOS_INVALID_TABLE_HANDLE (2021):
+	'EOS_INVALID_TABLE_HANDLE: Invalid table handle'
+
+--- TEST eos_GetTableMetaData with a negative handle ---
+Table Handle 0: EOS_File_Name = /opt/local/codes/data/eos/sesame
+Table Handle 1: EOS_File_Name = /opt/local/codes/data/eos/sesame
+eos_GetTableMetaData ERROR 2021: EOS_INVALID_TABLE_HANDLE: Invalid table handle
+Table Handle 3: EOS_File_Name = /opt/local/codes/data/eos/sesame
+
+--- TEST eos_DestroyTables with a negative handle ---
+--- Interpolate handle 0 ---
+  i=0	X =  2.690420e+00, Y =  2.981500e+02, F = -2.616039e-01, dFx =  2.701307e+01, dFy =  4.894898e-03
+  i=1	X =  2.691197e+00, Y =  2.981500e+02, F = -2.405917e-01, dFx =  2.706523e+01, dFy =  4.894223e-03
+  i=2	X =  2.692392e+00, Y =  2.981500e+02, F = -2.082195e-01, dFx =  2.714287e+01, dFy =  4.893183e-03
+  i=3	X =  2.693399e+00, Y =  2.981500e+02, F = -1.808364e-01, dFx =  2.720608e+01, dFy =  4.892304e-03
+  i=4	X =  2.694456e+00, Y =  2.981500e+02, F = -1.520563e-01, dFx =  2.727020e+01, dFy =  4.891381e-03
+  i=5	X =  2.695099e+00, Y =  2.981500e+02, F = -1.345106e-01, dFx =  2.730819e+01, dFy =  4.890819e-03
+  i=6	X =  2.696168e+00, Y =  2.981500e+02, F = -1.052896e-01, dFx =  2.736967e+01, dFy =  4.889883e-03
+  i=7	X =  2.697384e+00, Y =  2.981500e+02, F = -7.195295e-02, dFx =  2.743720e+01, dFy =  4.888816e-03
+  i=8	X =  2.698139e+00, Y =  2.981500e+02, F = -5.122871e-02, dFx =  2.747785e+01, dFy =  4.888154e-03
+  i=9	X =  2.699277e+00, Y =  2.981500e+02, F = -1.992214e-02, dFx =  2.753741e+01, dFy =  4.887154e-03
+  i=10	X =  2.700239e+00, Y =  2.981500e+02, F =  6.586589e-03, dFx =  2.760337e+01, dFy =  4.886304e-03
+  i=11	X =  2.701314e+00, Y =  2.981500e+02, F =  3.634838e-02, dFx =  2.772755e+01, dFy =  4.885247e-03
+  i=12	X =  2.702182e+00, Y =  2.981500e+02, F =  6.045521e-02, dFx =  2.781978e+01, dFy =  4.884308e-03
+  i=13	X =  2.703257e+00, Y =  2.981500e+02, F =  9.039965e-02, dFx =  2.792514e+01, dFy =  4.883072e-03
+  i=14	X =  2.704476e+00, Y =  2.981500e+02, F =  1.245195e-01, dFx =  2.803420e+01, dFy =  4.881608e-03
+  i=15	X =  2.705458e+00, Y =  2.981500e+02, F =  1.520887e-01, dFx =  2.811478e+01, dFy =  4.880404e-03
+  i=16	X =  2.706318e+00, Y =  2.981500e+02, F =  1.762892e-01, dFx =  2.818056e+01, dFy =  4.879345e-03
+  i=17	X =  2.707359e+00, Y =  2.981500e+02, F =  2.056584e-01, dFx =  2.825476e+01, dFy =  4.878070e-03
+  i=18	X =  2.708071e+00, Y =  2.981500e+02, F =  2.257972e-01, dFx =  2.830239e+01, dFy =  4.877207e-03
+  i=19	X =  2.709303e+00, Y =  2.981500e+02, F =  2.607332e-01, dFx =  2.837936e+01, dFy =  4.875742e-03
+--- Interpolate handle 1 ---
+  i=0	X =  2.690420e+00, Y =  2.981500e+02, F =  2.109634e-03, dFx = -2.398191e-01, dFy =  8.622187e-04
+  i=1	X =  2.691197e+00, Y =  2.981500e+02, F =  1.924470e-03, dFx = -2.367309e-01, dFy =  8.621313e-04
+  i=2	X =  2.692392e+00, Y =  2.981500e+02, F =  1.644579e-03, dFx = -2.319500e-01, dFy =  8.619970e-04
+  i=3	X =  2.693399e+00, Y =  2.981500e+02, F =  1.412896e-03, dFx = -2.278838e-01, dFy =  8.618835e-04
+  i=4	X =  2.694456e+00, Y =  2.981500e+02, F =  1.174380e-03, dFx = -2.235877e-01, dFy =  8.617645e-04
+  i=5	X =  2.695099e+00, Y =  2.981500e+02, F =  1.031469e-03, dFx = -2.209570e-01, dFy =  8.616921e-04
+  i=6	X =  2.696168e+00, Y =  2.981500e+02, F =  7.976508e-04, dFx = -2.165562e-01, dFy =  8.615715e-04
+  i=7	X =  2.697384e+00, Y =  2.981500e+02, F =  5.372774e-04, dFx = -2.115047e-01, dFy =  8.614343e-04
+  i=8	X =  2.698139e+00, Y =  2.981500e+02, F =  3.788298e-04, dFx = -2.083476e-01, dFy =  8.613490e-04
+  i=9	X =  2.699277e+00, Y =  2.981500e+02, F =  1.444342e-04, dFx = -2.035534e-01, dFy =  8.612205e-04
+  i=10	X =  2.700239e+00, Y =  2.981500e+02, F = -4.937181e-05, dFx = -1.995283e-01, dFy =  8.611118e-04
+  i=11	X =  2.701314e+00, Y =  2.981500e+02, F = -2.616899e-04, dFx = -1.952121e-01, dFy =  8.609904e-04
+  i=12	X =  2.702182e+00, Y =  2.981500e+02, F = -4.296153e-04, dFx = -1.917324e-01, dFy =  8.608925e-04
+  i=13	X =  2.703257e+00, Y =  2.981500e+02, F = -6.332830e-04, dFx = -1.874289e-01, dFy =  8.607712e-04
+  i=14	X =  2.704476e+00, Y =  2.981500e+02, F = -8.588605e-04, dFx = -1.825487e-01, dFy =  8.606334e-04
+  i=15	X =  2.705458e+00, Y =  2.981500e+02, F = -1.036192e-03, dFx = -1.786222e-01, dFy =  8.605224e-04
+  i=16	X =  2.706318e+00, Y =  2.981500e+02, F = -1.188287e-03, dFx = -1.751871e-01, dFy =  8.604252e-04
+  i=17	X =  2.707359e+00, Y =  2.981500e+02, F = -1.368458e-03, dFx = -1.710319e-01, dFy =  8.603074e-04
+  i=18	X =  2.708071e+00, Y =  2.981500e+02, F = -1.489247e-03, dFx = -1.681908e-01, dFy =  8.602268e-04
+  i=19	X =  2.709303e+00, Y =  2.981500e+02, F = -1.693544e-03, dFx = -1.632771e-01, dFy =  8.600871e-04
+--- Interpolate handle -2 ---
+eos_Interpolate ERROR 2021: EOS_INVALID_TABLE_HANDLE: Invalid table handle
+--- Interpolate handle 3 ---
+  i=0	X =  2.690420e+00, Y =  2.981500e+02, F =  1.058584e-03, dFx = -6.810012e-04, dFy =  2.930994e-06
+  i=1	X =  2.691197e+00, Y =  2.981500e+02, F =  1.058055e-03, dFx = -6.805209e-04, dFy =  2.930686e-06
+  i=2	X =  2.692392e+00, Y =  2.981500e+02, F =  1.057242e-03, dFx = -6.797839e-04, dFy =  2.930213e-06
+  i=3	X =  2.693399e+00, Y =  2.981500e+02, F =  1.056558e-03, dFx = -6.791632e-04, dFy =  2.929814e-06
+  i=4	X =  2.694456e+00, Y =  2.981500e+02, F =  1.055840e-03, dFx = -6.785134e-04, dFy =  2.929394e-06
+  i=5	X =  2.695099e+00, Y =  2.981500e+02, F =  1.055404e-03, dFx = -6.781186e-04, dFy =  2.929139e-06
+  i=6	X =  2.696168e+00, Y =  2.981500e+02, F =  1.054680e-03, dFx = -6.774632e-04, dFy =  2.928714e-06
+  i=7	X =  2.697384e+00, Y =  2.981500e+02, F =  1.053856e-03, dFx = -6.767186e-04, dFy =  2.928231e-06
+  i=8	X =  2.698139e+00, Y =  2.981500e+02, F =  1.053346e-03, dFx = -6.762574e-04, dFy =  2.927930e-06
+  i=9	X =  2.699277e+00, Y =  2.981500e+02, F =  1.052576e-03, dFx = -6.755630e-04, dFy =  2.927477e-06
+  i=10	X =  2.700239e+00, Y =  2.981500e+02, F =  1.051927e-03, dFx = -6.749189e-04, dFy =  2.927095e-06
+  i=11	X =  2.701314e+00, Y =  2.981500e+02, F =  1.051201e-03, dFx = -6.740264e-04, dFy =  2.926668e-06
+  i=12	X =  2.702182e+00, Y =  2.981500e+02, F =  1.050617e-03, dFx = -6.733353e-04, dFy =  2.926324e-06
+  i=13	X =  2.703257e+00, Y =  2.981500e+02, F =  1.049894e-03, dFx = -6.725139e-04, dFy =  2.925897e-06
+  i=14	X =  2.704476e+00, Y =  2.981500e+02, F =  1.049074e-03, dFx = -6.716245e-04, dFy =  2.925413e-06
+  i=15	X =  2.705458e+00, Y =  2.981500e+02, F =  1.048415e-03, dFx = -6.709396e-04, dFy =  2.925023e-06
+  i=16	X =  2.706318e+00, Y =  2.981500e+02, F =  1.047838e-03, dFx = -6.703616e-04, dFy =  2.924681e-06
+  i=17	X =  2.707359e+00, Y =  2.981500e+02, F =  1.047141e-03, dFx = -6.696877e-04, dFy =  2.924267e-06
+  i=18	X =  2.708071e+00, Y =  2.981500e+02, F =  1.046664e-03, dFx = -6.692421e-04, dFy =  2.923984e-06
+  i=19	X =  2.709303e+00, Y =  2.981500e+02, F =  1.045840e-03, dFx = -6.684991e-04, dFy =  2.923493e-06
+
+--- TEST eos_DestroyTables with a negative handle ---
+eos_DestroyTables ERROR 2021: EOS_INVALID_TABLE_HANDLE: Invalid table handle
+
+--- TEST eos_DestroyAll ---
+

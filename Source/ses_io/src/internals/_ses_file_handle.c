@@ -10,6 +10,8 @@
 #define BIG_END 1
 #define LITTLE_END 0
 
+#undef DEBUG_PRINT
+
 #define my_sfh_TestByteOrder HEADER(my_sfh_TestByteOrder)
 
 
@@ -34,6 +36,9 @@ struct _ses_file_handle*  _construct_ses_file_handle(FILE* the_c_file_handle,
 
   /*  end function prototypes */
 
+#ifdef DEBUG_PRINT
+    printf("_construct_ses_file_handle: start\n");
+#endif
 
   /*  error check the arguments */
 
@@ -88,8 +93,13 @@ struct _ses_file_handle*  _construct_ses_file_handle(FILE* the_c_file_handle,
   pSFH->_current_location = 0;
   pSFH->_is_a_copy = SES_FALSE;
   pSFH->_start_index = 0;
-  pSFH->_word_size = 22;
+  // The folowing value can change at ses-setup or ses_write_setup
+  pSFH->_word_size = ASCII_MEDIUM_WORD_SIZE; // Default word size is ASCII medium
+#ifdef DEBUG_PRINT
+    printf("_construct_ses_file_handle: set the _word_size to 22, even though it may not be...\n");
+#endif
 
+    
   if (filename != (ses_string)NULL) {
       
 	if (strlen(filename) > 0) {
@@ -105,7 +115,15 @@ struct _ses_file_handle*  _construct_ses_file_handle(FILE* the_c_file_handle,
 	pSFH->_filename = (ses_string)NULL;
   }
 
-  pSFH->_filetype = the_type;
+#ifdef DEBUG_PRINT
+    if (pSFH->_filename == NULL){
+        printf("_construct_ses_file_handle: pSFH->_filename: null\n");
+    }
+    else{
+        printf("_construct_ses_file_handle: pSFH->_filename: %c\n", pSFH->_filename);
+    }
+#endif
+    pSFH->_filetype = the_type;
   pSFH->_is_little_endian = is_little;
 
   int byte_order = my_sfh_TestByteOrder();
@@ -118,10 +136,23 @@ struct _ses_file_handle*  _construct_ses_file_handle(FILE* the_c_file_handle,
 
   /*  hook up the function pointers based on the type */
 
-  pSFH->_filetype = 'Q';
+  pSFH->_filetype = QUERY_4_TYPE;
+
+#ifdef DEBUG_PRINT
+    if (the_type == NULL){
+        printf("_construct_ses_file_handle: the_type: null\n");
+    }
+    else{
+        printf("_construct_ses_file_handle: the_type: %c\n", the_type);
+    }
+    printf("_construct_ses_file_handle: the_open_mode: %c\n", the_open_mode);
+
+#endif
+    
+    
 
   pSFH->pt2_read_directory = NULL;
-  if (the_type == 'B') {
+  if (the_type == BINARY_TYPE) {
     pSFH->_filetype = the_type;
     pSFH->pt2_read_char = &_read_char_binary;
     pSFH->pt2_read_directory = &_read_directory_binary;
@@ -148,7 +179,8 @@ struct _ses_file_handle*  _construct_ses_file_handle(FILE* the_c_file_handle,
 
 
   }
-  if (the_type == 'A') {
+    
+  if (the_type == ASCII_TYPE) {
     pSFH->_filetype = the_type;
     pSFH->pt2_read_char = &_read_char_ascii;
     pSFH->pt2_read_directory = &_read_directory_ascii;
@@ -172,8 +204,11 @@ struct _ses_file_handle*  _construct_ses_file_handle(FILE* the_c_file_handle,
     pSFH->pt2_get_directory_size = &_get_directory_size_ascii;
     pSFH->pt2_get_address_for_material = &_get_address_for_material_ascii;
     pSFH->pt2_get_address_for_table = &_get_address_for_table_ascii;
+#ifdef DEBUG_PRINT
+    printf("_construct_ses_file_handle: ASCII Type: done.\n");
+#endif
   }
-  if (the_type == 'X') {
+  if (the_type == XML_TYPE) {
    pSFH->_filetype = the_type;
     pSFH->pt2_read_char = &_read_char_pFILE_xml;
     pSFH->pt2_read_directory = &_read_directory_xml;
@@ -199,7 +234,7 @@ struct _ses_file_handle*  _construct_ses_file_handle(FILE* the_c_file_handle,
     pSFH->pt2_get_address_for_table = &_get_address_for_table_xml;
   }
 #ifdef USE_LIBXML2
-  if (the_type == 'L') {
+  if (the_type == LLNL_TYPE) {
     pSFH->_filetype = the_type;
  
     pSFH->pt2_read_directory = &_read_directory_llnl_xml;
@@ -228,9 +263,9 @@ struct _ses_file_handle*  _construct_ses_file_handle(FILE* the_c_file_handle,
 
 void _set_format_type(struct _ses_file_handle* pSFH, ses_file_type the_type) {
 
-  pSFH->_filetype = 'Q';
+  pSFH->_filetype = QUERY_4_TYPE;
 
-  if (the_type == 'B') {
+  if (the_type == BINARY_TYPE) {
     pSFH->_filetype = the_type;
     pSFH->pt2_read_directory = &_read_directory_binary;
     pSFH->pt2_read_index_record = &_read_index_record_binary;
@@ -254,7 +289,7 @@ void _set_format_type(struct _ses_file_handle* pSFH, ses_file_type the_type) {
     pSFH->pt2_get_address_for_material = &_get_address_for_material_binary;
     pSFH->pt2_get_address_for_table = &_get_address_for_table_binary;
   }
-  if (the_type == 'A') {
+  if (the_type == ASCII_TYPE) {
     pSFH->_filetype = the_type;
     pSFH->pt2_read_directory = &_read_directory_ascii;
     pSFH->pt2_read_index_record = &_read_index_record_ascii;
@@ -278,7 +313,7 @@ void _set_format_type(struct _ses_file_handle* pSFH, ses_file_type the_type) {
     pSFH->pt2_get_address_for_material = &_get_address_for_material_ascii;
     pSFH->pt2_get_address_for_table = &_get_address_for_table_ascii;
   }
-  if (the_type == 'X') {
+  if (the_type == XML_TYPE) {
     pSFH->_filetype = the_type;
     pSFH->pt2_read_directory = &_read_directory_xml;
     pSFH->pt2_read_index_record = &_read_index_record_xml;
@@ -303,7 +338,7 @@ void _set_format_type(struct _ses_file_handle* pSFH, ses_file_type the_type) {
     pSFH->pt2_get_address_for_table = &_get_address_for_table_xml;
   }
 #ifdef USE_LIBXML2
-  if (the_type == 'L') {
+  if (the_type == LLNL_TYPE) {
     pSFH->_filetype = the_type;
     pSFH->pt2_read_directory = &_read_directory_llnl_xml;
     pSFH->pt2_read_index_record = &_read_index_record_llnl_xml;
@@ -364,8 +399,8 @@ struct _ses_file_handle*  _copy_ses_file_handle(struct _ses_file_handle* pSFH) {
     _set_latest_error(SES_OBJECT_CONSTRUCTION_ERROR);
 
     /*  release memory on error exit */
-    ses_boolean didit_destruct = SES_FALSE;
-    didit_destruct = _destruct_ses_file_handle(return_value);
+    /* ses_boolean didit_destruct = SES_FALSE; */
+    /* didit_destruct = */ _destruct_ses_file_handle(return_value);
 
     return (struct _ses_file_handle*)NULL;
   }
@@ -505,7 +540,7 @@ FILE* _getPFILE(struct _ses_file_handle* the_handle) {
 	  switch(the_handle->_the_open_mode) {
 		  case 'R':
   
-		  	pFILE = fopen(filename, "rb");  /*  Note file not exist returns 0 */
+		  	pFILE = fopen(filename, "r");  /*  Note file not exist returns 0 */
    		  	break;
   
   		  case 'A':
@@ -530,8 +565,8 @@ FILE* _getPFILE(struct _ses_file_handle* the_handle) {
 
          /*  seek to current location */
 	 if (pFILE != 0) {
-	 	int fseek_return = 0;
-		fseek_return = fseek(the_handle->_c_file_handle, the_handle->_current_location, SEEK_SET);
+	 	/* int fseek_return = 0; */
+		/* fseek_return = */ fseek(the_handle->_c_file_handle, the_handle->_current_location, SEEK_SET);
 	 }
 
    
@@ -552,9 +587,9 @@ void _releasePFILE(struct _ses_file_handle* the_handle) {
 		       int the_value = ftell(the_handle->_c_file_handle);
 		       the_handle->_current_location = the_value;
 
-			int creturn = 0;
+			/* int creturn = 0; */
 
-	 		creturn = fclose(the_handle->_c_file_handle);
+	 		/* creturn = */ fclose(the_handle->_c_file_handle);
 			the_handle->_c_file_handle = (FILE*)NULL;
 			the_handle->_is_valid = SES_FALSE;
 		}

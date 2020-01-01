@@ -202,6 +202,7 @@ EOS_INTEGER _printDataForHandle (EOS_INTEGER th)
 
     printf("TableHandle: %d\tDataType: %s\tMaterialID: %d\nDescription: %s\n\n%s\n",
 	   th, get_tableType_str(type), matid, get_tableType_description(type), comments);
+    free (comments);
 
   }
   else {

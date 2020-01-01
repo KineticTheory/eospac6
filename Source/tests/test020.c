@@ -56,5 +56,8 @@ int main(){
       }
     }
   }
+
+  eos_DestroyAll (&error);
+
   return 0;
 }

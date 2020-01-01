@@ -242,6 +242,8 @@ int main ()
     RHO_EP *= 1.5;
   }
 
+  eos_DestroyAll (&errorCode);
+
   return 0;
 
 }

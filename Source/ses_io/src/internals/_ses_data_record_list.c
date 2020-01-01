@@ -191,9 +191,6 @@ long _get_total_table_size(struct _ses_data_record_list* the_list) {
     tmp = tmp->_next;
   }
 
- 
-  return_value = return_value;
-
   return return_value;
 }
 

@@ -31,17 +31,6 @@
 
 EOS_BOOLEAN _eos_fileExistsAndValid(EOS_CHAR *filename); /* function in eos_Utils.c */
 
-void* safe_malloc(int bytes) {
-  void *p=NULL;
-  assert (p == NULL);
-  
-  p = malloc(bytes);
-  if (p == NULL) {
-    printf("safe_malloc failed to allocate %i bytes\n", bytes);
-    assert(p != NULL);
-  }
-  return p;
-}
 
 int main ()
 {
@@ -56,7 +45,6 @@ int main ()
 
   char *indexFileName = "sesameFilesDir.txt";
   FILE *fp = NULL;
-  EOS_CHAR *file_str = NULL;
 
   errorCode = EOS_OK;
 
@@ -67,22 +55,26 @@ int main ()
 
   /* Modify sesameFilesDir.txt to include only one valid file name and the END token */
   eos_GetMaxDataFileNameLength (&max_length);
-  fileName = (EOS_CHAR *) safe_malloc(max_length * sizeof(EOS_CHAR));
+  fileName = (EOS_CHAR *) safe_malloc(max_length, sizeof(EOS_CHAR));
   strcpy(fileName, "./tests/data/zr_bin.2.mod");
   for (i = 0; i < 10; i++) {
-    tmp = (EOS_CHAR *) safe_malloc(max_length * sizeof(EOS_CHAR));
+    tmp = (EOS_CHAR *) safe_malloc(max_length, sizeof(EOS_CHAR));
     if (_eos_fileExistsAndValid(fileName)) break;
     fileName = (EOS_CHAR *) realloc (fileName, (strlen(fileName) + 4) * sizeof (EOS_CHAR));
     sprintf(tmp, "./.%s", fileName);
     strcpy(fileName, tmp);
+    EOS_FREE (tmp);
   }
+  EOS_FREE (tmp);
   fp = fopen (indexFileName, "w");  /* open indexFileName */
   if (fp) {
     fprintf(fp, "%s\n\n    END    \n", fileName); /* append END token with leading and trailing white space */
     fclose (fp);              /* close indexFileName */
+    EOS_FREE (fileName);
   }
   else {
     errorCode = -2;
+    EOS_FREE (fileName);
     return(errorCode);
   }
 
@@ -125,11 +117,11 @@ int main ()
   }
 
   /* attempt to interpolate data associated with each table handle */
-  X = (EOS_REAL *) safe_malloc (sizeof (EOS_REAL) * nXYPairs);
-  Y = (EOS_REAL *) safe_malloc (sizeof (EOS_REAL) * nXYPairs);
-  F = (EOS_REAL *) safe_malloc (sizeof (EOS_REAL) * nXYPairs);
-  dFx = (EOS_REAL *) safe_malloc (sizeof (EOS_REAL) * nXYPairs);
-  dFy = (EOS_REAL *) safe_malloc (sizeof (EOS_REAL) * nXYPairs);
+  X = (EOS_REAL *) safe_malloc (nXYPairs, sizeof (EOS_REAL));
+  Y = (EOS_REAL *) safe_malloc (nXYPairs, sizeof (EOS_REAL));
+  F = (EOS_REAL *) safe_malloc (nXYPairs, sizeof (EOS_REAL));
+  dFx = (EOS_REAL *) safe_malloc (nXYPairs, sizeof (EOS_REAL));
+  dFy = (EOS_REAL *) safe_malloc (nXYPairs, sizeof (EOS_REAL));
 
   if (! (Y && F && dFx && dFy)) {
     printf ("Memory allocation error!\n");
@@ -178,6 +170,7 @@ int main ()
   }
 
   /* deallocate memory */
+  if (X) EOS_FREE(X);
   if (Y) EOS_FREE(Y);
   if (F) EOS_FREE(F);
   if (dFx) EOS_FREE(dFx);

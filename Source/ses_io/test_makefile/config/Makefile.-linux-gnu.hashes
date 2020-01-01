@@ -1,0 +1,115 @@
+#-*-makefile-*-###################################################
+#  
+#  Copyright -- see file named COPYRIGHTNOTICE
+#  
+##################################################################
+### This file contains the following:                          ###
+### Platform-dependent system configuration for a BASE_ARCH    ###
+### value containing the following pattern:                    ###
+###    *-linux-gnu
+###                                                            ###
+### The purpose of this file is                                ###
+###    - define various associative arrays                     ###
+###    - define ALT_SUBDIR                                     ###
+###    - optionally redefine ARCH                              ###
+##################################################################
+#
+# GMSL function dependencies exist (see $(BASEDIR)/config/gmsl).
+#
+# x86 and Linux
+
+##################################################################
+### Assign values to associative arrays, which hold C, C++ and ###
+### F77 compiler names in preferential order according to      ###
+### the possible values of $(F90_Key).                         ###
+##################################################################
+$(call set,_CC,pgf90,    pgcc     gcc   )   # PGI
+$(call set,_CC,lf95,     gcc            )   # Lahey
+$(call set,_CC,f90,      gcc            )   # Absoft
+$(call set,_CC,pathf90,  pathcc   gcc   )   # Pathscale
+$(call set,_CC,ifort,    icc      gcc   )   # Intel
+$(call set,_CC,g95,      gcc            )   # G95
+$(call set,_CC,gfortran, gcc            )   # gfortran
+$(call set,_CC,ftn,      cc       gcc   )   # Cray Computing Environment (cce)
+
+$(call set,_CXX,pgf90,   pgCC     g++   )   # PGI
+$(call set,_CXX,lf95,    g++            )   # Lahey
+$(call set,_CXX,f90,     g++            )   # Absoft
+$(call set,_CXX,pathf90, pathCC   g++   )   # Pathscale
+$(call set,_CXX,ifort,   icpc     g++   )   # Intel
+$(call set,_CXX,g95,     g++            )   # G95
+$(call set,_CXX,gfortran,g++            )   # gfortran
+$(call set,_CXX,ftn,     CC       g++   )   # Cray Computing Environment (cce)
+
+$(call set,_F77,pgf90,   pgf77    pgf90 )   # PGI
+$(call set,_F77,lf95,    $(F90)         )   # Lahey
+$(call set,_F77,f90,     f77      $(F90))   # Absoft
+$(call set,_F77,pathf90, $(F90)         )   # Pathscale
+$(call set,_F77,ifort,   $(F90)         )   # Intel
+$(call set,_F77,g95,     $(F90)         )   # G95
+$(call set,_F77,gfortran,$(F90)         )   # gfortran
+$(call set,_F77,ftn,     $(F90)         )   # Cray Computing Environment (cce)
+
+##################################################################
+### Define CC, CXX and  F77 according to $(F90_Key).           ###
+##################################################################
+CC  = $(firstword $(foreach compiler,$(call get,_CC,$(F90_Key)),$(call pathsearch,$(compiler))))
+CXX = $(firstword $(foreach compiler,$(call get,_CXX,$(F90_Key)),$(call pathsearch,$(compiler))))
+F77 = $(firstword $(foreach compiler,$(call get,_F77,$(F90_Key)),$(call pathsearch,$(compiler))))
+
+##################################################################
+### Assign values to associative arrays, which hold various    ###
+### compiler options -- specific to this architecture.         ###
+##################################################################
+#
+### VERSION_FLAG{$CC} = $flag
+#
+### VERSION_FLAG{$CXX} = $flag
+#
+### VERSION_FLAG{$F77} = $flag
+#
+### VERSION_FLAG{$F90_Key} = $flag
+#
+### _COMP_FLAGS{$CC} = $flag
+$(call set,_COMP_FLAGS,icc,-fp-model precise)   # Intel C
+$(call set,_COMP_FLAGS,cc,-hfp0)            # Cray Computing Environment (cce)
+#
+### _COMP_FLAGS{$CXX} = $flag
+$(call set,_COMP_FLAGS,icpc,-fp-model precise)   # Intel C++
+$(call set,_COMP_FLAGS,CC,-hfp0)             # Cray Computing Environment (cce)
+#
+### _COMP_FLAGS{$F77} = $flag
+#
+### _COMP_FLAGS{$F90_Key} = $flag
+$(call set,_COMP_FLAGS,f90,-p"$(INCDIR)" -YCFRL=1)   # Absoft f90
+$(call set,_COMP_FLAGS,lf95,-I"$(INCDIR)")   # Lahey f95
+$(call set,_COMP_FLAGS,pgf90,-I"$(INCDIR)")   # PGI f90
+$(call set,_COMP_FLAGS,pathf90,-I"$(INCDIR)")   # Pathscale f90
+$(call set,_COMP_FLAGS,ifort,-I"$(INCDIR) -fp-model precise")   # Intel f90
+$(call set,_COMP_FLAGS,g95,-I"$(INCDIR)")   # G95
+$(call set,_COMP_FLAGS,gfortran,-I"$(INCDIR)")   # gfortran
+$(call set,_COMP_FLAGS,ppu-gfortran,-I"$(INCDIR)")   # ppu-gfortran
+$(call set,_COMP_FLAGS,ftn,-e m -I"$(INCDIR)" -hfp0)   # Cray Computing Environment (cce)
+
+# define define_module_subdir script options
+$(call set,_DEFINE_MODULE_SUBDIR_FLAGS,f90,absoft)   # Absoft f90
+$(call set,_DEFINE_MODULE_SUBDIR_FLAGS,lf95,lahey)   # Lahey f95
+$(call set,_DEFINE_MODULE_SUBDIR_FLAGS,pgf90,pgi)   # PGI f90
+$(call set,_DEFINE_MODULE_SUBDIR_FLAGS,pathf90,pathscale)   # Pathscale f90
+$(call set,_DEFINE_MODULE_SUBDIR_FLAGS,ifort,-d intel '^intel(-f)?/')   # Intel f90
+$(call set,_DEFINE_MODULE_SUBDIR_FLAGS,g95,$(F90_Key))   # G95
+$(call set,_DEFINE_MODULE_SUBDIR_FLAGS,gfortran,gcc)   # gfortran
+$(call set,_DEFINE_MODULE_SUBDIR_FLAGS,ftn,cce)   # Cray Computing Environment (cce)
+
+# define selected variable values according to $(F90_Key).
+ALT_SUBDIR := $(shell $(BASEDIR)/scripts/define_module_subdir $(call get,_DEFINE_MODULE_SUBDIR_FLAGS,$(F90_Key)))
+
+# define option(s) special condition(s)
+_DEBUG := $(DEBUG)
+override DEBUG = $(call ifseq_set,$(strip $(F90_Key)),ftn,$(patsubst -O,-O2,$(_DEBUG)),$(_DEBUG))
+
+# Set additional compiler-specific options
+_CFLAGS += $(call get,_COMP_FLAGS,$(notdir $(CC)))
+_CXXFLAGS += $(call get,_COMP_FLAGS,$(notdir $(CXX)))
+_FFLAGS += $(call get,_COMP_FLAGS,$(notdir $(F77)))
+_F90FLAGS += $(call get,_COMP_FLAGS,$(F90_Key))

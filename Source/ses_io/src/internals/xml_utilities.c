@@ -3,6 +3,7 @@
 
 #include "ses_defines.h"
 #include "ses_globals.h"
+
 #include "ses_externs.h"
 #include "ses_internals.h"
 
@@ -227,7 +228,7 @@ char* _skip_tag(FILE* pFILE, char* tag) {
       (ending delimiter is '>') */
 
   char c = ' ';
-  int length = 0;
+  /* int length = 0; */
   c = _read_char(pFILE);
 
   i = 0;
@@ -246,7 +247,7 @@ char* _skip_tag(FILE* pFILE, char* tag) {
 
   i = i + 1;
   buffer[i] = '\0';
-  length = i + 1;
+  /* length = i + 1; */
 
   /*  keep going until tag_name found */
 
@@ -388,10 +389,10 @@ long _read_long_pFILE_xml(FILE* pFILE) {
 
   long return_value = 0;
   const int BUFFER_LENGTH = 100;
-#ifdef _MSC_VER
-  char buffer[100];
-#else
+#ifndef _MSC_VER
   char buffer[BUFFER_LENGTH];
+#else
+  char buffer[100];
 #endif
 
   /*  read a string in from the current file handle into the buffer (ending delimiter is blank space)*/
@@ -456,8 +457,8 @@ ses_boolean _write_long_pFILE_xml(FILE* pFILE, long the_long) {
   
   //  put the long into a string
 
-  int length = 0;
-  length = sprintf(buffer, "%ld", the_long);
+  /* int length = 0; */
+  /* length = */ sprintf(buffer, "%ld", the_long);
 
   //  write the string to the FILE*
 
@@ -575,9 +576,8 @@ double            _read_double_pFILE_xml(FILE* pFILE) {
 #ifndef _MSC_VER
   char myBuffer[BUFFER_LENGTH];  
 #else
-  char myBuffer[15];  
+  char myBuffer[15];
 #endif
-
   char cbuffer = ' ';
 
   /*  peel off leading blanks */
@@ -646,8 +646,8 @@ ses_boolean _write_double_pFILE_xml(FILE* pFILE, double the_double) {
   }
 
   //  write double into a string
-  int length = 0;
-  length = sprintf(buffer, "%e ", the_double);
+  /* int length = 0; */
+  /* length = */ sprintf(buffer, "%e ", the_double);
 
   //  write out the string
 
@@ -904,9 +904,9 @@ ses_boolean        _write_ses_word_array_xml(struct _ses_file_handle* pSFH, ses_
 
   FILE* pFILE = pSFH->_c_file_handle;
   int i = 0;
-  ses_boolean didit_write = SES_NO_ERROR;
+  /* ses_boolean didit_write = SES_NO_ERROR; */
   for (i = 0; i < size_array; i++) {
-	didit_write = _write_double_xml(pSFH, the_array[i], nsig, do_validation);
+	/* didit_write = */ _write_double_xml(pSFH, the_array[i], nsig, do_validation);
         if (i < size_array - 1) {
 		_write_tag(pFILE, "  ");
 	}
@@ -978,6 +978,7 @@ ses_error_flag check_errors_write_ses_string_xml(struct _ses_file_handle* pSFH, 
   return SES_NO_ERROR;
 }
 /***************************************/
+
 
 
 

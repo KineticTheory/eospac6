@@ -1,3 +1,6 @@
+
+.NOTPARALLEL :
+
 #  This is the makefile for ses_io/src/wrappers/java
 _realpath = $(shell perl -e 'use Cwd "abs_path"; print abs_path(shift)," ";' $(1))
 REL_ROOT := ../../..
@@ -26,12 +29,28 @@ CLASSPATH=.:./ses_defines:./MySesIO
 endif
 SES_LIB_PATH = $(ROOT)/src
 
+# Being a cray, things are always in weird locales:
+ifeq ($(call match,ct-fe,$(MACHINE)),TRUE)
+JAVACC=/opt/java/default/bin/java
+JAVA=/opt/java/default/bin/javac
+JAVAH=/opt/java/default/bin/javah
+else
+JAVACC=$(shell which javac)
+JAVA=$(shell which java)
+JAVAH=$(shell which javah)
+endif
+
+
 #targets
 
 all : $(DYNAMIC_LIBRARY) 
 
 test : $(DYNAMIC_LIBRARY) JavaTests.class MySesIO/SesIO.class
-	java -Djava.library.path=. JavaTests
+ifeq ($(JAVA),)
+	echo "No java found"
+else
+	$(JAVA) -Djava.library.path=. JavaTests
+endif
 
 jar :  SesIO.class ses_defines
 	jar -cf jSesIO.jar SesIO.class ses_defines/*.class
@@ -43,49 +62,49 @@ CLASS = ses_number.class ses_file_handle.class ses_error_flag.class ses_word_ref
 ses_defines : $(CLASS)
 
 JavaTests.class : JavaTests.java
-	javac  -d . JavaTests.java
+	$(JAVACC)  -d . JavaTests.java
 
 ses_error_flag.class : ses_defines/ses_error_flag.java
-	javac  -d . ses_defines/ses_error_flag.java
+	$(JAVACC)  -d . ses_defines/ses_error_flag.java
 
 ses_number.class : ses_defines/ses_number.java
-	javac  -d . ses_defines/ses_number.java
+	$(JAVACC)  -d . ses_defines/ses_number.java
 
 ses_file_handle.class : ses_defines/ses_file_handle.java
-	javac  -d . ses_defines/ses_file_handle.java
+	$(JAVACC)  -d . ses_defines/ses_file_handle.java
 
 ses_word_reference.class : ses_defines/ses_word_reference.java
-	javac  -d . ses_defines/ses_word_reference.java
+	$(JAVACC)  -d . ses_defines/ses_word_reference.java
 
 ses_boolean.class : ses_defines/ses_boolean.java
-	javac  -d . ses_defines/ses_boolean.java
+	$(JAVACC)  -d . ses_defines/ses_boolean.java
 
 ses_string.class : ses_defines/ses_string.java
-	javac  -d . ses_defines/ses_string.java
+	$(JAVACC)  -d . ses_defines/ses_string.java
 
 ses_table_id.class : ses_defines/ses_table_id.java
-	javac  -d . ses_defines/ses_table_id.java
+	$(JAVACC)  -d . ses_defines/ses_table_id.java
 
 ses_label.class : ses_defines/ses_label.java
-	javac  -d . ses_defines/ses_label.java
+	$(JAVACC)  -d . ses_defines/ses_label.java
 
 ses_material_id.class : ses_defines/ses_material_id.java
-	javac  -d . ses_defines/ses_material_id.java
+	$(JAVACC)  -d . ses_defines/ses_material_id.java
 
 ses_material_id_reference.class : ses_defines/ses_material_id_reference.java
-	javac  -d . ses_defines/ses_material_id_reference.java
+	$(JAVACC)  -d . ses_defines/ses_material_id_reference.java
 
 ses_table_id_reference.class : ses_defines/ses_table_id_reference.java
-	javac  -d . ses_defines/ses_table_id_reference.java
+	$(JAVACC)  -d . ses_defines/ses_table_id_reference.java
 
 ses_open_type.class : ses_defines/ses_open_type.java
-	javac  -d . ses_defines/ses_open_type.java
+	$(JAVACC)  -d . ses_defines/ses_open_type.java
 
 ses_number_reference.class : ses_defines/ses_number_reference.java
-	javac  -d . ses_defines/ses_number_reference.java
+	$(JAVACC)  -d . ses_defines/ses_number_reference.java
 
 ses_array_order.class : ses_defines/ses_array_order.java
-	javac  -d . ses_defines/ses_array_order.java
+	$(JAVACC)  -d . ses_defines/ses_array_order.java
 
 #########################
 
@@ -98,20 +117,19 @@ OBJ=SesAccessDirectory.o SesAccessTableIndex.o SesArraySizeNext.o SesChangeNext.
 
 
 $(DYNAMIC_LIBRARY) : MySesIO_SesIO.h $(OBJ) $(ROOT)/src/libses.a SesIO.class 
-	gcc $(SHARED_FLAG) $(LOCAL_LDFLAGS) $(JFLAGS) -o $(DYNAMIC_LIBRARY) $(OBJ) -L$(SES_LIB_PATH) -lses -lc;
-	chcon -t textrel_shlib_t libsesj.so;
+	gcc $(SHARED_FLAG) $(LOCAL_LDFLAGS) $(JFLAGS) -o $(DYNAMIC_LIBRARY) $(OBJ) -L$(SES_LIB_PATH) -lxml2 -lses -lc;
 
 
 SesIO.class : MySesIO/SesIO.java 
-	javac  -d . MySesIO/SesIO.java
+	$(JAVACC)  -d . MySesIO/SesIO.java
 
 MySesIO_SesIO.h : SesIO.class
-	javah -jni MySesIO.SesIO
+	$(JAVAH) -jni MySesIO.SesIO
 
 
-.c.o : 
-	$(CC) $(CFLAGS) $(LOCAL_CFLAGS) -fPIC -o $@ $<
+.c.o :  
+	$(CC) $(CFLAGS) $(LOCAL_CFLAGS) -fPIC -o $@ $<	
 
 ############33
 clean :
-	rm libsesj.so; new_filename; rm sesame*;*.class;rm SesIO.h; rm MySesIO/SesIO.class; rm MySesIO_SesIO.h; rm *.so;rm *.o; rm *~;rm ses_defines/*.class; rm ses_writer;
+	rm libsesj.so; new_filename;*.class;rm SesIO.h; rm MySesIO/SesIO.class; rm MySesIO_SesIO.h; rm *.so;rm *.o; rm *~;rm ses_defines/*.class; rm ses_writer;

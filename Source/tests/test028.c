@@ -22,8 +22,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
-#include "../src/TEST_FUNCTIONS.h"
-#include "../src/eos_Interface.h"
+#include "TEST_FUNCTIONS.h"
+#include "eos_Interface.h"
 
 int main(){
   EOS_CHAR errorMessage[EOS_MaxErrMsgLen];
@@ -127,6 +127,8 @@ int main(){
   printf("input density value is %f\n", xVals[0]); 
   printf("input pressure value is %f\n", yVals[0]); 
   printf("interpolated value is %f\n", fVals[0]); 
+
+  eos_DestroyAll (&error);
 
   return 0;
 }

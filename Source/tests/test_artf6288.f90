@@ -8,7 +8,7 @@
 !********************************************************************
 
 !> @file
-!! @ingroup tests
+!! @ingroup Fortran90 tests
 !! @brief Verify that EOS_V_PtT is available via the eos_Interface F90 module.
 !!
 !! \note

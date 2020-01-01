@@ -8,13 +8,16 @@
 !********************************************************************
 
 !> @file
-!! @ingroup tests quick
+!! @ingroup Fortran90 tests quick
 !! @brief Ensure the new eos_SetDataFileName and eos_GetMaxDataFileNameLength
 !!        work as expected. See SourceForge© Issue #artf22076 for more details:
 !!        https://tf.lanl.gov/sf/go/artf22076
 !!
 !! \note
 !! MATIDS TO TEST: 3721 3722
+!! REQUIRED FILE: data/ses003721
+!! REQUIRED FILE: data/ses003722
+
 program twocall
 
   use eos_Interface
@@ -120,6 +123,8 @@ program twocall
         errormessage = ""
      endif
      write(*,'(a,i6,a)') " AFTER SECOND load tables err1=",err1,": " // trim(errorMessage)
+
+     call eos_DestroyAll (err1)
 
 end program twocall
 

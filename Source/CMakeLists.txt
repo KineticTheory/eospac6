@@ -10,7 +10,7 @@
 
 cmake_minimum_required(VERSION 3.11.0 FATAL_ERROR)
 project( Eospac6
-  VERSION 6.3.1
+  VERSION 6.4.0
   DESCRIPTION "Access library for equation of state data (Sesame)"
   LANGUAGES C )
 
@@ -68,6 +68,11 @@ set( CMAKE_C_FLAGS_RELEASE        "${CMAKE_C_FLAGS_RELEASE}"        CACHE STRING
 set( CMAKE_C_FLAGS_MINSIZEREL     "${CMAKE_C_FLAGS_MINSIZEREL}"     CACHE STRING "compiler flags" FORCE )
 set( CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_C_FLAGS_RELWITHDEBINFO}" CACHE STRING "compiler flags" FORCE )
 
+set(eospac_std_target_props_C
+  C_STANDARD 11                # Force strict ANSI-C 11 standard
+  C_EXTENSIONS OFF
+  C_STANDARD_REQUIRED ON)
+
 #-----------------------------------------------------------------------------
 # Sources -> Library
 #-----------------------------------------------------------------------------
@@ -81,6 +86,7 @@ file( GLOB libsources
   ${Eospac6_SOURCE_DIR}/ses_io/src/internals/json_parser/*.c
   ${Eospac6_SOURCE_DIR}/ses_io/src/internals/llnl_xml/*.c
   ${Eospac6_SOURCE_DIR}/ses_io/src/internals/xml/*.c)
+list( REMOVE_ITEM libsources ${Eospac6_SOURCE_DIR}/src/TEST_FUNCTIONS.c )
 file( GLOB libincludes 
   ${Eospac6_SOURCE_DIR}/src/*.h 
   ${Eospac6_SOURCE_DIR}/ses_io/src/internals/*.h
@@ -107,9 +113,11 @@ target_include_directories( libeospac6
     $<INSTALL_INTERFACE:include> )
 set_target_properties( libeospac6 PROPERTIES 
   OUTPUT_NAME "eospac6" 
-  WINDOWS_EXPORT_ALL_SYMBOLS ON)
+  WINDOWS_EXPORT_ALL_SYMBOLS ON
+  ${eospac_std_target_props_C} )
 if( MSVC )
-  set_source_files_properties( ${libsources} PROPERTIES COMPILE_DEFINITIONS "EOSPAC6_VERSION_FUNCTIONS_REDEFINED=1;MixedCase=1:_WIN32=1" ) # PC=1
+  set_source_files_properties( ${libsources} PROPERTIES 
+  COMPILE_DEFINITIONS "EOSPAC6_VERSION_FUNCTIONS_REDEFINED=1;MixedCase=1:_WIN32=1" ) # PC=1
 endif()
 
 #-----------------------------------------------------------------------------
@@ -134,6 +142,7 @@ endif()
 install(
   FILES 
     ${Eospac6_SOURCE_DIR}/src/eos_Interface.h
+    ${Eospac6_SOURCE_DIR}/src/eos_Interface.proto.h
     ${Eospac6_SOURCE_DIR}/src/eos_universal_types.h    
     ${Eospac6_SOURCE_DIR}/ses_io/include/ses_defines.h
     ${Eospac6_SOURCE_DIR}/src/TEST_FUNCTIONS.h 

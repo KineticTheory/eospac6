@@ -156,13 +156,13 @@ int main ()
   }
   else {
     err = -3;
-    return(err);
+    goto CLEANUP;
   }
 
   /* copy sesameFiles[0] to ./sesame3.copy */
   err = copy_file(sesameFiles[0], "./sesame3.copy");
   if (err)
-    return(err);
+    goto CLEANUP;
 
   /* Modify sesameFilesDir.txt to include MATID tokens */
   if (_eos_fileExistsAndValid(indexFileName)) {
@@ -175,14 +175,14 @@ int main ()
     }
     else {
       err = -2;
-      return(err);
+      goto CLEANUP;
     }
   }
 
   printf ("\nExtended file list:\n");
   err = print_FileList(-1, "<...>/");
   if (err)
-    return(err);
+    goto CLEANUP;
 
   /*  Write file_str to sesameFilesDir.txt */
   fp = fopen (indexFileName, "w");  /* open indexFileName */
@@ -192,7 +192,7 @@ int main ()
   }
   else {
     err = -3;
-    return(err);
+    goto CLEANUP;
   }
 
   {     /* load data to test usage of sesame3.copy */
@@ -271,14 +271,20 @@ int main ()
   }
   else {
     err = -3;
-    return(err);
+    goto CLEANUP;
   }
 
   /* delete ./sesame3.copy */
   err = unlink("./sesame3.copy");
   if (err)
-    return(err);
+    goto CLEANUP;
 
+ CLEANUP:
+  EOS_FREE (file_str);
+  {
+    EOS_INTEGER e;
+    eos_DestroyAll(&e);
+  }
   return(err);
 
 }

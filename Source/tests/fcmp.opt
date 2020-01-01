@@ -307,3 +307,9 @@ test_artf36719__Fortran2003_APItest.stdout	-a 0 -e fcmp_ignore
 test_artf36719__Fortran2003_APItest.TablesLoaded.dat	-Q
 test_artf37549__Fortran2003_APItest.stdout	-r 1.0e-12 -e eosfilename
 test_artf37549__Fortran2003_APItest.TablesLoaded.dat	-Q
+test_artf44296.stdout	-r 1.0e-11 -d -i -e fcmp_ignore
+test_artf47577.TablesLoaded.dat	-Q
+test_eos_GetTableInfo.TablesLoaded.dat	-Q
+test_artf50835.TablesLoaded.dat	-Q
+test_issue562.TablesLoaded.dat	-Q
+test_issue587.TablesLoaded.dat	-Q

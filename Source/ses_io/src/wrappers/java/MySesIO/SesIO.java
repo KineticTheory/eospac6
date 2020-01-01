@@ -46,7 +46,7 @@ public class SesIO
     public native int SesSetArrayOrder(int the_handle, char the_order);
     public native int SesSetDate(int the_handle, long the_date);
     public native int SesSetGrid(int the_handle, int nr, int nt, int ntab);
-    public native int SesSetFormat(int the_handle, char the_format);
+    public native int SesSetFormat(int the_handle, char the_format, char ascii_format);
     public native int SesSetLabel(int the_handle, String the_label);
     public native int SesSetMaterialOrder(int the_handle);
     public native int SesSetSignificantDigits(int the_handle, long number_digits);
@@ -63,8 +63,8 @@ public class SesIO
     public native int SesWriteNext(int the_handle, double buf1[], int dim, String the_label);
     public native int SesWriteNumber(int the_handle, long the_number);
     public native int SesWritePairs(int the_handle, double buf1[], double buf2[], long dim);
-    public native int SesWriteSetup(int the_handle, int the_mid, int the_tid, int nr, int nt, int ntab);
-    public native int SesWriteWord(int the_handle, double the_word );        
+     public native int SesWriteSetup(int the_handle, int the_mid, int the_tid, int nr, int nt, int ntab);
+    public native int SesWriteWord(int the_handle, double the_word );
 
 
 

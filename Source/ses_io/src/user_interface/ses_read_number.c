@@ -25,8 +25,8 @@ ses_error_flag ses_read_number(ses_file_handle the_handle, ses_number_reference 
   /*  open the file handle */
 
   struct _ses_file_handle* pSFH = FILE_LIST[the_handle]->_the_handle;
-  FILE* pFILE = (FILE*)NULL;
-  pFILE = _getPFILE(pSFH);
+  /* FILE* pFILE = (FILE*)NULL; */
+  /* pFILE = */ _getPFILE(pSFH);
 
   /*  get the directory */
 
@@ -68,8 +68,8 @@ ses_error_flag ses_read_number(ses_file_handle the_handle, ses_number_reference 
   else {
     /*  read from the current location */
     long location = ftell(pSFH->_c_file_handle);
-    ses_boolean didit_go = SES_FALSE;
-    didit_go = pSFH->pt2_go_to_next_array_location(pSFH, location); 
+    /* ses_boolean didit_go = SES_FALSE; */
+    /* didit_go = */ pSFH->pt2_go_to_next_array_location(pSFH, location); 
     the_long_read = _read_long(pSFH);
   }
 

@@ -42,7 +42,7 @@ int main ()
 
   EOS_INTEGER i, j, itest;
   EOS_REAL rho[nXYPairsE], T[nXYPairsE], P[nXYPairsE], U[nXYPairsE];
-  EOS_REAL *X, *Y, F[nXYPairsE], dFx[nXYPairsE], dFy[nXYPairsE];
+  EOS_REAL F[nXYPairsE], dFx[nXYPairsE], dFy[nXYPairsE];
   EOS_INTEGER extrapCode[nXYPairsE];
   EOS_INTEGER tableHandle[nTablesE];
   EOS_INTEGER errorCode, tableHandleErrorCode, nXYPairs, nModelTests;

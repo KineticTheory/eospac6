@@ -62,8 +62,8 @@ ses_boolean _construct_standard_tables(void) {
 #endif
 
     /*  release memory on error */
-    ses_boolean didit_destruct = SES_FALSE;
-    didit_destruct = _destruct_standard_tables();
+    /* ses_boolean didit_destruct = SES_FALSE; */
+    /* didit_destruct = */ _destruct_standard_tables();
 
     _set_latest_error(SES_READ_ERROR);
     return SES_FALSE;
@@ -730,10 +730,10 @@ ses_boolean _is_valid_file_type(ses_file_type the_type) {
   ses_boolean return_value = SES_FALSE;
 
 
-  if ((the_type == 'B') || (the_type == 'A')||(the_type == 'X') ) {
+  if ((the_type == BINARY_TYPE) || (the_type == ASCII_TYPE) || (the_type == XML_TYPE) ) {
     return_value = SES_TRUE;
   }
-  if (the_type == 'L') {
+  if (the_type == LLNL_TYPE) {
 	return_value = SES_TRUE;
   }
 
@@ -913,7 +913,7 @@ ses_boolean _get_more_table_definitions(ses_file_handle the_handle) {
   //  called right at the end of ses_open, the _ses_standard tables data structure
   //  has been loaded with the standard table definitions
 
-  //  setup to 100 table
+  //  setup to 100 table 
 
   //  if it did the setup correctly, read table definitions
   //  add those table definitions to the standard tables
@@ -940,23 +940,29 @@ ses_boolean _get_more_table_definitions(ses_file_handle the_handle) {
     for (i = 0; i < size; i++) {
 
       ses_error_flag didit_setup = ses_setup(the_handle, the_materials[i], my_table_id);
-      ses_string the_string;
+      ses_string the_string = (ses_string)NULL;
       if (didit_setup == SES_NO_ERROR) {
 				
 	read_100 = SES_FALSE;
 	/*  ready to read the 100 table */
 	int i2 = 0;
 	ses_number number_tables_defined = 0;
+	ses_word_reference the_data = (ses_word_reference)NULL;
 
 	while (ses_has_next(the_handle) == SES_TRUE) {
 
 	  ses_number the_size = ses_array_size_next(the_handle);   /*  number of words in the array */ 
-	  ses_word_reference the_data = (ses_word_reference)NULL;
 
           if (i2 == 0) {
- 	    the_data = ses_read_next(the_handle);  
-	    number_tables_defined = (ses_number)(the_data[0]);    //  number of tables defined
-	  }
+ 	    the_data = ses_read_next(the_handle); 
+
+            if (the_data != (ses_word_reference)NULL) {
+	      number_tables_defined = (ses_number)(the_data[0]);    //  number of tables defined
+	      free(the_data);
+	      the_data = (ses_word_reference)NULL;
+	    }
+	    
+	  }  
 	  else {
 
 	    /*  for the character string, never flip */
@@ -969,79 +975,107 @@ ses_boolean _get_more_table_definitions(ses_file_handle the_handle) {
             FILE_LIST[the_handle]->_the_handle->_needs_flip = needs_flip;
 	    /*  turn the data into a string */
 	    int dim = ((the_size)*sizeof(ses_word))/number_tables_defined;              
+
             /*  compute the size of each string to an 8-byte boundary */
 
 	    the_string = malloc(sizeof(char) * (dim) * number_tables_defined + 1); 
+	    int k6 = 0;
+	    for (k6=0; k6 < sizeof(char)*dim*number_tables_defined + 1; k6++) {
+		the_string[k6] = ' ';
+	     }
 		 //  add an extra for the null terminator
-	    int k = 0;
+
+	    int last_index = 0;
+	    if (the_data != (ses_word_reference)NULL) {
+
+	       int k = 0;
     						
-	    union {
-		double the_double;
-		char the_chars[8];
-	    } my_union;
+	       union {
+		   double the_double;
+		   char the_chars[8];
+	       } my_union;
 
-	    int m = 0;
-	    for (k = 0; k < the_size; k++) {
-	      my_union.the_double = the_data[k];
-	      int l = 0;
-	      for (l = 0; l < 8; l++) {
-		the_string[m + l] = my_union.the_chars[l];
+	       int m = 0;
+	       for (k = 0; k < the_size; k++) {
+	         my_union.the_double = the_data[k];
+	         int l = 0;
+	         for (l = 0; l < 8; l++) {
+		   the_string[m + l] = my_union.the_chars[l];
 		
-	      }
-	      m = m + 8;
+	         }
+	         m = m + 8;
 													
-	    }
-            int last_index = dim*number_tables_defined;
-	    the_string[last_index] = '\0';
+	       }
+               last_index = dim*number_tables_defined;
+	       the_string[last_index] = '\0';
 
+  	       free(the_data);	
+	       the_data = (ses_word_reference)NULL;
+
+
+	    }  
+	    else {
+		the_string[0] = '\0';
+            } 
+
+	   int strings_left = number_tables_defined;
+	   ses_string the_string1 = NULL;
+	   ses_string the_string2 = NULL;
+	   while (strings_left > 0) {
+	    
 
 	    /*  turn the string into strings for each of the defined tables */
-	    ses_string the_string1 = malloc(sizeof(char) * dim * 8 + 1);
-	    ses_string the_string2 = malloc(sizeof(char) * dim * 8 + 1);
+	    the_string1 = malloc(sizeof(char) * dim * 8 + 1);
+	    the_string2 = malloc(sizeof(char) * dim * 8 + 1);
+	    int k7 = 0;
+	    for (k7 = 0; k7 < sizeof(char) * dim * 8 + 1; k7++) {
+		the_string1[k7] = ' ';
+		the_string2[k7] = ' ';
+            }
+
+	    //  take out all the '\n'
+	    int k2 = 0;
+	    int s = 0;
+	    for (k2 = 0; k2 < last_index + 1; k2++) {
+		if (the_string[k2] == '\n') {
+		}
+		else {
+			the_string[s] = the_string[k2];
+			s++;
+		}
+	    }
+
 
 	    int start1 = 0;
 	    int start2 = 0;
-	    ses_boolean seen_first = SES_FALSE;
-	    ses_boolean seen_second = SES_FALSE;
-	    int k2 = 0;
+	    ses_boolean seen_non_delim = SES_FALSE;
+	    ses_boolean seen_delim = SES_FALSE;
 	    for (k2 = 0; k2 < last_index + 1; k2++) {
-	         if (seen_first == SES_FALSE) {
-		     if (the_string[k2] != '@') {
-		        the_string1[start1] = the_string[k2];
-		     }
-		     else {
-		        seen_first = SES_TRUE;
-		        the_string1[start1] = '\0';
-		     }  
-		     start1++;
-	         }
-	         else {
-		     if (seen_second == SES_FALSE) {
-		          if (the_string[k2] != '@') {
-		              the_string2[start2] = the_string[k2];	
-		              seen_second = SES_TRUE;
-		              start2++;
+
+		   if (seen_delim == SES_FALSE) {
+	           	if (the_string[k2] == '@') {
+				if (seen_non_delim == SES_TRUE) {
+					the_string1[start1] = '\0';
+					seen_delim = SES_TRUE;
+				}
+				else {
+					k2++;
+				}
+			 }
+			 else {
+				seen_non_delim = SES_TRUE;
+				the_string1[start1] = the_string[k2];
+				start1++;
+			 }
+		   }
+		   else {
+			the_string2[start2] = the_string[k2];
+			start2++;
+		   }
 					
-		          }
-		     }
-		     else {
-		          if (the_string[k2] != '@') {
-		               the_string2[start2] = the_string[k2];
-		               start2++;
-		          }
-		          else {
-		               the_string2[start2] = '\0';
-		          }
-		     }
+	    } 
+	    the_string2[start2] = '\0';
 
-
-	         }
-							
-	    }
-
-            //if (seen_second == SES_FALSE) {
-		the_string2[start2] = '\0';
-	    //}
 
             free(the_string);
 	    the_string = (ses_string)NULL;
@@ -1051,24 +1085,33 @@ ses_boolean _get_more_table_definitions(ses_file_handle the_handle) {
 	    if (didit_define_error == SES_NO_ERROR) {
 		read_100 = SES_TRUE;
 		return_value = SES_TRUE;
+	    }  //  if ses_no_error
+	    the_string = malloc(sizeof(char) * (dim) * number_tables_defined + 1); 
+	    int k6 = 0;
+	    for (k6=0; k6 < sizeof(char)*dim*number_tables_defined + 1; k6++) {
+		the_string[k6] = ' ';
+	     }
+	    strcpy(the_string, the_string2);
+
+            strings_left--;   
+            if (the_string1 != NULL) {
+		free(the_string1);
+		the_string1 = (ses_string)NULL;
 	    }
-	    if (start2 > 0) {
-	       ses_boolean didit_define = SES_TRUE;
-	       didit_define = _add_table_definition(the_string2);
-            }
+	    if (the_string2 != NULL) {
+		free(the_string2);
+   	        the_string2 = (ses_string)NULL;
+	    }
 
-            free(the_string1);
-	    the_string1 = (ses_string)NULL;
-	    free(the_string2);
-	    the_string2 = (ses_string)NULL;
+	   }
 
-					
+           free(the_string);
+	   the_string = (ses_string)NULL;
+ 					
 
 	  }
 	  i2++;
-					
-	  free(the_data);
-	  the_data = (ses_word_reference)NULL;
+	  				
  
 	}
 	/*  clear the setup object */
@@ -1076,13 +1119,12 @@ ses_boolean _get_more_table_definitions(ses_file_handle the_handle) {
 	_destruct_ses_setup(FILE_LIST[the_handle]->_the_setup);
 
       }
-      else {
-	//_destruct_ses_directory(FILE_LIST[the_handle]->_directory);
-	//free(FILE_LIST[the_handle]->_directory);
-	//FILE_LIST[the_handle]->_directory = (struct _ses_directory*)NULL;
 
+      if (the_string != NULL) {
+         free(the_string);
+         the_string = (ses_string)NULL;
       }
-    }
+     }
 
     free(the_materials);
     the_materials = (ses_material_id_reference)NULL;
@@ -1111,6 +1153,8 @@ ses_boolean _add_table_definition(ses_string the_data) {
 
   struct _standard_table* new_table = (struct _standard_table*)NULL;
   new_table = _construct_standard_table(the_data);
+  new_table->_is_user_defined = SES_TRUE;
+
   if (new_table == (struct _standard_table*)NULL) {
     return SES_FALSE;
   }
@@ -1137,7 +1181,7 @@ ses_boolean _read_and_define_tables_from_file(void) {
   ses_boolean return_value = SES_FALSE;
 
   char* filename = "table_defs.sesio";
-  FILE* cfh = fopen(filename, "rb");  //  Note file not exist returns 0
+  FILE* cfh = fopen(filename, "r");  //  Note file not exist returns 0
   if (cfh == NULL) {
   }
   else {
@@ -1148,12 +1192,13 @@ ses_boolean _read_and_define_tables_from_file(void) {
     for (i = 0; i < 10000; i++) {
       line[i] = '\0';
     }
-    ses_boolean didit_define = SES_FALSE;
+    /* ses_boolean didit_define = SES_FALSE; */
     while (fgets(line, sizeof(line), cfh) != NULL) {
       ses_string the_string = &line[0];
+
       //  if not a comment, add the table definition
       if (line[0] != '#') {
-      	didit_define = _add_table_definition(the_string);
+      	/* didit_define = */ _add_table_definition(the_string);
       }
 			
     }

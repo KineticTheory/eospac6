@@ -3,9 +3,9 @@
 
 AFTER EOS_LOADTABLES
 no. tables:         4
-no. handles:        4
-no. alloc:          4
-no. generalOptions: 8
+no. handles:        6
+no. alloc:          6
+no. generalOptions: 9
 no. tableOptions:   15
 
 tableHandlesMap[0] = 0 tableTypes[0] = 2 errorCodes[0] = 0
@@ -15,6 +15,7 @@ tableHandlesMap[0] = 0 tableTypes[0] = 2 errorCodes[0] = 0
 	                      EOS_X_CONVERT -> 1.000000,
 	                      EOS_Y_CONVERT -> 1.000000,
 	                      EOS_F_CONVERT -> 1.000000,
+	                      DISABLE_FTBLS_INVT_MASK -> 0,
 	                      EOS_DISABLE_GHOST_NODES -> 0,
 	                      EOS_ALLOW_ALL_INFO_ITEMS -> 0
 	                     }
@@ -35,13 +36,14 @@ tableHandlesMap[0] = 0 tableTypes[0] = 2 errorCodes[0] = 0
 	                      EOS_INVERT_AT_SETUP -> 0
 	                     }
 
-tableHandlesMap[1] = 1 tableTypes[1] = 4 errorCodes[1] = 0
+tableHandlesMap[1] = 4 tableTypes[1] = 4 errorCodes[1] = 0
 	generalOptions[1] -> {EOS_DUMP_DATA -> 0,
 	                      EOS_APPEND_DATA -> 1,
 	                      EOS_CHECK_ARGS -> 0,
 	                      EOS_X_CONVERT -> 1.000000,
 	                      EOS_Y_CONVERT -> 1.000000,
 	                      EOS_F_CONVERT -> 1.000000,
+	                      DISABLE_FTBLS_INVT_MASK -> 0,
 	                      EOS_DISABLE_GHOST_NODES -> 0,
 	                      EOS_ALLOW_ALL_INFO_ITEMS -> 0
 	                     }
@@ -69,6 +71,7 @@ tableHandlesMap[2] = 2 tableTypes[2] = 12 errorCodes[2] = 0
 	                      EOS_X_CONVERT -> 1.000000,
 	                      EOS_Y_CONVERT -> 1.000000,
 	                      EOS_F_CONVERT -> 1.000000,
+	                      DISABLE_FTBLS_INVT_MASK -> 0,
 	                      EOS_DISABLE_GHOST_NODES -> 0,
 	                      EOS_ALLOW_ALL_INFO_ITEMS -> 0
 	                     }
@@ -89,13 +92,14 @@ tableHandlesMap[2] = 2 tableTypes[2] = 12 errorCodes[2] = 0
 	                      EOS_INVERT_AT_SETUP -> 0
 	                     }
 
-tableHandlesMap[3] = 3 tableTypes[3] = 6 errorCodes[3] = 0
+tableHandlesMap[3] = 5 tableTypes[3] = 6 errorCodes[3] = 0
 	generalOptions[3] -> {EOS_DUMP_DATA -> 0,
 	                      EOS_APPEND_DATA -> 1,
 	                      EOS_CHECK_ARGS -> 0,
 	                      EOS_X_CONVERT -> 1.000000,
 	                      EOS_Y_CONVERT -> 1.000000,
 	                      EOS_F_CONVERT -> 1.000000,
+	                      DISABLE_FTBLS_INVT_MASK -> 0,
 	                      EOS_DISABLE_GHOST_NODES -> 0,
 	                      EOS_ALLOW_ALL_INFO_ITEMS -> 0
 	                     }
@@ -115,3 +119,7 @@ tableHandlesMap[3] = 3 tableTypes[3] = 6 errorCodes[3] = 0
 	                      EOS_USE_MAXWELL_TABLE -> 0,
 	                      EOS_INVERT_AT_SETUP -> 0
 	                     }
+
+tableHandlesMap[4] = -2   *** INVALID TABLE HANDLE ***
+
+tableHandlesMap[5] = -2   *** INVALID TABLE HANDLE ***

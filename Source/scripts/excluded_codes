@@ -7,12 +7,24 @@ eval '(exit $?0)' && eval 'exec perl -S "$0" ${1+"$@"}' #-*-perl-*-
 #
 ##################################################################
 #
-# $ARGV[0] shall contain the name of the specific get_sesame_data binary to be
-# used.
-# The remaining values in @ARGV shall contain the input file(s), which define
-# what matids are used by each defined code.
 # This script will determine which codes require data that is not
 # on the current machine, and then display those codes on STDOUT.
+#
+# $ARGV[0] shall contain the name of the specific get_sesame_data
+# binary to be used. The remaining values in @ARGV are optional
+# source file names to search for requirements, which may be
+# specified with the following syntax:
+#    MATIDS TO TEST     : list one or more required matid;
+#                         multiple instances are allowed
+#    REQUIRED FILE      : list one required filename per instance;
+#                         multiple instances are allowed
+#    REQUIRED FILE (AND): same as "REQUIRED FILE:" syntax
+#    REQUIRED FILE (OR) : list one filename per instance;
+#                         multiple instances are allowed and
+#                         at least one file listed is required
+#
+# If no file names are provided on the command line, then all
+# files matching glob("test*.[fc]*") are searched.
 #
 use Data::Dumper;
 use Getopt::Long;		# option parser
@@ -23,62 +35,129 @@ GetOptions($options,
 	   "verbose+"
 	  );
 
+use Cwd;
+
+my $startdir = getcwd;
+my $start = time;
+
 # Build matid and/or sesame file dependencies
 undef @list;
 undef @sesameFilesDirAddons;
-foreach $f (glob "test*.[fc]*") {
+
+$get_sesame_data = shift;
+
+@files = glob "test*.[fc]*";
+@files = @ARGV if scalar @ARGV;
+
+print '@files = ', Dumper(\@files) if $options->{"verbose"};
+
+foreach $f (@files) {
+  undef @sesameFilesDirConditionalAddons;
   $g=`basename $f`;
   chomp $g;
   print "file: $g\n" if $options->{"verbose"} > 2;
   $t = "";
   undef @s;
-  @a=findMatchingLines("MATIDS TO TEST:", $f); chomp @a; push(@s, @a);
-  @a=findMatchingLines("REQUIRED FILE:", $f);  chomp @a; push(@s, @a);
-  print STDERR "$f: ", '\@s = ', Dumper(\@s) if $options->{"verbose"} > 2;
+  print STDERR __LINE__,' :: $f = ', Dumper($f) if $options->{"verbose"} > 4;
+  @a=findMatchingLines('MATIDS\s+TO\s+TEST:', $f);        chomp @a; push(@s, @a);
+  print STDERR __LINE__,' :: @a = ', Dumper(\@a) if $options->{"verbose"} > 4;
+  @a=findMatchingLines('REQUIRED\s+FILE:', $f);           chomp @a; push(@s, @a);
+  print STDERR __LINE__,' :: @a = ', Dumper(\@a) if $options->{"verbose"} > 4;
+  @a=findMatchingLines('REQUIRED\s+FILE\s*\(AND\):', $f); chomp @a; push(@s, @a);
+  print STDERR __LINE__,' :: @a = ', Dumper(\@a) if $options->{"verbose"} > 4;
+  @a=findMatchingLines('REQUIRED\s+FILE\s*\(OR\):', $f);  chomp @a; push(@s, @a);
+  print STDERR __LINE__,' :: @a = ', Dumper(\@a) if $options->{"verbose"} > 4;
+  print STDERR __LINE__,' :: @s = ', Dumper(\@s) if $options->{"verbose"} > 3;
+  print STDERR __LINE__,":: $f: ", '\@s = ', Dumper(\@s) if $options->{"verbose"} == 3;
   foreach $s (@s) {
     $s=~s/.*MATIDS TO TEST:\s*//;
-    if ( $s=~s/.*REQUIRED FILE:\s*/FILE=/ ) {
-      $s=~m/FILE=(.+)/;
-      push @sesameFilesDirAddons, $1;
+    if ($s =~ m|.*REQUIRED\s+FILE:\s*(.+)| or $s =~ m|.*REQUIRED\s+FILE\s+\(AND\):\s*(.+)|) {
+      my $n = $1; $n =~ s/^\s+//; $n =~ s/\s+$//;
+      $n = "$startdir/$n" if $n !~ m|^/|;
+      $s = "FILE=$n";
+      print STDERR __LINE__," :: $s\n" if $options->{"verbose"} > 3;
+      push @sesameFilesDirAddons, "$n" if not grep {m:$n:} @sesameFilesDirAddons;
     }
-    $s=~s/ +/\t/g if $s !~ /FILE=/;
-    chomp $s;
-    $t .= "\t$s";
+    if ($s =~ m|.*REQUIRED\s+FILE\s+\(OR\):\s*(.+)|) {
+      my $n = $1; $n =~ s/^\s+//; $n =~ s/\s+$//;
+      $n = "$startdir/$n" if $n !~ m|^/|;
+      print STDERR __LINE__," :: $s\n" if $options->{"verbose"} > 3;
+      push @sesameFilesDirConditionalAddons, "$n" if not grep {m:$n:} @sesameFilesDirConditionalAddons;
+    }
+    else {
+      $s=~s/ +/\t/g if $s !~ /FILE=/;
+      chomp $s;
+      $t .= "\t$s";
+    }
   }
-  print STDERR "$f: ", '\@s = ', Dumper(\@s) if $options->{"verbose"} > 2;
+  my $c = "";
+  print STDERR '@sesameFilesDirConditionalAddons = ', Dumper(\@sesameFilesDirConditionalAddons)
+    if $options->{"verbose"} > 2;
+  for $n (@sesameFilesDirConditionalAddons) {
+    if (-r "$n") {
+      $t .= "\tFILE=$n";
+      $c = "$n";
+      last;
+    }
+  }
+  $t .= "\tFILE=REQUIRE_ONE(" . join(", ", @sesameFilesDirConditionalAddons) . ")"
+    if scalar(@sesameFilesDirConditionalAddons) and "$c" eq "";
+  print STDERR "$f: ", '$c = ', Dumper($c) if $options->{"verbose"} > 2;
+  print STDERR "$f: ", '@s = ', Dumper(\@s) if $options->{"verbose"} > 2;
   push(@list, "$g$t");
 }
 
-$get_sesame_data = shift;
+print STDERR '@sesameFilesDirAddons = ', Dumper(\@sesameFilesDirAddons) if $options->{"verbose"} > 2;
+
 system("$get_sesame_data id > /dev/null 2>&1");
 die "\n$get_sesame_data is not executable\n\n" unless $?==0;
 
-# create backup of sesameFilesDir.txt
-$sesameFilesDir_bak = "sesameFilesDir.txt.bak$$";
-system("cp -p sesameFilesDir.txt $sesameFilesDir_bak > /dev/null 2>&1");
+# create $tmpDir/sesameFilesDir.txt from template
+$tmpDir = "$startdir/tmpDir.${start}.$$";
+system("mkdir $tmpDir > /dev/null 2>&1");
+die "ERROR: cannot create directory, '$tmpDir'\n" if not -r "$tmpDir";
+$sesameFilesDir_tmp = "$tmpDir/sesameFilesDir.txt";
+if (open(IFH, "sesameFilesDir.txt.template")) {
+  if (open(OFH, "> $sesameFilesDir_tmp")) {
+    my $d = getcwd;
+    while ($line = <IFH>) {
+      chomp $line;
+      $line =~ s:<BASEDIR_PATTERN>/tests:$d: if not m/^[\s]*\#/;
+      print OFH "$line\n";
+    }
+    close OFH;
+  }
+  else {
+    die "ERROR: cannot create file, '$sesameFilesDir_tmp'\n";
+  }
+  close IFH;
+}
+else {
+  die "ERROR: cannot open file, 'sesameFilesDir.txt.template'\n";
+}
 
-$backup_created=0;
-if (-e "$sesameFilesDir_bak") {
-  $backup_created++;
-  system("cat *.sesameFilesDir.txt >> sesameFilesDir.txt") if glob("*.sesameFilesDir.txt");
+$tmp_created=0;
+if (-r "$sesameFilesDir_tmp") {
+  $tmp_created++;
+  chdir("$tmpDir");
+  system("cat $startdir/*.sesameFilesDir.txt >> sesameFilesDir.txt") if glob("$startdir/*.sesameFilesDir.txt");
   if ( scalar @sesameFilesDirAddons ) {
     if ( open(FH, ">> sesameFilesDir.txt") ) {
-      print FH "\n", join("\n", @sesameFilesDirAddons), "\n";
+      print FH "\n# Addons\n", join("\n", @sesameFilesDirAddons), "\n";
       close FH;
     }
     else {
-      warn "File, sesameFilesDir.txt, was not opened to append sesameFilesDirAddons\n";
+      warn "File, $sesameFilesDir_tmp, was not opened to append sesameFilesDirAddons\n";
     }
   }
-  system("echo END >> sesameFilesDir.txt") if $options->{"noDefaultData"};
+  system("echo END >> $sesameFilesDir_tmp") if $options->{"noDefaultData"};
 
-  system("cat sesameFilesDir.txt") if $options->{"verbose"};
+  system("echo;echo '---' $sesameFilesDir_tmp '---'; cat $sesameFilesDir_tmp; echo '---'; echo")
+    if $options->{"verbose"};
+
 }
 
 $available_matids = `$get_sesame_data id | grep -v 'materials found' 2>&1`;
-
-system("mv $sesameFilesDir_bak sesameFilesDir.txt > /dev/null 2>&1")
-  if $backup_created;
 
 print "AVAILABLE MATIDS: $available_matids\n"
   if $options->{"verbose"};
@@ -97,7 +176,7 @@ foreach (@list) {
   ($file, @reqs) = split(/\t+/);
   next if $reqs[0] !~ /\d+/i and $reqs[0] !~ /FILE=/;
   foreach $m (@reqs) {
-    if ($m !~ /FILE=/ and $available_matids !~ /\b$m\b/) {
+    if ($m !~ /FILE=REQUIRE_ONE/ and $m !~ /FILE=/ and $available_matids !~ /\b$m\b/) {
       push(@excluded, $file) if not $excluded{$file};
       $excluded{$file}++;
       $i++;
@@ -108,11 +187,12 @@ foreach (@list) {
     elsif ($m =~ /FILE=/) {
       $m =~ /FILE=(.+)/;
       my $f = $1;
-      next if $f and -e $f;
+      next if $m !~ /FILE=REQUIRE_ONE/ and -r "$f";
       push(@excluded, $file) if not $excluded{$file};
       $excluded{$file}++;
       $i++;
-      print STDERR "$i: Excluding $file because it requires FILE=$f\n"
+      $m =~ s/FILE=REQUIRE_ONE/one of /;
+      print STDERR "$i: Excluding $file because it requires $m\n"
 	if $options->{"verbose"} and not $options->{"included"};
       last;
     }
@@ -149,6 +229,17 @@ else {
   print "@excluded";
 }
 
+chdir("$startdir");
+if ($tmp_created) {
+  system("rm -rf $tmpDir > /dev/null 2>&1");
+  die "ERROR: cannot remove directory, $tmpDir\n" if -d $tmpDir;
+}
+
+#
+# ARGUMENTS:
+#   $s : regex pattern
+#   $f : filename to search
+#
 sub findMatchingLines() {
 
   my $s = shift;

@@ -45,6 +45,8 @@ foreach $file (@ARGV) {
 
     chomp;
 
+    s/\r+$//;
+
     if (/^[\s\/\*!]+$/) { # reset current $doxytag
       $comments_found++;
       $doxytag = "";
@@ -82,11 +84,16 @@ foreach $file (@ARGV) {
       $hash{$doxytag} .= "$s\n$pad" if $s ne "";
 
       print STDERR __LINE__,": $doxytag: $s\n" if $options->{"verbose"};
-      print STDERR __LINE__,": $doxytag: $_" if $options->{"verbose"};
+      print STDERR __LINE__,": $doxytag: $_\n" if $options->{"verbose"};
     }
     elsif (/[\\\@\$](date):*\s*(.*)\s*\$/i) {
       ($doxytag, $s) = ($1, $2);
       $doxytag = uc($doxytag);
+
+      use Time::Local; # convert GMT to my locale
+      use POSIX;
+      my ($Y,$M,$D,$h,$m,$s,$z)=split(/[\s\/:]+/,$s);
+      $s = strftime("%F %T %Z",localtime(timegm($s,$m,$h,$D,$M-1,$Y-1900)));
 
       $sorted_hashkeys .= ($sorted_hashkeys?"|":"") . "$doxytag" if $sorted_hashkeys !~ /$doxytag/;
       $s =~ s/^\s+//;
@@ -96,7 +103,7 @@ foreach $file (@ARGV) {
       $hash{$doxytag} .= "$s\n$pad" if $s ne "";
 
       print STDERR __LINE__,": $doxytag: $s\n" if $options->{"verbose"};
-      print STDERR __LINE__,": $doxytag: $_" if $options->{"verbose"};
+      print STDERR __LINE__,": $doxytag: $_\n" if $options->{"verbose"};
     }
     elsif (/[\\\@](par)\s+(\S+)\s*(.*)/) {
       ($doxytag, $parname, $s) = ($1, $2, $3);
@@ -108,7 +115,7 @@ foreach $file (@ARGV) {
       $hash{$parname} .= "$s\n" if $s ne "";
 
       print STDERR __LINE__,": $parname: $s\n" if $options->{"verbose"};
-      print STDERR __LINE__,": $parname: $_" if $options->{"verbose"};
+      print STDERR __LINE__,": $parname: $_\n" if $options->{"verbose"};
     }
     elsif ($doxytag && /^\s*\*+(.*)/) {
       $s = $1;

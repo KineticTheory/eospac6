@@ -4,25 +4,27 @@
  AFTER load tables err1=     0: 
 
  Test eos_GetTableMetaData using material id 2161
-     EOS_Material_Name       : tin (z= 50.000000 a=118.710000)
-     EOS_Material_Source     : Eric Chisolm and Carl Greeff, T-1
-     EOS_Material_Date       : june 06
-     EOS_Material_Ref        : LA-UR-05-9414
-     EOS_Material_Composition: tin
-     EOS_Material_Codes      : opensesame 06-06-2006
-     EOS_Material_Phases     : 3, beta, gamma, liquid
+     EOS_Material_Name          : tin (z= 50.000000 a=118.710000)
+     EOS_Material_Source        : Eric Chisolm and Carl Greeff, T-1
+     EOS_Material_Date          : june 06
+     EOS_Material_Ref           : LA-UR-05-9414
+     EOS_Material_Composition   : tin
+     EOS_Material_Codes         : opensesame 06-06-2006
+     EOS_Material_Phases        : 3, beta, gamma, liquid
+     EOS_Material_Classification: Unknown Classification
 
  AFTER create tables err1=     0: 
  tablehandle =      0
  AFTER load tables err1=     0: 
 
  Test eos_GetTableMetaData using material id 3720
-     EOS_Material_Name       : aluminum (z=13.0, a=26.9815)
-     EOS_Material_Source     : S. D. Crockett, T-1
-     EOS_Material_Date       : Aug.28
-     EOS_Material_Ref        : LAUR-04-6442
-     EOS_Material_Composition: Al
-     EOS_Material_Codes      : GRIZZLY (ver. 030603)
-     EOS_Material_Phases     : 
+     EOS_Material_Name          : aluminum (z=13.0, a=26.9815)
+     EOS_Material_Source        : S. D. Crockett, T-1
+     EOS_Material_Date          : Aug.28
+     EOS_Material_Ref           : LAUR-04-6442
+     EOS_Material_Composition   : Al
+     EOS_Material_Codes         : GRIZZLY (ver. 030603)
+     EOS_Material_Phases        : No material phase information found
+     EOS_Material_Classification: Unclassified
 
-18 tests passed
+20 tests passed

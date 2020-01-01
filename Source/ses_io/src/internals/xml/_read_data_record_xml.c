@@ -26,16 +26,16 @@ ses_error_flag _read_data_record_xml(struct _ses_data_record* ptDR, struct _ses_
 
    /*  read the the dimensions, from the grid tag */
 
-   double* buffer = (double*)NULL;
+   /* double* buffer = (double*)NULL; */
    long dim1, dim2;
    dim1 = _read_long_tag(pFILE, "dim1");
    dim2 = _read_long_tag(pFILE, "dim2");
-   char* the_tag = (char*)NULL;
+   /* char* the_tag = (char*)NULL; */
    if ((dim1 > 0) && (dim2 > 0)) {
    
-	buffer = malloc(sizeof(ses_word)*dim1*dim2);
-   	the_tag = _skip_tag(pFILE, "</grid>");
-	buffer = (double*)_read_word_list_pFILE_xml(pFILE, dim1*dim2);
+	/* buffer = malloc(sizeof(ses_word)*dim1*dim2); */
+   	/* the_tag = */ _skip_tag(pFILE, "</grid>");
+	/* buffer = (double*)_read_word_list_pFILE_xml(pFILE, dim1*dim2); */
 
    }
  

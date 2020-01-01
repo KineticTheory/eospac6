@@ -20,6 +20,9 @@
 #include <math.h>
 #include <float.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include "eos_SaferMemoryAllocation.h"
+
 #ifndef _POSIX_
 #define _POSIX_
 #endif
@@ -88,10 +91,10 @@ typedef struct
 {
   EOS_INTEGER optionFlag;
   EOS_INTEGER optionType; /* 1: EOS_BOOLEAN
-			     2: EOS_INTEGER
-			     3: EOS_REAL
-			     4: EOS_CHAR*
-			  */
+                             2: EOS_INTEGER
+                             3: EOS_REAL
+                             4: EOS_CHAR*
+                          */
   eos_OptionValue optionValue;
 } eos_Option;
 
@@ -101,8 +104,8 @@ typedef struct
 #define TINY_LOG_D -99.0
 #define HUGE_LOG_D 99.0
 #define HUGE_D 1.0e99
-#define EV_TO_KELVIN (EOS_REAL)11604.85
-#define UNIVERSAL_GAS_CONST (EOS_REAL)8.314472e-03 /* gas constant (kboltz/amu in kJ/kelvin/mol) */
+#define EV_TO_KELVIN (EOS_REAL)1.16045221e+04
+#define UNIVERSAL_GAS_CONST (EOS_REAL)8.3144598e-03 /* gas constant (kboltz/amu in kJ/kelvin/mol) */
 
 #ifdef _EOS_INTERNAL_
 
@@ -360,33 +363,32 @@ eos_TableData _eos_TableList[] = {
   /* 194 */ {EOS_B_DT,      "EOS_B_DT",      604,      1,           EOS_RECORD_TYPE1,     EOS_CATEGORY0, EOS_CONDUCTIVITY,  EOS_B,         EOS_D,         EOS_T,         EOS_NullTable,  EOS_Zfc_DT,     EOS_NullTable,    EOS_NullTable,    EOS_TRUE,  "Thermoelectric Coefficient (1/cm^2/s) (Density (Mg/m^3)- and Temperature (eV)-dependent)"},
   /* 195 */ {EOS_Kc_DT,     "EOS_Kc_DT",     605,      1,           EOS_RECORD_TYPE1,     EOS_CATEGORY0, EOS_CONDUCTIVITY,  EOS_Kc,        EOS_D,         EOS_T,         EOS_NullTable,  EOS_Zfc_DT,     EOS_NullTable,    EOS_NullTable,    EOS_TRUE,  "Electron Conductive Opacity (Conductivity Model) (cm^2/g) (Density (Mg/m^3)- and Temperature (eV)-dependent)"},
   /* 196 */ {EOS_V_PtT,     "EOS_V_PtT",     301,      1,           EOS_RECORD_TYPE1,     EOS_CATEGORY1, EOS_TOTAL,         EOS_V,         EOS_Pt,        EOS_T,         EOS_NullTable,  EOS_NullTable,  EOS_Ut_DT,        EOS_D_PtT,        EOS_FALSE, "Specific-Volume (m^3/Mg) (Total Pressure (GPa)- and Temperature (K)-dependent)"},
-  /* 197 */ {EOS_301_DATA,  "EOS_301_DATA",  301,      1,           EOS_RECORD_TYPE1,     EOS_CATEGORY0, EOS_INFORMATION,   EOS_NullTable, EOS_NullTable, EOS_NullTable, EOS_NullTable,  EOS_NullTable,  EOS_NullTable,    EOS_NullTable,    EOS_FALSE, "Generic internal 301 table data types (all subtables)"},
-  /* 198 */ {EOS_303_DATA,  "EOS_303_DATA",  303,      1,           EOS_RECORD_TYPE1,     EOS_CATEGORY0, EOS_INFORMATION,   EOS_NullTable, EOS_NullTable, EOS_NullTable, EOS_NullTable,  EOS_NullTable,  EOS_NullTable,    EOS_NullTable,    EOS_FALSE, "Generic internal 303 table data types (all subtables)"},
-  /* 199 */ {EOS_304_DATA,  "EOS_304_DATA",  304,      1,           EOS_RECORD_TYPE1,     EOS_CATEGORY0, EOS_INFORMATION,   EOS_NullTable, EOS_NullTable, EOS_NullTable, EOS_NullTable,  EOS_NullTable,  EOS_NullTable,    EOS_NullTable,    EOS_FALSE, "Generic internal 304 table data types (all subtables)"},
+  /* 197 */ {EOS_301_DATA,  "EOS_301_DATA",  301,      1,           EOS_RECORD_TYPE1,     EOS_CATEGORY0, EOS_INTERNAL,      EOS_NullTable, EOS_NullTable, EOS_NullTable, EOS_NullTable,  EOS_NullTable,  EOS_NullTable,    EOS_NullTable,    EOS_FALSE, "Generic internal 301 table data types (all subtables)"},
+  /* 198 */ {EOS_303_DATA,  "EOS_303_DATA",  303,      1,           EOS_RECORD_TYPE1,     EOS_CATEGORY0, EOS_INTERNAL,      EOS_NullTable, EOS_NullTable, EOS_NullTable, EOS_NullTable,  EOS_NullTable,  EOS_NullTable,    EOS_NullTable,    EOS_FALSE, "Generic internal 303 table data types (all subtables)"},
+  /* 199 */ {EOS_304_DATA,  "EOS_304_DATA",  304,      1,           EOS_RECORD_TYPE1,     EOS_CATEGORY0, EOS_INTERNAL,      EOS_NullTable, EOS_NullTable, EOS_NullTable, EOS_NullTable,  EOS_NullTable,  EOS_NullTable,    EOS_NullTable,    EOS_FALSE, "Generic internal 304 table data types (all subtables)"},
 
   /*         eosTableType   *eosTableType_s  tableNum  subTableNum  recordType            category       subCategory        depVar         indepVar1      indepVar2      eosTempBalFunc  eosPresBalFunc  eosTableTypeRef1  eosTableTypeRef2  logAxes    *eosTableName */
-  /* 200 */ {EOS_305_DATA,  "EOS_305_DATA",  305,      1,           EOS_RECORD_TYPE1,     EOS_CATEGORY0, EOS_INFORMATION,   EOS_NullTable, EOS_NullTable, EOS_NullTable, EOS_NullTable,  EOS_NullTable,  EOS_NullTable,    EOS_NullTable,    EOS_FALSE, "Generic internal 305 table data types (all subtables)"},
-  /* 201 */ {EOS_306_DATA,  "EOS_306_DATA",  306,      1,           EOS_RECORD_TYPE1,     EOS_CATEGORY0, EOS_INFORMATION,   EOS_NullTable, EOS_NullTable, EOS_NullTable, EOS_NullTable,  EOS_NullTable,  EOS_NullTable,    EOS_NullTable,    EOS_FALSE, "Generic internal 306 table data types (all subtables)"},
-  /* 202 */ {EOS_401_DATA,  "EOS_401_DATA",  401,      1,           EOS_RECORD_TYPE2,     EOS_CATEGORY0, EOS_INFORMATION,   EOS_NullTable, EOS_NullTable, EOS_NullTable, EOS_NullTable,  EOS_NullTable,  EOS_NullTable,    EOS_NullTable,    EOS_FALSE, "Generic internal 401 table data types (all subtables)"},
-  /* 203 */ {EOS_411_DATA,  "EOS_411_DATA",  411,      1,           EOS_RECORD_TYPE1,     EOS_CATEGORY0, EOS_INFORMATION,   EOS_NullTable, EOS_NullTable, EOS_NullTable, EOS_NullTable,  EOS_NullTable,  EOS_NullTable,    EOS_NullTable,    EOS_FALSE, "Generic internal 411 table data types (all subtables)"},
-  /* 204 */ {EOS_412_DATA,  "EOS_412_DATA",  412,      1,           EOS_RECORD_TYPE1,     EOS_CATEGORY0, EOS_INFORMATION,   EOS_NullTable, EOS_NullTable, EOS_NullTable, EOS_NullTable,  EOS_NullTable,  EOS_NullTable,    EOS_NullTable,    EOS_FALSE, "Generic internal 412 table data types (all subtables)"},
-  /* 205 */ {EOS_431_DATA,  "EOS_431_DATA",  431,      1,           EOS_RECORD_TYPE1,     EOS_CATEGORY0, EOS_INFORMATION,   EOS_NullTable, EOS_NullTable, EOS_NullTable, EOS_NullTable,  EOS_NullTable,  EOS_NullTable,    EOS_NullTable,    EOS_FALSE, "Generic internal 431 table data types (all subtables)"},
-  /* 206 */ {EOS_501_DATA,  "EOS_501_DATA",  501,      1,           EOS_RECORD_TYPE2,     EOS_CATEGORY0, EOS_INFORMATION,   EOS_NullTable, EOS_NullTable, EOS_NullTable, EOS_NullTable,  EOS_NullTable,  EOS_NullTable,    EOS_NullTable,    EOS_FALSE, "Generic internal 501 table data types (all subtables)"},
-  /* 207 */ {EOS_502_DATA,  "EOS_502_DATA",  502,      1,           EOS_RECORD_TYPE1,     EOS_CATEGORY0, EOS_INFORMATION,   EOS_NullTable, EOS_NullTable, EOS_NullTable, EOS_NullTable,  EOS_NullTable,  EOS_NullTable,    EOS_NullTable,    EOS_FALSE, "Generic internal 502 table data types (all subtables)"},
-  /* 208 */ {EOS_503_DATA,  "EOS_503_DATA",  503,      1,           EOS_RECORD_TYPE1,     EOS_CATEGORY0, EOS_INFORMATION,   EOS_NullTable, EOS_NullTable, EOS_NullTable, EOS_NullTable,  EOS_NullTable,  EOS_NullTable,    EOS_NullTable,    EOS_FALSE, "Generic internal 503 table data types (all subtables)"},
-  /* 209 */ {EOS_504_DATA,  "EOS_504_DATA",  504,      1,           EOS_RECORD_TYPE1,     EOS_CATEGORY0, EOS_INFORMATION,   EOS_NullTable, EOS_NullTable, EOS_NullTable, EOS_NullTable,  EOS_NullTable,  EOS_NullTable,    EOS_NullTable,    EOS_FALSE, "Generic internal 504 table data types (all subtables)"},
-  /* 210 */ {EOS_505_DATA,  "EOS_505_DATA",  505,      1,           EOS_RECORD_TYPE1,     EOS_CATEGORY0, EOS_INFORMATION,   EOS_NullTable, EOS_NullTable, EOS_NullTable, EOS_NullTable,  EOS_NullTable,  EOS_NullTable,    EOS_NullTable,    EOS_FALSE, "Generic internal 505 table data types (all subtables)"},
-  /* 211 */ {EOS_601_DATA,  "EOS_601_DATA",  601,      1,           EOS_RECORD_TYPE2,     EOS_CATEGORY0, EOS_INFORMATION,   EOS_NullTable, EOS_NullTable, EOS_NullTable, EOS_NullTable,  EOS_NullTable,  EOS_NullTable,    EOS_NullTable,    EOS_FALSE, "Generic internal 601 table data types (all subtables)"},
-  /* 212 */ {EOS_602_DATA,  "EOS_602_DATA",  602,      1,           EOS_RECORD_TYPE1,     EOS_CATEGORY0, EOS_INFORMATION,   EOS_NullTable, EOS_NullTable, EOS_NullTable, EOS_NullTable,  EOS_NullTable,  EOS_NullTable,    EOS_NullTable,    EOS_FALSE, "Generic internal 602 table data types (all subtables)"},
-  /* 213 */ {EOS_603_DATA,  "EOS_603_DATA",  603,      1,           EOS_RECORD_TYPE1,     EOS_CATEGORY0, EOS_INFORMATION,   EOS_NullTable, EOS_NullTable, EOS_NullTable, EOS_NullTable,  EOS_NullTable,  EOS_NullTable,    EOS_NullTable,    EOS_FALSE, "Generic internal 603 table data types (all subtables)"},
-  /* 214 */ {EOS_604_DATA,  "EOS_604_DATA",  604,      1,           EOS_RECORD_TYPE1,     EOS_CATEGORY0, EOS_INFORMATION,   EOS_NullTable, EOS_NullTable, EOS_NullTable, EOS_NullTable,  EOS_NullTable,  EOS_NullTable,    EOS_NullTable,    EOS_FALSE, "Generic internal 604 table data types (all subtables)"},
-  /* 215 */ {EOS_605_DATA,  "EOS_605_DATA",  605,      1,           EOS_RECORD_TYPE1,     EOS_CATEGORY0, EOS_INFORMATION,   EOS_NullTable, EOS_NullTable, EOS_NullTable, EOS_NullTable,  EOS_NullTable,  EOS_NullTable,    EOS_NullTable,    EOS_FALSE, "Generic internal 605 table data types (all subtables)"},
+  /* 200 */ {EOS_305_DATA,  "EOS_305_DATA",  305,      1,           EOS_RECORD_TYPE1,     EOS_CATEGORY0, EOS_INTERNAL,      EOS_NullTable, EOS_NullTable, EOS_NullTable, EOS_NullTable,  EOS_NullTable,  EOS_NullTable,    EOS_NullTable,    EOS_FALSE, "Generic internal 305 table data types (all subtables)"},
+  /* 201 */ {EOS_306_DATA,  "EOS_306_DATA",  306,      1,           EOS_RECORD_TYPE1,     EOS_CATEGORY0, EOS_INTERNAL,      EOS_NullTable, EOS_NullTable, EOS_NullTable, EOS_NullTable,  EOS_NullTable,  EOS_NullTable,    EOS_NullTable,    EOS_FALSE, "Generic internal 306 table data types (all subtables)"},
+  /* 202 */ {EOS_401_DATA,  "EOS_401_DATA",  401,      1,           EOS_RECORD_TYPE2,     EOS_CATEGORY0, EOS_INTERNAL,      EOS_NullTable, EOS_NullTable, EOS_NullTable, EOS_NullTable,  EOS_NullTable,  EOS_NullTable,    EOS_NullTable,    EOS_FALSE, "Generic internal 401 table data types (all subtables)"},
+  /* 203 */ {EOS_411_DATA,  "EOS_411_DATA",  411,      1,           EOS_RECORD_TYPE1,     EOS_CATEGORY0, EOS_INTERNAL,      EOS_NullTable, EOS_NullTable, EOS_NullTable, EOS_NullTable,  EOS_NullTable,  EOS_NullTable,    EOS_NullTable,    EOS_FALSE, "Generic internal 411 table data types (all subtables)"},
+  /* 204 */ {EOS_412_DATA,  "EOS_412_DATA",  412,      1,           EOS_RECORD_TYPE1,     EOS_CATEGORY0, EOS_INTERNAL,      EOS_NullTable, EOS_NullTable, EOS_NullTable, EOS_NullTable,  EOS_NullTable,  EOS_NullTable,    EOS_NullTable,    EOS_FALSE, "Generic internal 412 table data types (all subtables)"},
+  /* 205 */ {EOS_431_DATA,  "EOS_431_DATA",  431,      1,           EOS_RECORD_TYPE1,     EOS_CATEGORY0, EOS_INTERNAL,      EOS_NullTable, EOS_NullTable, EOS_NullTable, EOS_NullTable,  EOS_NullTable,  EOS_NullTable,    EOS_NullTable,    EOS_FALSE, "Generic internal 431 table data types (all subtables)"},
+  /* 206 */ {EOS_501_DATA,  "EOS_501_DATA",  501,      1,           EOS_RECORD_TYPE2,     EOS_CATEGORY0, EOS_INTERNAL,      EOS_NullTable, EOS_NullTable, EOS_NullTable, EOS_NullTable,  EOS_NullTable,  EOS_NullTable,    EOS_NullTable,    EOS_FALSE, "Generic internal 501 table data types (all subtables)"},
+  /* 207 */ {EOS_502_DATA,  "EOS_502_DATA",  502,      1,           EOS_RECORD_TYPE1,     EOS_CATEGORY0, EOS_INTERNAL,      EOS_NullTable, EOS_NullTable, EOS_NullTable, EOS_NullTable,  EOS_NullTable,  EOS_NullTable,    EOS_NullTable,    EOS_FALSE, "Generic internal 502 table data types (all subtables)"},
+  /* 208 */ {EOS_503_DATA,  "EOS_503_DATA",  503,      1,           EOS_RECORD_TYPE1,     EOS_CATEGORY0, EOS_INTERNAL,      EOS_NullTable, EOS_NullTable, EOS_NullTable, EOS_NullTable,  EOS_NullTable,  EOS_NullTable,    EOS_NullTable,    EOS_FALSE, "Generic internal 503 table data types (all subtables)"},
+  /* 209 */ {EOS_504_DATA,  "EOS_504_DATA",  504,      1,           EOS_RECORD_TYPE1,     EOS_CATEGORY0, EOS_INTERNAL,      EOS_NullTable, EOS_NullTable, EOS_NullTable, EOS_NullTable,  EOS_NullTable,  EOS_NullTable,    EOS_NullTable,    EOS_FALSE, "Generic internal 504 table data types (all subtables)"},
+  /* 210 */ {EOS_505_DATA,  "EOS_505_DATA",  505,      1,           EOS_RECORD_TYPE1,     EOS_CATEGORY0, EOS_INTERNAL,      EOS_NullTable, EOS_NullTable, EOS_NullTable, EOS_NullTable,  EOS_NullTable,  EOS_NullTable,    EOS_NullTable,    EOS_FALSE, "Generic internal 505 table data types (all subtables)"},
+  /* 211 */ {EOS_601_DATA,  "EOS_601_DATA",  601,      1,           EOS_RECORD_TYPE2,     EOS_CATEGORY0, EOS_INTERNAL,      EOS_NullTable, EOS_NullTable, EOS_NullTable, EOS_NullTable,  EOS_NullTable,  EOS_NullTable,    EOS_NullTable,    EOS_FALSE, "Generic internal 601 table data types (all subtables)"},
+  /* 212 */ {EOS_602_DATA,  "EOS_602_DATA",  602,      1,           EOS_RECORD_TYPE1,     EOS_CATEGORY0, EOS_INTERNAL,      EOS_NullTable, EOS_NullTable, EOS_NullTable, EOS_NullTable,  EOS_NullTable,  EOS_NullTable,    EOS_NullTable,    EOS_FALSE, "Generic internal 602 table data types (all subtables)"},
+  /* 213 */ {EOS_603_DATA,  "EOS_603_DATA",  603,      1,           EOS_RECORD_TYPE1,     EOS_CATEGORY0, EOS_INTERNAL,      EOS_NullTable, EOS_NullTable, EOS_NullTable, EOS_NullTable,  EOS_NullTable,  EOS_NullTable,    EOS_NullTable,    EOS_FALSE, "Generic internal 603 table data types (all subtables)"},
+  /* 214 */ {EOS_604_DATA,  "EOS_604_DATA",  604,      1,           EOS_RECORD_TYPE1,     EOS_CATEGORY0, EOS_INTERNAL,      EOS_NullTable, EOS_NullTable, EOS_NullTable, EOS_NullTable,  EOS_NullTable,  EOS_NullTable,    EOS_NullTable,    EOS_FALSE, "Generic internal 604 table data types (all subtables)"},
+  /* 215 */ {EOS_605_DATA,  "EOS_605_DATA",  605,      1,           EOS_RECORD_TYPE1,     EOS_CATEGORY0, EOS_INTERNAL,      EOS_NullTable, EOS_NullTable, EOS_NullTable, EOS_NullTable,  EOS_NullTable,  EOS_NullTable,    EOS_NullTable,    EOS_FALSE, "Generic internal 605 table data types (all subtables)"},
   /* 216 */ {EOS_M_DT,      "EOS_M_DT",      321,      1,           EOS_RECORD_TYPE6,     EOS_CATEGORY0, EOS_MASS_FRACTION, EOS_M,         EOS_D,         EOS_T,         EOS_NullTable,  EOS_NullTable,  EOS_NullTable,    EOS_NullTable,    EOS_FALSE, "Mass Fraction (Density- and Temperature-dependent)"}
 
 };
 eos_TableData *eos_TableList = _eos_TableList;
 EOS_INTEGER MAX_TYPES = sizeof(_eos_TableList)/sizeof(_eos_TableList[0]);
-EOS_INTEGER *eos_TableListReverseMap = NULL;
 
 /* Variable definition constants */
 eos_VarTypeData _eos_VarList[] = {
@@ -473,6 +475,7 @@ EOS_INTEGER _eos_OptionFlags[EOS_TOTAL_TABLE_OPTIONS] = {
   EOS_XY_MODIFY,
   EOS_INVERT_AT_SETUP,
   EOS_NORMAL_DERIVATIVES,
+  DISABLE_FTBLS_INVT_MASK,      /* include private option flags after all others */
   EOS_DISABLE_GHOST_NODES,      /* include private option flags after all others */
   EOS_DEBUG_PRINT,              /* include private option flags after all others */
   EOS_ALLOW_ALL_INFO_ITEMS      /* include private option flags after all others */
@@ -509,6 +512,7 @@ EOS_CHAR* _eos_OptionFlags_str[EOS_TOTAL_TABLE_OPTIONS] = {
   "EOS_XY_MODIFY",
   "EOS_INVERT_AT_SETUP",
   "EOS_NORMAL_DERIVATIVES",
+  "DISABLE_FTBLS_INVT_MASK",      /* include private option flags after all others */
   "EOS_DISABLE_GHOST_NODES",      /* include private option flags after all others */
   "EOS_DEBUG_PRINT",              /* include private option flags after all others */
   "EOS_ALLOW_ALL_INFO_ITEMS"      /* include private option flags after all others */
@@ -520,7 +524,6 @@ EOS_CHAR** eos_OptionFlags_str = _eos_OptionFlags_str;
 
 #else //if not _EOS_INTERNAL_
 extern eos_TableData *eos_TableList;
-extern EOS_INTEGER *eos_TableListReverseMap;
 extern eos_VarTypeData *eos_VarList;
 extern eos_DataMap gEosDataMap;
 extern eos_Interpolation gEosInterpolation;
@@ -533,32 +536,41 @@ extern EOS_CHAR** eos_OptionFlags_str;
 /* The EOS_IS_PRESSURE_VARIABLE macro determines if 't' is one of the following pressure variables:
    EOS_Pc, EOS_Pe, EOS_Pf, EOS_Piz, EOS_Pic, EOS_Pm, EOS_Pt, EOS_Pv */
 #define EOS_IS_PRESSURE_VARIABLE(t) (t==EOS_Pc   || \
-				     t==EOS_Pe   || \
-				     t==EOS_Pf   || \
-				     t==EOS_Piz  || \
-				     t==EOS_Pic  || \
-				     t==EOS_Pm   || \
-				     t==EOS_Pt   || \
-				     t==EOS_Pv)
+                                     t==EOS_Pe   || \
+                                     t==EOS_Pf   || \
+                                     t==EOS_Piz  || \
+                                     t==EOS_Pic  || \
+                                     t==EOS_Pm   || \
+                                     t==EOS_Pt   || \
+                                     t==EOS_Pv)
 
 /* The EOS_IS_TYPE_DEPRECATED macro is used to identify data types that are deprecated.
    Once the data types are actually deleted, they need to be removed from this macro. */
 #define  EOS_IS_TYPE_DEPRECATED(o) (EOS_FALSE)
 
+#define EOS_IS_HIDDEN_OPTION(o) (o==EOS_CHECK_ARGS || \
+                                 o==DISABLE_FTBLS_INVT_MASK || \
+                                 o==EOS_DEBUG_PRINT || \
+                                 o==EOS_ALLOW_ALL_INFO_ITEMS || \
+                                 o==EOS_USE_TAYLOR_FIT || \
+                                 o==EOS_DISABLE_GHOST_NODES || \
+                                 o==EOS_SAVE_SPECIES_DATA || \
+                                 o==EOS_NORMAL_DERIVATIVES)
+
 #define EOS_IS_DERIVATIVETYPE_INTERPOLATION_OPTION(o) (o==EOS_NORMAL_DERIVATIVES || \
-						       o==EOS_DISCONTINUOUS_DERIVATIVES || \
-						       o==EOS_XY_PASSTHRU || \
-						       o==EOS_XY_MODIFY)
+                                                       o==EOS_DISCONTINUOUS_DERIVATIVES || \
+                                                       o==EOS_XY_PASSTHRU || \
+                                                       o==EOS_XY_MODIFY)
 #define EOS_IS_INTERPOLATIONTYPE_OPTION(o) (o==EOS_LINEAR ||		\
                                             o==EOS_RATIONAL ||		\
                                             o==EOS_USE_CUSTOM_INTERP || \
-					    o==EOS_SAVE_SPECIES_DATA ||	\
+                                            o==EOS_SAVE_SPECIES_DATA ||	\
                                             o==EOS_DISABLE_GHOST_NODES)
 #define EOS_IS_INTERPOLATION_OPTION(o) (EOS_IS_DERIVATIVETYPE_INTERPOLATION_OPTION(o) || \
                                         EOS_IS_INTERPOLATIONTYPE_OPTION(o))
 
 #define EOS_IS_LOADING_OPTION(o) (o == EOS_PT_SMOOTHING || \
-				  o == EOS_ADJUST_VAP_PRES || \
+                                  o == EOS_ADJUST_VAP_PRES || \
                                   o == EOS_INSERT_DATA || \
                                   o == EOS_MONOTONIC_IN_X || \
                                   o == EOS_MONOTONIC_IN_Y || \
@@ -570,8 +582,11 @@ extern EOS_CHAR** eos_OptionFlags_str;
                                   o == EOS_CALC_FREE_ENERGY || \
                                   o == EOS_CREATE_TZERO || \
                                   o == EOS_USE_TAYLOR_FIT || \
-				  o == EOS_USE_MAXWELL_TABLE || \
-				  o == EOS_INVERT_AT_SETUP)
+                                  o == EOS_USE_MAXWELL_TABLE || \
+                                  o == EOS_INVERT_AT_SETUP)
+
+#define EOS_IS_LOADING_OPTION_WITH_REAL_VALUE(o)    (o == EOS_ADJUST_VAP_PRES)
+#define EOS_IS_LOADING_OPTION_WITH_INTEGER_VALUE(o) (o == EOS_INSERT_DATA)
 
 #define EOS_IS_GENERAL_OPTION(o) (o == EOS_DUMP_DATA || \
                                   o == EOS_APPEND_DATA || \
@@ -579,64 +594,67 @@ extern EOS_CHAR** eos_OptionFlags_str;
                                   o == EOS_X_CONVERT || \
                                   o == EOS_Y_CONVERT || \
                                   o == EOS_F_CONVERT || \
+                                  o == DISABLE_FTBLS_INVT_MASK || \
                                   o == EOS_DEBUG_PRINT || \
-				  o == EOS_ALLOW_ALL_INFO_ITEMS)
+                                  o == EOS_ALLOW_ALL_INFO_ITEMS)
 
 #define EOS_OPTION_FLAG_TO_INDEX(o) (((o) >= EOS_MIN_PRIVATE_OPTION_FLAG_VALUE) \
                                      ? ((o) - EOS_MIN_PRIVATE_OPTION_FLAG_VALUE + EOS_NUM_TABLE_OPTIONS) \
                                      : ((o) - EOS_MIN_OPTION_FLAG_VALUE))
 #define EOS_LOADING_OPTION_FLAG_TO_INDEX(f)  ((f == EOS_INSERT_DATA)? 0 : \
-					     ((f == EOS_MONOTONIC_IN_X)? 1 : \
-					     ((f == EOS_MONOTONIC_IN_Y)? 2 : \
-					     ((f == EOS_SMOOTH)? 3 :	\
-					     ((f == EOS_SPLIT_COWAN)? 4 : \
-					     ((f == EOS_SPLIT_FORCED)? 5 : \
-					     ((f == EOS_SPLIT_IDEAL_GAS)? 6 : \
-					     ((f == EOS_SPLIT_NUM_PROP)? 7: \
-					     ((f == EOS_PT_SMOOTHING)? 8: \
-					     ((f == EOS_ADJUST_VAP_PRES)? 9: \
-					     ((f == EOS_CALC_FREE_ENERGY)? 10: \
-					     ((f == EOS_CREATE_TZERO)? 11: \
-					     ((f == EOS_USE_TAYLOR_FIT)? 12 : \
-					     ((f == EOS_USE_MAXWELL_TABLE)? 13 : \
-					     ((f == EOS_INVERT_AT_SETUP)? 14 : 15)))))))))))))))
+                                             ((f == EOS_MONOTONIC_IN_X)? 1 : \
+                                             ((f == EOS_MONOTONIC_IN_Y)? 2 : \
+                                             ((f == EOS_SMOOTH)? 3 :	\
+                                             ((f == EOS_SPLIT_COWAN)? 4 : \
+                                             ((f == EOS_SPLIT_FORCED)? 5 : \
+                                             ((f == EOS_SPLIT_IDEAL_GAS)? 6 : \
+                                             ((f == EOS_SPLIT_NUM_PROP)? 7: \
+                                             ((f == EOS_PT_SMOOTHING)? 8: \
+                                             ((f == EOS_ADJUST_VAP_PRES)? 9: \
+                                             ((f == EOS_CALC_FREE_ENERGY)? 10: \
+                                             ((f == EOS_CREATE_TZERO)? 11: \
+                                             ((f == EOS_USE_TAYLOR_FIT)? 12 : \
+                                             ((f == EOS_USE_MAXWELL_TABLE)? 13 : \
+                                             ((f == EOS_INVERT_AT_SETUP)? 14 : 15)))))))))))))))
 #define EOS_GENERAL_OPTION_FLAG_TO_INDEX(o) ((o == EOS_DUMP_DATA)? 0 :	\
-					    ((o == EOS_APPEND_DATA)? 1 : \
-					    ((o == EOS_CHECK_ARGS)? 2 : \
-					    ((o == EOS_X_CONVERT)? 3 : \
-					    ((o == EOS_Y_CONVERT)? 4 : \
-					    ((o == EOS_F_CONVERT)? 5 : \
-					    ((o == EOS_DEBUG_PRINT)? 6 : \
-					    ((o == EOS_ALLOW_ALL_INFO_ITEMS)? 7 : 8))))))))
+                                            ((o == EOS_APPEND_DATA)? 1 : \
+                                            ((o == EOS_CHECK_ARGS)? 2 : \
+                                            ((o == EOS_X_CONVERT)? 3 : \
+                                            ((o == EOS_Y_CONVERT)? 4 : \
+                                            ((o == EOS_F_CONVERT)? 5 : \
+                                            ((o == DISABLE_FTBLS_INVT_MASK)? 6 : \
+                                            ((o == EOS_DEBUG_PRINT)? 7 : \
+                                            ((o == EOS_ALLOW_ALL_INFO_ITEMS)? 8 : 9)))))))))
 #define EOS_GENERAL_INDEX_TO_OPTION_FLAG(i) ((i == 0)? EOS_DUMP_DATA : \
-					    ((i == 1)? EOS_APPEND_DATA: \
+                                            ((i == 1)? EOS_APPEND_DATA: \
                                             ((i == 2)? EOS_CHECK_ARGS : \
                                             ((i == 3)? EOS_X_CONVERT : \
                                             ((i == 4)? EOS_Y_CONVERT : \
                                             ((i == 5)? EOS_F_CONVERT : \
-                                            ((i == 6)? EOS_DEBUG_PRINT : \
-                                            ((i == 7)? EOS_ALLOW_ALL_INFO_ITEMS : EOS_ALLOW_ALL_INFO_ITEMS))))))))
+                                            ((i == 6)? DISABLE_FTBLS_INVT_MASK : \
+                                            ((i == 7)? EOS_DEBUG_PRINT : \
+                                            ((i == 8)? EOS_ALLOW_ALL_INFO_ITEMS : EOS_ALLOW_ALL_INFO_ITEMS)))))))))
 
 #define EOS_ALLOW_CAT0_ONLY_INFO_ITEM(i) (((i == EOS_R_Array) || \
-					   (i == EOS_T_Array) || \
-					   (i == EOS_F_Array) || \
-					   (i == EOS_NR) || \
-					   (i == EOS_NT) || \
-					   (i == EOS_NUM_PHASES) || \
-					   (i == EOS_Rmin) || \
-					   (i == EOS_Rmax) || \
-					   (i == EOS_Tmin) || \
-					   (i == EOS_Tmax) || \
-					   (i == EOS_Fmin) || \
-					   (i == EOS_Fmax) || \
-					   (i == EOS_NT401) || \
-					   (i == EOS_P401) || \
-					   (i == EOS_T401) || \
-					   (i == EOS_RG401) || \
-					   (i == EOS_RL401) || \
-					   (i == EOS_EG401) || \
-					   (i == EOS_EL401)) ? EOS_TRUE : EOS_FALSE \
-					 )
+                                           (i == EOS_T_Array) || \
+                                           (i == EOS_F_Array) || \
+                                           (i == EOS_NR) ||      \
+                                           (i == EOS_NT) ||      \
+                                           (i == EOS_NUM_PHASES) || \
+                                           (i == EOS_Rmin) ||       \
+                                           (i == EOS_Rmax) ||       \
+                                           (i == EOS_Tmin) ||       \
+                                           (i == EOS_Tmax) ||       \
+                                           (i == EOS_Fmin) ||       \
+                                           (i == EOS_Fmax) ||       \
+                                           (i == EOS_NT401) ||      \
+                                           (i == EOS_P401) ||       \
+                                           (i == EOS_T401) ||       \
+                                           (i == EOS_RG401) ||      \
+                                           (i == EOS_RL401) ||      \
+                                           (i == EOS_EG401) ||      \
+                                           (i == EOS_EL401)) ? EOS_TRUE : EOS_FALSE \
+                                          )
 
 /* var orders for conversion factors */
 #define X_Y_F 0
@@ -660,6 +678,8 @@ extern EOS_CHAR** eos_OptionFlags_str;
 /*!
  * The following function is used to build a reverse map, eos_TableListReverseMap[], for eos_TableList[]
  */
+EOS_INTEGER *eos_TableListReverseMap = NULL;
+EOS_INTEGER _eos_TableListReverseMap_size = 0;
 void _eos_SetTableListReverseMap(void) {
 
   if ( ! eos_TableListReverseMap ) {
@@ -681,21 +701,50 @@ void _eos_SetTableListReverseMap(void) {
     /* populate reverse map */
     for (i = 0; i < MAX_TYPES; i++)
       eos_TableListReverseMap[eos_TableList[i].eosTableType] = i;
+
+    /* store size of reverse map */
+    _eos_TableListReverseMap_size = max_idx+1;
   }
+}
+void _eos_DestroyTableListReverseMap(void) {
+
+  if ( eos_TableListReverseMap ) {
+    /* deallocate reverse map */
+    EOS_FREE(eos_TableListReverseMap);
+    _eos_TableListReverseMap_size = 0;
+  }
+}
+
+/*!
+ * The following function is debuggable form of the EOS_TYPE_TO_LIST_INDEX(t,c) macro
+ */
+int __eos_TypeToListIndex__(EOS_INTEGER t, EOS_CHAR *caller) {
+
+  assert( t >= 0 );
+  assert( t < _eos_TableListReverseMap_size );
+  assert( eos_TableListReverseMap[t] >=0 );
+
+  return eos_TableListReverseMap[t];
 }
 
 #else /* ! _EOS_INTERNAL_ */
 
 EOS_INTEGER __eos_TypeToListIndex__(EOS_INTEGER t, EOS_CHAR *caller);
 void _eos_SetTableListReverseMap(void);
+void _eos_DestroyTableListReverseMap(void);
 
 extern EOS_INTEGER MAX_TYPES;
 extern EOS_INTEGER MAX_VARS;
+extern EOS_INTEGER *eos_TableListReverseMap;
+extern EOS_INTEGER _eos_TableListReverseMap_size;
 
 #endif /* _EOS_INTERNAL_ */
 
-//#define EOS_TYPE_TO_LIST_INDEX __eos_TypeToListIndex__
+#ifdef DEBUG_EOS_TYPE_TO_LIST_INDEX
+#define EOS_TYPE_TO_LIST_INDEX __eos_TypeToListIndex__
+#else
 #define EOS_TYPE_TO_LIST_INDEX(t,c) eos_TableListReverseMap[t]
+#endif
 
 #define EOS_TYPE_TO_STRING(t) (eos_TableList[EOS_TYPE_TO_LIST_INDEX(t, "EOS_TYPE_TO_STRING")].eosTableType_s)
 #define EOS_TYPE_TO_TAB_NUM(t) (eos_TableList[EOS_TYPE_TO_LIST_INDEX(t, "EOS_TYPE_TO_TAB_NUM")].tableNum)

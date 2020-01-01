@@ -1,6 +1,4 @@
 
-#define DEBUG_WRAP
-
 
 SES_ERROR_FLAG function ses_define_table_f90(tid, description, nr, nt, num_independent, num_arrays, size_arrays, labels)
 

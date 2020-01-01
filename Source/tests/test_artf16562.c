@@ -29,24 +29,13 @@
 
 EOS_BOOLEAN _eos_fileExistsAndValid(EOS_CHAR *filename); /* function in eos_Utils.c */
 
-void* safe_malloc(int bytes) {
-  void *p=NULL;
-  assert (p == NULL);
-  
-  p = malloc(bytes);
-  if (p == NULL) {
-    printf("safe_malloc failed to allocate %i bytes\n", bytes);
-    assert(p != NULL);
-  }
-  return p;
-}
 
 int main ()
 {
   int i, j;
   EOS_INTEGER matID[2];
   EOS_INTEGER tableHandle[2], tableType[2];
-  EOS_INTEGER errorCode, max_length;
+  EOS_INTEGER errorCode, err, max_length;
   EOS_INTEGER nTables = 2, nXYPairs = 4;
   EOS_CHAR errorMessage[EOS_MaxErrMsgLen];
   EOS_CHAR *fileName = NULL, *tmp = NULL;
@@ -66,19 +55,19 @@ int main ()
   /*  Read sesameFilesDir.txt into memory */
   errorCode = get_fileContent(indexFileName, &file_str);
   if(errorCode)
-    return(errorCode);
+    goto CLEANUP;
 
   /* Modify sesameFilesDir.txt to include only one valid file name and the END token */
   eos_GetMaxDataFileNameLength (&max_length);
-  fileName = (EOS_CHAR *) safe_malloc(max_length * sizeof(EOS_CHAR));
+  fileName = (EOS_CHAR *) safe_malloc(max_length, sizeof(EOS_CHAR));
   strcpy(fileName, "./tests/data/sesame3");
+  tmp = (EOS_CHAR *) safe_malloc(max_length, sizeof(EOS_CHAR));
   for (i = 0; i < 10; i++) {
-    tmp = (EOS_CHAR *) safe_malloc(max_length * sizeof(EOS_CHAR));
     if (_eos_fileExistsAndValid(fileName)) break;
-    fileName = (EOS_CHAR *) realloc (fileName, (strlen(fileName) + 4) * sizeof (EOS_CHAR));
     sprintf(tmp, "./.%s", fileName);
     strcpy(fileName, tmp);
   }
+  EOS_FREE(tmp);
   fp = fopen (indexFileName, "w");  /* open indexFileName */
   if (fp) {
     fprintf(fp, "%s\n\n    END    \n", fileName); /* append END token with leading and trailing white space */
@@ -86,7 +75,7 @@ int main ()
   }
   else {
     errorCode = -2;
-    return(errorCode);
+    goto CLEANUP;
   }
 
   /* initialize table handle */
@@ -94,24 +83,28 @@ int main ()
   if (errorCode != EOS_OK) {
     eos_GetErrorMessage (&errorCode, errorMessage);
     printf ("eos_CreateTables ERROR %d: %s\n", errorCode, errorMessage);
-    return(errorCode);
+    goto CLEANUP;
   }
   /* load data results in an expected error */
   eos_LoadTables (&nTables, tableHandle, &errorCode);
   if (errorCode != EOS_OK) {
-    eos_GetErrorMessage (&errorCode, errorMessage);
-    printf ("eos_LoadTables ERROR %d: %s\n", errorCode, errorMessage);
+    for (i = 0; i < nTables; i++) {
+      EOS_INTEGER th_err = EOS_OK;
+      eos_GetErrorCode (&tableHandle[i], &th_err);
+      eos_GetErrorMessage (&th_err, errorMessage);
+      printf ("eos_LoadTables ERROR %d: %s\n", th_err, errorMessage);
+    }
   }
 
   /* define custom matID-to-file association */
   strcpy(fileName, "./tests/data/93270littlebin");
+  tmp = (EOS_CHAR *) safe_malloc(max_length, sizeof(EOS_CHAR));
   for (i = 0; i < 10; i++) {
-    tmp = (EOS_CHAR *) safe_malloc(max_length * sizeof(EOS_CHAR));
     if (_eos_fileExistsAndValid(fileName)) break;
-    fileName = (EOS_CHAR *) realloc (fileName, (strlen(fileName) + 4) * sizeof (EOS_CHAR));
     sprintf(tmp, "./.%s", fileName);
     strcpy(fileName, tmp);
   }
+  EOS_FREE(tmp);
   eos_SetDataFileName (&tableHandle[0], &matID[0], &tableType[0], fileName, &errorCode);
   if (errorCode != EOS_OK) {
     eos_GetErrorMessage (&errorCode, errorMessage);
@@ -120,13 +113,13 @@ int main ()
 
   /* define custom matID-to-file association */
   strcpy(fileName, "./tests/data/testbin");
+  tmp = (EOS_CHAR *) safe_malloc(max_length, sizeof(EOS_CHAR));
   for (i = 0; i < 10; i++) {
-    tmp = (EOS_CHAR *) safe_malloc(max_length * sizeof(EOS_CHAR));
     if (_eos_fileExistsAndValid(fileName)) break;
-    fileName = (EOS_CHAR *) realloc (fileName, (strlen(fileName) + 4) * sizeof (EOS_CHAR));
     sprintf(tmp, "./.%s", fileName);
     strcpy(fileName, tmp);
   }
+  EOS_FREE(tmp);
   eos_SetDataFileName (&tableHandle[1], &matID[1], &tableType[1], fileName, &errorCode);
   if (errorCode != EOS_OK) {
     eos_GetErrorMessage (&errorCode, errorMessage);
@@ -139,14 +132,16 @@ int main ()
   if (errorCode != EOS_OK) {
     eos_GetErrorMessage (&errorCode, errorMessage);
     printf ("eos_SetOption ERROR %i: %s\n", errorCode, errorMessage);
-    return 0;
+    errorCode = 0;
+    goto CLEANUP;
   }
   for (i = 1; i < nTables; i++) {
     eos_SetOption (&tableHandle[i], &EOS_APPEND_DATA, EOS_NullPtr, &errorCode);
     if (errorCode != EOS_OK) {
       eos_GetErrorMessage (&errorCode, errorMessage);
       printf ("eos_SetOption ERROR %i: %s\n", errorCode, errorMessage);
-      return 0;
+      errorCode = 0;
+      goto CLEANUP;
     }
   }
 
@@ -167,15 +162,16 @@ int main ()
 	   tableHandle[i], get_tableType_str(tableType[i]), matID[i],
 	   get_tableHandleFileName (tableHandle[i]));
 
-    X = (EOS_REAL *) safe_malloc (sizeof (EOS_REAL) * nXYPairs);
-    Y = (EOS_REAL *) safe_malloc (sizeof (EOS_REAL) * nXYPairs);
-    F = (EOS_REAL *) safe_malloc (sizeof (EOS_REAL) * nXYPairs);
-    dFx = (EOS_REAL *) safe_malloc (sizeof (EOS_REAL) * nXYPairs);
-    dFy = (EOS_REAL *) safe_malloc (sizeof (EOS_REAL) * nXYPairs);
+    X = (EOS_REAL *) safe_malloc (nXYPairs, sizeof (EOS_REAL));
+    Y = (EOS_REAL *) safe_malloc (nXYPairs, sizeof (EOS_REAL));
+    F = (EOS_REAL *) safe_malloc (nXYPairs, sizeof (EOS_REAL));
+    dFx = (EOS_REAL *) safe_malloc (nXYPairs, sizeof (EOS_REAL));
+    dFy = (EOS_REAL *) safe_malloc (nXYPairs, sizeof (EOS_REAL));
 
     if (! (Y && F && dFx && dFy)) {
       printf ("Memory allocation error!\n");
-      return 2;
+      errorCode = 2;
+      goto CLEANUP;
     }
 
     X[0] = 1000.;
@@ -206,10 +202,11 @@ int main ()
     }
 
     /* deallocate memory */
-    if (Y) EOS_FREE(Y);
-    if (F) EOS_FREE(F);
-    if (dFx) EOS_FREE(dFx);
-    if (dFy) EOS_FREE(dFy);
+    EOS_FREE(X);
+    EOS_FREE(Y);
+    EOS_FREE(F);
+    EOS_FREE(dFx);
+    EOS_FREE(dFy);
   }
 
   /* test some error handling */
@@ -220,8 +217,12 @@ int main ()
     printf ("eos_SetDataFileName ERROR %d: %s\n", errorCode, errorMessage);
   }
 
+  /* reset errorCode since everything has been successfully handled so far */
+  errorCode = 0;
+
+ CLEANUP:
   /* destroy objects associated with all table handles */
-  eos_DestroyAll (&errorCode);
+  eos_DestroyAll (&err);
 
   /*  Write file_str to sesameFilesDir.txt */
   fp = fopen (indexFileName, "w");  /* open indexFileName */
@@ -230,9 +231,12 @@ int main ()
     fclose (fp);              /* close indexFileName */
   }
   else {
-    return(-3);
+    errorCode = -3;
   }
 
-  return 0;
+  EOS_FREE(fileName);
+  EOS_FREE(file_str);
+
+  return errorCode;
 
 }

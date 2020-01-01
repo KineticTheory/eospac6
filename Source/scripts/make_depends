@@ -1,12 +1,12 @@
-#-*-perl-*-
+eval '(exit $?0)' && eval 'exec perl -S "$0" ${1+"$@"}' #-*-perl-*-
+& eval 'exec perl -S "$0" $argv:q'
+        if 0;
+#
 ##################################################################
 #
 #  Copyright -- see file named COPYRIGHTNOTICE
 #
 ##################################################################
-eval '(exit $?0)' && eval 'exec perl -S $0 ${1+"$@"}'
-& eval 'exec perl -S $0 $argv:q'
-        if 0;
 #
 # perl script to generate dependencies for a Makefile
 #
@@ -79,17 +79,18 @@ sub create_depend_file {
 
   # now find include files brought in by header files
 
-  while (1) {
+ OUTER: while (1) {
     my @t2_list = ();
     foreach $ifile (@ilist1) {
       # print "   $ifile \n\n"
       #   if $options->{verbose};
       my @t1_list = &find_includes($ifile);
       @t2_list = (@t2_list, @t1_list);
+      print __FILE__,"(",__LINE__,")::\@t2_list = [ @t2_list ]\n"
+	if $options->{verbose};
+      last OUTER if (@t1_list == 0);
     }
-    if (@t2_list == 0) {
-      last;
-    }
+    last OUTER if (@t2_list == 0);
     @ilist1 = &remove_dups(@t2_list);
     @ilist2 = (@ilist2, @ilist1);
   }
@@ -119,7 +120,7 @@ sub find_includes {
   local(@list);
   @list=();
   my $FH;
-  open($FH,"$filename");
+  open($FH,"$filename") or die "FATAL: Cannot open file, $filename\n";
   while (<$FH>) {
     if (/^m4_include[(]<</) {
       s/m4_include[(]<<//;

@@ -75,8 +75,8 @@ struct _ses_data_record*  _construct_ses_data_record(long maddress, long nr, lon
 
   /*******************************************/
 
-  ses_boolean didit_fill = SES_FALSE;
-  didit_fill = _fill_iterator_size_and_label_arrays(return_value->_the_iterator, the_tid);
+  /* ses_boolean didit_fill = SES_FALSE; */
+  /* didit_fill = */ _fill_iterator_size_and_label_arrays(return_value->_the_iterator, the_tid);
 
   /*******************************************/
   

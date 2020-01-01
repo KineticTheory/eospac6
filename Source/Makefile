@@ -29,23 +29,39 @@ lib: # Compile only the library
 comma := ,
 space :=
 space +=
+cpuinfo_flags_table = $(shell $(foreach k,$(call keys,_F90-CPUINFO_COMP_FLAGS),echo "                      $(call split,-,$(k))" " ... " "$(call get,_F90-CPUINFO_COMP_FLAGS,$(k))";))
 define HELP_ADDENDUM
 Additionally, the following Makefile variables may be set on the command line:
+
+  CPUFLAGS          Define optional performance enhancement options for specific CPU
+                    instruction sets. Some defaults are defined in ./config/Makefile-*.hashes,
+                    and they are used if the current CPU is detected to be in the supported list.
+                    If cross-compiling is necessary, then using CPUFLAGS is likely required.
+                    The following shows a list of SHORTCUT keys that the user may use to enable
+                    associated default compiler options. For example, if CPUFLAGS=avx512pf for
+                    ifort version 18, then the "$(call get,_F90-CPUINFO_COMP_FLAGS,ifort-18-avx512pf)"
+                    options will be applied. Alternatively, the user may explicitly define
+                    CPUFLAGS="$(call get,_F90-CPUINFO_COMP_FLAGS,ifort-18-avx512pf)". A mixture of
+                    SHORTCUTs and options may be used (i.e., CPUFLAGS="avx512pf -xAVX").
 
   EXAMPLETARGETS    Define a specific list of test case Make targets to operate upon.
                     For example:
                       make EXAMPLETARGETS=test_task1606 check
                           builds, runs and checks for PASS/FAIL the test_task1606 code.
 
-  TESTTARGETS       Define a specific list of test case Make targets to operate upon.
-                    For example:
-                      make TESTTARGETS=test_task1606 check
-                          builds, runs and checks for PASS/FAIL the test_task1606 code.
+  memcheck=1        Use either valgrind or purify to perform memory tests.
+                    If both valgrind and purify are found, then valgrind is used.
 
-  UTILTARGETS       Define a specific list of utils Make targets to operate upon.
-                    For example:
-                      make UTILTARGETS=get_sesame_data check
-                          builds, runs and checks for PASS/FAIL the get_sesame_data code.
+  NORUN             If this variable is set to any value other than "FALSE", then the tests
+                    are not executed, merely compiled.
+
+  NOVECT            Disable automatic vectorization. The CPUFLAGS will be defined as
+                    -DDISABLE_OMP_SIMD_PRAGMA.
+
+  prefix            Define an alternative installation directory.
+
+  PURIFY=purify     Force the usage of purify for memory tests. If purify
+                    is named something else on your system, then define it with this variable.
 
   SERIES            Define a specific series of like-named or categorized test case Make
                     targets to operate upon.
@@ -64,13 +80,15 @@ Additionally, the following Makefile variables may be set on the command line:
                           builds, runs and checks for PASS/FAIL all of the C++ codes
                           (likewise c, f and f90 for C, F77 and F90 respectively).
 
-  prefix            Define an alternative installation directory.
+  TESTTARGETS       Define a specific list of test case Make targets to operate upon.
+                    For example:
+                      make TESTTARGETS=test_task1606 check
+                          builds, runs and checks for PASS/FAIL the test_task1606 code.
 
-  memcheck=1        Use either valgrind or purify to perform memory tests.
-                    If both valgrind and purify are found, then valgrind is used.
-
-  PURIFY=purify     Force the usage of purify for memory tests. If purify
-                    is named something else on your system, then define it with this variable.
+  UTILTARGETS       Define a specific list of utils Make targets to operate upon.
+                    For example:
+                      make UTILTARGETS=get_sesame_data check
+                          builds, runs and checks for PASS/FAIL the get_sesame_data code.
 
   VALGRIND=valgrind Force the usage of valgrind for memory tests. If valgrind
                     is named something else on your system, then define it with this variable.
@@ -95,6 +113,9 @@ help: # Print this help
             echo $(X_Compile_Module_List) | awk '{for (i=1;i<=NF;i=i+3) {print $$(i),$$(i+1),$$(i+2)}}' | column -t -c 80 | sed -e 's:^:   :g'; \
           fi; \
           printf "\n%s\n\n" "$$HELP_ADDENDUM"; \
+          (printf "%-22s %-10s %-10s %-10s %s\n%-22s %-10s %-10s %-10s %s\n" " " F90 VERSION SHORTCUT "COMPILER OPTIONS" " " "----------" "----------" "----------" "----------------"); \
+          ($(foreach k,$(call keys,_F90-CPUINFO_COMP_FLAGS),printf "%-22s %-10s %-10s %-10s %s\n" " " $(call split,-,$(k)) "$(call get,_F90-CPUINFO_COMP_FLAGS,$(k))";)); \
+          echo; \
          ) | more
 
 EXAMPLEFILES := $(foreach ext,c f cpp f90, \
@@ -174,6 +195,7 @@ TAGS:
 
 clean: # Delete the files created for the current platform/compiler configuration
 	@$(MAKE) -C $(BASEDIR)/Examples clean
+	-rm -fr $(BUILD_LOG)
 
 cleanarch: # Delete the files created for the current platform (includes all compiler configurations)
 	@echo ' '
@@ -186,12 +208,19 @@ cleanarch: # Delete the files created for the current platform (includes all com
 
 distclean: # Delete files created for all platform/compiler configurations
 	@$(MAKE) -C $(BASEDIR)/Examples distclean
+	-rm -f $(BUILD_LOG)
 
 distcleanfast:
 	@$(MAKE) -C $(BASEDIR)/Examples distcleanfast
+	-rm -f $(BUILD_LOG)
 
 mostlyclean: # Delete files created for all platform/compiler configurations except those used to build $(LIBRARY_AR)
 	@$(MAKE) -C $(BASEDIR)/Examples mostlyclean
+	-rm -fr $(BUILD_LOG)
+
+partialclean: # Delete test object and executable files created for current platform/compiler configuration
+	@$(MAKE) -C $(BASEDIR)/tests partialclean
+	-rm -fr $(BUILD_LOG)
 
 doxygen: # Run Doxygen on the Source tree. Output is placed in ../Documentation/doxygen/html
 	@(doxy_config_dir=../Documentation/doxygen; \
@@ -249,6 +278,6 @@ COMPILER_INFO:
 .PHONY: all lib check test TAGS install uninstall clean cleanarch distclean compare \
         list_installed_files list_my_installed_files examples tests doxygen \
         list_tests send_report utils $(UTILTARGETS) msvs list_installdirs \
-        list_compilers COMPILER_INFO checkutils
+        list_compilers COMPILER_INFO checkutils partialclean mostlyclean
 
 .NOTPARALLEL:

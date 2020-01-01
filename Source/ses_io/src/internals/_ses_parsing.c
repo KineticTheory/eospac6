@@ -53,36 +53,36 @@ ses_string _get_table_string(struct _standard_table the_table) {
 		int tid_len = 5 + 30 + 1;  //  30 spaces for the tid
 		the_string[0] = calloc(tid_len, sizeof(char));          //  sizeof the_string[0] is at max 36
 		the_string[0][0] = '\0';
-		int n = sprintf(the_string[0], "tid: %ld", tid);
+		/* int n = */ sprintf(the_string[0], "tid: %ld", tid);
 
 		int descrip_len = 14 + strlen(description) + 1;         //  sizeof the_string[1] is at max 15 + strlen(description)
 		the_string[1] = calloc(descrip_len, sizeof(char));
 		the_string[1][0] = '\0';
-		n = sprintf(the_string[1], "description : %s", description);
+		/* n = */ sprintf(the_string[1], "description : %s", description);
 	
 		int ind_len = 21 + 10 + 1;  //  10 spaces for num_ind    
 		the_string[2] = calloc(ind_len, sizeof(char));          //  sizeof the_string[2] is at max 32
 		the_string[2][0] = '\0';
-		n = sprintf(the_string[2], "number_ind : %ld", num_ind);
+		/* n = */ sprintf(the_string[2], "number_ind : %ld", num_ind);
 
 		int num_arr_len = 16 + 10 + 1;  //  10 spaces for num_arr     
 		the_string[3] = calloc(num_arr_len, sizeof(char));         //  sizeof the_string[3] is at max 27
 		the_string[3][0] = '\0';
-		n = sprintf(the_string[3], "num_arrays : %ld", num_arr);
+		/* n = */ sprintf(the_string[3], "num_arrays : %ld", num_arr);
 
                 /*  add nr and nt */
 
 		int nr_len = 5 + 10 + 1;  //  25 spaces for nr
 		the_string[4] = calloc(nr_len, sizeof(char));               // sizeof the_string[4] is at max  16
 		the_string[4][0] = '\0';
-                n = sprintf(the_string[4], "nr : %ld", nr);
+                /* n = */ sprintf(the_string[4], "nr : %ld", nr);
 
 
 		int nt_len = 5 + 10 + 1;  //  25 spaces for nt
 		the_string[5] = calloc(nt_len, sizeof(char));               //  sizeof the_string[5] is at max 16
 		the_string[5][0] = '\0';
 
-                n = sprintf(the_string[5], "nt : %ld", nt);
+                /* n = */ sprintf(the_string[5], "nt : %ld", nt);
 
                 /*  end chunk for nr and nt */
 
@@ -131,9 +131,9 @@ ses_string _get_table_string(struct _standard_table the_table) {
 		label_string = strcat(label_string, " ]");
 
                 the_string[6] = calloc((strlen(size_string)+8+1), sizeof(char));
-		n = sprintf(the_string[6], "sizes : %s", size_string);
+		/* n = */ sprintf(the_string[6], "sizes : %s", size_string);
 		the_string[7] = calloc((strlen(label_string)+9+1), sizeof(char));
-		n = sprintf(the_string[7], "labels : %s", label_string);
+		/* n = */ sprintf(the_string[7], "labels : %s", label_string);
 		
 		/* make one long string from the rest */
 
@@ -143,7 +143,7 @@ ses_string _get_table_string(struct _standard_table the_table) {
 		}
 		total_size = total_size + 4 + 1;
 		return_value = calloc(total_size, sizeof(char));
-		n = sprintf(return_value, " { %s  , %s , %s , %s , %s , %s , %s , %s } ", the_string[0], the_string[1], the_string[2], the_string[3], the_string[4], the_string[5], the_string[6], the_string[7]);
+		/* n = */ sprintf(return_value, " { %s  , %s , %s , %s , %s , %s , %s , %s } ", the_string[0], the_string[1], the_string[2], the_string[3], the_string[4], the_string[5], the_string[6], the_string[7]);
 
 
                 /* free */
@@ -381,7 +381,7 @@ ses_label* _convert_to_string_array(ses_string the_string) {
 
 }
 /* Parse the input text into an unescaped cstring, and populate item. */
-static const unsigned char _ses_firstByteMark[7] = { 0x00, 0x00, 0xC0, 0xE0, 0xF0, 0xF8, 0xFC };
+/*static const unsigned char _ses_firstByteMark[7] = { 0x00, 0x00, 0xC0, 0xE0, 0xF0, 0xF8, 0xFC };*/
 /*static const char *_ses_parse_string(const char *str)
 {
   const char *ptr=str+1;char *ptr2;char *out;int len=0;unsigned uc,uc2;

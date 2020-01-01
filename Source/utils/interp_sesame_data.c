@@ -6,6 +6,10 @@
  * Copyright -- see file named COPYRIGHTNOTICE
  * 
  ********************************************************************/
+
+/* Define revision number for this file: */
+char *revision = "$Revision: 1.38 $";
+
 /*!
  * \file
  * \ingroup utils
@@ -44,28 +48,40 @@
  *                 values between <y> and <y1>.
  * <br>
  * \arg <OPTIONS>
+ * \arg -c <file>
+ *              Specify the configuration <file>, which contains the desired options.
+ * \arg -D <file>
+ *              Create data dump file (see EOSPAC 6's TablesLoaded.dat file) with specified name, <file>.
+ *              If <file> is an empty string, then the default, TablesLoaded.dat, will be used.
  * \arg -d
  *              Display double precision interpolated output.
  * \arg -e
  *              Allow extrapolation to continue with warning(s).
  * \arg -F <file>
  *              Search named Sesame <file> exclusively.
+ * \arg -g
+ *              Return gnuplot compatible output. Metadata is prefixed with # and sent to stdout
+ *              rather than stderr.
  * \arg -h
  *              Display the basic usage of this tool.
- * \arg -g
- *              Return gnuplot compatible output.
  * \arg -I N
  *              Number of samples, N, to take from the x-independent variable's range. Default=50.
  * \arg -i <file>
- *              Parse <file>, which contains two columns of data where the <xValue> and <yValue> input
- *              correspond to columns 1 and 2 respectively.
+ *              Parse <file>, which contains two columns of data where the <xValue> and <yValue>
+ *              input correspond to columns 1 and 2 respectively.
  *              Text trailing a # character will be ignored as notes.
  *              If <file> is the '-' character, then stdin is parsed.
  *              This option overrides the '-x' and '-y' options.
  * \arg -J N
  *              Number of samples, N, to take from the y-independent variable's range. Default=50.
+ * \arg -K
+ *              Disable the masking of extrapolated values in the data dump file associated with the
+ *              -D option.
  * \arg -L
  *              Use EOSPAC's linear interpolation instead of the default rational interpolation.
+ * \arg -l
+ *              Rather than the default latin hypercube sampling method, use a logarithmic sampling
+ *              of x- and/or y-input ranges.
  * \arg -M v
  *              Specify the independent variable, v, with respect to which EOSPAC must enforce
  *              monotonicity.
@@ -73,6 +89,11 @@
  * \arg -n N
  *              Number of samples, N, to take from each independent variable's range. Default=50.
  *              This option overrides the '-I' and '-J' options.
+ * \arg -O
+ *              Write to stdout a default configuration file that contains possible EOSPAC 6 options'
+ *              key/value pairs.
+ * \arg -p
+ *              Enable the EOSPAC6 option, EOS_INVERT_AT_SETUP, for diagnostic purposes.
  * \arg -s
  *              Ignored unless '-g' option is used. Ensure the output will be compatible with
  *              gnuplot's 'splot' function.
@@ -214,7 +235,7 @@ EOS_INTEGER parseInput (EOS_CHAR *fName, EOS_INTEGER *N, EOS_REAL **x, EOS_REAL 
     }
 
     if (! strstr(fName, ","))
-      fp = fopen(fName, "rb");
+      fp = fopen(fName, "r");
     else
     { /* comma-delimited list */
       int i;
@@ -362,7 +383,7 @@ int main (int argc, char *argv[])
   EOS_REAL *X = NULL, *Y = NULL, *FXY = NULL, *dFx = NULL, *dFy = NULL;
   EOS_INTEGER *extrap = NULL;
   enum
-    { nTablesE = 1 };
+  { nTablesE = 1 };
 
   EOS_INTEGER tableType = EOS_NullTable;
   EOS_INTEGER matID     = 0;
@@ -375,16 +396,19 @@ int main (int argc, char *argv[])
   EOS_INTEGER nTables, nXYPairs;
   EOS_INTEGER depVar, indepVar1, indepVar2, indepVarCnt=0;
   EOS_CHAR *depVarStr, *indepVar1Str, *indepVar2Str, *dFxStr=NULL, *dFyStr=NULL;
-
-
   char    *p = NULL;
-  char    *generalOpts = "dehF:gI:i:J:LM:n:sVvx:y:";
+  char    *generalOpts = "c:D:dehF:gI:i:J:KLlM:n:OpsVvx:y:";
   char    *indepVarOpts = "";
   int     minArgs = 2;
   char    *optionStr = NULL;
 
+  extern EOS_CHAR fName[PATH_MAX];
+  extern EOS_CHAR fNameBak[PATH_MAX];
+  extern int fNameBakCreated;
+
   EOS_CHAR errorMessage[EOS_MaxErrMsgLen];
   EOS_INTEGER indexFileCount;
+  EOS_INTEGER NP = 1;
 
   /* parse command line options */
   optionStr = (char*) safe_malloc((strlen(generalOpts) + strlen(indepVarOpts) + 1), sizeof(char));
@@ -403,21 +427,27 @@ int main (int argc, char *argv[])
 
   /* display usage */
   if (argc < 2) {
-    printf("%s\n\n", get_header_str("interp_sesame_data", "$Revision: 1.27 $"));
+    printf("%s\n\n", get_header_str("interp_sesame_data", revision));
     display_usage(argv);
     return InsufficientArguments;
   }
 
   /* display help */
   if (option['h'].flag) {
-    printf("%s\n\n", get_header_str("interp_sesame_data", "$Revision: 1.27 $"));
+    printf("%s\n\n", get_header_str("interp_sesame_data", revision));
     printf("%s", help_str);
     return OK;
   }
 
   /* display version */
   if (option['V'].flag) {
-    printf("%s\n", get_version_str("interp_sesame_data", "$Revision: 1.27 $"));
+    printf("%s\n", get_version_str("interp_sesame_data", revision));
+    return OK;
+  }
+
+  /* display all default option key/value pairs to stdout */
+  if (option['O'].flag) {
+    write_defaultOptionFlags_KeyValue(stdout, "interp_sesame_data");
     return OK;
   }
 
@@ -448,7 +478,7 @@ int main (int argc, char *argv[])
   if (argsc < minArgs + ((option['i'].flag)?0:indepVarCnt)) {
     int err = InsufficientArguments;
     fprintf (stderr,"\n%s ERROR %d: %s (%d < %d)\n\n", argv[0], err, localErrorMessages[err],
-	     argsc, 2 + ((option['i'].flag)?0:indepVarCnt));
+             argsc, 2 + ((option['i'].flag)?0:indepVarCnt));
     return err;
   }
   if (tableType <= 0) {
@@ -499,6 +529,26 @@ int main (int argc, char *argv[])
     indexFileCount = createIndexFile(option['F'].arg);
   }
 
+  {
+    EOS_CHAR *commentStr = get_commentStr(matID);
+    EOS_CHAR *infoStr;
+    EOS_INTEGER L = -1;
+    if (commentStr) {
+      infoStr = (EOS_CHAR*)malloc(strlen(commentStr)*sizeof(EOS_CHAR));
+      L = eos_getFieldValue(commentStr, "classification.", infoStr);
+    }
+    else {
+      infoStr = (EOS_CHAR*)malloc(50*sizeof(EOS_CHAR));
+    }
+    if (L < 0)
+      sprintf(infoStr, "Unknown Classification");
+
+    printf("#\n# %s\n#\n", infoStr);
+
+    EOS_FREE(commentStr);
+    EOS_FREE(infoStr);
+  }
+
   eos_CreateTables (&nTables, &tableType, &matID, &tableHandle, &errorCode);
   if (errorCode != EOS_OK) {
     eos_GetErrorMessage (&errorCode, errorMessage);
@@ -506,20 +556,79 @@ int main (int argc, char *argv[])
     return eospacError;
   }
 
+  { /* conditionally-read the optional configuration file and set defined options */
+    EOS_BOOLEAN fileExists = EOS_FALSE;
+    struct stat file_statbuf;
+    EOS_CHAR fn[PATH_MAX];
+    if (option['c'].flag)
+      sprintf(fn, "%s", option['c'].arg);
+    else
+      sprintf(fn, "config.%s", "interp_sesame_data");
+
+    fileExists = (!((EOS_BOOLEAN) stat (fn, &file_statbuf)))?EOS_TRUE:EOS_FALSE;
+    if (fileExists) {
+      parse_optionFlags_KeyValue(fn, NULL, NULL, nTables, &tableHandle, EOS_TRUE);
+    }
+    else if (option['c'].flag) {
+      int err = MissingConfigFile;
+      fprintf (stderr, "\ninterp_sesame_data ERROR %d: %s\n\n", err, localErrorMessages[err]);
+      return err;
+    }
+  }
+
   if (option['M'].flag) {
-    EOS_INTEGER opt;
-    if (! strncmp(option['M'].arg,"x",1) || ! strncmp(option['M'].arg,"X",1))
+    EOS_INTEGER opt = 0;
+    if (! isOptionFlagSet(tableHandle, EOS_MONOTONIC_IN_X) &&
+        (! strncmp(option['M'].arg,"x",1) || ! strncmp(option['M'].arg,"X",1)))
       opt = EOS_MONOTONIC_IN_X;
-    if (! strncmp(option['M'].arg,"y",1) || ! strncmp(option['M'].arg,"Y",1))
+    if (! isOptionFlagSet(tableHandle, EOS_MONOTONIC_IN_Y) &&
+        (! strncmp(option['M'].arg,"y",1) || ! strncmp(option['M'].arg,"Y",1)))
       opt = EOS_MONOTONIC_IN_Y;
+    if (opt) {
+      if (option['g'].flag) printf("# ");
+      printf("FORCE MONOTONICITY WITH RESPECT TO %s (opt=%d)\n", option['M'].arg, opt);
+      eos_SetOption (&tableHandle, &opt, EOS_NullPtr, &errorCode);
+      if (errorCode != EOS_OK) {
+        eos_GetErrorMessage (&errorCode, errorMessage);
+        fprintf (stderr, "\neos_SetOption ERROR %d: %s (fcmp_ignore)\n\n", errorCode, errorMessage);
+        return eospacError;
+      }
+    }
+  }
+  if (! isOptionFlagSet(tableHandle, EOS_INVERT_AT_SETUP) && option['p'].flag) {
+    EOS_INTEGER opt;
+    opt = EOS_INVERT_AT_SETUP;
     if (option['g'].flag) printf("# ");
-    printf("FORCE MONOTONICITY WITH RESPECT TO %s (opt=%d)\n", option['M'].arg, opt);
+    printf("Enable the EOS_INVERT_AT_SETUP option\n");
     eos_SetOption (&tableHandle, &opt, EOS_NullPtr, &errorCode);
     if (errorCode != EOS_OK) {
       eos_GetErrorMessage (&errorCode, errorMessage);
       fprintf (stderr, "\neos_SetOption ERROR %d: %s (fcmp_ignore)\n\n", errorCode, errorMessage);
       return eospacError;
     }
+  }
+
+  if (option['K'].flag) {
+    eos_SetOption (&tableHandle, &DISABLE_FTBLS_INVT_MASK, EOS_NullPtr, &errorCode);
+    if (errorCode != EOS_OK) {
+      eos_GetErrorMessage (&errorCode, errorMessage);
+      fprintf (stderr, "\neos_SetOption ERROR %d: %s (fcmp_ignore)\n\n", errorCode, errorMessage);
+      return eospacError;
+    }
+  }
+
+  if (option['D'].flag) {
+    int err = 0;
+
+    eos_SetOption (&tableHandle, &EOS_DUMP_DATA, EOS_NullPtr, &errorCode);
+    if (errorCode != EOS_OK) {
+      eos_GetErrorMessage (&errorCode, errorMessage);
+      fprintf (stderr, "\neos_SetOption ERROR %d: %s (fcmp_ignore)\n\n", errorCode, errorMessage);
+      return eospacError;
+    }
+
+    err = backupTablesLoadedFile();
+    if (err) return err;
   }
 
   eos_LoadTables (&nTables, &tableHandle, &errorCode);
@@ -529,11 +638,17 @@ int main (int argc, char *argv[])
     return eospacError;
   }
 
+  if (option['D'].flag && strcmp(fName, "TablesLoaded.dat")) {
+    int err = 0;
+    err = recoverTablesLoadedFile();
+    if (err) return err;
+  }
+
   if (option['F'].flag) {
     cleanIndexFile(indexFileCount);
   }
 
-  if (option['L'].flag) {
+  if (! isOptionFlagSet(tableHandle, EOS_LINEAR) && option['L'].flag) {
     if (option['g'].flag) printf("# ");
     printf("LINEAR INTERPOLATION\n");
     eos_SetOption (&tableHandle, &EOS_LINEAR, EOS_NullPtr, &errorCode);
@@ -543,7 +658,7 @@ int main (int argc, char *argv[])
       return eospacError;
     }
   }
-  else {
+  else if (! isOptionFlagSet(tableHandle, EOS_RATIONAL)) {
     if (option['g'].flag) printf("# ");
     printf("RATIONAL INTERPOLATION\n");
   }
@@ -566,12 +681,12 @@ int main (int argc, char *argv[])
     if (indepVarCnt > 1) {
 
       if (option['y'].flag) { /* parse either input file or comma-delimited list */
-	parseInput (option['y'].arg, &Ny, &y_in, NULL);
+        parseInput (option['y'].arg, &Ny, &y_in, NULL);
       }
       else {
-	y_lower = (EOS_REAL)strtod(args[3-((option['x'].flag)?1:0)], &p);
-	y_rangeExists = get_UpperRangeValue(args[3-((option['x'].flag)?1:0)], &y_upper);
-	if (! y_rangeExists) y_upper = y_lower;
+        y_lower = (EOS_REAL)strtod(args[3-((option['x'].flag)?1:0)], &p);
+        y_rangeExists = get_UpperRangeValue(args[3-((option['x'].flag)?1:0)], &y_upper);
+        if (! y_rangeExists) y_upper = y_lower;
       }
     }
 
@@ -596,39 +711,70 @@ int main (int argc, char *argv[])
       return mallocError;
     }
 
-    if (x_in) {
+    if (x_in) { /* use user-provided input */
       for (i=0; i<Nx; i++)
-	X[i] = x_in[i];
+        X[i] = x_in[i];
       EOS_FREE(x_in);
     }
-    else
+    else if (option['l'].flag) { /* use logarithmic sampling method */
+      generate_Log10DistributedPoints(X, NULL, Nx, x_lower, x_upper, 0.0, 0.0);
+    }
+    else /* use latin hypercube sampling method */
       getSamples(Nx, x_lower, x_upper, X);
 
-    if (y_in) {
+    if (y_in) { /* use user-provided input */
       for (i=0; i<Ny; i++)
-	Y[i] = y_in[i];
+        Y[i] = y_in[i];
       EOS_FREE(y_in);
     }
-    else
+    else if (option['l'].flag) { /* use logarithmic sampling method */
+      generate_Log10DistributedPoints(Y, NULL, Ny, y_lower, y_upper, 0.0, 0.0);
+    }
+    else /* use latin hypercube sampling method */
       getSamples(Ny, y_lower, y_upper, Y);
 
     
     for (j=Ny-1; j>=0; j--) { /* spread samples in arrays */
       for (i=0; i<Nx; i++) {
-	X[i+j*Nx] = X[i];
-	Y[i+j*Nx] = Y[j];
+        X[i+j*Nx] = X[i];
+        Y[i+j*Nx] = Y[j];
       }
     }
 
   }
 
-  /* allocate memory for interpolation */
-  FXY = (EOS_REAL *) safe_malloc(nXYPairs, sizeof(EOS_REAL));
-  dFx = (EOS_REAL *) safe_malloc(nXYPairs, sizeof(EOS_REAL));
-  dFy = (EOS_REAL *) safe_malloc(nXYPairs, sizeof(EOS_REAL));
-  extrap = (EOS_INTEGER *) safe_malloc(nXYPairs, sizeof(EOS_INTEGER));
+  if (tableType == EOS_M_DT) {
+    EOS_INTEGER one = 1;
+    EOS_INTEGER infoItem[1] = { EOS_NUM_PHASES };
+    EOS_REAL val;
+    eos_GetTableInfo(&tableHandle, &one, infoItem, &val, &errorCode);
+    if (errorCode == EOS_OK) NP = (EOS_INTEGER)val;
+  }
 
-  if (! (FXY && dFx && dFy)) {
+  /* allocate memory for interpolation */
+  FXY = (EOS_REAL *) safe_malloc(nXYPairs*NP, sizeof(EOS_REAL));
+  if (! FXY) {
+    fprintf (stderr, "\nERROR %d: Memory allocation error! (line %d)\n\n", mallocError, __LINE__);
+    return mallocError;
+  }
+  if (tableType != EOS_M_DT) {
+    dFx = (EOS_REAL *) safe_malloc(nXYPairs, sizeof(EOS_REAL));
+    if (! dFx) {
+      fprintf (stderr, "\nERROR %d: Memory allocation error! (line %d)\n\n", mallocError, __LINE__);
+      return mallocError;
+    }
+    dFy = (EOS_REAL *) safe_malloc(nXYPairs, sizeof(EOS_REAL));
+    if (! dFy) {
+      fprintf (stderr, "\nERROR %d: Memory allocation error! (line %d)\n\n", mallocError, __LINE__);
+      return mallocError;
+    }
+  }
+  else {
+    dFx = (EOS_REAL *)NULL;
+    dFy = (EOS_REAL *)NULL;
+  }
+  extrap = (EOS_INTEGER *) safe_malloc(nXYPairs*NP, sizeof(EOS_INTEGER));
+  if (! extrap) {
     fprintf (stderr, "\nERROR %d: Memory allocation error! (line %d)\n\n", mallocError, __LINE__);
     return mallocError;
   }
@@ -647,117 +793,153 @@ int main (int argc, char *argv[])
   else {
     EOS_INTEGER err = EOS_OK;
     EOS_CHAR label[64];
-    int fieldWidth = (int) log10(nXYPairs) +1 ;
+    int fieldWidth = (int) log10(nXYPairs) + 1;
+
     if (option['g'].flag) printf("# ");
     printf ("%s: %s :: %s\n", get_tableType_str(tableType), get_tableType_description(tableType),
-	    get_tableHandleFileName(tableHandle));
+            get_tableHandleFileName(tableHandle));
 
     eos_CheckExtrap (&tableHandle, &nXYPairs, X, Y, extrap, &err);
 
-    if (option['d'].flag) {
+    { /*
+       * Display interpolation results
+       */
+      int w[] = {8, 15}; int p = 6; /* default field widths and single precision */
+      if (option['d'].flag) {  /* field widths and double precision */
+        w[0] = 12;
+        w[1] = 24;
+        p = 15;
+      }
+      if (tableType == EOS_M_DT) {
 
-      if (indepVarCnt > 1) {
-	if (option['g'].flag) {
-	  printf ("#%12s%24s%24s%24s%24s\n",
-		  indepVar1Str, indepVar2Str, depVarStr, dFxStr, dFyStr);
-	}
-	else {
-	  printf ("\t%*s %13s%24s%24s%24s%24s\n", fieldWidth, " ",
-		  indepVar1Str, indepVar2Str, depVarStr, dFxStr, dFyStr);
-	}
-	if (option['g'].flag) {
-	  for (i = 0; i < nXYPairs; i++) {
-	    if (i>0 && X[i] < X[i-1]) {
-	      if (option['s'].flag) printf ("\n");
-	      else                  printf ("\n\n");
-	    }
-	    if (extrap[i]) sprintf(label, " (%s)", ERROR_TO_TEXT(extrap[i]));
-	    else strcpy(label, "");
-	    printf ("%24.15e%24.15e%24.15e%24.15e%24.15e%s\n", X[i], Y[i], FXY[i], dFx[i], dFy[i], label);
-	  }
-	}
-	else {
-	  for (i = 0; i < nXYPairs; i++) {
-	    if (extrap[i]) sprintf(label, " (%s)", ERROR_TO_TEXT(extrap[i]));
-	    else strcpy(label, "");
-	    printf ("\t%*d.%24.15e%24.15e%24.15e%24.15e%24.15e%s\n",
-		    fieldWidth, i+1, X[i], Y[i], FXY[i], dFx[i], dFy[i], label);
-	  }
-	}
+        int j;
+
+        if (option['g'].flag) {
+          printf ("#%*s%*s",
+                  w[0]+1, indepVar1Str, w[1], indepVar2Str);
+          for (j = 0; j < NP; j++)
+            printf ("%*s%d", w[1], depVarStr, j+1);
+          printf("\n");
+
+          for (i = 0; i < nXYPairs; i++) {
+            if (i>0 && X[i] < X[i-1]) {
+              if (option['s'].flag) printf ("\n");
+              else                  printf ("\n\n");
+            }
+
+            if (extrap[i]) sprintf(label, " (%s)", ERROR_TO_TEXT(extrap[i]));
+            else strcpy(label, "");
+            printf ("%*.*e%*.*e", w[1], p, X[i], w[1], p, Y[i]);
+            for (j = 0; j < NP; j++)
+              printf ("%*.*e", w[1], p, FXY[i+j*nXYPairs]);
+            printf ("%s\n", label);
+          }
+        }
+        else {
+          printf ("\t%*s %*s%*s", fieldWidth, " ",
+                  w[0]+1, indepVar1Str, w[1], indepVar2Str);
+          for (j = 0; j < NP; j++)
+            printf ("%*s%d", w[1], depVarStr, j+1);
+          printf("\n");
+
+          for (i = 0; i < nXYPairs; i++) {
+            if (i>0 && X[i] < X[i-1]) {
+              if (option['s'].flag) printf ("\n");
+              else                  printf ("\n\n");
+            }
+
+            if (extrap[i]) sprintf(label, " (%s)", ERROR_TO_TEXT(extrap[i]));
+            else strcpy(label, "");
+            printf ("\t%*d.%*.*e%*.*e", fieldWidth, i+1, w[1], p, X[i], w[1], p, Y[i]);
+            for (j = 0; j < NP; j++)
+              printf ("%*.*e", w[1], p, FXY[i+j*nXYPairs]);
+            printf ("%s\n", label);
+          }
+        }
+
+      }
+      else if (indepVarCnt > 1) {
+        if (option['g'].flag) {
+          if (dFx && dFy)
+            printf ("#%*s%*s%*s%*s%*s\n",
+                    w[0], indepVar1Str, w[1], indepVar2Str, w[1], depVarStr, w[1], dFxStr, w[1], dFyStr);
+          else
+            printf ("#%*s%*s%*s\n",
+                    w[0], indepVar1Str, w[1], indepVar2Str, w[1], depVarStr);
+        }
+        else {
+          if (dFx && dFy)
+            printf ("\t%*s %*s%*s%*s%*s%*s\n", fieldWidth, " ",
+                    w[0]+1, indepVar1Str, w[1], indepVar2Str, w[1], depVarStr, w[1], dFxStr, w[1], dFyStr);
+          else
+            printf ("\t%*s %*s%*s%*s\n", fieldWidth, " ",
+                    w[0]+1, indepVar1Str, w[1], indepVar2Str, w[1], depVarStr);
+        }
+        if (option['g'].flag) {
+          for (i = 0; i < nXYPairs; i++) {
+            if (i>0 && X[i] < X[i-1]) {
+              if (option['s'].flag) printf ("\n");
+              else                  printf ("\n\n");
+            }
+
+            if (extrap[i]) sprintf(label, " (%s)", ERROR_TO_TEXT(extrap[i]));
+            else strcpy(label, "");
+            if (dFx && dFy)
+              printf ("%*.*e%*.*e%*.*e%*.*e%*.*e%s\n",
+                      w[1], p, X[i], w[1], p, Y[i], w[1], p, FXY[i], w[1], p, dFx[i], w[1], p, dFy[i], label);
+            else
+              printf ("%*.*e%*.*e%*.*e%s\n",
+                      w[1], p, X[i], w[1], p, Y[i], w[1], p, FXY[i], label);
+          }
+        }
+        else {
+          for (i = 0; i < nXYPairs; i++) {
+            if (extrap[i]) sprintf(label, " (%s)", ERROR_TO_TEXT(extrap[i]));
+            else strcpy(label, "");
+            if (dFx && dFy)
+              printf ("\t%*d.%*.*e%*.*e%*.*e%*.*e%*.*e%s\n",
+                      fieldWidth, i+1, w[1], p, X[i], w[1], p, Y[i], w[1], p, FXY[i], w[1], p, dFx[i], w[1], p, dFy[i], label);
+            else
+              printf ("\t%*d.%*.*e%*.*e%*.*e%s\n",
+                      fieldWidth, i+1, w[1], p, X[i], w[1], p, Y[i], w[1], p, FXY[i], label);
+          }
+        }
       }
       else {
-	if (option['g'].flag) {
-	  printf ("#%12s%24s%24s\n", indepVar1Str, depVarStr, dFxStr);
-	  for (i = 0; i < nXYPairs; i++) {
-	    if (i>0 && X[i] < X[i-1]) {
-	      if (option['s'].flag) printf ("\n");
-	      else                  printf ("\n\n");
-	    }
-	    if (extrap[i]) sprintf(label, " (%s)", ERROR_TO_TEXT(extrap[i]));
-	    else strcpy(label, "");
-	    printf ("%24.15e%24.15e%24.15e%s\n", X[i], FXY[i], dFx[i], label);
-	  }
-	}
-	else {
-	  printf ("\t%*s %13s%24s%24s\n", fieldWidth, " ", indepVar1Str, depVarStr, dFxStr);
-	  for (i = 0; i < nXYPairs; i++) {
-	    if (extrap[i]) sprintf(label, " (%s)", ERROR_TO_TEXT(extrap[i]));
-	    else strcpy(label, "");
-	    printf ("\t%*d.%24.15e%24.15e%24.15e%s\n", fieldWidth, i+1, X[i], FXY[i], dFx[i], label);
-	  }
-	}
-      }
+        if (option['g'].flag) {
+          if (dFx)
+            printf ("#%*s%*s%*s\n", w[0], indepVar1Str, w[1], depVarStr, w[1], dFxStr);
+          else
+            printf ("#%*s%*s\n", w[0], indepVar1Str, w[1], depVarStr);
+          for (i = 0; i < nXYPairs; i++) {
+            if (i>0 && X[i] < X[i-1]) {
+              if (option['s'].flag) printf ("\n");
+              else                  printf ("\n\n");
+            }
 
-    }
-    else {
-
-      if (indepVarCnt > 1) {
-	if (option['g'].flag) {
-	  printf ("#%8s%15s%15s%15s%15s\n",
-		  indepVar1Str, indepVar2Str, depVarStr, dFxStr, dFyStr);
-	}
-	else {
-	  printf ("\t%*s %9s%15s%15s%15s%15s\n", fieldWidth, " ",
-		  indepVar1Str, indepVar2Str, depVarStr, dFxStr, dFyStr);
-	}
-	if (option['g'].flag) {
-	  for (i = 0; i < nXYPairs; i++) {
-	    if (i>0 && X[i] < X[i-1]) {
-	      if (option['s'].flag) printf ("\n");
-	      else                  printf ("\n\n");
-	    }
-	    printf ("%15.6e%15.6e%15.6e%15.6e%15.6e\n", X[i], Y[i], FXY[i], dFx[i], dFy[i]);
-	  }
-	}
-	else {
-	  for (i = 0; i < nXYPairs; i++) {
-	    if (extrap[i]) sprintf(label, " (%s)", ERROR_TO_TEXT(extrap[i]));
-	    else strcpy(label, "");
-	    printf ("\t%*d.%15.6e%15.6e%15.6e%15.6e%15.6e%s\n",
-		    fieldWidth, i+1, X[i], Y[i], FXY[i], dFx[i], dFy[i], label);
-	  }
-	}
+            if (extrap[i]) sprintf(label, " # %s", ERROR_TO_TEXT(extrap[i]));
+            else strcpy(label, "");
+            if (dFx)
+              printf ("%*.*e%*.*e%*.*e%s\n", w[1], p, X[i], w[1], p, FXY[i], w[1], p, dFx[i], label);
+            else
+              printf ("%*.*e%*.*e%s\n", w[1], p, X[i], w[1], p, FXY[i], label);
+          }
+        }
+        else {
+          if (dFx)
+            printf ("\t%*s %*s%*s%*s\n", fieldWidth, " ", w[0]+1, indepVar1Str, w[1], depVarStr, w[1], dFxStr);
+          else
+            printf ("\t%*s %*s%*s\n", fieldWidth, " ", w[0]+1, indepVar1Str, w[1], depVarStr);
+          for (i = 0; i < nXYPairs; i++) {
+            if (extrap[i]) sprintf(label, " (%s)", ERROR_TO_TEXT(extrap[i]));
+            else strcpy(label, "");
+            if (dFx)
+              printf ("\t%*d.%*.*e%*.*e%*.*e%s\n", fieldWidth, i+1, w[1], p, X[i], w[1], p, FXY[i], w[1], p, dFx[i], label);
+            else
+              printf ("\t%*d.%*.*e%*.*e%s\n", fieldWidth, i+1, w[1], p, X[i], w[1], p, FXY[i], label);
+          }
+        }
       }
-      else {
-	printf ("\t%*s %9s%15s%15s\n", fieldWidth, " ", indepVar1Str, depVarStr, dFxStr);
-	if (option['g'].flag) {
-	  for (i = 0; i < nXYPairs; i++) {
-	    if (i>0 && X[i] < X[i-1]) {
-	      if (option['s'].flag) printf ("\n");
-	      else                  printf ("\n\n");
-	    }
-	    printf ("%15.6e%15.6e%15.6e\n", X[i], FXY[i], dFx[i]);
-	  }
-	}
-	else {
-	  for (i = 0; i < nXYPairs; i++) {
-	    if (extrap[i]) sprintf(label, " (extrapolated: %s)", ERROR_TO_TEXT(extrap[i]));
-	    else strcpy(label, "");
-	    printf ("\t%*d.%15.6e%15.6e%15.6e%s\n", fieldWidth, i+1, X[i], FXY[i], dFx[i], label);
-	  }
-	}
-      }
-
     }
   }
 
@@ -765,7 +947,7 @@ int main (int argc, char *argv[])
   if (errorCode != EOS_OK) {
     eos_GetErrorMessage (&errorCode, errorMessage);
     fprintf (stderr, "\neos_DestroyAll ERROR %d: %s for tableHandle=%d\n\n",
-	     errorCode, errorMessage, tableHandle);
+             errorCode, errorMessage, tableHandle);
     return eospacError;
   }
 

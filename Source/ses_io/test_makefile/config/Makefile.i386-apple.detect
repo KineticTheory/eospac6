@@ -1,0 +1,36 @@
+#-*-makefile-*-###################################################
+#  
+#  Copyright -- see file named COPYRIGHTNOTICE
+#  
+##################################################################
+### This file contains the following:                          ###
+### Platform-dependent system configuration for an ARCH value  ###
+### containing the following pattern:                          ###
+###    i386-apple
+###                                                            ###
+### The purpose of this file is                                ###
+###    - detect F90                                            ###
+###    - define F90_Key                                        ###
+##################################################################
+#
+# i386 and MacOS
+
+##################################################################
+# Compiler suite configurations based upon F90                 ###
+##################################################################
+# Default: use the first F90 compiler found from F90_List
+F90_List = f90 pgf90 ifort g95 gfortran nagfor
+F90_Found_List = $(foreach compiler,$(F90_List),$(call pathsearch,$(compiler)))
+F90 = $(firstword $(F90_Found_List))
+F90_Key = $(strip $(firstword $(foreach compiler,$(F90_List),$(call match_r1,$(compiler),$(F90)))))
+ifeq ($(strip $(F90_Key)),)
+  $(error No supported Fortran compiler was found in your PATH for this machine. (supported: $(F90_List)))
+endif
+
+##################################################################
+### Define selected variable values according to $(F90_Key).   ###
+##################################################################
+ifeq ($(strip $(F90_Key)),g95)
+  G95_MEM_SEGMENTS = 0
+  export G95_MEM_SEGMENTS
+endif

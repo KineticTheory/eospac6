@@ -36,6 +36,9 @@ CC  = $(firstword $(foreach compiler,$(call get,_CC,$(F90_Key)),$(call pathsearc
 CXX = $(firstword $(foreach compiler,$(call get,_CXX,$(F90_Key)),$(call pathsearch,$(compiler))))
 F77 = $(firstword $(foreach compiler,$(call get,_F77,$(F90_Key)),$(call pathsearch,$(compiler))))
 
+# compiler check for CC, CXX, F90 and F77
+include $(BASEDIR)/config/Makefile.check_compilers
+
 ##################################################################
 ### Assign values to associative arrays, which hold various    ###
 ### compiler options -- specific to this architecture.         ###

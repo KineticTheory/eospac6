@@ -270,7 +270,10 @@ int main ()
             }
           }
 	  eos_ErrorCodesEqual((EOS_INTEGER*)&EOS_WARNING, &th_errorCode, &equal);
-	  if (! equal) return -2;
+	  if (! equal) {
+	    errorCode = -2;
+	    goto CLEANUP;
+	  }
         }
 
         /* enable data dump */
@@ -299,13 +302,17 @@ int main ()
             }
           }
 	  eos_ErrorCodesEqual((EOS_INTEGER*)&EOS_WARNING, &th_errorCode, &equal);
-          if (th_errorCode != EOS_WARNING) return -3;
+          if (th_errorCode != EOS_WARNING) {
+	    errorCode = -3;
+	    goto CLEANUP;
+	  }
         }
 
       }
       else {
         printf ("INVALID itype\n");
-        return -1;
+	errorCode = -1;
+	goto CLEANUP;
       }
 
       // Perform interpolation for each data type
@@ -329,7 +336,8 @@ int main ()
             es1errmsg (ierr1, errorMessage);
             printf ("EOSPAC 5 INTERPOLATION ERROR %d, TABLE %d: %s\n", ierr1,
                     inams[i], errorMessage);
-            return -4;
+	    errorCode = -4;
+	    goto CLEANUP;
           }
 #endif
           // convert partial derivatives from dF/dlnx to dFdx and dF/dlny to dFdy
@@ -353,8 +361,9 @@ int main ()
             eos_GetErrorMessage (&errorCode, errorMessage);
             printf ("%d: %s\n", errorCode, errorMessage);
             if (! equal) {
-              return -5;
-            }
+	      errorCode = -5;
+	      goto CLEANUP;
+	    }
             else {
 	      EOS_INTEGER err;
               eos_CheckExtrap (&tableHandle[i - 2], &nXYPairs, X, Y1,
@@ -403,5 +412,13 @@ int main ()
   free(ierrs);
   free(xyBounds);
 
-  return 0;
+  errorCode = 0;
+
+ CLEANUP:
+  {
+    EOS_INTEGER err;
+    eos_DestroyAll (&err);
+  }
+
+  return errorCode;
 }

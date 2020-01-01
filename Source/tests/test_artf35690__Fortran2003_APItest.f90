@@ -8,7 +8,7 @@
 !*********************************************************************
 
 !>  \file
-!!  \ingroup tests
+!!  \ingroup Fortran2003 tests
 !!  \brief Verify the new public function, eos_GetTableMetaData, returns meta data,
 !!         per a user's specific request, functions as advertised within a Fortran code.
 !!

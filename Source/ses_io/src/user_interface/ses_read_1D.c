@@ -5,6 +5,7 @@
 #include "ses_internals.h"
 
 
+
 ses_error_flag ses_read_1D(ses_file_handle the_handle, ses_word_reference the_buffer, ses_number dim) {
 
   /*  at the current file location, read a 1D array */
@@ -36,8 +37,8 @@ ses_error_flag ses_read_1D(ses_file_handle the_handle, ses_word_reference the_bu
     return SES_READ_ERROR;
   }
 
-  FILE* pFILE = 0;
-  pFILE = _getPFILE(pSFH);
+  /* FILE* pFILE = 0; */
+  /* pFILE = */ _getPFILE(pSFH);
 
  
   struct _ses_setup* pSET = FILE_LIST[the_handle]->_the_setup;
@@ -76,7 +77,7 @@ ses_error_flag ses_read_1D(ses_file_handle the_handle, ses_word_reference the_bu
     printf("ses_read_1D:  function pointer null\n");
 #endif
     _set_latest_error(SES_NULL_OBJECT_ERROR);
-    return 0;
+    return SES_NULL_OBJECT_ERROR;
   }
 
   struct _ses_directory* ptDIR = FILE_LIST[the_handle]->_directory;
@@ -86,8 +87,8 @@ ses_error_flag ses_read_1D(ses_file_handle the_handle, ses_word_reference the_bu
      pSFH->_array_address = FILE_LIST[the_handle]->_current_index_record->_array_iadr[table_index][pSFH->_iteration_index];
      pSFH->_array_filename = FILE_LIST[the_handle]->_current_index_record->_array_filename[table_index][pSFH->_iteration_index];
      long location = pSFH->_array_address;
-     ses_boolean didit_go = SES_FALSE;
-     didit_go = pSFH->pt2_go_to_next_array_location(pSFH, location);
+     /* ses_boolean didit_go = SES_FALSE; */
+     /* didit_go = */ pSFH->pt2_go_to_next_array_location(pSFH, location);
   }
  ses_error_flag didit_read = pSFH->pt2_read_array(pSFH, the_buffer, dim, nsig, do_valid);
 
@@ -96,7 +97,7 @@ ses_error_flag ses_read_1D(ses_file_handle the_handle, ses_word_reference the_bu
     printf("ses_read_1D:  _read_array error\n");
 #endif
     _set_latest_error(SES_READ_ERROR);
-    return 0;
+    return SES_READ_ERROR;
   }
 
   /*  code added to move the iterator along -- found while testing wrappers */

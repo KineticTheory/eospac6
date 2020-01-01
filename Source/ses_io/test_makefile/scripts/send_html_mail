@@ -23,6 +23,9 @@ $email_address = 'eospac_testing@lanl.gov';
 $subject = "EOSPAC 6 Testing Status report";
 $subject = $options->{"subject"}
   if ($options->{"subject"});
+$subject_wrapped_html = $subject;
+$subject_wrapped_html =~ s|s*\(|<br><i>(|;
+$subject_wrapped_html .= '</i>';
 
 # define default/custom smtp server name
 $smtp_server_name = 'mail';
@@ -31,7 +34,7 @@ $smtp_server_name = $options->{"mail_server"}
 
 $scriptname = basename($0);
 
-# load HTNL file in memory
+# load HTML file in memory
 while (<>) {
   $msgstr .= $_;
 }
@@ -75,6 +78,7 @@ if (! $options->{"plaintextfile"}) { # send HTML formatted message only
 Content-Type: text/html; charset="iso-8859-1"
 Content-Transfer-Encoding: 7bit
 
+<h2 style='background-color:#FFFFCC;border:thin solid #000000;text-align:center;padding:1em;'>$subject_wrapped_html</h2>
 $msgstr
 END_MIME_CONTENT
 
@@ -94,6 +98,7 @@ If you are reading this, consider upgrading to a multipart-MIME-compatible e-mai
 Content-Type: text/html
 Content-Transfer-Encoding: 7bit
 
+<h2 style='background-color:#FFFFCC;border:thin solid #000000;text-align:center;padding:1em;'>$subject_wrapped_html</h2>
 $msgstr
 --$boundary1
 Content-Type: multipart/parallel; boundary="$boundary2"
@@ -103,6 +108,7 @@ Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
 Content-Disposition: attachment; filename="$plaintextfile"
 
+$subject
 $textfilestr
 --$boundary2--
 

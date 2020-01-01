@@ -1,4 +1,4 @@
-eos_LoadTables ERROR   2006: EOS_DATA_TYPE_NOT_FOUND: Data table type is not in library
-  TH 0, eos_LoadTables ERROR ****: EOS_INVALID_TABLE_HANDLE: Invalid table handle because EOS_NO_DATA_TABLE: Data table, EOS_At_DT, is not in EOS table area and it could not be manufactured for table handle 0
-  TH 2, eos_LoadTables ERROR ****: EOS_DATA_TYPE_NOT_FOUND: Data table type is not in library
-  TH 4, eos_LoadTables ERROR ****: EOS_DATA_TYPE_NOT_FOUND: Data table type is not in library
+eos_LoadTables ERROR  52011: EOS_NO_DATA_TABLE: Data table, EOS_At_DT, is not in EOS table area and it could not be manufactured for table handle 4
+  TH 0, eos_LoadTables ERROR  12021: EOS_INVALID_TABLE_HANDLE: Invalid table handle because EOS_NO_DATA_TABLE: Data table, EOS_At_DT, is not in EOS table area and it could not be manufactured for table handle 0
+  TH 2, eos_LoadTables ERROR  32021: EOS_INVALID_TABLE_HANDLE: Invalid table handle because EOS_NO_DATA_TABLE: Data table, EOS_St_DT, is not in EOS table area and it could not be manufactured for table handle 2
+  TH 4, eos_LoadTables ERROR  52021: EOS_INVALID_TABLE_HANDLE: Invalid table handle because EOS_NO_DATA_TABLE: Data table, EOS_At_DT, is not in EOS table area and it could not be manufactured for table handle 4

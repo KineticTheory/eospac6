@@ -147,8 +147,8 @@ struct _ses_file*  _construct_ses_file(FILE* pFILE,
 
     /*  release memory on error */
 
-    ses_boolean didit_destruct = SES_FALSE;
-    didit_destruct = _destruct_ses_file(the_library);
+    /* ses_boolean didit_destruct = SES_FALSE; */
+    /* didit_destruct = */ _destruct_ses_file(the_library);
 
     return (struct _ses_file*)NULL;
   }
@@ -185,8 +185,8 @@ struct _ses_file*  _construct_ses_file(FILE* pFILE,
 
       /*  release memory on error */
 
-      ses_boolean didit_destruct = SES_FALSE;
-      didit_destruct = _destruct_ses_file(the_library);
+      /* ses_boolean didit_destruct = SES_FALSE; */
+      /* didit_destruct = */ _destruct_ses_file(the_library);
       the_library = (struct _ses_file*)NULL;
 
       return (struct _ses_file*)NULL;
@@ -265,8 +265,8 @@ struct _ses_file* _copy_ses_file(struct _ses_file* pSF) {
     _set_latest_error(SES_OBJECT_COPY_ERROR);
 
     /*  release memory on error */
-    ses_boolean didit_destruct = SES_FALSE;
-    didit_destruct = _destruct_ses_file(return_value);
+    /* ses_boolean didit_destruct = SES_FALSE; */
+    /* didit_destruct = */ _destruct_ses_file(return_value);
     free(return_value);
     return_value = (struct _ses_file*)NULL;
  
@@ -281,8 +281,8 @@ struct _ses_file* _copy_ses_file(struct _ses_file* pSF) {
     _set_latest_error(SES_OBJECT_COPY_ERROR);
 
     /*  release memory on error */
-    ses_boolean didit_destruct = SES_FALSE;
-    didit_destruct = _destruct_ses_file(return_value);
+    /* ses_boolean didit_destruct = SES_FALSE; */
+    /* didit_destruct = */ _destruct_ses_file(return_value);
     free(return_value);
     return_value = (struct _ses_file*)NULL;
 
@@ -433,9 +433,9 @@ ses_boolean _destruct_ses_file(struct _ses_file* the_library) {
   else {
 	/*  on 'W' and 'A' current data record is on the material file list of the output file, and is destructed there */
         the_library->_current_data_record = (struct _ses_data_record*)NULL;
-	ses_boolean didit2 = SES_FALSE;
+	/* ses_boolean didit2 = SES_FALSE; */
         if (the_library->_current_index_record != (struct _ses_index_record*)NULL) {
-        	didit2 = _destruct_ses_index_record(the_library->_current_index_record);
+        	/* didit2 = */ _destruct_ses_index_record(the_library->_current_index_record);
         	free(the_library->_current_index_record);
         	the_library->_current_index_record = (struct _ses_index_record*)NULL;
 	}

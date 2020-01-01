@@ -127,6 +127,8 @@ int main(){
 
   printf("interpolated value is %f\n", fVals[0]); 
 
+  eos_DestroyAll (&error);
+
   return 0;
 }
 

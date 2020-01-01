@@ -129,58 +129,58 @@ int main ()
   modelTest_s modelTests[] = {
     /* Group 1: 301 tables */
     { nTablesE, {0}, {EOS_Pt_DT},    {EOS_FALSE}, 0,                   "",                    rho, T,  P1,  dFx0,  dFy0,  EOS_TRUE }
-   ,{ nTablesE, {0}, {EOS_Ut_DT},    {EOS_FALSE}, 0,                   "",                    rho, T,  U1,  dFx0,  dFy0,  EOS_TRUE }
-   ,{ nTablesE, {0}, {EOS_T_DPt},    {EOS_FALSE}, EOS_INVERT_AT_SETUP, "EOS_INVERT_AT_SETUP", rho, P1, F1,  dFx1,  dFy1,  EOS_TRUE }
-   ,{ nTablesE, {0}, {EOS_T_DPt},    {EOS_FALSE}, 0,                   "",                    rho, P1, F2,  dFx2,  dFy2,  EOS_TRUE }
-   ,{ nTablesE, {0}, {EOS_T_DUt},    {EOS_FALSE}, EOS_INVERT_AT_SETUP, "EOS_INVERT_AT_SETUP", rho, U1, F1a, dFx1a, dFy1a, EOS_TRUE }
-   ,{ nTablesE, {0}, {EOS_T_DUt},    {EOS_FALSE}, 0,                   "",                    rho, U1, F2a, dFx2a, dFy2a, EOS_TRUE }
-   ,{ nTablesE, {0}, {EOS_Ut_DPt},   {EOS_FALSE}, EOS_INVERT_AT_SETUP, "EOS_INVERT_AT_SETUP", rho, P1, F3,  dFx3,  dFy3,  EOS_TRUE }
-   ,{ nTablesE, {0}, {EOS_Ut_DPt},   {EOS_FALSE}, 0,                   "",                    rho, P1, F4,  dFx4,  dFy4,  EOS_TRUE }
-   ,{ nTablesE, {0}, {EOS_Pt_DUt},   {EOS_FALSE}, EOS_INVERT_AT_SETUP, "EOS_INVERT_AT_SETUP", rho, U1, F5,  dFx5,  dFy5,  EOS_TRUE }
-   ,{ nTablesE, {0}, {EOS_Pt_DUt},   {EOS_FALSE}, 0,                   "",                    rho, U1, F6,  dFx6,  dFy6,  EOS_TRUE }
-   ,{ nTablesE, {0}, {EOS_D_PtT},    {EOS_FALSE}, EOS_INVERT_AT_SETUP, "EOS_INVERT_AT_SETUP", P1,  T,  F7,  dFx7,  dFy7,  EOS_TRUE }
-   ,{ nTablesE, {0}, {EOS_D_PtT},    {EOS_FALSE}, 0,                   "",                    P1,  T,  F8,  dFx8,  dFy8,  EOS_TRUE }
-   ,{ nTablesE, {0}, {EOS_Ut_PtT},   {EOS_FALSE}, EOS_INVERT_AT_SETUP, "EOS_INVERT_AT_SETUP", P1,  T,  F9,  dFx9,  dFy9,  EOS_TRUE }
-   ,{ nTablesE, {0}, {EOS_Ut_PtT},   {EOS_FALSE}, 0,                   "",                    P1,  T,  F10, dFx10, dFy10, EOS_TRUE }
+    ,{ nTablesE, {0}, {EOS_Ut_DT},    {EOS_FALSE}, 0,                   "",                    rho, T,  U1,  dFx0,  dFy0,  EOS_TRUE }
+    ,{ nTablesE, {0}, {EOS_T_DPt},    {EOS_FALSE}, EOS_INVERT_AT_SETUP, "EOS_INVERT_AT_SETUP", rho, P1, F1,  dFx1,  dFy1,  EOS_TRUE }
+    ,{ nTablesE, {0}, {EOS_T_DPt},    {EOS_FALSE}, 0,                   "",                    rho, P1, F2,  dFx2,  dFy2,  EOS_TRUE }
+    ,{ nTablesE, {0}, {EOS_T_DUt},    {EOS_FALSE}, EOS_INVERT_AT_SETUP, "EOS_INVERT_AT_SETUP", rho, U1, F1a, dFx1a, dFy1a, EOS_TRUE }
+    ,{ nTablesE, {0}, {EOS_T_DUt},    {EOS_FALSE}, 0,                   "",                    rho, U1, F2a, dFx2a, dFy2a, EOS_TRUE }
+    ,{ nTablesE, {0}, {EOS_Ut_DPt},   {EOS_FALSE}, EOS_INVERT_AT_SETUP, "EOS_INVERT_AT_SETUP", rho, P1, F3,  dFx3,  dFy3,  EOS_TRUE }
+    ,{ nTablesE, {0}, {EOS_Ut_DPt},   {EOS_FALSE}, 0,                   "",                    rho, P1, F4,  dFx4,  dFy4,  EOS_TRUE }
+    ,{ nTablesE, {0}, {EOS_Pt_DUt},   {EOS_FALSE}, EOS_INVERT_AT_SETUP, "EOS_INVERT_AT_SETUP", rho, U1, F5,  dFx5,  dFy5,  EOS_TRUE }
+    ,{ nTablesE, {0}, {EOS_Pt_DUt},   {EOS_FALSE}, 0,                   "",                    rho, U1, F6,  dFx6,  dFy6,  EOS_TRUE }
+    ,{ nTablesE, {0}, {EOS_D_PtT},    {EOS_FALSE}, EOS_INVERT_AT_SETUP, "EOS_INVERT_AT_SETUP", P1,  T,  F7,  dFx7,  dFy7,  EOS_TRUE }
+    ,{ nTablesE, {0}, {EOS_D_PtT},    {EOS_FALSE}, 0,                   "",                    P1,  T,  F8,  dFx8,  dFy8,  EOS_TRUE }
+    ,{ nTablesE, {0}, {EOS_Ut_PtT},   {EOS_FALSE}, EOS_INVERT_AT_SETUP, "EOS_INVERT_AT_SETUP", P1,  T,  F9,  dFx9,  dFy9,  EOS_TRUE }
+    ,{ nTablesE, {0}, {EOS_Ut_PtT},   {EOS_FALSE}, 0,                   "",                    P1,  T,  F10, dFx10, dFy10, EOS_TRUE }
     /* Group 2: 303 tables */
-   ,{ nTablesE, {0}, {EOS_Pic_DT},   {EOS_FALSE}, 0,                   "",                    rho, T,  P2,  dFx11, dFy11, EOS_TRUE }
-   ,{ nTablesE, {0}, {EOS_Uic_DT},   {EOS_FALSE}, 0,                   "",                    rho, T,  U2,  dFx12, dFy12, EOS_TRUE }
-   ,{ nTablesE, {0}, {EOS_T_DPic},   {EOS_FALSE}, EOS_INVERT_AT_SETUP, "EOS_INVERT_AT_SETUP", rho, P2, F13, dFx13, dFy13, EOS_TRUE }
-   ,{ nTablesE, {0}, {EOS_T_DPic},   {EOS_FALSE}, 0,                   "",                    rho, P2, F14, dFx14, dFy14, EOS_TRUE }
+    ,{ nTablesE, {0}, {EOS_Pic_DT},   {EOS_FALSE}, 0,                   "",                    rho, T,  P2,  dFx11, dFy11, EOS_TRUE }
+    ,{ nTablesE, {0}, {EOS_Uic_DT},   {EOS_FALSE}, 0,                   "",                    rho, T,  U2,  dFx12, dFy12, EOS_TRUE }
+    ,{ nTablesE, {0}, {EOS_T_DPic},   {EOS_FALSE}, EOS_INVERT_AT_SETUP, "EOS_INVERT_AT_SETUP", rho, P2, F13, dFx13, dFy13, EOS_TRUE }
+    ,{ nTablesE, {0}, {EOS_T_DPic},   {EOS_FALSE}, 0,                   "",                    rho, P2, F14, dFx14, dFy14, EOS_TRUE }
 
-   ,{ nTablesE, {0}, {EOS_T_DUic},   {EOS_FALSE}, EOS_INVERT_AT_SETUP, "EOS_INVERT_AT_SETUP", rho, U2, F13a, dFx13a, dFy13a, EOS_TRUE }
-   ,{ nTablesE, {0}, {EOS_T_DUic},   {EOS_FALSE}, 0,                   "",                    rho, U2, F14a, dFx14a, dFy14a, EOS_TRUE }
+    ,{ nTablesE, {0}, {EOS_T_DUic},   {EOS_FALSE}, EOS_INVERT_AT_SETUP, "EOS_INVERT_AT_SETUP", rho, U2, F13a, dFx13a, dFy13a, EOS_TRUE }
+    ,{ nTablesE, {0}, {EOS_T_DUic},   {EOS_FALSE}, 0,                   "",                    rho, U2, F14a, dFx14a, dFy14a, EOS_TRUE }
 
-   ,{ nTablesE, {0}, {EOS_Uic_DPic}, {EOS_FALSE}, EOS_INVERT_AT_SETUP, "EOS_INVERT_AT_SETUP", rho, P2, F15, dFx15, dFy15, EOS_TRUE }
-   ,{ nTablesE, {0}, {EOS_Uic_DPic}, {EOS_FALSE}, 0,                   "",                    rho, P2, F16, dFx16, dFy16, EOS_TRUE }
-   ,{ nTablesE, {0}, {EOS_Pic_DUic}, {EOS_FALSE}, EOS_INVERT_AT_SETUP, "EOS_INVERT_AT_SETUP", rho, U2, F17, dFx17, dFy17, EOS_TRUE }
-   ,{ nTablesE, {0}, {EOS_Pic_DUic}, {EOS_FALSE}, 0,                   "",                    rho, U2, F18, dFx18, dFy18, EOS_TRUE }
+    ,{ nTablesE, {0}, {EOS_Uic_DPic}, {EOS_FALSE}, EOS_INVERT_AT_SETUP, "EOS_INVERT_AT_SETUP", rho, P2, F15, dFx15, dFy15, EOS_TRUE }
+    ,{ nTablesE, {0}, {EOS_Uic_DPic}, {EOS_FALSE}, 0,                   "",                    rho, P2, F16, dFx16, dFy16, EOS_TRUE }
+    ,{ nTablesE, {0}, {EOS_Pic_DUic}, {EOS_FALSE}, EOS_INVERT_AT_SETUP, "EOS_INVERT_AT_SETUP", rho, U2, F17, dFx17, dFy17, EOS_TRUE }
+    ,{ nTablesE, {0}, {EOS_Pic_DUic}, {EOS_FALSE}, 0,                   "",                    rho, U2, F18, dFx18, dFy18, EOS_TRUE }
     /* Group 3: 304 tables */
-   ,{ nTablesE, {0}, {EOS_Pe_DT},    {EOS_FALSE}, 0,                   "",                    rho, T,  P3,  dFx19, dFy19, EOS_TRUE }
-   ,{ nTablesE, {0}, {EOS_Ue_DT},    {EOS_FALSE}, 0,                   "",                    rho, T,  U3,  dFx20, dFy20, EOS_TRUE }
-   ,{ nTablesE, {0}, {EOS_T_DPe},    {EOS_FALSE}, EOS_INVERT_AT_SETUP, "EOS_INVERT_AT_SETUP", rho, P3, F21, dFx21, dFy21, EOS_TRUE }
-   ,{ nTablesE, {0}, {EOS_T_DPe},    {EOS_FALSE}, 0,                   "",                    rho, P3, F22, dFx22, dFy22, EOS_TRUE }
+    ,{ nTablesE, {0}, {EOS_Pe_DT},    {EOS_FALSE}, 0,                   "",                    rho, T,  P3,  dFx19, dFy19, EOS_TRUE }
+    ,{ nTablesE, {0}, {EOS_Ue_DT},    {EOS_FALSE}, 0,                   "",                    rho, T,  U3,  dFx20, dFy20, EOS_TRUE }
+    ,{ nTablesE, {0}, {EOS_T_DPe},    {EOS_FALSE}, EOS_INVERT_AT_SETUP, "EOS_INVERT_AT_SETUP", rho, P3, F21, dFx21, dFy21, EOS_TRUE }
+    ,{ nTablesE, {0}, {EOS_T_DPe},    {EOS_FALSE}, 0,                   "",                    rho, P3, F22, dFx22, dFy22, EOS_TRUE }
 
-   ,{ nTablesE, {0}, {EOS_T_DUe},    {EOS_FALSE}, EOS_INVERT_AT_SETUP, "EOS_INVERT_AT_SETUP", rho, U3, F21a, dFx21a, dFy21a, EOS_TRUE }
-   ,{ nTablesE, {0}, {EOS_T_DUe},    {EOS_FALSE}, 0,                   "",                    rho, U3, F22a, dFx22a, dFy22a, EOS_TRUE }
+    ,{ nTablesE, {0}, {EOS_T_DUe},    {EOS_FALSE}, EOS_INVERT_AT_SETUP, "EOS_INVERT_AT_SETUP", rho, U3, F21a, dFx21a, dFy21a, EOS_TRUE }
+    ,{ nTablesE, {0}, {EOS_T_DUe},    {EOS_FALSE}, 0,                   "",                    rho, U3, F22a, dFx22a, dFy22a, EOS_TRUE }
 
-   ,{ nTablesE, {0}, {EOS_Ue_DPe},   {EOS_FALSE}, EOS_INVERT_AT_SETUP, "EOS_INVERT_AT_SETUP", rho, P3, F23, dFx23, dFy23, EOS_TRUE }
-   ,{ nTablesE, {0}, {EOS_Ue_DPe},   {EOS_FALSE}, 0,                   "",                    rho, P3, F24, dFx24, dFy24, EOS_TRUE }
-   ,{ nTablesE, {0}, {EOS_Pe_DUe},   {EOS_FALSE}, EOS_INVERT_AT_SETUP, "EOS_INVERT_AT_SETUP", rho, U3, F25, dFx25, dFy25, EOS_TRUE }
-   ,{ nTablesE, {0}, {EOS_Pe_DUe},   {EOS_FALSE}, 0,                   "",                    rho, U3, F26, dFx26, dFy26, EOS_TRUE }
+    ,{ nTablesE, {0}, {EOS_Ue_DPe},   {EOS_FALSE}, EOS_INVERT_AT_SETUP, "EOS_INVERT_AT_SETUP", rho, P3, F23, dFx23, dFy23, EOS_TRUE }
+    ,{ nTablesE, {0}, {EOS_Ue_DPe},   {EOS_FALSE}, 0,                   "",                    rho, P3, F24, dFx24, dFy24, EOS_TRUE }
+    ,{ nTablesE, {0}, {EOS_Pe_DUe},   {EOS_FALSE}, EOS_INVERT_AT_SETUP, "EOS_INVERT_AT_SETUP", rho, U3, F25, dFx25, dFy25, EOS_TRUE }
+    ,{ nTablesE, {0}, {EOS_Pe_DUe},   {EOS_FALSE}, 0,                   "",                    rho, U3, F26, dFx26, dFy26, EOS_TRUE }
     /* Group 4: 305 tables */
-   ,{ nTablesE, {0}, {EOS_Piz_DT},   {EOS_FALSE}, 0,                   "",                    rho, T,  P4,  dFx29, dFy29, EOS_TRUE }
-   ,{ nTablesE, {0}, {EOS_Uiz_DT},   {EOS_FALSE}, 0,                   "",                    rho, T,  U4,  dFx30, dFy30, EOS_TRUE }
-   ,{ nTablesE, {0}, {EOS_T_DPiz},   {EOS_FALSE}, EOS_INVERT_AT_SETUP, "EOS_INVERT_AT_SETUP", rho, P4, F31, dFx31, dFy31, EOS_TRUE }
-   ,{ nTablesE, {0}, {EOS_T_DPiz},   {EOS_FALSE}, 0,                   "",                    rho, P4, F32, dFx32, dFy32, EOS_TRUE }
+    ,{ nTablesE, {0}, {EOS_Piz_DT},   {EOS_FALSE}, 0,                   "",                    rho, T,  P4,  dFx29, dFy29, EOS_TRUE }
+    ,{ nTablesE, {0}, {EOS_Uiz_DT},   {EOS_FALSE}, 0,                   "",                    rho, T,  U4,  dFx30, dFy30, EOS_TRUE }
+    ,{ nTablesE, {0}, {EOS_T_DPiz},   {EOS_FALSE}, EOS_INVERT_AT_SETUP, "EOS_INVERT_AT_SETUP", rho, P4, F31, dFx31, dFy31, EOS_TRUE }
+    ,{ nTablesE, {0}, {EOS_T_DPiz},   {EOS_FALSE}, 0,                   "",                    rho, P4, F32, dFx32, dFy32, EOS_TRUE }
 
-   ,{ nTablesE, {0}, {EOS_T_DUiz},   {EOS_FALSE}, EOS_INVERT_AT_SETUP, "EOS_INVERT_AT_SETUP", rho, U4, F31a, dFx31a, dFy31a, EOS_TRUE }
-   ,{ nTablesE, {0}, {EOS_T_DUiz},   {EOS_FALSE}, 0,                   "",                    rho, U4, F32a, dFx32a, dFy32a, EOS_TRUE }
+    ,{ nTablesE, {0}, {EOS_T_DUiz},   {EOS_FALSE}, EOS_INVERT_AT_SETUP, "EOS_INVERT_AT_SETUP", rho, U4, F31a, dFx31a, dFy31a, EOS_TRUE }
+    ,{ nTablesE, {0}, {EOS_T_DUiz},   {EOS_FALSE}, 0,                   "",                    rho, U4, F32a, dFx32a, dFy32a, EOS_TRUE }
 
-   ,{ nTablesE, {0}, {EOS_Uiz_DPiz}, {EOS_FALSE}, EOS_INVERT_AT_SETUP, "EOS_INVERT_AT_SETUP", rho, P4, F33, dFx33, dFy33, EOS_TRUE }
-   ,{ nTablesE, {0}, {EOS_Uiz_DPiz}, {EOS_FALSE}, 0,                   "",                    rho, P4, F34, dFx34, dFy34, EOS_TRUE }
-   ,{ nTablesE, {0}, {EOS_Piz_DUiz}, {EOS_FALSE}, EOS_INVERT_AT_SETUP, "EOS_INVERT_AT_SETUP", rho, U4, F35, dFx35, dFy35, EOS_TRUE }
-   ,{ nTablesE, {0}, {EOS_Piz_DUiz}, {EOS_FALSE}, 0,                   "",                    rho, U4, F36, dFx36, dFy36, EOS_TRUE }
+    ,{ nTablesE, {0}, {EOS_Uiz_DPiz}, {EOS_FALSE}, EOS_INVERT_AT_SETUP, "EOS_INVERT_AT_SETUP", rho, P4, F33, dFx33, dFy33, EOS_TRUE }
+    ,{ nTablesE, {0}, {EOS_Uiz_DPiz}, {EOS_FALSE}, 0,                   "",                    rho, P4, F34, dFx34, dFy34, EOS_TRUE }
+    ,{ nTablesE, {0}, {EOS_Piz_DUiz}, {EOS_FALSE}, EOS_INVERT_AT_SETUP, "EOS_INVERT_AT_SETUP", rho, U4, F35, dFx35, dFy35, EOS_TRUE }
+    ,{ nTablesE, {0}, {EOS_Piz_DUiz}, {EOS_FALSE}, 0,                   "",                    rho, U4, F36, dFx36, dFy36, EOS_TRUE }
   };
   EOS_CHAR errorMessage[EOS_MaxErrMsgLen];
 
@@ -287,8 +287,8 @@ int main ()
     for (itest = 0; itest < nModelTests; itest++) {
 
       for (i = 0; i < modelTests[itest].nTables; i++) {
-	tableHandle[itest] = 0;
-	modelTests[itest].matID[i] = MaterialList[imatid];
+        tableHandle[itest] = 0;
+        modelTests[itest].matID[i] = MaterialList[imatid];
       }
 
       printf ("\n*********************************************************************\n");
@@ -296,85 +296,85 @@ int main ()
 
       /* initialize table data objects */
       eos_CreateTables (&(modelTests[itest].nTables),
-			modelTests[itest].tableType, modelTests[itest].matID,
-			&tableHandle[itest], &errorCode);
+                        modelTests[itest].tableType, modelTests[itest].matID,
+                        &tableHandle[itest], &errorCode);
       if (errorCode != EOS_OK) {
-	eos_GetErrorMessage (&errorCode, errorMessage);
-	printf ("eos_CreateTables ERROR %i: %s\n", errorCode, errorMessage);
-	for (i = 0; i < modelTests[itest].nTables; i++) {
-	  tableHandleErrorCode = EOS_OK;
-	  eos_GetErrorCode (&tableHandle[itest], &tableHandleErrorCode);
-	  if (tableHandleErrorCode != EOS_OK) {
-	    eos_GetErrorMessage (&tableHandleErrorCode, errorMessage);
-	    printf ("%i: eos_CreateTables ERROR %i: %s\n",
-		    tableHandle[itest], tableHandleErrorCode, errorMessage);
-	  }
-	}
-	continue;
+        eos_GetErrorMessage (&errorCode, errorMessage);
+        printf ("eos_CreateTables ERROR %i: %s\n", errorCode, errorMessage);
+        for (i = 0; i < modelTests[itest].nTables; i++) {
+          tableHandleErrorCode = EOS_OK;
+          eos_GetErrorCode (&tableHandle[itest], &tableHandleErrorCode);
+          if (tableHandleErrorCode != EOS_OK) {
+            eos_GetErrorMessage (&tableHandleErrorCode, errorMessage);
+            printf ("%i: eos_CreateTables ERROR %i: %s\n",
+                    tableHandle[itest], tableHandleErrorCode, errorMessage);
+          }
+        }
+        continue;
       }
 
       if (modelTests[itest].modelFlag) {
-	printf ("--- Set option: type=%s (%i) ---\n",
-		modelTests[itest].modelFlagLabel, modelTests[itest].modelFlag);
-	/* set additional option */
-	for (i = 0; i < modelTests[itest].nTables; i++) {
-	  eos_SetOption (&tableHandle[itest], &modelTests[itest].modelFlag, EOS_NullPtr,
-			 &errorCode);
-	  if (errorCode != EOS_OK) {
-	    eos_GetErrorMessage (&errorCode, errorMessage);
-	    printf ("eos_SetOption ERROR %i: %s\n", errorCode, errorMessage);
-	  }
-	}
+        printf ("--- Set option: type=%s (%i) ---\n",
+                modelTests[itest].modelFlagLabel, modelTests[itest].modelFlag);
+        /* set additional option */
+        for (i = 0; i < modelTests[itest].nTables; i++) {
+          eos_SetOption (&tableHandle[itest], &modelTests[itest].modelFlag, EOS_NullPtr,
+                         &errorCode);
+          if (errorCode != EOS_OK) {
+            eos_GetErrorMessage (&errorCode, errorMessage);
+            printf ("eos_SetOption ERROR %i: %s\n", errorCode, errorMessage);
+          }
+        }
       }
       /* Enable data dump to file */
       for (i = 0; i < modelTests[itest].nTables; i++) {
-	if (modelTests[itest].dump == EOS_FALSE) continue;
-	dump_cntr++;
-	if (dump_cntr == 0) {
-	  eos_SetOption (&tableHandle[0], &EOS_DUMP_DATA, EOS_NullPtr,
-			 &errorCode);
-	  if (errorCode != EOS_OK) {
-	    eos_GetErrorMessage (&errorCode, errorMessage);
-	    printf ("eos_SetOption ERROR %i: %s\n", errorCode, errorMessage);
-	  }
-	}
-	else {
-	  eos_SetOption (&tableHandle[itest], &EOS_APPEND_DATA, EOS_NullPtr,
-			 &errorCode);
-	  if (errorCode != EOS_OK) {
-	    eos_GetErrorMessage (&errorCode, errorMessage);
-	    printf ("eos_SetOption ERROR %i: %s\n", errorCode, errorMessage);
-	  }
-	}
+        if (modelTests[itest].dump == EOS_FALSE) continue;
+        dump_cntr++;
+        if (dump_cntr == 0) {
+          eos_SetOption (&tableHandle[0], &EOS_DUMP_DATA, EOS_NullPtr,
+                         &errorCode);
+          if (errorCode != EOS_OK) {
+            eos_GetErrorMessage (&errorCode, errorMessage);
+            printf ("eos_SetOption ERROR %i: %s\n", errorCode, errorMessage);
+          }
+        }
+        else {
+          eos_SetOption (&tableHandle[itest], &EOS_APPEND_DATA, EOS_NullPtr,
+                         &errorCode);
+          if (errorCode != EOS_OK) {
+            eos_GetErrorMessage (&errorCode, errorMessage);
+            printf ("eos_SetOption ERROR %i: %s\n", errorCode, errorMessage);
+          }
+        }
       }
 
       /* load data into table data objects */
       printf ("--- Load data:");
       for (i = 0; i < modelTests[itest].nTables; i++)
-	printf ("%c%s (%i)", (i>0?',':' '), get_tableType_str(modelTests[itest].tableType[i]), modelTests[itest].matID[i]);
+        printf ("%c%s (%i)", (i>0?',':' '), get_tableType_str(modelTests[itest].tableType[i]), modelTests[itest].matID[i]);
       printf (" ---\n");
       eos_LoadTables (&(modelTests[itest].nTables), &tableHandle[itest], &errorCode);
       if (errorCode != EOS_OK) {
-	eos_GetErrorMessage (&errorCode, errorMessage);
-	printf ("eos_LoadTables ERROR %i: %s\n", errorCode, errorMessage);
-	for (i = 0; i < modelTests[itest].nTables; i++) {
-	  tableHandleErrorCode = EOS_OK;
-	  eos_GetErrorCode (&tableHandle[itest], &tableHandleErrorCode);
-	  if (tableHandleErrorCode != EOS_OK) {
-	    eos_GetErrorMessage (&tableHandleErrorCode, errorMessage);
-	    printf ("%i: eos_LoadTables ERROR %i: %s\n",
-		    tableHandle[itest], tableHandleErrorCode, errorMessage);
-	  }
-	  else {
-	    modelTests[itest].isLoaded[i] = EOS_FALSE;
-	  }
-	}
-	continue;
+        eos_GetErrorMessage (&errorCode, errorMessage);
+        printf ("eos_LoadTables ERROR %i: %s\n", errorCode, errorMessage);
+        for (i = 0; i < modelTests[itest].nTables; i++) {
+          tableHandleErrorCode = EOS_OK;
+          eos_GetErrorCode (&tableHandle[itest], &tableHandleErrorCode);
+          if (tableHandleErrorCode != EOS_OK) {
+            eos_GetErrorMessage (&tableHandleErrorCode, errorMessage);
+            printf ("%i: eos_LoadTables ERROR %i: %s\n",
+                    tableHandle[itest], tableHandleErrorCode, errorMessage);
+          }
+          else {
+            modelTests[itest].isLoaded[i] = EOS_FALSE;
+          }
+        }
+        continue;
       }
       else {
-	for (i = 0; i < modelTests[itest].nTables; i++) {
-	  modelTests[itest].isLoaded[i] = EOS_TRUE;
-	}
+        for (i = 0; i < modelTests[itest].nTables; i++) {
+          modelTests[itest].isLoaded[i] = EOS_TRUE;
+        }
       }
     }                             /* itest loop */
 
@@ -383,62 +383,62 @@ int main ()
       /* interpolate */
       for (i = 0; i < modelTests[itest].nTables; i++) {
 
-	if (! modelTests[itest].isLoaded[i])
-	  continue;
+        if (! modelTests[itest].isLoaded[i])
+          continue;
 
-	printf ("\n*********************************************************************\n");
-	printf ("*** EOSPAC 6 TEST CASE %i ***\n", itest+imatid*nModelTests);
-	if (modelTests[itest].modelFlag) {
-	  printf ("--- Set options: type=%s (%i) ---\n",
-		  modelTests[itest].modelFlagLabel, modelTests[itest].modelFlag);
-	}
-	printf ("--- Loaded data:");
-	for (j = 0; j < modelTests[itest].nTables; j++)
-	  printf ("%c%s (%i)", (i>0?',':' '), get_tableType_str(modelTests[itest].tableType[j]), modelTests[itest].matID[j]);
-	printf (" ---\n");
+        printf ("\n*********************************************************************\n");
+        printf ("*** EOSPAC 6 TEST CASE %i ***\n", itest+imatid*nModelTests);
+        if (modelTests[itest].modelFlag) {
+          printf ("--- Set options: type=%s (%i) ---\n",
+                  modelTests[itest].modelFlagLabel, modelTests[itest].modelFlag);
+        }
+        printf ("--- Loaded data:");
+        for (j = 0; j < modelTests[itest].nTables; j++)
+          printf ("%c%s (%i)", (i>0?',':' '), get_tableType_str(modelTests[itest].tableType[j]), modelTests[itest].matID[j]);
+        printf (" ---\n");
 
-	printf ("--- Interpolate using tableType %s for material %i ---\n",
-		get_tableType_str(modelTests[itest].tableType[i]), modelTests[itest].matID[i]);
-	eos_Interpolate (&tableHandle[itest], &nXYPairs,
-			 modelTests[itest].x_ptr, modelTests[itest].y_ptr, modelTests[itest].f_ptr,
-			 modelTests[itest].dFx_ptr, modelTests[itest].dFy_ptr,
-			 &errorCode);
-	if (errorCode != EOS_OK) {
-	  EOS_BOOLEAN equal;
-	  eos_ErrorCodesEqual((EOS_INTEGER*)&EOS_INTERP_EXTRAPOLATED, &errorCode, &equal);
-	  eos_GetErrorMessage (&errorCode, errorMessage);
-	  printf ("eos_Interpolate ERROR %i: %s\n", errorCode, errorMessage);
-	  if (equal) {
-	    eos_CheckExtrap (&tableHandle[itest], &nXYPairs, modelTests[itest].x_ptr, modelTests[itest].y_ptr, extrapCode,
-			     &errorCode);
-	    if (errorCode != EOS_OK) {
-	      printf ("eos_CheckExtrap ERROR %i: %s\n", errorCode, errorMessage);
-	    }
-	    else {
-	      for (j = 0; j < nXYPairs; j++) {
-		if (extrapCode[j] != EOS_OK) {
-		  printf
-		    ("  i=%i\tX = %13.6e, Y = %13.6e, F = %13.6e, dFx = %13.6e, dFy = %13.6e, extrap: %i\n",
-		     j, modelTests[itest].x_ptr[j], modelTests[itest].y_ptr[j], modelTests[itest].f_ptr[j],
-		     modelTests[itest].dFx_ptr[j], modelTests[itest].dFy_ptr[j], extrapCode[j]);
-		}
-		else {
-		  printf
-		    ("  i=%i\tX = %13.6e, Y = %13.6e, F = %13.6e, dFx = %13.6e, dFy = %13.6e\n", j,
-		     modelTests[itest].x_ptr[j], modelTests[itest].y_ptr[j], modelTests[itest].f_ptr[j],
-		     modelTests[itest].dFx_ptr[j], modelTests[itest].dFy_ptr[j]);
-		}
-	      }
-	    }
-	  }
-	}
-	else {
-	  for (j = 0; j < nXYPairs; j++) {
-	    printf ("  i=%i\tX = %13.6e, Y = %13.6e, F = %13.6e, dFx = %13.6e, dFy = %13.6e\n",
-		    j, modelTests[itest].x_ptr[j], modelTests[itest].y_ptr[j], modelTests[itest].f_ptr[j],
-		    modelTests[itest].dFx_ptr[j], modelTests[itest].dFy_ptr[j]);
-	  }
-	}
+        printf ("--- Interpolate using tableType %s for material %i ---\n",
+                get_tableType_str(modelTests[itest].tableType[i]), modelTests[itest].matID[i]);
+        eos_Interpolate (&tableHandle[itest], &nXYPairs,
+                         modelTests[itest].x_ptr, modelTests[itest].y_ptr, modelTests[itest].f_ptr,
+                         modelTests[itest].dFx_ptr, modelTests[itest].dFy_ptr,
+                         &errorCode);
+        if (errorCode != EOS_OK) {
+          EOS_BOOLEAN equal;
+          eos_ErrorCodesEqual((EOS_INTEGER*)&EOS_INTERP_EXTRAPOLATED, &errorCode, &equal);
+          eos_GetErrorMessage (&errorCode, errorMessage);
+          printf ("eos_Interpolate ERROR %i: %s\n", errorCode, errorMessage);
+          if (equal) {
+            eos_CheckExtrap (&tableHandle[itest], &nXYPairs, modelTests[itest].x_ptr, modelTests[itest].y_ptr, extrapCode,
+                             &errorCode);
+            if (errorCode != EOS_OK) {
+              printf ("eos_CheckExtrap ERROR %i: %s\n", errorCode, errorMessage);
+            }
+            else {
+              for (j = 0; j < nXYPairs; j++) {
+                if (extrapCode[j] != EOS_OK) {
+                  printf
+                    ("  i=%i\tX = %13.6e, Y = %13.6e, F = %13.6e, dFx = %13.6e, dFy = %13.6e, extrap: %i\n",
+                     j, modelTests[itest].x_ptr[j], modelTests[itest].y_ptr[j], modelTests[itest].f_ptr[j],
+                     modelTests[itest].dFx_ptr[j], modelTests[itest].dFy_ptr[j], extrapCode[j]);
+                }
+                else {
+                  printf
+                    ("  i=%i\tX = %13.6e, Y = %13.6e, F = %13.6e, dFx = %13.6e, dFy = %13.6e\n", j,
+                     modelTests[itest].x_ptr[j], modelTests[itest].y_ptr[j], modelTests[itest].f_ptr[j],
+                     modelTests[itest].dFx_ptr[j], modelTests[itest].dFy_ptr[j]);
+                }
+              }
+            }
+          }
+        }
+        else {
+          for (j = 0; j < nXYPairs; j++) {
+            printf ("  i=%i\tX = %13.6e, Y = %13.6e, F = %13.6e, dFx = %13.6e, dFy = %13.6e\n",
+                    j, modelTests[itest].x_ptr[j], modelTests[itest].y_ptr[j], modelTests[itest].f_ptr[j],
+                    modelTests[itest].dFx_ptr[j], modelTests[itest].dFy_ptr[j]);
+          }
+        }
       }
     }                             /* itest loop */
 
@@ -451,31 +451,53 @@ int main ()
     for (itest = 0; itest < nModelTests; itest++) {
 
       EOS_INTEGER itest0 = itest + 1;
+      EOS_REAL sum[3] = {0.0, 0.0, 0.0}, mean[3], stddev[3] = {0.0, 0.0, 0.0}, rdiff[3];
 
       if (get_dataTypeCategory(modelTests[itest].tableType[0]) == 0)
-	continue;
+        continue;
 
       if (modelTests[itest].modelFlag != EOS_INVERT_AT_SETUP)
-	continue;
+        continue;
 
       for (i = 0; i < modelTests[itest].nTables; i++) {
 
-	if (! modelTests[itest].isLoaded[i])
-	  continue;
+        if (! modelTests[itest].isLoaded[i])
+          continue;
 
-	printf ("--- TEST CASE %i vs. TEST CASE %i for material %i ---\n",
-		itest+imatid*nModelTests, itest0+imatid*nModelTests, modelTests[itest].matID[i]);
+        printf ("--- TEST CASE %i vs. TEST CASE %i for material %i ---\n",
+                itest+imatid*nModelTests, itest0+imatid*nModelTests, modelTests[itest].matID[i]);
 
 #define reldiff(x,y) (y-x)/fabs(x)
+        for (j = 0; j < nXYPairs; j++) {
+          sum[0] += reldiff( modelTests[itest0].f_ptr[j],   modelTests[itest].f_ptr[j]   );
+          sum[1] += reldiff( modelTests[itest0].dFx_ptr[j], modelTests[itest].dFx_ptr[j] );
+          sum[2] += reldiff( modelTests[itest0].dFy_ptr[j], modelTests[itest].dFy_ptr[j] );
+        }
+        mean[0] = sum[0] / nXYPairs;
+        mean[1] = sum[1] / nXYPairs;
+        mean[2] = sum[2] / nXYPairs;
 
-	for (j = 0; j < nXYPairs; j++) {
-	  printf ("  i=%i\t                                      F = %13.6e, dFx = %13.6e, dFy = %13.6e\tfmcp_ignore\n",
-		  j,
-		  reldiff( modelTests[itest0].f_ptr[j],   modelTests[itest].f_ptr[j]   ),
-		  reldiff( modelTests[itest0].dFx_ptr[j], modelTests[itest].dFx_ptr[j] ),
-		  reldiff( modelTests[itest0].dFy_ptr[j], modelTests[itest].dFy_ptr[j] ));
-	}
+        for (j = 0; j < nXYPairs; j++) {
+          rdiff[0] = reldiff( modelTests[itest0].f_ptr[j],   modelTests[itest].f_ptr[j]   );
+          rdiff[1] = reldiff( modelTests[itest0].dFx_ptr[j], modelTests[itest].dFx_ptr[j] );
+          rdiff[2] = reldiff( modelTests[itest0].dFy_ptr[j], modelTests[itest].dFy_ptr[j] );
 
+          printf ("  i=%i\t                                      F = %13.6e, dFx = %13.6e, dFy = %13.6e\tfmcp_ignore\n",
+                  j, rdiff[0], rdiff[1], rdiff[2]);
+
+          stddev[0] += pow(rdiff[0] - mean[0], 2.0);
+          stddev[1] += pow(rdiff[1] - mean[1], 2.0);
+          stddev[2] += pow(rdiff[2] - mean[2], 2.0);
+        }
+
+        stddev[0] = sqrt(stddev[0] / nXYPairs);
+        stddev[1] = sqrt(stddev[1] / nXYPairs);
+        stddev[2] = sqrt(stddev[2] / nXYPairs);
+
+        printf ("  mean\t                                      F = %13.6e, dFx = %13.6e, dFy = %13.6e\tfmcp_ignore\n",
+                mean[0], mean[1], mean[2]);
+        printf ("stddev\t                                      F = %13.6e, dFx = %13.6e, dFy = %13.6e\tfmcp_ignore\n",
+                stddev[0], stddev[1], stddev[2]);
       }
 
     }                             /* itest loop */

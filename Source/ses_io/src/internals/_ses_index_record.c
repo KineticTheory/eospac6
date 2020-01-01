@@ -130,8 +130,8 @@ struct _ses_index_record* _copy_index_record(struct _ses_index_record* the_index
     _set_latest_error(SES_MEMORY_ALLOCATION_ERROR);
 
     /*  release memory on error */
-    ses_boolean didit_destruct = SES_FALSE;
-    didit_destruct = _destruct_ses_index_record(return_value);
+    /* ses_boolean didit_destruct = SES_FALSE; */
+    /* didit_destruct = */ _destruct_ses_index_record(return_value);
 
     return (struct _ses_index_record*)NULL;
   }
@@ -144,8 +144,8 @@ struct _ses_index_record* _copy_index_record(struct _ses_index_record* the_index
     _set_latest_error(SES_MEMORY_ALLOCATION_ERROR);
 
     /*  release memory on error */
-    ses_boolean didit_destruct = SES_FALSE;
-    didit_destruct = _destruct_ses_index_record(return_value);
+    /* ses_boolean didit_destruct = SES_FALSE; */
+    /* didit_destruct = */ _destruct_ses_index_record(return_value);
 
     return (struct _ses_index_record*)NULL;
   }
@@ -158,8 +158,8 @@ struct _ses_index_record* _copy_index_record(struct _ses_index_record* the_index
     _set_latest_error(SES_MEMORY_ALLOCATION_ERROR);
 
     /*  release memory on error */
-    ses_boolean didit_destruct = SES_FALSE;
-    didit_destruct = _destruct_ses_index_record(return_value);
+    /* ses_boolean didit_destruct = SES_FALSE; */
+    /* didit_destruct = */ _destruct_ses_index_record(return_value);
 
     return (struct _ses_index_record*)NULL;
   }
@@ -655,9 +655,9 @@ struct _ses_index_record* _read_index_record(struct _ses_file_handle* pSFH, long
     _set_latest_error(read_errors);
 
     /*  destruct on error */
-    ses_boolean didit_destruct = SES_FALSE; 
+    /* ses_boolean didit_destruct = SES_FALSE;  */
 
-    didit_destruct = _destruct_ses_index_record(the_index_record);
+    /* didit_destruct = */ _destruct_ses_index_record(the_index_record);
     free(the_index_record);
     the_index_record = (struct _ses_index_record*)NULL;
   }

@@ -21,6 +21,7 @@
 
 enum EOS_DATA_CLASS_enum
 {
+  EOS_INTERNAL,                 /* Internally-used information */
   EOS_INFORMATION,              /* General information found in 100 and 200 tables */
   EOS_TOTAL,                    /* Total EOS in 301 tables */
   EOS_ION_PLUS_COLD,            /* Ion+Cold EOS in 303 tables */
@@ -356,11 +357,12 @@ typedef enum EOS_RECORD_TYPE_enum EOS_RECORD_TYPE;
 
 /* Define hidden option flags that are currently not defined in the public interface.
  *  NOTE: If you want to use these in a test code, copy these defines into your code. */
-#define EOS_NUM_PRIVATE_OPTIONS 3
+#define EOS_NUM_PRIVATE_OPTIONS 4
 #define EOS_MIN_PRIVATE_OPTION_FLAG_VALUE   11000       /* Minimum private option flag value */
-#define EOS_DEBUG_PRINT   11000 /* Enable DEBUG_PRINT function */
-#define EOS_DISABLE_GHOST_NODES 11001      /* Disable the forced usage of ghost node data during interpolation */
-#define EOS_ALLOW_ALL_INFO_ITEMS 11002  /* Override category restrictions related to selected table information parameters */
+#define DISABLE_FTBLS_INVT_MASK   11000 /* Disable FTBLS_INVT_MASK function */
+#define EOS_DEBUG_PRINT   11001 /* Enable DEBUG_PRINT function */
+#define EOS_DISABLE_GHOST_NODES 11002      /* Disable the forced usage of ghost node data during interpolation */
+#define EOS_ALLOW_ALL_INFO_ITEMS 11003  /* Override category restrictions related to selected table information parameters */
 
 /* Table setup and interpolation option constants */
 #define EOS_NUM_LOADING_OPTIONS 15
@@ -428,7 +430,8 @@ typedef enum EOS_RECORD_TYPE_enum EOS_RECORD_TYPE;
 #define EOS_Material_Composition           4006 /* The material composition that is associated with the specified table handle */
 #define EOS_Material_Codes                 4007 /* The data generation software name(s) that is associated with the specified table handle */
 #define EOS_Material_Phases                4008 /* The material phase name(s) that is associated with the specified table handle */
-#define EOS_NUM_TABLE_META_DATA_CONSTANTS 8
+#define EOS_Material_Classification        4009 /* The material classification that is associated with the specified table handle. Examples include, but are not limited to, Unknown, Unclassified, Export Controlled, etc. */
+#define EOS_NUM_TABLE_META_DATA_CONSTANTS 9
 
 #define EOS_META_DATA_STRLEN 4096 /* maximum length of string buffer required for meta data information */
 

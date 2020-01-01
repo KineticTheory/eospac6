@@ -23,7 +23,7 @@
 ##################################################################
 #  use the first F90 compiler found from F90_List
 F90_List = g95 gfortran
-F90_Found_List = $(foreach compiler,$(F90_List),$(call pathsearch,$(compiler)))
+F90_Found_List = $(call memoize,create_F90_Found_List_once,$(F90_List))
 F90 = $(firstword $(notdir $(F90_Found_List)))
 ifeq ($(strip $(F90))$(strip $(F90_Found_List)),)
   $(error No supported Fortran compiler was found in your PATH for this machine. (supported: $(F90_List)))
@@ -51,6 +51,9 @@ CC  = $(firstword $(foreach compiler,$(call get,_CC,$(F90_Key)),$(call pathsearc
 CXX = $(firstword $(foreach compiler,$(call get,_CXX,$(F90_Key)),$(call pathsearch,$(compiler))))
 F77 = $(firstword $(foreach compiler,$(call get,_F77,$(F90_Key)),$(call pathsearch,$(compiler))))
 
+# compiler check for CC, CXX, F90 and F77
+include $(BASEDIR)/config/Makefile.check_compilers
+
 ##################################################################
 ### Assign values to associative arrays, which hold various    ###
 ### compiler options -- specific to this architecture.         ###
@@ -71,6 +74,16 @@ F77 = $(firstword $(foreach compiler,$(call get,_F77,$(F90_Key)),$(call pathsear
 ### _COMP_FLAGS{$F77} = $flag
 #
 ### _COMP_FLAGS{$F90_Key} = $flag
+
+MAKE_WINLIB_AR = $(WINLIB_AR)
+
+##################################################################
+### Define selected variable values according to $(F90).       ###
+##################################################################
+ifeq ($(strip $(F90)),g95)
+  G95_MEM_SEGMENTS = 0
+  export G95_MEM_SEGMENTS
+endif
 
 # define define_module_subdir script options
 $(call set,_DEFINE_MODULE_SUBDIR_FLAGS,g95,$(F90_Key))   # G95

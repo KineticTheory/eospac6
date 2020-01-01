@@ -15,25 +15,80 @@ eval '(exit $?0)' && eval 'exec perl -S "$0" ${1+"$@"}'
 # This script will determine which codes require data that is not
 # on the current machine, and then display those codes on STDOUT.
 #
+use Data::Dumper;
+use Getopt::Long;		# option parser
+my $options={};
+GetOptions($options,
+	   "--verbose+"
+	  );
+
 $get_sesame_data = shift;
 system("$get_sesame_data id > /dev/null 2>&1");
 die "\n$get_sesame_data is not executable\n\n" unless $?==0;
 
+$backup_created=0;
+if (glob("*.sesameFilesDir.txt")) {
+  $sesameFilesDir_bak = "sesameFilesDir.txt.bak$$";
+  system("cp sesameFilesDir.txt $sesameFilesDir_bak > /dev/null 2>&1");
+  if (-e "$sesameFilesDir_bak") {
+    $backup_created++;
+    system("cat *.sesameFilesDir.txt >> sesameFilesDir.txt");
+  }
+}
+
 $available_matids = `$get_sesame_data id | grep -v 'materials found' 2>&1`;
+
+system("mv $sesameFilesDir_bak sesameFilesDir.txt > /dev/null 2>&1")
+  if $backup_created;
+
+print "AVAILABLE MATIDS: $available_matids\n"
+  if $options->{"verbose"};
 
 @excluded = ();
 
-if ($#ARGV > -1) {
-  while (<>) {
-    chomp;
-    ($file, @matids) = split(/\t+/);
-    next if $matids[0] !~ /\d+/i;
-    foreach $m (@matids) {
-      if ($available_matids !~ /\b$m\b/) {
-	push(@excluded, $file);
-	print STDERR "Excluding $file because it requires $m\n";
-	last;
-      }
+# Build matid and/or sesame file dependencies
+undef @list;
+foreach $f (glob "*.[fc]*") {
+  $g=`basename $f`;
+  chomp $g;
+  $t = "";
+  undef @s;
+  @a=`grep "MATIDS TO TEST:" $f`; chomp @a; push(@s, @a);
+  @a=`grep "REQUIRED FILE:" $f`;  chomp @a; push(@s, @a);
+  print STDERR "$f: ", '\@s = ', Dumper(\@s) if $options->{"verbose"} > 2;
+  foreach $s (@s) {
+    $s=~s/.*MATIDS TO TEST:\s*//;
+    $s=~s/.*REQUIRED FILE:\s*/FILE=/;
+    $s=~s/ +/\t/g if $s !~ /FILE=/;
+    chomp $s;
+    $t .= "\t$s";
+  }
+  print STDERR "$f: ", '\@s = ', Dumper(\@s) if $options->{"verbose"} > 2;
+  push(@list, "$g$t");
+}
+
+print STDERR "INTERMEDIATE LIST:\n", Dumper(\@list)
+  if $options->{"verbose"} > 1;
+
+foreach (@list) {
+  s/[\n\r]//g;
+  ($file, @reqs) = split(/\t+/);
+  next if $reqs[0] !~ /\d+/i and $reqs[0] !~ /FILE=/;
+  foreach $m (@reqs) {
+    if ($m !~ /FILE=/ and $available_matids !~ /\b$m\b/) {
+      push(@excluded, $file);
+      print STDERR "Excluding $file because it requires $m\n"
+	if $options->{"verbose"};
+      last;
+    }
+    elsif ($m =~ /FILE=/) {
+      $m =~ /FILE=(\S+)/;
+      my $f = $1;
+      next if $f and -e $f;
+      push(@excluded, $file);
+      print STDERR "Excluding $file because it requires FILE=$f\n"
+	if $options->{"verbose"};
+      last;
     }
   }
 }

@@ -1,0 +1,13 @@
+
+----- TEST 1. flag= T
+eos_CreateTables OK
+eos_LoadTables ERROR  12011: EOS_NO_DATA_TABLE: Data table, EOS_St_DT, is not in EOS table area and it could not be manufactured for table handle 0
+  TH 0, eos_LoadTables ERROR 12021: EOS_INVALID_TABLE_HANDLE: Invalid table handle because EOS_NO_DATA_TABLE: Data table, EOS_St_DT, is not in EOS table area and it could not be manufactured for table handle 0
+eos_DestroyAll OK
+
+----- TEST 2. flag= F
+eos_CreateTables OK
+eos_LoadTables ERROR  22011: EOS_NO_DATA_TABLE: Data table, EOS_St_DT, is not in EOS table area and it could not be manufactured for table handle 1
+  TH 1, eos_LoadTables ERROR 22021: EOS_INVALID_TABLE_HANDLE: Invalid table handle because EOS_NO_DATA_TABLE: Data table, EOS_St_DT, is not in EOS table area and it could not be manufactured for table handle 1
+eos_DestroyAll OK
+

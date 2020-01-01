@@ -1,0 +1,75 @@
+#-*-makefile-*-###################################################
+#  
+#  Copyright -- see file named COPYRIGHTNOTICE
+#  
+##################################################################
+### This file contains the following:                          ###
+### Platform-dependent system configuration for a BASE_ARCH    ###
+### value containing the following pattern:                    ###
+###    *powerpc-ibm-aix
+###                                                            ###
+### The purpose of this file is                                ###
+###    - define various associative arrays                     ###
+###    - define ALT_SUBDIR                                     ###
+###    - optionally redefine ARCH                              ###
+##################################################################
+#
+# GMSL function dependencies exist (see $(BASEDIR)/config/gmsl).
+#
+# IBM PowerPC and AIX
+
+##################################################################
+### Assign values to associative arrays, which hold C, C++ and ###
+### F77 compiler names in preferential order according to      ###
+### the possible values of $(F90).                             ###
+##################################################################
+$(call set,_CC,xlf90,    xlc      gcc  )   # IBM XL
+
+$(call set,_CXX,xlf90,   xlC      g++  )   # IBM XL
+
+$(call set,_F77,xlf90,   f77      xlf90)   # IBM XL
+
+##################################################################
+### Define CC, CXX and  F77 according to $(F90).               ###
+##################################################################
+CC  = $(firstword $(foreach compiler,$(call get,_CC,$(F90_Key)),$(call pathsearch,$(compiler))))
+CXX = $(firstword $(foreach compiler,$(call get,_CXX,$(F90_Key)),$(call pathsearch,$(compiler))))
+F77 = $(firstword $(foreach compiler,$(call get,_F77,$(F90_Key)),$(call pathsearch,$(compiler))))
+
+##################################################################
+### Assign values to associative arrays, which hold various    ###
+### compiler options -- specific to this architecture.         ###
+##################################################################
+#
+### VERSION_FLAG{$CC} = $flag
+$(call set,VERSION_FLAG,xlc,-qversion)   # XL C
+#
+### VERSION_FLAG{$CXX} = $flag
+$(call set,VERSION_FLAG,xlC,-qversion)   # XL C++
+#
+### VERSION_FLAG{$F77} = $flag
+$(call set,VERSION_FLAG,f77,-qversion)   # XLF F77
+#
+### VERSION_FLAG{$F90} = $flag
+$(call set,VERSION_FLAG,xlf90,-qversion)   # XLF F90
+#
+### _COMP_FLAGS{$CC} = $flag
+#
+### _COMP_FLAGS{$CXX} = $flag
+#
+### _COMP_FLAGS{$F77} = $flag
+#
+### _COMP_FLAGS{$F90} = $flag
+$(call set,_COMP_FLAGS,xlf90,-qfloat=nomaf -qsuffix=f=f90)   # XLF F90
+
+# define define_module_subdir script options
+$(call set,_DEFINE_MODULE_SUBDIR_FLAGS,xlf90,$(F90))   # XLF F90
+
+# define selected variable values according to $(F90_Key).
+ALT_SUBDIR := $(shell $(BASEDIR)/scripts/define_module_subdir $(call get,_DEFINE_MODULE_SUBDIR_FLAGS,$(F90_Key)))
+
+# Set additional compiler-specific options
+_CFLAGS += $(call get,_COMP_FLAGS,$(CC))
+_CXXFLAGS += $(call get,_COMP_FLAGS,$(CXX))
+_FFLAGS += $(call get,_COMP_FLAGS,$(F77))
+_F90FLAGS += $(call get,_COMP_FLAGS,$(F90))

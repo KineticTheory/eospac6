@@ -9,7 +9,7 @@
  * \brief Simple MAIN to demonstrate sampler usage
  *
  * \author David A. Pimentel
- *         $Date: 2013/09/10 00:16:16 $
+ *         $Date: 2013/09/09 18:16:16 MDT $
  *
  * \par STDERR
  *       All information and error messages are returned

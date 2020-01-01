@@ -15,17 +15,11 @@ ifeq (0,${MAKELEVEL})
   export ORIGINAL_COMMAND_LINE := $(strip $(MAKE) $(if $(DEBUG),DEBUG=$(DEBUG),) $(MAKEFLAGS) $(MAKECMDGOALS))
 
   # verify version is at least $(REQUIRED_MAKE_VERSION)
-  REQUIRED_MAKE_VERSION = 3.80
-  RECOMMENDED_MAKE_VERSION = 3.81
+  REQUIRED_MAKE_VERSION = 3.81
   ver := $(shell echo $(MAKE_VERSION) | sed -e 's/^\([0-9][0-9]*\.[0-9][0-9]*\).*/\1/')
   valid = $(shell perl -e '$$v="$(MAKE_VERSION)";$$v=~s/(^\d+\.\d+).*/$$1/;print (($$v>=$(REQUIRED_MAKE_VERSION)) ? 1: 0);')
-  got_recommended = $(shell perl -e '$$v="$(MAKE_VERSION)";$$v=~s/(^\d+\.\d+).*/$$1/;print (($$v>=$(RECOMMENDED_MAKE_VERSION)) ? 1: 0);')
   ifeq ($(valid),1)
-    ifeq ($(got_recommended),1)
-      $(warning ==== GNU make $(MAKE_VERSION) is current enough. ====)
-    else
-      $(warning ==== GNU make $(MAKE_VERSION) is current enough; however, GNU make $(RECOMMENDED_MAKE_VERSION) or later is recommended. ====)
-    endif
+    $(warning ==== GNU make $(MAKE_VERSION) is current enough. ====)
   else
     $(error GNU make $(MAKE_VERSION) is not current enough. Version $(REQUIRED_MAKE_VERSION) or later is required. It has been available from ftp.gnu.org since 03-Oct-2002, so upgrade already!)
   endif
@@ -35,11 +29,12 @@ endif
 LIBRARY = eospac
 MAJOR_VER = 6
 
-CVS_BASE_TAG_NAME = $(filter-out ame:,$(filter-out \$,$(subst -,.,$Name: v6-3-1 $)))
+CVS_BASE_TAG_NAME = $(filter-out ame: ame,$(filter-out \$,$(subst -,.,$Name: v6-4-0 $)))
 ifeq ($(strip $(CVS_BASE_TAG_NAME)),)
   # Assign a default value to CVS_BASE_TAG_NAME if empty
   CVS_BASE_TAG_NAME = v$(MAJOR_VER).unreleased
 endif
+$(warning CVS_BASE_TAG_NAME = $(CVS_BASE_TAG_NAME))
 
 INSTALLEDFILESGROUP = $(filter pdata,$(shell groups))
 
@@ -125,7 +120,11 @@ BUILD_LOG = build.log
 ##################################################################
 ifeq (0,${MAKELEVEL})
   _BASE_ARCH0 = $(shell sh $(BASEDIR)/scripts/config.guess)
-  _BASE_ARCH = $(shell sh $(BASEDIR)/scripts/config.guess.wrapper)
+  ifneq ($(NOVECT),)
+    _BASE_ARCH := $(shell sh $(BASEDIR)/scripts/config.guess.wrapper -n)
+  else
+    _BASE_ARCH := $(shell sh $(BASEDIR)/scripts/config.guess.wrapper)
+  endif
   ifneq ($(strip $(BASE_ARCH0)),)
     ifneq ($(strip $(BASE_ARCH0)),$(strip $(_BASE_ARCH0)))
       $(warning *** You cannot override BASE_ARCH0 on the command line! ***)
@@ -180,10 +179,10 @@ REGRESSION_DATA_DIR_PARENT = $(BASEDIR)/tests/data
 ### Define default compilers and options.                      ###
 ### These may be overridden upon a platform-specific basis.    ###
 ##################################################################
-CC  := gcc
-CXX := g++
-F77 := gfortran
-F90 := gfortran
+CC  :=
+CXX :=
+F77 :=
+F90 :=
 
 # Override RANLIB, since its functionality is typically performed by ar.
 RANLIB = :
@@ -209,6 +208,10 @@ _CFLAGS   = -Wall -fPIC -DHEADER_EOS
 _CXXFLAGS = -Wall -fPIC
 _FFLAGS   = -Wall -fPIC
 _F90FLAGS = -Wall -fPIC
+#_F90FLAGS += -Wextra
+#_F90FLAGS += -pedantic
+#_F90FLAGS += -fbacktrace
+#_F90FLAGS += -std=f2003
 
 C_ADDRESS_FLAG =
 F_ADDRESS_FLAG =
@@ -225,8 +228,9 @@ base_dirList= /opt/local/codes/data \
               /usr/gapps/lanl-data  \
               /projects/lanl-data  \
               /usr/local
-prefix      = $(addsuffix /eos/$(LIBRARY)/$(CVS_BASE_TAG_NAME), \
-                $(strip $(firstword $(wildcard $(base_dirList)))))
+base_dir    = $(strip $(firstword $(wildcard $(base_dirList))))
+prefix      = $(addsuffix /eos/$(LIBRARY)/$(CVS_BASE_TAG_NAME), $(base_dir))
+prefix0     = $(shell dirname $(shell dirname $(shell dirname $(prefix))))
 exec_prefix = $(strip ${prefix})
 install_subdir = $(strip $(ARCH))
 
@@ -259,49 +263,43 @@ ifeq ($(call match,pc-cygwin,$(BASE_ARCH)),TRUE)
   # Cygwin and MS Windows PC
   CONFIG_INC := $(BASEDIR)/config/Makefile.pc-cygwin
 
-else
-ifeq ($(call match,sgi-irix,$(BASE_ARCH)),TRUE)
+else ifeq ($(call match,sgi-irix,$(BASE_ARCH)),TRUE)
   # mips SGI and IRIX
   CONFIG_INC := $(BASEDIR)/config/Makefile.sgi-irix
 
-else
-ifeq ($(call match,dec-osf,$(BASE_ARCH)),TRUE)
+else ifeq ($(call match,dec-osf,$(BASE_ARCH)),TRUE)
   # Compaq Alpha and OSF
   CONFIG_INC := $(BASEDIR)/config/Makefile.dec-osf
 
-else
-#ifeq ($(or $(call match,powerpc64-,$(BASE_ARCH)),$(call match,powerpc-,$(BASE_ARCH)))$(call match,-linux-gnu,$(BASE_ARCH)),TRUETRUE)
-ifeq ($(call match,powerpc64-,$(BASE_ARCH))$(call match,-linux-gnu,$(BASE_ARCH)),TRUETRUE)
+else ifeq ($(call match,power,$(BASE_ARCH))$(call match,pc64,$(BASE_ARCH))$(call match,-linux-gnu,$(BASE_ARCH)),TRUETRUETRUE)
   # IBM PowerPC-64 and Linux
   CONFIG_INC := $(BASEDIR)/config/Makefile.powerpc-linux-gnu
 
-else
-ifeq ($(call match,powerpc-,$(BASE_ARCH))$(call match,-linux-gnu,$(BASE_ARCH)),TRUETRUE)
+else ifeq ($(call match,powerpc-,$(BASE_ARCH))$(call match,-linux-gnu,$(BASE_ARCH)),TRUETRUE)
   # IBM PowerPC and Linux
   CONFIG_INC := $(BASEDIR)/config/Makefile.powerpc-linux-gnu
 
-else
-ifeq ($(call match,powerpc-ibm-aix,$(BASE_ARCH)),TRUE)
+else ifeq ($(call match,powerpc-ibm-aix,$(BASE_ARCH)),TRUE)
   # IBM PowerPC and AIX
   CONFIG_INC := $(BASEDIR)/config/Makefile.powerpc-ibm-aix
 
-else
-ifeq ($(call match,powerpc-apple,$(BASE_ARCH)),TRUE)
+else ifeq ($(call match,powerpc-apple,$(BASE_ARCH)),TRUE)
   # IBM PowerPC and MacOS
   CONFIG_INC := $(BASEDIR)/config/Makefile.powerpc-apple
 
-else
-ifeq ($(call match,i386-apple,$(BASE_ARCH)),TRUE)
+else ifeq ($(call match,i386-apple,$(BASE_ARCH)),TRUE)
   # Intel and MacOS
   CONFIG_INC := $(BASEDIR)/config/Makefile.i386-apple
 
-else
-ifeq ($(call match,sun-solaris,$(BASE_ARCH)),TRUE)
+else ifeq ($(call match,x86_64-apple,$(BASE_ARCH)),TRUE)
+  # Intel and MacOS (Until a unique x86_64-apple configuration is required, use what is used for i386-apple)
+  CONFIG_INC := $(BASEDIR)/config/Makefile.i386-apple
+
+else ifeq ($(call match,sun-solaris,$(BASE_ARCH)),TRUE)
   # Sun and Solaris
   CONFIG_INC := $(BASEDIR)/config/Makefile.sun-solaris
 
-else
-ifeq ($(call match,-linux-gnu,$(BASE_ARCH)),TRUE)
+else ifeq ($(call match,-linux-gnu,$(BASE_ARCH)),TRUE)
   # PC or IBM PowerPC, and Linux
   CONFIG_INC := $(BASEDIR)/config/Makefile.-linux-gnu
 
@@ -311,15 +309,8 @@ else
   CONFIG_INC :=
 
 endif
-endif
-endif
-endif
-endif
-endif
-endif
-endif
-endif
-endif
+
+$(warning Loaded CONFIG_INC="$(CONFIG_INC)" for $(BASE_ARCH))
 
 ##################################################################
 ### Define ARCH                                                ###
@@ -341,6 +332,9 @@ endif
 ###    - optionally redefine ARCH                              ###
 ##################################################################
 
+create_F90_Found_List_once = $(foreach compiler,$1,$(call pathsearch,$(compiler)))
+set_F90_Key_once = $(strip $(firstword $(foreach compiler,$1,$(call match_r1,$(compiler),$(F90)))))
+
 CONFIG_INC_DETECT = $(strip $(wildcard $(CONFIG_INC).detect))
 ifeq ($(strip $(wildcard $(CONFIG_INC_DETECT))),)
   CONFIG_INC_DETECT = $(wildcard $(CONFIG_INC))
@@ -348,6 +342,10 @@ endif
 ifeq ($(strip $(wildcard $(CONFIG_INC_DETECT))),)
 
   # Default
+  CC  := gcc
+  CXX := g++
+  F77 := gfortran
+  F90 := gfortran
   ifeq (0,${MAKELEVEL})
     $(warning **************************************************************************************)
     $(warning WARNING: This is an unsupported platform. Attempting to compile using generic options.)
@@ -360,6 +358,52 @@ else
   include $(CONFIG_INC_DETECT)
 
 endif
+
+##################################################################
+### Assign values to associative arrays, which hold various    ###
+### compiler options -- unless already defined.                ###
+##################################################################
+#
+### VERSION_FLAG{$CC} = $flag
+$(call set_if_undefined,VERSION_FLAG,gcc,--version)
+$(call set_if_undefined,VERSION_FLAG,pgcc,-V)
+$(call set_if_undefined,VERSION_FLAG,icc,--version)
+$(call set_if_undefined,VERSION_FLAG,pathcc,-version)
+$(call set_if_undefined,VERSION_FLAG,cc,-V)
+#
+### VERSION_FLAG{$CXX} = $flag
+$(call set_if_undefined,VERSION_FLAG,g++,--version)
+$(call set_if_undefined,VERSION_FLAG,pgCC,-V)
+$(call set_if_undefined,VERSION_FLAG,icpc,--version)
+$(call set_if_undefined,VERSION_FLAG,pathCC,-version)
+$(call set_if_undefined,VERSION_FLAG,CC,-V)
+#
+### VERSION_FLAG{$F77} = $flag
+$(call set_if_undefined,VERSION_FLAG,pgf77,-V)
+$(call set_if_undefined,VERSION_FLAG,g77,--version)
+$(call set_if_undefined,VERSION_FLAG,f77,-V)
+#
+### VERSION_FLAG{$F90} = $flag
+$(call set_if_undefined,VERSION_FLAG,pgf90,-V)
+$(call set_if_undefined,VERSION_FLAG,pgf95,-V)
+$(call set_if_undefined,VERSION_FLAG,lf95,--version)
+$(call set_if_undefined,VERSION_FLAG,f90,-V)
+$(call set_if_undefined,VERSION_FLAG,pathf90,-version)
+$(call set_if_undefined,VERSION_FLAG,pathf95,-version)
+$(call set_if_undefined,VERSION_FLAG,ifort,--version)
+$(call set_if_undefined,VERSION_FLAG,g95,--version)
+$(call set_if_undefined,VERSION_FLAG,gfortran,--version)
+$(call set_if_undefined,VERSION_FLAG,f90,-V)
+$(call set_if_undefined,VERSION_FLAG,ftn,-V)
+#
+# Redefine compiler version commands based upon increased flexibility
+#
+CC_VERSION  = $(if $(_CC_VERSION),$(_CC_VERSION),$(call define_version_cmd,$(CC),--version))
+CXX_VERSION = $(if $(_CXX_VERSION),$(_CXX_VERSION),$(call define_version_cmd,$(CXX),--version))
+F77_VERSION = $(if $(_F77_VERSION),$(_F77_VERSION),$(call define_version_cmd,$(F77),--version))
+F90_VERSION = $(if $(_F90_VERSION),$(_F90_VERSION),$(call define_version_cmd,$(F90_Key),--version))
+
+export VERSION_FLAG CC_VERSION CXX_VERSION F90_VERSION
 
 ##################################################################
 ### Platform-dependent system configuration section tests for  ###
@@ -378,6 +422,10 @@ endif
 ifeq ($(strip $(wildcard $(CONFIG_INC_HASHES))),)
 
   # Default
+  CC  := gcc
+  CXX := g++
+  F77 := gfortran
+  F90 := gfortran
   ifeq (0,${MAKELEVEL})
     $(warning **************************************************************************************)
     $(warning WARNING: This is an unsupported platform. Attempting to compile using generic options.)
@@ -420,8 +468,9 @@ base_dirList= /opt/local/codes/data \
               /usr/gapps/lanl-data  \
               /projects/lanl-data  \
               /usr/local
-prefix      = $(addsuffix /eos/$(LIBRARY)/$(CVS_BASE_TAG_NAME), \
-                $(strip $(firstword $(wildcard $(base_dirList)))))
+base_dir    = $(strip $(firstword $(wildcard $(base_dirList))))
+prefix      = $(addsuffix /eos/$(LIBRARY)/$(CVS_BASE_TAG_NAME), $(base_dir))
+prefix0     = $(shell dirname $(shell dirname $(shell dirname $(prefix))))
 exec_prefix = $(strip ${prefix})
 
 export CVS_BASE_TAG_NAME F_ADDRESS_FLAG C_ADDRESS_FLAG ALT_SUBDIR N32 SERIES
@@ -431,52 +480,6 @@ ifeq ($(strip $(notdir $(call pathsearch,$(F77)))),)
   $(warning F77 compiler reset to $(F90) for this machine, because $(F77) was not found.)
   F77 = $(F90)
 endif
-
-##################################################################
-### Assign values to associative arrays, which hold various    ###
-### compiler options -- unless already defined.                ###
-##################################################################
-#
-### VERSION_FLAG{$CC} = $flag
-$(call set_if_undefined,VERSION_FLAG,gcc,--version)
-$(call set_if_undefined,VERSION_FLAG,pgcc,-V)
-$(call set_if_undefined,VERSION_FLAG,icc,-V)
-$(call set_if_undefined,VERSION_FLAG,pathcc,-version)
-$(call set_if_undefined,VERSION_FLAG,cc,-V)
-#
-### VERSION_FLAG{$CXX} = $flag
-$(call set_if_undefined,VERSION_FLAG,g++,--version)
-$(call set_if_undefined,VERSION_FLAG,pgCC,-V)
-$(call set_if_undefined,VERSION_FLAG,icpc,-V)
-$(call set_if_undefined,VERSION_FLAG,pathCC,-version)
-$(call set_if_undefined,VERSION_FLAG,CC,-V)
-#
-### VERSION_FLAG{$F77} = $flag
-$(call set_if_undefined,VERSION_FLAG,pgf77,-V)
-$(call set_if_undefined,VERSION_FLAG,g77,--version)
-$(call set_if_undefined,VERSION_FLAG,f77,-V)
-#
-### VERSION_FLAG{$F90} = $flag
-$(call set_if_undefined,VERSION_FLAG,pgf90,-V)
-$(call set_if_undefined,VERSION_FLAG,pgf95,-V)
-$(call set_if_undefined,VERSION_FLAG,lf95,--version)
-$(call set_if_undefined,VERSION_FLAG,f90,-V)
-$(call set_if_undefined,VERSION_FLAG,pathf90,-version)
-$(call set_if_undefined,VERSION_FLAG,pathf95,-version)
-$(call set_if_undefined,VERSION_FLAG,ifort,-V)
-$(call set_if_undefined,VERSION_FLAG,g95,--version)
-$(call set_if_undefined,VERSION_FLAG,gfortran,--version)
-$(call set_if_undefined,VERSION_FLAG,f90,-V)
-$(call set_if_undefined,VERSION_FLAG,ftn,-V)
-#
-# Redefine compiler version commands based upon increased flexibility
-#
-CC_VERSION  = $(if $(_CC_VERSION),$(_CC_VERSION),$(call define_version_cmd,$(CC),--version))
-CXX_VERSION = $(if $(_CXX_VERSION),$(_CXX_VERSION),$(call define_version_cmd,$(CXX),--version))
-F77_VERSION = $(if $(_F77_VERSION),$(_F77_VERSION),$(call define_version_cmd,$(F77),--version))
-F90_VERSION = $(if $(_F90_VERSION),$(_F90_VERSION),$(call define_version_cmd,$(F90_Key),--version))
-
-export VERSION_FLAG CC_VERSION CXX_VERSION F90_VERSION
 
 ##################################################################
 ### Check to see if the specified compiler executables are     ###
@@ -498,12 +501,15 @@ ifneq (${MAKECMDGOALS},help)
       $(error Invalid F90 compiler: $(F90) not found)
     endif
 
-    $(warning *** The following compiler executables are used ***)
-    $(warning C: $(notdir $(CC)) ... $(call pathsearch,$(CC)))
-    $(warning C++: $(notdir $(CXX)) ... $(call pathsearch,$(CXX)))
-    $(warning F77: $(notdir $(F77)) ... $(call pathsearch,$(F77)))
-    $(warning F90: $(notdir $(F90)) ... $(call pathsearch,$(F90)))
-    $(warning ***************************************************)
+    $(info *********************************************************************)
+    $(info *)
+    $(info * The following compiler executables are used:)
+    $(info *   C:   $(notdir $(CC)) ... $(call pathsearch,$(CC)))
+    $(info *   C++: $(notdir $(CXX)) ... $(call pathsearch,$(CXX)))
+    $(info *   F77: $(notdir $(F77)) ... $(call pathsearch,$(F77)))
+    $(info *   F90: $(notdir $(F90)) ... $(call pathsearch,$(F90)))
+    $(info *)
+    $(info *********************************************************************)
   endif
 endif
 
@@ -514,6 +520,18 @@ _CFLAGS   := $(if $(call seq,gcc,$(notdir $(CC))),$(_CFLAGS),$(subst -Wall,,$(_C
 _CXXFLAGS := $(if $(call seq,g++,$(notdir $(CXX))),$(_CXXFLAGS),$(subst -Wall,,$(_CXXFLAGS)))
 _FFLAGS   := $(if $(call seq,g77,$(notdir $(F77))),$(_FFLAGS),$(subst -Wall,,$(_FFLAGS)))
 _F90FLAGS := $(if $(call seq,gfortran,$(notdir $(F90))),$(_F90FLAGS),$(subst -Wall,,$(_F90FLAGS)))
+
+override CPUFLAGS := $(_CPUINFO_FLAGS)
+$(warning ----------------------------------------------------)
+$(warning CPUFLAGS : $(CPUFLAGS))
+$(warning ----------------------------------------------------)
+
+# override CFLAGS   := $(_CFLAGS)   $(DEBUG) $(C_ADDRESS_FLAG) -I$(INCDIR) -I$(SESIOINC) -L$(LIBDIR) $(DEFS) $(PROFILE) $(CFLAGS)   $(CPUFLAGS)
+# override CXXFLAGS := $(_CXXFLAGS) $(DEBUG) $(C_ADDRESS_FLAG) -I$(INCDIR) -I$(SESIOINC) -L$(LIBDIR) $(DEFS) $(PROFILE) $(CXXFLAGS) $(CPUFLAGS)
+# override FFLAGS   := $(_FFLAGS)   $(DEBUG) $(F_ADDRESS_FLAG) -I$(INCDIR) -I$(SESIOINC) -L$(LIBDIR) $(DEFS) $(PROFILE) $(FFLAGS)	  $(CPUFLAGS)
+# override F90FLAGS := $(_F90FLAGS) $(DEBUG) $(F_ADDRESS_FLAG) -I$(INCDIR) -I$(SESIOINC) -L$(LIBDIR) $(DEFS) $(PROFILE) $(F90FLAGS) $(CPUFLAGS)
+
+# override LDFLAGS  += $(_LDFLAGS) $(DEBUG) -I$(INCDIR) -I$(SESIOINC) -L$(LIBDIR) $(PROFILE) $(CPUFLAGS)
 
 override CFLAGS   := $(_CFLAGS)   $(DEBUG) $(C_ADDRESS_FLAG) -I$(INCDIR) -I$(SESIOINC) -L$(LIBDIR) $(DEFS) $(PROFILE) $(CFLAGS)
 override CXXFLAGS := $(_CXXFLAGS) $(DEBUG) $(C_ADDRESS_FLAG) -I$(INCDIR) -I$(SESIOINC) -L$(LIBDIR) $(DEFS) $(PROFILE) $(CXXFLAGS)
@@ -596,6 +614,7 @@ ifdef VERBOSE
   $(warning EXAMPLEDIR                         : $(EXAMPLEDIR))
   $(warning EXE0                               : $(EXE0))
   $(warning EXE1                               : $(EXE1))
+  $(warning EXE                                : $(EXE))
   $(warning F77                                : $(F77))
   $(warning F77_VERSION                        : $(F77_VERSION))
   $(warning F90                                : $(F90))
@@ -623,7 +642,6 @@ ifdef VERBOSE
   $(warning PROFILE                            : $(PROFILE))
   $(warning PURIFY                             : $(PURIFY))
   $(warning RANLIB                             : $(RANLIB))
-  $(warning RECOMMENDED_MAKE_VERSION           : $(RECOMMENDED_MAKE_VERSION))
   $(warning REGRESSION_DATA_DIR_PARENT         : $(REGRESSION_DATA_DIR_PARENT))
   $(warning REGRESSION_DATA_DIR                : $(REGRESSION_DATA_DIR))
   $(warning REGRESSION_DATA_EXCEPTIONS_DIR     : $(REGRESSION_DATA_EXCEPTIONS_DIR))

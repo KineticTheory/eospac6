@@ -51,8 +51,12 @@ wrappers/fortran/libsesf.a :
 wrappers/fortran/libsesw.a :
 	$(MAKE) -C wrappers/fortran $(FLAGS) libsesw.a
 
+# Hack: to get it to work on Linux & Mac.
 wrappers/java/libsesj.so :
 	$(MAKE) -C wrappers/java $(FLAGS) libsesj.so
+
+wrappers/java/libsesj.dylib :
+	$(MAKE) -C wrappers/java $(FLAGS) libsesj.dylib
 
 clean :
 	rm -f libses.a; rm -f *.o; rm -f *~

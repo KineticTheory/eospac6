@@ -20,8 +20,33 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
+#include "eos_SaferMemoryAllocation.h"
 
+#ifndef EXCLUDE_COLD_CURVE_IN_INVERTED_GRID
+#  define __INCLUDE_COLD_CURVE_IN_INVERTED_GRID__
+#endif
+#ifdef __INCLUDE_COLD_CURVE_IN_INVERTED_GRID__
+#  define __ADD_VAL__(v) v
+#else
+#  define __ADD_VAL__(v) 0
+#endif
 
+/* The following macro enables logic that removes the cold curve from a
+ * pre-inverted (EOS_INVERT_AT_SETUP) table before it is constructed:
+ */
+#define __REMOVE_COLD_CURVE_FROM_SELECTED_INVERSIONS__
+
+#ifdef __REMOVE_COLD_CURVE_FROM_SELECTED_INVERSIONS__
+/* The following macro enables logic that normalizes data with X[] for the
+ * pre-inverted (EOS_INVERT_AT_SETUP) table before it is constructed:
+ */
+#define __NORMALIZE_WITH_X_FOR_SELECTED_INVERSIONS__
+#endif
+
+#ifdef __NORMALIZE_WITH_X_FOR_SELECTED_INVERSIONS__
+//#define __DISALLOW_POSITIVE_XF_EXTRAPOLATION_IF_INVERTATSETUP__
+//#define __DISALLOW_NEGATIVE_XF_EXTRAPOLATION_IF_INVERTATSETUP__
+#endif
 
 /************************************************************************
  * 
@@ -44,10 +69,11 @@ EOS_INTEGER sesameFilesL;
 EOS_INTEGER _EOS_STOP_FILE_SEARCH = 999999;
 EOS_BOOLEAN fileListPrinted = EOS_FALSE;
 
-#define EOS_NUMDEFAULTSESAMEPATHSL 6
+#define EOS_NUMDEFAULTSESAMEPATHSL 7
 static const EOS_CHAR *defaultSesamePathList[EOS_NUMDEFAULTSESAMEPATHSL] = {
   "/usr/projects/data/eos",     /* LANL Production data path        */
   "/usr/local/codes/data/eos",  /* LANL X-Div LAN data path         */
+  "/opt/local/codes/data/eos",  /* LANL X-Div LAN data path         */
   "/usr/local/udata/ses",       /* LANL Cray unclassified data path */
   "/usr/local/cdata",           /* LANL Cray classified data path   */
   "/usr/gapps/lanl-data/eos",   /* LLNL Production data path        */
@@ -139,10 +165,7 @@ extern EOS_INTEGER gMatidMapL;
 #endif
 
 /* Miscellaneous macro definitions */
-//#define EOS_FREE(p) { assert(p != NULL); free(p); p=NULL; }
-//DEBUG
-#define EOS_FREE(p) {if(p != NULL) free(p); p=NULL;}
-#define AVERAGE(a,b,_ab_type_) (a+b)/((_ab_type_)2.0)
+#define AVERAGE(_ab_type_,a,b) (a+b)/((_ab_type_)2.0)
 /* The following 4 defines can have values of 0 or 1; otherwise code failure occurs in _eos_CreateGhostData() */
 #define _EOS_CREATEGHOSTDATA_X_LO 1
 #define _EOS_CREATEGHOSTDATA_X_HI 1

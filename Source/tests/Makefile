@@ -43,11 +43,22 @@ endif
 ##################################################################
 DEPDIR = $(BASEDIR)/tests/.depends
 df = $(DEPDIR)/$(*F)
-MAKEDEPEND = $(BASEDIR)/scripts/make_depends -d $(DEPDIR) -I $(BASEDIR)/src -I $(SESIOINC) $<
+MAKEDEPEND = $(BASEDIR)/scripts/make_depends -d $(DEPDIR) -I $(SRCDIR) -I $(SESIOINC) $<
+
+# Change specific compiler options as required for tests
+override CFLAGS   := $(subst -fp-model=precise,-fp-model=strict,$(CFLAGS))
+override CXXFLAGS := $(subst -fp-model=precise,-fp-model=strict,$(CXXFLAGS))
+override FFLAGS   := $(subst -fp-model=precise,-fp-model=strict,$(FFLAGS))
+override F90FLAGS := $(subst -fp-model=precise,-fp-model=strict,$(F90FLAGS))
+
+ifeq ($(call match,-xMIC-AVX512,$(CPUFLAGS)),TRUE)
+  # for one C test on KNL
+  override CFLAGS   += -DUSE_AVX512PF
+endif
 
 $(OBJDIR)/%.o : %.c
 	$(MAKEDEPEND)
-	${CC} $(C_ADDRESS_FLAG) ${CPPFLAGS} ${CFLAGS} $(MORE_COMPILE_OPTS) -c $< -o $@
+	${CC} $(C_ADDRESS_FLAG) ${CPPFLAGS} ${CFLAGS} $(MORE_COMPILE_OPTS) -I$(SRCDIR) -c $< -o $@
 	$(PURIFY) $(CC) $(C_ADDRESS_FLAG) $(LDFLAGS) $(MORE_LD_OPTS) -o $(EXEDIR)/$* $@ $(LIBS) $(MORELIBS)
 	@(if [ ! -d "$(EXEDIR)/$*.workdir" ]; then mkdir -p "$(EXEDIR)/$*.workdir"; fi; \
           d=`echo $(EXEDIR)/$*.workdir | sed -e 's:$(BASEDIR)/*::' | sed -e 's:[^/]:\.\.:g;s:\.\.*:..:g'`; \
@@ -57,8 +68,8 @@ $(OBJDIR)/%.o : %.c
 
 $(OBJDIR)/%.o : %.cpp
 	$(MAKEDEPEND)
-	${CXX} $(C_ADDRESS_FLAG) ${CPPFLAGS} ${CXXFLAGS} $(MORE_COMPILE_OPTS) -c $< -o $@
-	$(PURIFY) $(CXX) $(C_ADDRESS_FLAG) $(LDFLAGS) $(MORE_LD_OPTS) -o $(EXEDIR)/$* $@ $(LIBS) $(MORELIBS)
+	${CXX} $(C_ADDRESS_FLAG) ${CPPFLAGS} ${CXXFLAGS} $(CPUFLAGS)  $(MORE_COMPILE_OPTS) -I$(SRCDIR) -c $< -o $@
+	$(PURIFY) $(CXX) $(C_ADDRESS_FLAG) $(LDFLAGS) $(CPUFLAGS) $(MORE_LD_OPTS) -o $(EXEDIR)/$* $@ $(LIBS) $(MORELIBS)
 	@(if [ ! -d "$(EXEDIR)/$*.workdir" ]; then mkdir -p "$(EXEDIR)/$*.workdir"; fi; \
           d=`echo $(EXEDIR)/$*.workdir | sed -e 's:$(BASEDIR)/*::' | sed -e 's:[^/]:\.\.:g;s:\.\.*:..:g'`; \
           sed -e "/^[[:space:]]*#/!s:<BASEDIR_PATTERN>:$$d:" sesameFilesDir.txt.template > "$(EXEDIR)/$*.workdir/sesameFilesDir.txt" ; \
@@ -67,7 +78,7 @@ $(OBJDIR)/%.o : %.cpp
 
 $(OBJDIR)/%.o : %.f
 	$(MAKEDEPEND)
-	${F77} $(F_ADDRESS_FLAG) ${FFLAGS} $(MORE_COMPILE_OPTS) -c $< -o $@
+	${F77} $(F_ADDRESS_FLAG) ${FFLAGS} $(MORE_COMPILE_OPTS) -I$(SRCDIR) -c $< -o $@
 	$(PURIFY) $(F77) $(F_ADDRESS_FLAG) $(LDFLAGS) $(MORE_LD_OPTS) -o $(EXEDIR)/$* $@ $(LIBS) $(F77_LIBS) $(MORELIBS)
 	@(if [ ! -d "$(EXEDIR)/$*.workdir" ]; then mkdir -p "$(EXEDIR)/$*.workdir"; fi; \
           d=`echo $(EXEDIR)/$*.workdir | sed -e 's:$(BASEDIR)/*::' | sed -e 's:[^/]:\.\.:g;s:\.\.*:..:g'`; \
@@ -79,8 +90,8 @@ $(OBJDIR)/%.o : %.f90
 	$(MAKEDEPEND)
 	@(d=`pwd`; \
          cd $(OBJDIR); \
-         echo $(F90) $(F_ADDRESS_FLAG) ${F90FLAGS} $(MORE_COMPILE_OPTS) -c $$d/$< -o $@; \
-         $(F90) $(F_ADDRESS_FLAG) ${F90FLAGS} $(MORE_COMPILE_OPTS) -c $$d/$< -o $@; \
+         set -x; \
+         $(F90) $(F_ADDRESS_FLAG) ${F90FLAGS} $(MORE_COMPILE_OPTS) -I$(SRCDIR) -c $$d/$< -o $@; \
         )
 	$(PURIFY) $(F90) $(F_ADDRESS_FLAG) $(LDFLAGS) $(MORE_LD_OPTS) -o $(EXEDIR)/$* $@ $(PROFILE) $(LIBS) $(F90_LIBS) $(MORELIBS)
 	@(if [ ! -d "$(EXEDIR)/$*.workdir" ]; then mkdir -p "$(EXEDIR)/$*.workdir"; fi; \
@@ -120,7 +131,7 @@ INCLUDED_EXE ?= $(filter $(EXE),$(sort $(_INCLUDED_EXE)))
 #$(warning "***" $(BASEDIR)/scripts/excluded_codes $(GET_SESAME_DATA) $(if $(_NODEFAULTDATA),--noDefaultData,))
 #$(warning "***" EXCLUDED_EXE = $(EXCLUDED_EXE))
 #$(warning "***" $(BASEDIR)/scripts/excluded_codes $(GET_SESAME_DATA) --included $(if $(_NODEFAULTDATA),--noDefaultData,))
-#(warning "***" INCLUDED_EXE = $(INCLUDED_EXE))
+#$(warning "***" INCLUDED_EXE = $(INCLUDED_EXE))
 
 EXCLUDED_OBJS            ?= $(sort $(addprefix $(OBJDIR)/,$(addsuffix .o,$(EXCLUDED_EXE))))
 #$(warning "***" EXCLUDED_OBJS = $(EXCLUDED_OBJS))
@@ -136,6 +147,8 @@ FILTERED_COMPARE_TARGETS ?= $(addsuffix compare,$(addprefix $(EXEDIR)/,$(filter-
 #$(warning "***" FILTERED_COMPARE_TARGETS = $(FILTERED_COMPARE_TARGETS))
 EXCLUDED_COMPARE_TARGETS ?= $(addsuffix compare,$(addprefix $(EXEDIR)/,$(EXCLUDED_EXE)))
 #$(warning "***" EXCLUDED_COMPARE_TARGETS = $(EXCLUDED_COMPARE_TARGETS))
+
+REGRESSION_PATCH_LIST_FILE = $(EXEDIR)/regression_patch_list_file.txt
 
 .PHONY: all
 ifdef NODEP
@@ -191,7 +204,8 @@ $(addprefix $(EXEDIR)/,$(EXE)):
               printf "*** Execute %s\n" $$exe; \
               rm -f $(DATADUMPFILE) $$exe.$(DATADUMPFILE) $$exe.status_error > $(JUNKFILE) 2>&1; \
               if [ -n "$(VALGRIND)" ]; then \
-                valgrind_opt="--leak-check=full --log-file=$$exe.valgrind"; \
+                valgrind_opt="--tool=memcheck --leak-check=full --show-reachable=yes --log-file=$$exe.valgrind --freelist-vol=10000000000 --track-origins=yes"; \
+                valgrind_opt="--leak-check=full --show-reachable=yes --log-file=$$exe.valgrind"; \
                 printf "\t($(VALGRIND) $$valgrind_opt ./$$exe)\n"; \
               else \
                 valgrind_opt=""; \
@@ -200,7 +214,13 @@ $(addprefix $(EXEDIR)/,$(EXE)):
                 $(DEBUGGER) ../$$exe ../$$exe > ../$$exe.stdout 2>&1; \
               else \
                 if [ -x /usr/bin/time ]; then \
-                  timer='/usr/bin/time -p'; \
+                  /usr/bin/time --version > /dev/null 2>&1; \
+                  if [ $$? -eq 0 ]; then \
+                    export TIME='real %e\nuser %U\nsys %S\nmaxresident %M kB'; \
+                    timer='/usr/bin/time '; \
+                  else \
+                    timer='/usr/bin/time -p'; \
+                  fi; \
                 else \
                   timer=''; \
                   start_time=`perl -e 'print time'`; \
@@ -217,7 +237,8 @@ $(addprefix $(EXEDIR)/,$(EXE)):
                 perl -e 'print shift;$$t=eval time - shift;print "\t",(($$t<=0)?1:$$t),"\n"' $$exe $$start_time > $$exe.$(TIMINGFILE); \
               fi; \
               if [ $$exe_status -ne 0 ]; then \
-                 printf '    EXECUTION STATUS ERROR for %s (status=%d)\n' $$exe $$exe_status; \
+                 printf '    EXECUTION STATUS ERROR for %s (status=%d)' $$exe $$exe_status; \
+                 printf ' :: %s may include details\n' "$(EXEDIR)/$${exe}.workdir/$$exe.$(TIMINGFILE_P)"; \
                  printf 'EXECUTION STATUS ERROR: %d' $$exe_status > $$exe.status_error 2>&1; \
               fi; \
               mv -f $(DATADUMPFILE) ../$$exe.$(DATADUMPFILE) > $(JUNKFILE) 2>&1; \
@@ -227,10 +248,17 @@ $(addprefix $(EXEDIR)/,$(EXE)):
               done; \
               cd ..; \
               if [ -n "$(VALGRIND)" ]; then \
-                grep '=  *[^ ][^ ]* *lost:  *[^0]' $(EXEDIR)/$$exe.valgrind | sed 's/^.*= / /' > $(EXEDIR)/$$exe.leak.summary 2>&1; \
-                grep 'Process terminating' $(EXEDIR)/$$exe.valgrind | sed 's/^.*= / /' >> $(EXEDIR)/$$exe.leak.summary 2>&1; \
-                egrep -C 1 '=  *[^ ][^ ]* *\(at|by\)' $(EXEDIR)/$$exe.valgrind | sed 's/^.*= / /' >> $(EXEDIR)/$$exe.leak.summary 2>&1; \
-                if [ -z "$(EXEDIR)/$$exe.leak.summary" ]; then \
+                if [ -f "$(EXEDIR)/$$exe.valgrind" ]; then \
+                  : echo $@ ":: Parse $(EXEDIR)/$$exe.valgrind"; \
+                  sed -i -e 's/^ *== *[0-9][0-9]* *== *$$//;' $(EXEDIR)/$$exe.valgrind; \
+                  grep '=  *[^ ][^ ]* *lost:  *[^0]' $(EXEDIR)/$$exe.valgrind | sed 's/^.*= / /' > $(EXEDIR)/$$exe.leak.summary 2>&1; \
+                  grep '=  *[^ ][^ ]* *reachable:  *[^0]' $(EXEDIR)/$$exe.valgrind | sed 's/^.*= / /' >> $(EXEDIR)/$$exe.leak.summary 2>&1; \
+                  grep '=  *[^ ][^ ]* *suppressed:  *[^0]' $(EXEDIR)/$$exe.valgrind | sed 's/^.*= / /' >> $(EXEDIR)/$$exe.leak.summary 2>&1; \
+                  grep 'Process terminating' $(EXEDIR)/$$exe.valgrind | sed 's/^.*= / /' >> $(EXEDIR)/$$exe.leak.summary 2>&1; \
+                  egrep -C 1 '=  *[^ ][^ ]* *\(at|by\)' $(EXEDIR)/$$exe.valgrind | sed 's/^.*= / /' >> $(EXEDIR)/$$exe.leak.summary 2>&1; \
+                fi; \
+                if [ ! -s "$(EXEDIR)/$$exe.leak.summary" ]; then \
+                  echo $@ ":: No memory leaks found"; \
                   rm -f $(EXEDIR)/$$exe.leak.summary $(EXEDIR)/$$exe.valgrind; \
                 fi; \
               fi; \
@@ -246,10 +274,14 @@ TIMINGXML    = test_times.xml
 
 .PHONY: check test
 check test: all
-  ifeq ($(XCOMPILE),$(false))
+  ifeq ($(XCOMPILE)$(USE_SLURM),$(false))
 	@$(MAKE) execute_only
   else
+    ifeq ($(USE_SLURM),$(false))
 	@$(MAKE) EXECUTE_MESSAGE check_on_compute_node
+    else
+	@$(MAKE) XCOMPILE=$(USE_SLURM) EXECUTE_MESSAGE check_on_compute_node
+    endif
   endif
 
 .PHONY: execute_only
@@ -260,9 +292,9 @@ execute_only: CLEAN_WORK_DIRS
 	@$(MAKE) EXECUTE_MESSAGE $(FILTERED_EXE)
     endif
     ifeq ($(wildcard $(INCDIR)/*2003.[Mm][Oo][Dd]),)
-	@$(MAKE) EXCEPTION_MESSAGE $(filter-out %Fortran2003_APItest%,$(EXCEPTION_TARGETS))
+	@$(MAKE) EXCEPTION_MESSAGE $(filter-out %Fortran2003_APItest%,$(EXCEPTION_TARGETS)) EXCEPTION_COUNT_MESSAGE
     else
-	@$(MAKE) EXCEPTION_MESSAGE $(EXCEPTION_TARGETS)
+	@$(MAKE) EXCEPTION_MESSAGE $(EXCEPTION_TARGETS) EXCEPTION_COUNT_MESSAGE
     endif
 	@(echo ' '; \
           echo '**************************************************************'; \
@@ -279,20 +311,33 @@ execute_only: CLEAN_WORK_DIRS
 
 .PHONY: check_on_compute_node
 check_on_compute_node: create_parallel_job_list
-	@-rm -f $(EXEDIR)/run_tests_on_compute_node.msub.out
+	@-rm -f $(EXEDIR)/run_tests_on_compute_node.msub.out $(EXEDIR)/run_tests_on_compute_node.slurm.out
 	@echo 'START:' `date`
-	@STARTDIR=$(EXEDIR);export STARTDIR;pwd;set -x;msub -d ${EXEDIR} -K $(BASEDIR)/scripts/run_tests_on_$(XCOMPILE)_node.msub
+	@(STARTDIR=$(EXEDIR);export STARTDIR;pwd;set -x; \
+          job_cmd=`which sbatch msub 2>/dev/null | head -n1 | xargs basename`; \
+          case $$job_cmd in \
+            sbatch) $$job_cmd -D ${EXEDIR} -W $(BASEDIR)/scripts/run_tests_on_$(XCOMPILE)_node.sbatch;; \
+            msub)   $$job_cmd -d ${EXEDIR} -K $(BASEDIR)/scripts/run_tests_on_$(XCOMPILE)_node.msub;; \
+            *)      echo 'ERROR: A valid job launcher was not found';; \
+          esac; \
+         )
 	@echo '  END:' `date`
 	@$(MAKE) compare
 	@$(MAKE) -j1 MAKE_HTML_OPT=$(MAKE_HTML_OPT) make_html make_xml
 
 .PHONY: create_parallel_job_list
 create_parallel_job_list:
-	@(for f in $(FILTERED_EXE); do \
-            t=`basename $${f}`; \
-            echo "cd $(EXEDIR)/$${t}.workdir; ( echo name: $${t}; /usr/bin/time -p ../$${t} > ../$${t}.stdout ) >& $${t}.test_times_portable.txt"; \
-          done; \
-         ) > ${EXEDIR}/parallel.job.list
+	@(if [ -n "$(VALGRIND)" ]; then \
+        valgrind_opt="--tool=memcheck --leak-check=full --show-reachable=yes --log-file=$$exe.valgrind --freelist-vol=10000000000 --track-origins=yes"; \
+        valgrind_opt="--leak-check=full --show-reachable=yes --log-file=$$exe.valgrind"; \
+      else \
+        valgrind_opt=""; \
+      fi; \
+      for f in $(FILTERED_EXE); do \
+        t=`basename $${f}`; \
+        echo "cd $(EXEDIR)/$${t}.workdir; ( echo name: $${t}; /usr/bin/time -p $(VALGRIND) $$valgrind_opt ../$${t} > ../$${t}.stdout ) >& $${t}.test_times_portable.txt"; \
+      done; \
+     ) > ${EXEDIR}/parallel.job.list
 
 .PHONY: GATHER_VALGRIND_DATA
 GATHER_VALGRIND_DATA:
@@ -307,6 +352,7 @@ GATHER_VALGRIND_DATA:
                 printf "\t***see %s for details\n\n" "$(EXEDIR)/$${f_root}.valgrind"; \
                 h=""; \
               else \
+                echo $@ ":: No memory leaks found"; \
                 rm -f $$f $(EXEDIR)/$${f_root}.valgrind; \
               fi; \
             done; \
@@ -338,8 +384,18 @@ GATHER_TIMING_DATA:
 
 .PHONY: EXCEPTION_MESSAGE
 EXCEPTION_MESSAGE:
+	@rm -f $(REGRESSION_PATCH_LIST_FILE)
 	@(echo  ' '; \
           echo 'Apply applicable regression baseline patches:'; \
+         )
+
+.PHONY: EXCEPTION_COUNT_MESSAGE
+EXCEPTION_COUNT_MESSAGE:
+	@(echo ' '; \
+          n="no"; \
+          if [ -f $(REGRESSION_PATCH_LIST_FILE) ]; then n=`wc -l $(REGRESSION_PATCH_LIST_FILE)`; fi; \
+          echo '   ***' $$n 'regression baseline patches were found'; \
+          echo ' '; \
          )
 
 .PHONY: EXECUTE_MESSAGE
@@ -375,8 +431,8 @@ $(EXCEPTION_TARGETS):
             if [ -n "$$f" ]; then \
               f0=$(REGRESSION_DATA_DIR)/`basename $$f | sed 's/\.[a-zA-Z0-9]\{1,\}$$//'`; \
               f1=`echo $$f | sed 's/\.[a-zA-Z0-9]\{1,\}$$//'`; \
-              echo "+ patch -o $$f1 -i $$f $$f0"; \
-              patch -o $$f1 -i $$f $$f0 > $(JUNKFILE) 2>&1; \
+              echo $$f >> $(REGRESSION_PATCH_LIST_FILE); \
+              ( set -x; patch -o $$f1 -i $$f $$f0 > $(JUNKFILE) 2>&1 ); \
             fi; \
           done; \
          )
@@ -405,6 +461,7 @@ $(FILTERED_COMPARE_TARGETS):
           REGRESSION_DATA_DIR="$(REGRESSION_DATA_DIR)"; \
           REGRESSION_DATA_EXCEPTIONS_DIR="$(REGRESSION_DATA_EXCEPTIONS_DIR)"; \
           REGRESSION_DATA_EXCEPTIONS_DIR_NEW="$(REGRESSION_DATA_EXCEPTIONS_DIR_NEW)"; \
+          REGRESSION_DATA_DIR_PARENT="$(REGRESSION_DATA_DIR_PARENT)"; \
           _MANDATORY_FCMP_FLAGS="$(_MANDATORY_FCMP_FLAGS)"; \
           export ACCEPTANCE_REL_DIFF; \
           export ARCH; \
@@ -418,8 +475,9 @@ $(FILTERED_COMPARE_TARGETS):
           export REGRESSION_DATA_DIR; \
           export REGRESSION_DATA_EXCEPTIONS_DIR; \
           export REGRESSION_DATA_EXCEPTIONS_DIR_NEW; \
+          export REGRESSION_DATA_DIR_PARENT; \
           export _MANDATORY_FCMP_FLAGS; \
-          $(BASEDIR)/scripts/compare.sh -t ndiff $$exe; \
+          if [ -z "${NOCOMPARE}" ]; then $(BASEDIR)/scripts/compare.sh -t ndiff $$exe; fi; \
          )
 
 .PHONY: GATHER_COMPARE_DATA
@@ -432,7 +490,7 @@ GATHER_COMPARE_DATA: GATHER_TIMING_DATA
             echo ' ' >> $(PASSFAILOUTPUTFILE); \
             for exe in $(sort $(EXE)); do \
               test_result_file=$(EXEDIR)/$${exe}.workdir/test_result.txt; \
-              cat $${test_result_file} >> $(PASSFAILOUTPUTFILE); \
+              if [ -f "$${test_result_file}" ]; then cat $${test_result_file} >> $(PASSFAILOUTPUTFILE); fi; \
             done; \
           fi;)
 	@(d=`dirname $(PASSFAILOUTPUTFILE)`; \
@@ -450,39 +508,46 @@ GATHER_COMPARE_DATA: GATHER_TIMING_DATA
             cntr_test_times_total_str=`echo $$cntr_test_times_total_sec | awk '{ SUM += $$1} END { print int(SUM/60) " min " (SUM/60-int($$1/60))*60 " sec" }'`; \
             totcntr=`expr $$tmpcntr + $$cntr + $$cntr_warning`; \
             grandtotcntr=`expr $$tmpcntr + $$cntr + $$cntr_warning + $$cntr_ignored + $$cntr_excluded`; \
-            if [ $$cntr -ne 0 ]; then \
-              echo "   *** $$cntr of $$totcntr TESTS FAILED!!! ***"; \
-            fi; \
-            if [ $$tmpcntr -ne 0 ]; then \
-              echo "   *** $$tmpcntr of $$totcntr TESTS PASSED!!! ***"; \
-            fi; \
-            if [ $$cntr_warning -ne 0 ]; then \
-              echo "    WARNING:   $$cntr_warning of $$grandtotcntr have no baseline output."; \
-            fi; \
-            if [ $$cntr_ignored -ne 0 ]; then \
-              was='was'; \
-              if [ $$cntr_ignored -gt 1 ]; then \
-                was='were'; \
+            my_system_name=`uname -n`; \
+            if [ -n "${NOCOMPARE}" ]; then \
+              echo "*** No test comparisons to baseline files performed because NOCOMPARE"; echo;\
+            else \
+              echo   "   *** On $$my_system_name: $(ARCH)"; \
+              if [ $$cntr -ne 0 ]; then \
+                echo "   *** $$cntr of $$totcntr TESTS FAILED!!! ***" | tee -a $(PASSFAILOUTPUTFILE); \
               fi; \
-              echo "       NOTE: $$cntr_ignored of $$grandtotcntr $$was ignored due to either a lack of required data or an incompatible compiler. (not included in total)"; \
-            fi; \
-            if [ $$cntr_excluded -ne 0 ]; then \
-              was='was'; \
-              if [ $$cntr_excluded -gt 1 ]; then \
-                was='were'; \
+              if [ $$tmpcntr -ne 0 ]; then \
+                echo "   *** $$tmpcntr of $$totcntr TESTS PASSED!!! ***" | tee -a $(PASSFAILOUTPUTFILE); \
               fi; \
-              echo "       NOTE: $$cntr_excluded of $$grandtotcntr $$was purposely excluded according to fcmp options in fcmp.opt. (not included in total)"; \
-            fi; \
-            if [ $$cntr_exceptions -ne 0 ]; then \
-              was='was'; \
-              if [ $$cntr_exceptions -gt 1 ]; then \
-                was='were'; \
+              if [ $$cntr_warning -ne 0 ]; then \
+                echo "    WARNING:   $$cntr_warning of $$grandtotcntr have no baseline output." | tee -a $(PASSFAILOUTPUTFILE); \
               fi; \
-              echo "       NOTE: $$cntr_exceptions of $$grandtotcntr $$was compared to baseline exceptions."; \
+              if [ $$cntr_ignored -ne 0 ]; then \
+                was='was'; \
+                if [ $$cntr_ignored -gt 1 ]; then \
+                  was='were'; \
+                fi; \
+                echo "       NOTE: $$cntr_ignored of $$grandtotcntr $$was ignored due to either a lack of required data or an incompatible compiler. (not included in total)" | tee -a $(PASSFAILOUTPUTFILE); \
+              fi; \
+              if [ $$cntr_excluded -ne 0 ]; then \
+                was='was'; \
+                if [ $$cntr_excluded -gt 1 ]; then \
+                  was='were'; \
+                fi; \
+                echo "       NOTE: $$cntr_excluded of $$grandtotcntr $$was purposely excluded according to fcmp options in fcmp.opt. (not included in total)" | tee -a $(PASSFAILOUTPUTFILE); \
+              fi; \
+              if [ $$cntr_exceptions -ne 0 ]; then \
+                was='was'; \
+                if [ $$cntr_exceptions -gt 1 ]; then \
+                  was='were'; \
+                fi; \
+                echo "       NOTE: $$cntr_exceptions of $$grandtotcntr $$was compared to baseline exceptions." | tee -a $(PASSFAILOUTPUTFILE); \
+              fi; \
             fi; \
             if [ $$cntr_test_times_file_wc -ne 0 ]; then \
-              echo "       NOTE: $$cntr_test_times_file_wc test codes took $$cntr_test_times_total_str with an average time of $$cntr_test_times_avg_sec sec/test."; \
+              echo "       NOTE: $$cntr_test_times_file_wc test codes took $$cntr_test_times_total_str with an average time of $$cntr_test_times_avg_sec sec/test." | tee -a $(PASSFAILOUTPUTFILE); \
             fi; \
+            echo "       NOTE: CPUFLAGS = $(CPUFLAGS)" | tee -a $(PASSFAILOUTPUTFILE); \
             echo 'END_PASSFAILOUTPUT' >> $(PASSFAILOUTPUTFILE); \
             echo ' '; \
           fi;)
@@ -490,7 +555,7 @@ GATHER_COMPARE_DATA: GATHER_TIMING_DATA
 .PHONY: compare
 compare:
 	@( $(MAKE) COMPILER_INFO 2>&1 ) | tee $(COMPILER_INFO_FILE)
-	$(MAKE) EXCEPTION_MESSAGE $(EXCEPTION_TARGETS)
+	@-$(MAKE) EXCEPTION_MESSAGE $(EXCEPTION_TARGETS) EXCEPTION_COUNT_MESSAGE
 	@-(echo ' '; \
            echo '**************************************************************'; \
            echo '***' Compare $(ARCH) to regression baseline results; \
@@ -505,13 +570,20 @@ compare:
                continue; \
              fi; \
              if [ -n "$(VALGRIND)" ]; then \
-               grep '=  *[^ ][^ ]* *lost:  *[^0]' $(EXEDIR)/$$exe.valgrind | sed 's/^.*= / /' > $(EXEDIR)/$${exe}.workdir/leak.summary 2>&1; \
-               grep 'Process terminating' $(EXEDIR)/$$exe.valgrind | sed 's/^.*= / /' >> $(EXEDIR)/$${exe}.workdir/leak.summary 2>&1; \
-               egrep -C 1 '=  *(at|by)' $(EXEDIR)/$$exe.valgrind | sed 's/^.*= / /' >> $(EXEDIR)/$${exe}.workdir/leak.summary 2>&1; \
+               if [ -f "$(EXEDIR)/$$exe.valgrind" ]; then \
+                 : echo $@ ":: Parse $(EXEDIR)/$$exe.valgrind"; \
+                 sed -i -e 's/^ *== *[0-9][0-9]* *== *$$//;' $(EXEDIR)/$$exe.valgrind; \
+                 grep '=  *[^ ][^ ]* *lost:  *[^0]' $(EXEDIR)/$$exe.valgrind | sed 's/^.*= / /' > $(EXEDIR)/$${exe}.workdir/leak.summary 2>&1; \
+                 grep '=  *[^ ][^ ]* *reachable:  *[^0]' $(EXEDIR)/$$exe.valgrind | sed 's/^.*= / /' >> $(EXEDIR)/$${exe}.workdir/leak.summary 2>&1; \
+                 grep '=  *[^ ][^ ]* *suppressed:  *[^0]' $(EXEDIR)/$$exe.valgrind | sed 's/^.*= / /' >> $(EXEDIR)/$${exe}.workdir/leak.summary 2>&1; \
+                 grep 'Process terminating' $(EXEDIR)/$$exe.valgrind | sed 's/^.*= / /' >> $(EXEDIR)/$${exe}.workdir/leak.summary 2>&1; \
+                 egrep -C 1 '=  *(at|by)' $(EXEDIR)/$$exe.valgrind | sed 's/^.*= / /' >> $(EXEDIR)/$${exe}.workdir/leak.summary 2>&1; \
+               fi; \
                if [ -s "$(EXEDIR)/$${exe}.workdir/leak.summary" ]; then \
-                 printf "\tMEMORY LEAK SUMMARY:\n"; \
-                 cat $(EXEDIR)/$${exe}.workdir/leak.summary; \
+                 : printf "\tMEMORY LEAK SUMMARY:\n"; \
+                 : cat $(EXEDIR)/$${exe}.workdir/leak.summary; \
                else \
+                 echo $@ ":: No memory leaks found"; \
                  rm -f $(EXEDIR)/$${exe}.workdir/leak.summary $(EXEDIR)/$$exe.valgrind; \
                fi; \
              fi; \
@@ -546,7 +618,7 @@ create_exception_files: # these files shall be created either using "diff -e old
 
 .PHONY: make_html
 make_html:
-	@$(BASEDIR)/scripts/make_html $(MAKE_HTML_OPT) --preamble '$(ORIGINAL_COMMAND_LINE)' --verbose $(PASSFAILOUTPUTFILE) > $(PASSFAILOUTPUTHTML)
+	@$(BASEDIR)/scripts/make_html $(MAKE_HTML_OPT) --verbose $(PASSFAILOUTPUTFILE) > $(PASSFAILOUTPUTHTML)
 
 .PHONY: make_xml
 make_xml:
@@ -555,13 +627,15 @@ make_xml:
 .PHONY: send_report
 send_report: make_html make_xml
 	@-(my_system_name=`uname -n`; \
-           cntr=`grep -c FAILED $(PASSFAILOUTPUTFILE)`; \
-           tmpcntr=`grep -c PASSED $(PASSFAILOUTPUTFILE)`; \
-           cntr_ignored=`grep -c IGNORED $(PASSFAILOUTPUTFILE)`; \
-           cntr_warning=`grep -c WARNING $(PASSFAILOUTPUTFILE)`; \
+           cntr=`grep -c FAILED: $(PASSFAILOUTPUTFILE)`; \
+           tmpcntr=`grep -c PASSED: $(PASSFAILOUTPUTFILE)`; \
+           cntr_ignored=`grep -c IGNORED: $(PASSFAILOUTPUTFILE)`; \
+           cntr_warning=`grep -c WARNING: $(PASSFAILOUTPUTFILE)`; \
+           time_per_test=`grep -c 'average time' $(PASSFAILOUTPUTFILE)`; \
            totcntr=`expr $$tmpcntr + $$cntr + $$cntr_warning`; \
+           optimized="$(if $(filter -O%,$(DEBUG)),; optimized,)"; \
            $(BASEDIR)/scripts/send_html_mail -p $(PASSFAILOUTPUTFILE) \
-                 -s "EOSPAC 6: $$tmpcntr of $$totcntr PASSED ($$my_system_name: $(ARCH))" $(PASSFAILOUTPUTHTML); \
+                 -s "EOSPAC 6: $$tmpcntr of $$totcntr PASSED ($$my_system_name: $(ARCH)$${optimized})" $(PASSFAILOUTPUTHTML); \
          )
 
 .PHONY: $(GET_MOD_FILES)
@@ -622,7 +696,7 @@ ifeq (0,${MAKELEVEL})
 	@$(MAKE) -C $(BASEDIR)/Examples clean
 else
 	-rm -fr $(EXAMPLEDIR) $(DEPDIR) $(EXEDIR) $(LIBDIR) \
-                `find . -name 'core*'` `find . -name '*.stackdump'`
+                `find . -name 'core*' -o -name '*.stackdump' -o -name '*.lst'` $(BUILD_LOG)
 	@$(MAKE) -C $(BASEDIR)/src clean
 endif
 
@@ -648,7 +722,7 @@ DISTCLEAN_SUBDIRS = $(notdir $(DISTCLEAN_DIRS))
 .PHONY: distclean
 distclean: $(addprefix distclean_,$(DISTCLEAN_SUBDIRS))
 	-rm -fr $(DEPDIR) $(BUILD_LOG) \
-                `find . -name '$(JUNKFILE)*'` \
+                `find . -name '$(JUNKFILE)*' -o -name '*.lst'` \
                 `find . -name data -prune -o -name '*.MOD' -o -name '*.mod' -print` \
                 `find . -name data -prune -o -name 'core*' -o -name '*.stackdump' -print`
 	-rm -f  `find ./data -name '*.ed' -o -name '*.?diff' | sed 's/\.[a-zA-Z0-9]\{1,\}$$//'`
@@ -708,6 +782,10 @@ mostlyclean:
                 `find . -name data -prune -o -name '*.MOD' -o -name '*.mod' -print` \
                 `find . -name data -prune -o -name 'core*' -o -name '*.stackdump' -print`
 
+.PHONY: partialclean
+partialclean:
+	-rm -fr $(OBJDIR)/*.o $(BUILD_LOG)
+
 .PHONY: list_tests
 list_tests:
 	@-(printf "\nGiven the SESAME data found on your system, the available test case Make targets are:\n"; \
@@ -765,7 +843,7 @@ COMPILER_INFO:
 	@echo ' '
 	@echo '********************************************************'
 
-.PHONY: all check test MAKEDIRS install TAGS clean cleanarch distclean mostlyclean \
+.PHONY: all check test MAKEDIRS install TAGS clean cleanarch \
         help list_installed_files list_my_installed_files list_tests send_report \
         make_html make_xml $(addprefix $(EXEDIR)/,$(EXE)) EXECUTE_MESSAGE \
         GATHER_TIMING_DATA GATHER_COMPARE_DATA CLEAN_WORK_DIRS create_exception_files \

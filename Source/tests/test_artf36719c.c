@@ -18,11 +18,16 @@
  *
  * \note
  * MATIDS TO TEST: 3720 3721 3722
+ * REQUIRED FILE: data/ses003721
+ * REQUIRED FILE: data/ses003722
  */
 
 #include <stdio.h>
 #include <stdlib.h>
 #include "eos_Interface.h"
+
+/* prototype defined in src/eos_Utils.proto.h, and function declared in src/eos_Utils.c */
+EOS_BOOLEAN _eos_fileExistsAndValid (EOS_CHAR * filename);
 
 int main ()
 {
@@ -37,13 +42,12 @@ int main ()
   EOS_INTEGER ntables;
   EOS_INTEGER matid;
   EOS_CHAR filename[100];
-  EOS_CHAR tmp[100];
+  EOS_CHAR tmp[200];
   EOS_CHAR errorMessage[EOS_MaxErrMsgLen];
   EOS_CHAR infoString[EOS_META_DATA_STRLEN];
 
-  int i, k, count;
+  int i, count;
 
-  EOS_BOOLEAN lexist;
   EOS_BOOLEAN equal;
 
   ntables = 1;
@@ -289,6 +293,8 @@ int main ()
   count++; /* increment passed test counter */
 
   printf("\n%2i %s\n", count, "tests passed");
+
+  eos_DestroyAll (&err1);
 
   return(0);
 }

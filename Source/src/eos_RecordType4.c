@@ -97,6 +97,8 @@ void eos_CreateRecordType4 (void *ptr, EOS_INTEGER th)
 
   me = (eos_RecordType4 *) ptr;
 
+  gEosDataMap.errorCodes[th] = EOS_OK; /* reset previous error */
+ 
   /* set the sesame file indexes and offsets for RecordType4 */
   eos_SetFileIndexesRecordType4 (me, th);
 
@@ -110,9 +112,12 @@ void eos_CreateRecordType4 (void *ptr, EOS_INTEGER th)
   }
 
   /* allocate enough space for each table */
-  for (i = 0; i < me->numberTables; i++)
+  for (i = 0; i < me->numberTables; i++) {
     me->comment[i] = (EOS_CHAR *) calloc (me->numChars[i]+1, sizeof(EOS_CHAR));
+    if (me->comment[i] != (EOS_CHAR *)NULL) me->eosData.isAllocated++;
+  }
 
+  me->eosData.isAllocated = (me->eosData.isAllocated == me->numberTables) ? 1 : 0;
 }
 
 /***********************************************************************/
@@ -153,7 +158,7 @@ void eos_SetFileIndexesRecordType4 (void *ptr, EOS_INTEGER th)
     if (errMsg) ierr = eos_SetCustomErrorMsg(th, ierr, "%s", errMsg);
     EOS_FREE(errMsg);
     if (ierr) {
-      /* deallocate read_data[], which was allocated by eos_SeekToDataTable() above */
+      /* deallocate read_data[], which was allocated by eos_SesSeekToDataTable() above */
       EOS_FREE (read_data);
       if (eos_GetStandardErrorCodeFromCustomErrorCode(ierr) == EOS_MATERIAL_NOT_FOUND) break;
       continue;
@@ -180,7 +185,7 @@ void eos_SetFileIndexesRecordType4 (void *ptr, EOS_INTEGER th)
     me->tableNum[me->numberTables - 1] = tableNum;
     me->dataFileOffsets[me->numberTables - 1] = fileOffset;
 
-    /* deallocate read_data[], which was allocated by eos_SeekToDataTable() above */
+    /* deallocate read_data[], which was allocated by eos_SesSeekToDataTable() above */
     EOS_FREE (read_data);
   }
 
@@ -477,7 +482,7 @@ void eos_SetPackedTableRecordType4 (void *ptr, EOS_INTEGER th,
 
   /* store the number of Comment Tables stored in memory */
   me->eosData.numSubtablesLoaded = me->numberTables;
-  me->eosData.isLoaded = (me->eosData.numSubtablesLoaded > 0);
+  me->eosData.isLoaded = (me->eosData.numSubtablesLoaded > 0) ? 1 : 0;
 
   memcpy (&(me->eosData.dataFileIndex), packedTable + byteCount, sizeof (EOS_INTEGER));
   byteCount += sizeof (EOS_INTEGER);
@@ -658,13 +663,14 @@ void eos_GetTableInfoRecordType4 (void *ptr, EOS_INTEGER th,
 /*************************************************************************
  *
  * Fetch the substring from the comment string that is indicated by the
- * supplied keyword.
+ * supplied keyword. Failed to find keyword in str If -1 is returned.
  *
  *************************************************************************/
 int _eos_get_field_value(EOS_CHAR *str, EOS_CHAR *keyword, EOS_CHAR *oStr)
 {
-  EOS_INTEGER i, L, rVal = 0;
+  EOS_INTEGER i, L, rVal = -1;
   EOS_CHAR *s = NULL;
+  EOS_CHAR *e = NULL;
   EOS_CHAR *end = NULL;
   EOS_CHAR *str_lc = NULL;
 
@@ -684,7 +690,10 @@ int _eos_get_field_value(EOS_CHAR *str, EOS_CHAR *keyword, EOS_CHAR *oStr)
     while(isspace(*s)) s++;
 
     /* Find length of substring */
-    i = strchr(s, '/') - s;
+    e = strchr(s, '/');
+    if (! e) e = strchr(s, '\n');
+    if (! e) e = strchr(s, '\0');
+    i = e - s;
     end = s + i - 1;
 
     /* Trim trailing space */
@@ -720,7 +729,7 @@ int _eos_get_field_value(EOS_CHAR *str, EOS_CHAR *keyword, EOS_CHAR *oStr)
  * 
  ************************************************************************/
 void eos_GetTableMetaDataRecordType4 (void *ptr, EOS_INTEGER infoItem,
-				      EOS_CHAR *infoStr, EOS_INTEGER *err)
+                                      EOS_CHAR *infoStr, EOS_INTEGER *err)
 {
   EOS_INTEGER j, L = -1;
   eos_RecordType4 *me;
@@ -739,39 +748,83 @@ void eos_GetTableMetaDataRecordType4 (void *ptr, EOS_INTEGER infoItem,
       switch (infoItem) {
 
       case EOS_Material_Name:
-	L = _eos_get_field_value(cmntStr, "material.", infoStr);
-	break;
+        L = _eos_get_field_value(cmntStr, "material.", infoStr);
+        if (L < 0) L = _eos_get_field_value(cmntStr, "material:", infoStr);
+        if (L < 0) {
+          L = 0;
+          sprintf(infoStr, "No material name information found");
+        }
+        break;
 
       case EOS_Material_Source:
-	L = _eos_get_field_value(cmntStr, "source.", infoStr);
-	break;
+        L = _eos_get_field_value(cmntStr, "source.", infoStr);
+        if (L < 0) L = _eos_get_field_value(cmntStr, "source:", infoStr);
+        if (L < 0) {
+          L = 0;
+          sprintf(infoStr, "No material source information found");
+        }
+        break;
 
       case EOS_Material_Date:
-	L = _eos_get_field_value(cmntStr, "date.", infoStr);
-	break;
+        L = _eos_get_field_value(cmntStr, "date.", infoStr);
+        if (L < 0) L = _eos_get_field_value(cmntStr, "date:", infoStr);
+        if (L < 0) {
+          L = 0;
+          sprintf(infoStr, "No material date information found");
+        }
+        break;
 
       case EOS_Material_Ref:
-	L = _eos_get_field_value(cmntStr, "refs.", infoStr);
-	if (L <= 0)
-	  L = _eos_get_field_value(cmntStr, "ref.", infoStr);
-	break;
+        L = _eos_get_field_value(cmntStr, "refs.", infoStr);
+        if (L < 0) L = _eos_get_field_value(cmntStr, "refs:", infoStr);
+        if (L < 0) L = _eos_get_field_value(cmntStr, "ref.", infoStr);
+        if (L < 0) L = _eos_get_field_value(cmntStr, "ref:", infoStr);
+        if (L < 0) {
+          L = 0;
+          sprintf(infoStr, "No material ref information found");
+        }
+        break;
 
       case EOS_Material_Composition:
-	L = _eos_get_field_value(cmntStr, "comp.", infoStr);
-	break;
+        L = _eos_get_field_value(cmntStr, "comp.", infoStr);
+        if (L < 0) L = _eos_get_field_value(cmntStr, "comp:", infoStr);
+        if (L < 0) {
+          L = 0;
+          sprintf(infoStr, "No material composition information found");
+        }
+        break;
 
       case EOS_Material_Codes:
-	L = _eos_get_field_value(cmntStr, "codes.", infoStr);
-	break;
+        L = _eos_get_field_value(cmntStr, "codes.", infoStr);
+        if (L < 0) L = _eos_get_field_value(cmntStr, "codes:", infoStr);
+        if (L < 0) {
+          L = 0;
+          sprintf(infoStr, "No material codes information found");
+        }
+        break;
 
       case EOS_Material_Phases:
-	L = _eos_get_field_value(cmntStr, "phases.", infoStr);
-	break;
+        L = _eos_get_field_value(cmntStr, "phases.", infoStr);
+        if (L < 0) L = _eos_get_field_value(cmntStr, "phases:", infoStr);
+        if (L < 0) {
+          L = 0;
+          sprintf(infoStr, "No material phase information found");
+        }
+        break;
+
+      case EOS_Material_Classification:
+        L = _eos_get_field_value(cmntStr, "classification.", infoStr);
+        if (L < 0) L = _eos_get_field_value(cmntStr, "classification:", infoStr);
+        if (L < 0) {
+          L = 0;
+          sprintf(infoStr, "Unknown Classification");
+        }
+        break;
 
       }
 
       if ( L < 0 ) {
-	*err = EOS_INVALID_INFO_FLAG; /* RTFM for possible infoItem values! */
+        *err = EOS_INVALID_INFO_FLAG; /* RTFM for possible infoItem values! */
       }
 
       EOS_FREE(cmntStr);

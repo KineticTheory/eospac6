@@ -5,18 +5,17 @@ Ordered list of Sesame files searched:
     ./../../../../../tests/data/ses2141_2140A.dat
     ./../../../../../tests/data/ses2161_2160PU.dat
     ./../../../../../tests/data/93270littlebin
-    /opt/local/codes/data/eos/sesame
-    /opt/local/codes/data/eos/sesou
-    /opt/local/codes/data/eos/sescu
-    /opt/local/codes/data/eos/sescu1
-    /opt/local/codes/data/eos/sescu9
-    /opt/local/codes/data/eos/export-controlled/ieee64/sesame
-    /opt/local/codes/data/eos/export-controlled/ieee64/sesou
+    /usr/projects/data/eos/sesame
+    /usr/projects/data/eos/sesou
+    /usr/projects/data/eos/sescu
+    /usr/projects/data/eos/sescu1
+    /usr/projects/data/eos/sescu9
+    /usr/projects/data/eos/export-controlled/ieee64/sesame
+    /usr/projects/data/eos/export-controlled/ieee64/sesou
 
 
-TableHandle=0 matid = 33336 source = /opt/local/codes/data/eos/sesame page =  1
+TableHandle=0 matid = 33336 source = /usr/projects/data/eos/sesame page =  1
 Data Type = EOS_Tm_D
-Loading Options: EOS_MONOTONIC_IN_Y
 Description = Melt Temperature (K) (Density (Mg/m^3)-dependent)
   fconv =   1.000000000000000E+00         xconv =   1.000000000000000E+00         yconv =   1.000000000000000E+00
 
@@ -95,9 +94,9 @@ Description = Melt Temperature (K) (Density (Mg/m^3)-dependent)
    8.937500000000000E+04   1.113911714632494E+07
    1.787500000000000E+05   1.768478487445426E+07
 
-TableHandle=1 matid = 33336 source = /opt/local/codes/data/eos/sesame page =  1
+TableHandle=1 matid = 33336 source = /usr/projects/data/eos/sesame page =  1
 Data Type = EOS_Pm_D
-Loading Options: EOS_MONOTONIC_IN_X, EOS_MONOTONIC_IN_Y
+Loading Options: EOS_MONOTONIC_IN_X
 Description = Melt Pressure (GPa) (Density (Mg/m^3)-dependent)
   fconv =   1.000000000000000E+00         xconv =   1.000000000000000E+00         yconv =   1.000000000000000E+00
 
@@ -176,9 +175,8 @@ Description = Melt Pressure (GPa) (Density (Mg/m^3)-dependent)
    8.937500000000000E+04   4.127788047813447E+10
    1.787500000000000E+05   1.359581840186777E+11
 
-TableHandle=2 matid = 33336 source = /opt/local/codes/data/eos/sesame page =  1
+TableHandle=2 matid = 33336 source = /usr/projects/data/eos/sesame page =  1
 Data Type = EOS_Um_D
-Loading Options: EOS_MONOTONIC_IN_Y
 Description = Melt Specific-Internal-Energy (MJ/kg) (Density (Mg/m^3)-dependent)
   fconv =   1.000000000000000E+00         xconv =   1.000000000000000E+00         yconv =   1.000000000000000E+00
 
@@ -257,9 +255,8 @@ Description = Melt Specific-Internal-Energy (MJ/kg) (Density (Mg/m^3)-dependent)
    8.937500000000000E+04   6.019516526820036E+05
    1.787500000000000E+05   1.010626054409105E+06
 
-TableHandle=3 matid = 33336 source = /opt/local/codes/data/eos/sesame page =  1
+TableHandle=3 matid = 33336 source = /usr/projects/data/eos/sesame page =  1
 Data Type = EOS_Tf_D
-Loading Options: EOS_MONOTONIC_IN_Y
 Description = Freeze Temperature (K) (Density (Mg/m^3)-dependent)
   fconv =   1.000000000000000E+00         xconv =   1.000000000000000E+00         yconv =   1.000000000000000E+00
 
@@ -338,9 +335,9 @@ Description = Freeze Temperature (K) (Density (Mg/m^3)-dependent)
    8.937500000000000E+04   1.336694057558993E+07
    1.787500000000000E+05   2.122174184934511E+07
 
-TableHandle=4 matid = 33336 source = /opt/local/codes/data/eos/sesame page =  1
+TableHandle=4 matid = 33336 source = /usr/projects/data/eos/sesame page =  1
 Data Type = EOS_Pf_D
-Loading Options: EOS_MONOTONIC_IN_X, EOS_MONOTONIC_IN_Y
+Loading Options: EOS_MONOTONIC_IN_X
 Description = Freeze Pressure (GPa) (Density (Mg/m^3)-dependent)
   fconv =   1.000000000000000E+00         xconv =   1.000000000000000E+00         yconv =   1.000000000000000E+00
 
@@ -419,9 +416,8 @@ Description = Freeze Pressure (GPa) (Density (Mg/m^3)-dependent)
    8.937500000000000E+04   4.142823279954942E+10
    1.787500000000000E+05   1.365405343103079E+11
 
-TableHandle=5 matid = 33336 source = /opt/local/codes/data/eos/sesame page =  1
+TableHandle=5 matid = 33336 source = /usr/projects/data/eos/sesame page =  1
 Data Type = EOS_Uf_D
-Loading Options: EOS_MONOTONIC_IN_Y
 Description = Freeze Specific-Internal-Energy (MJ/kg) (Density (Mg/m^3)-dependent)
   fconv =   1.000000000000000E+00         xconv =   1.000000000000000E+00         yconv =   1.000000000000000E+00
 
@@ -500,15 +496,14 @@ Description = Freeze Specific-Internal-Energy (MJ/kg) (Density (Mg/m^3)-dependen
    8.937500000000000E+04   6.044803024172394E+05
    1.787500000000000E+05   1.012083595746234E+06
 
-TableHandle=6 matid = 33336 source = /opt/local/codes/data/eos/sesame page =  1
+TableHandle=6 matid = 33336 source = /usr/projects/data/eos/sesame page =  1
 Data Type = EOS_D_Tm
-Loading Options: EOS_MONOTONIC_IN_X, EOS_MONOTONIC_IN_Y
 Description = Density (Mg/m^3) (Melt Temperature (K)-dependent)
   fconv =   1.000000000000000E+00         xconv =   1.000000000000000E+00         yconv =   1.000000000000000E+00
 
                      y =   0.000000000000000E+00
  x =
-   0.000000000000000E+00   1.905824131322176E-21
+   0.000000000000000E+00                     ---
    2.620576459673279E-07   8.937500000000000E-06
    6.603480586834155E-07   1.787500000000000E-05
    2.240617949647064E-06   4.468750000000000E-05
@@ -581,9 +576,8 @@ Description = Density (Mg/m^3) (Melt Temperature (K)-dependent)
    1.113911714632494E+07   8.937500000000000E+04
    1.768478487445426E+07   1.787500000000000E+05
 
-TableHandle=7 matid = 33336 source = /opt/local/codes/data/eos/sesame page =  1
+TableHandle=7 matid = 33336 source = /usr/projects/data/eos/sesame page =  1
 Data Type = EOS_D_Pm
-Loading Options: EOS_MONOTONIC_IN_X, EOS_MONOTONIC_IN_Y
 Description = Density (Mg/m^3) (Melt Pressure (GPa)-dependent)
   fconv =   1.000000000000000E+00         xconv =   1.000000000000000E+00         yconv =   1.000000000000000E+00
 
@@ -665,15 +659,14 @@ Description = Density (Mg/m^3) (Melt Pressure (GPa)-dependent)
 TableHandle=8 matid = 33336 Data Type = EOS_D_Um	NOT LOADED
 Description = Density (Mg/m^3) (Melt Specific-Internal-Energy (MJ/kg)-dependent)
 
-TableHandle=9 matid = 33336 source = /opt/local/codes/data/eos/sesame page =  1
+TableHandle=9 matid = 33336 source = /usr/projects/data/eos/sesame page =  1
 Data Type = EOS_D_Tf
-Loading Options: EOS_MONOTONIC_IN_X, EOS_MONOTONIC_IN_Y
 Description = Density (Mg/m^3) (Freeze Temperature (K)-dependent)
   fconv =   1.000000000000000E+00         xconv =   1.000000000000000E+00         yconv =   1.000000000000000E+00
 
                      y =   0.000000000000000E+00
  x =
-   0.000000000000000E+00   8.470329472543003E-22
+   0.000000000000000E+00                     ---
    3.144691751607934E-07   8.937500000000000E-06
    7.924176704200986E-07   1.787500000000000E-05
    2.688741539576476E-06   4.468750000000000E-05
@@ -746,9 +739,8 @@ Description = Density (Mg/m^3) (Freeze Temperature (K)-dependent)
    1.336694057558993E+07   8.937499999999999E+04
    2.122174184934511E+07   1.787500000000000E+05
 
-TableHandle=10 matid = 33336 source = /opt/local/codes/data/eos/sesame page =  1
+TableHandle=10 matid = 33336 source = /usr/projects/data/eos/sesame page =  1
 Data Type = EOS_D_Pf
-Loading Options: EOS_MONOTONIC_IN_X, EOS_MONOTONIC_IN_Y
 Description = Density (Mg/m^3) (Freeze Pressure (GPa)-dependent)
   fconv =   1.000000000000000E+00         xconv =   1.000000000000000E+00         yconv =   1.000000000000000E+00
 
@@ -830,9 +822,8 @@ Description = Density (Mg/m^3) (Freeze Pressure (GPa)-dependent)
 TableHandle=11 matid = 33336 Data Type = EOS_D_Uf	NOT LOADED
 Description = Density (Mg/m^3) (Freeze Specific-Internal-Energy (MJ/kg)-dependent)
 
-TableHandle=12 matid = 33336 source = /opt/local/codes/data/eos/sesame page =  1
+TableHandle=12 matid = 33336 source = /usr/projects/data/eos/sesame page =  1
 Data Type = EOS_Tm_Pm
-Loading Options: EOS_MONOTONIC_IN_Y
 Description = Melt Temperature (K) (Melt Pressure (GPa)-dependent)
   fconv =   1.000000000000000E+00         xconv =   1.000000000000000E+00         yconv =   1.000000000000000E+00
 
@@ -914,15 +905,14 @@ Description = Melt Temperature (K) (Melt Pressure (GPa)-dependent)
 TableHandle=13 matid = 33336 Data Type = EOS_Tm_Um	NOT LOADED
 Description = Melt Temperature (K) (Melt Specific-Internal-Energy (MJ/kg)-dependent)
 
-TableHandle=14 matid = 33336 source = /opt/local/codes/data/eos/sesame page =  1
+TableHandle=14 matid = 33336 source = /usr/projects/data/eos/sesame page =  1
 Data Type = EOS_Pm_Tm
-Loading Options: EOS_MONOTONIC_IN_Y
 Description = Melt Pressure (GPa) (Melt Temperature (K)-dependent)
   fconv =   1.000000000000000E+00         xconv =   1.000000000000000E+00         yconv =   1.000000000000000E+00
 
                      y =   0.000000000000000E+00
  x =
-   0.000000000000000E+00  -1.000348583872720E-25
+   0.000000000000000E+00                     ---
    2.620576459673279E-07  -4.691206980446739E-10
    6.603480586834155E-07  -1.679476648016121E-09
    2.240617949647064E-06  -9.065145527981186E-09
@@ -998,15 +988,14 @@ Description = Melt Pressure (GPa) (Melt Temperature (K)-dependent)
 TableHandle=15 matid = 33336 Data Type = EOS_Pm_Um	NOT LOADED
 Description = Melt Pressure (GPa) (Melt Specific-Internal-Energy (MJ/kg)-dependent)
 
-TableHandle=16 matid = 33336 source = /opt/local/codes/data/eos/sesame page =  1
+TableHandle=16 matid = 33336 source = /usr/projects/data/eos/sesame page =  1
 Data Type = EOS_Um_Tm
-Loading Options: EOS_MONOTONIC_IN_Y
 Description = Melt Specific-Internal-Energy (MJ/kg) (Melt Temperature (K)-dependent)
   fconv =   1.000000000000000E+00         xconv =   1.000000000000000E+00         yconv =   1.000000000000000E+00
 
                      y =   0.000000000000000E+00
  x =
-   0.000000000000000E+00   5.207211816756768E+00
+   0.000000000000000E+00                     ---
    2.620576459673279E-07   5.207211816756768E+00
    6.603480586834155E-07   5.207162449336663E+00
    2.240617949647064E-06   5.207032803581332E+00
@@ -1079,9 +1068,8 @@ Description = Melt Specific-Internal-Energy (MJ/kg) (Melt Temperature (K)-depend
    1.113911714632494E+07   6.019516526820036E+05
    1.768478487445426E+07   1.010626054409105E+06
 
-TableHandle=17 matid = 33336 source = /opt/local/codes/data/eos/sesame page =  1
+TableHandle=17 matid = 33336 source = /usr/projects/data/eos/sesame page =  1
 Data Type = EOS_Um_Pm
-Loading Options: EOS_MONOTONIC_IN_Y
 Description = Melt Specific-Internal-Energy (MJ/kg) (Melt Pressure (GPa)-dependent)
   fconv =   1.000000000000000E+00         xconv =   1.000000000000000E+00         yconv =   1.000000000000000E+00
 
@@ -1160,9 +1148,8 @@ Description = Melt Specific-Internal-Energy (MJ/kg) (Melt Pressure (GPa)-depende
    4.127788047813447E+10   6.019516526820036E+05
    1.359581840186777E+11   1.010626054409105E+06
 
-TableHandle=18 matid = 33336 source = /opt/local/codes/data/eos/sesame page =  1
+TableHandle=18 matid = 33336 source = /usr/projects/data/eos/sesame page =  1
 Data Type = EOS_Tf_Pf
-Loading Options: EOS_MONOTONIC_IN_Y
 Description = Freeze Temperature (K) (Freeze Pressure (GPa)-dependent)
   fconv =   1.000000000000000E+00         xconv =   1.000000000000000E+00         yconv =   1.000000000000000E+00
 
@@ -1244,15 +1231,14 @@ Description = Freeze Temperature (K) (Freeze Pressure (GPa)-dependent)
 TableHandle=19 matid = 33336 Data Type = EOS_Tf_Uf	NOT LOADED
 Description = Freeze Temperature (K) (Freeze Specific-Internal-Energy (MJ/kg)-dependent)
 
-TableHandle=20 matid = 33336 source = /opt/local/codes/data/eos/sesame page =  1
+TableHandle=20 matid = 33336 source = /usr/projects/data/eos/sesame page =  1
 Data Type = EOS_Pf_Tf
-Loading Options: EOS_MONOTONIC_IN_Y
 Description = Freeze Pressure (GPa) (Freeze Temperature (K)-dependent)
   fconv =   1.000000000000000E+00         xconv =   1.000000000000000E+00         yconv =   1.000000000000000E+00
 
                      y =   0.000000000000000E+00
  x =
-   0.000000000000000E+00  -4.445993125278361E-26
+   0.000000000000000E+00                     ---
    3.144691751607934E-07  -4.691206367589571E-10
    7.924176704200986E-07  -1.679476339151478E-09
    2.688741539576476E-06  -9.065142907940859E-09
@@ -1328,15 +1314,14 @@ Description = Freeze Pressure (GPa) (Freeze Temperature (K)-dependent)
 TableHandle=21 matid = 33336 Data Type = EOS_Pf_Uf	NOT LOADED
 Description = Freeze Pressure (GPa) (Freeze Specific-Internal-Energy (MJ/kg)-dependent)
 
-TableHandle=22 matid = 33336 source = /opt/local/codes/data/eos/sesame page =  1
+TableHandle=22 matid = 33336 source = /usr/projects/data/eos/sesame page =  1
 Data Type = EOS_Uf_Tf
-Loading Options: EOS_MONOTONIC_IN_Y
 Description = Freeze Specific-Internal-Energy (MJ/kg) (Freeze Temperature (K)-dependent)
   fconv =   1.000000000000000E+00         xconv =   1.000000000000000E+00         yconv =   1.000000000000000E+00
 
                      y =   0.000000000000000E+00
  x =
-   0.000000000000000E+00   5.207211816767055E+00
+   0.000000000000000E+00                     ---
    3.144691751607934E-07   5.207211816767055E+00
    7.924176704200986E-07   5.207162449362583E+00
    2.688741539576476E-06   5.207032803669280E+00
@@ -1409,9 +1394,8 @@ Description = Freeze Specific-Internal-Energy (MJ/kg) (Freeze Temperature (K)-de
    1.336694057558993E+07   6.044803024172394E+05
    2.122174184934511E+07   1.012083595746234E+06
 
-TableHandle=23 matid = 33336 source = /opt/local/codes/data/eos/sesame page =  1
+TableHandle=23 matid = 33336 source = /usr/projects/data/eos/sesame page =  1
 Data Type = EOS_Uf_Pf
-Loading Options: EOS_MONOTONIC_IN_Y
 Description = Freeze Specific-Internal-Energy (MJ/kg) (Freeze Pressure (GPa)-dependent)
   fconv =   1.000000000000000E+00         xconv =   1.000000000000000E+00         yconv =   1.000000000000000E+00
 

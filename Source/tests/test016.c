@@ -37,15 +37,12 @@
 #include <assert.h>
 #include <float.h>
 #include "eos_Interface.h"
+#include "TEST_FUNCTIONS.h"
 #define SAFER_FREE(p) { assert(p != NULL); free(p); p=NULL; }
 #define MIN(x,y) (((x)<(y))? (x) : (y))
 #define MAX(x,y) (((x)>(y))? (x) : (y))
 #define ABS(x)  (((x)>0)? (x) : -1*(x))
 #define FABS(x) (((x)>0)? (x) : (EOS_REAL)-1.0*(x))
-
-/* Define hidden option flags that are currently not defined in the public interface.
- *  NOTE: If you want to use these in a test code, copy these defines into your code. */
-static const EOS_INTEGER EOS_DEBUG_PRINT = 11000;       /* Enable DEBUG_PRINT function */
 
 int main ()
 {

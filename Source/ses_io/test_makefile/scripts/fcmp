@@ -99,6 +99,9 @@ cmp(1)
 =cut
 EOH
 
+# Store original arguments before parsing options
+my $orig_opts = "@ARGV";
+
 use Getopt::Long;		# option parser
 use strict;
 
@@ -120,6 +123,11 @@ GetOptions($options,
 	   "verbose",
 	   "Quit"
 	  );
+
+# Remove remaining arguments from $orig_opts
+for my $o ( @ARGV ) {
+  $orig_opts =~ s|$o||g;
+}
 
 exit 255 if ($options->{"Quit"}); # do nothing
 
@@ -157,7 +165,7 @@ my %opt_hash = ();
 
 if ($options->{"options-file"}) {
   if ($options->{"key-option"}) {
-    use vars qw($key $opt $line $orig_opts);
+    use vars qw($key $opt $line);
     open(OFH,$options->{"options-file"}) || die "Cannot open '". $options->{"options-file"} . "'\n";
     while ($line = <OFH>) {
       chomp($line);
@@ -176,7 +184,7 @@ if ($options->{"options-file"}) {
       exit 0;
     }
     if ($opt_hash{$options->{"key-option"}}) {
-      $orig_opts = '-v' if ($options->{"verbose"});
+      $orig_opts =~ s|\s*\-+k[^\s=]*[\s=]+[\"\']*[^\"\']+[\"\']*\s*||; # remove key-option from new command line
       my $cmd = "$0 $orig_opts " . $opt_hash{$options->{"key-option"}} . " @ARGV";
       print "$cmd\n" if ($options->{"verbose"});
       exec "$cmd";

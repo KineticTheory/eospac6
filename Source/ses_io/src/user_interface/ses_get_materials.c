@@ -19,8 +19,8 @@ ses_material_id_reference ses_get_materials(ses_file_handle the_handle, long* si
     return SES_NULL_MATERIALS;
   }
 
-  FILE* pFILE = 0;
-  pFILE = _getPFILE(FILE_LIST[the_handle]->_the_handle);
+  /* FILE* pFILE = 0; */
+  /* pFILE = */ _getPFILE(FILE_LIST[the_handle]->_the_handle);
 
   if (size == (long*)NULL) {
 #ifdef DEBUG_PRINT

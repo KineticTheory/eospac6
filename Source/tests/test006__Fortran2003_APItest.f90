@@ -8,7 +8,7 @@
 !********************************************************************
 
 !> \file
-!! \ingroup tests
+!! \ingroup Fortran2003 tests
 !! \brief Test Interpolation and Mixing functionality using the Fortran 90 interface.
 !! EOS_RATIONAL and EOS_LINEAR interpolation options.
 !!
@@ -66,6 +66,9 @@ program test006
   integer(EOS_INTEGER) :: errorCode, errorCodeMix, iType, materialID, extrapCode(nXYPairs)
   real(EOS_REAL) :: atomicWeight(nMatIDs), gamma(nMatIDs), &
                     atomicWeights(nTables), gammas(nTables)
+  real(EOS_REAL) :: A_scalar(1)     ! array containing single scalar for rank compatibility
+  real(EOS_REAL) :: C_scalar(1)     ! array containing single scalar for rank compatibility
+  real(EOS_REAL) :: gamma_scalar(1) ! array containing single scalar for rank compatibility
   real(EOS_REAL) :: cmixrVals(nMatIDsToMix,nMixSets), C(nXYPairs,nMatIDsToMix), gamma_bar, Abar
   real(EOS_REAL) :: cmixrVals_i(nMatIDsToMix)
 
@@ -74,6 +77,7 @@ program test006
   real(EOS_REAL) :: wctime_interp = 0_EOS_REAL, cputime_interp = 0_EOS_REAL, cpucycles_interp = 0_EOS_REAL
   real(EOS_REAL) :: wctime_mix = 0_EOS_REAL, cputime_mix = 0_EOS_REAL, cpucycles_mix = 0_EOS_REAL
   integer(EOS_INTEGER) :: errtmp
+  logical :: iseq
 
   character*(500) :: s1, s2, s3, s4
 
@@ -82,7 +86,8 @@ program test006
 
   real(EOS_REAL) :: d1, d2, d3, diff1, diff2, diff3, mxdiff1, mxdiff2, mxdiff3
 
-  integer(EOS_INTEGER), parameter :: EOS_DISABLE_GHOST_NODES = 11001 ! private option to disable the usage of ghost node data during interpolation
+  !integer(EOS_INTEGER), parameter :: EOS_DISABLE_GHOST_NODES = 11002 ! private option to disable the usage of ghost node data during interpolation
+  include 'TEST_FUNCTIONS.f90'
   logical :: disableGhostNodes = .FALSE.
 
   logical :: uselinear = .FALSE.
@@ -275,7 +280,7 @@ program test006
 
      extrapCode = EOS_OK
      if (errorCode.NE.EOS_OK) then
-        if (errorCode.EQ.EOS_INTERP_EXTRAPOLATED) then
+        if (iseq(errorCode,EOS_INTERP_EXTRAPOLATED)) then
            call eos_CheckExtrap(tableHandles(i), nXYPairs, X, Y, extrapCode, errorCode)
         else
            call print_error(errorCode, 'eos_Interpolate')
@@ -353,8 +358,11 @@ program test006
      endif
 
      ! calculate ideal gas data
+     A_scalar(1)     = atomicWeights(i)
+     C_scalar(1)     = 1.0_EOS_REAL
+     gamma_scalar(1) = gammas(i)
      call idealGas(1_EOS_INTEGER, iType, nXYPairs, X, Y, R, fcold, &
-                   atomicWeights(i), 1.0_EOS_REAL, gammas(i), Fideal, gamma_bar, Abar)
+                   A_scalar, C_scalar, gamma_scalar, Fideal, gamma_bar, Abar)
 
      ! write results to STDOUT
      s=' '
@@ -456,9 +464,9 @@ program test006
      extrapCode = EOS_OK
      if (errorCode.NE.EOS_OK) then
         errorCodeMix = errorCode
-        if (errorCode.EQ.EOS_INTERP_EXTRAPOLATED .OR. &
-             errorCode.EQ.EOS_INTERP_EXTRAP_PBAL .OR. &
-             errorCode.EQ.EOS_INTERP_EXTRAP_TBAL) then
+        if (iseq(errorCode,EOS_INTERP_EXTRAPOLATED) .OR. &
+             iseq(errorCode,EOS_INTERP_EXTRAP_PBAL) .OR. &
+             iseq(errorCode,EOS_INTERP_EXTRAP_TBAL)) then
            call eos_CheckExtrap(tableHandles(i), nXYPairs, X, Y, extrapCode, errorCode)
         else
            call print_error(errorCode, 'eos_Mix')
@@ -544,15 +552,15 @@ program test006
 
      ! write results to STDOUT
      s=' '
-     if (errorCodeMix.EQ.EOS_INTERP_EXTRAPOLATED) then
+     if (iseq(errorCodeMix,EOS_INTERP_EXTRAPOLATED)) then
         where (extrapCode.NE.EOS_OK)
            s='F'
         end where
-     elseif (errorCodeMix.EQ.EOS_INTERP_EXTRAP_PBAL) then
+     elseif (iseq(errorCodeMix,EOS_INTERP_EXTRAP_PBAL)) then
         where (extrapCode.NE.EOS_OK)
            s='PBAL'
         end where
-     elseif (errorCodeMix.EQ.EOS_INTERP_EXTRAP_TBAL) then
+     elseif (iseq(errorCodeMix,EOS_INTERP_EXTRAP_TBAL)) then
         where (extrapCode.NE.EOS_OK)
            s='TBAL'
         end where
@@ -655,6 +663,7 @@ subroutine print_table_errors(tableHandles, nTables, label)
   character(*) :: label
   integer(EOS_INTEGER) :: errorCode, ierr
   character(EOS_MaxErrMsgLen) :: errorMessage
+  logical :: iseq
 
   ierr = EOS_OK
 
@@ -665,9 +674,9 @@ subroutine print_table_errors(tableHandles, nTables, label)
      write(*,'(1x,i4,3a,i4,2a)') &
           tableHandles(i), '. ', trim(label), ' ERROR ', errorCode, ': ', &
           errorMessage(1:(len_trim(errorMessage)-1))
-     if (errorCode.EQ.EOS_INTERP_EXTRAPOLATED .OR. &
-          errorCode.EQ.EOS_INTERP_EXTRAP_PBAL .OR. &
-          errorCode.EQ.EOS_INTERP_EXTRAP_TBAL) then
+     if (iseq(errorCode,EOS_INTERP_EXTRAPOLATED) .OR. &
+          iseq(errorCode,EOS_INTERP_EXTRAP_PBAL) .OR. &
+          iseq(errorCode,EOS_INTERP_EXTRAP_TBAL)) then
         ! do nothing here
      else
         ierr = -1_EOS_INTEGER
@@ -687,21 +696,22 @@ subroutine print_error(errorCode, label)
   character(*) :: label
   integer(EOS_INTEGER) :: errorCode
   character(EOS_MaxErrMsgLen) :: errorMessage
+  logical :: iseq
 
   call eos_GetErrorMessage(errorCode, errorMessage)
   write(*,'(2a,i4,2a)') trim(label), ' ERROR ', errorCode, ': ', &
        errorMessage(1:(len_trim(errorMessage)-1))
 
-  if (errorCode.EQ.EOS_INTERP_EXTRAPOLATED .OR. &
-       errorCode.EQ.EOS_INTERP_EXTRAP_PBAL .OR. &
-       errorCode.EQ.EOS_INTERP_EXTRAP_TBAL) then
+  if (iseq(errorCode,EOS_INTERP_EXTRAPOLATED) .OR. &
+       iseq(errorCode,EOS_INTERP_EXTRAP_PBAL) .OR. &
+       iseq(errorCode,EOS_INTERP_EXTRAP_TBAL)) then
      ! do nothing here
   else
      stop
   endif
 end subroutine print_error
 
-module test006_reallocate_mod
+module test006__Fortran2003_APItest_reallocate_mod
 contains
 ! ===========================================================================
 ! Reallocate a 1-D EOS_INTEGER array to n elements.
@@ -719,7 +729,7 @@ function reallocate(p, n)               ! reallocate EOS_INTEGER
   reallocate(1:nold) = p(1:nold)
   deallocate(p, STAT=ierr)
 end function reallocate
-end module test006_reallocate_mod
+end module test006__Fortran2003_APItest_reallocate_mod
 
 ! ===========================================================================
 ! Assign X and Y values for interpolation based upon data type.
@@ -727,7 +737,7 @@ end module test006_reallocate_mod
 subroutine setXandYVALS( &
      tableHandles, nTableHandles, THindex,nXYPairs,X,Y,iType,matID)
   use eos_Interface2003
-  use test006_reallocate_mod
+  use test006__Fortran2003_APItest_reallocate_mod
   implicit none
   integer(EOS_INTEGER) :: nTableHandles, tableHandles(nTableHandles), &
                           THindex, nXYPairs, iType, matID
@@ -783,7 +793,7 @@ subroutine setXandYVALS( &
   ! Get data type for current tableHandle
   call eos_GetTableInfo(tableHandles(THindex), 1_EOS_INTEGER, EOS_Table_Type, &
                         infoVal, errorCode)
-  iType = infoVal
+  iType = NINT(infoVal,EOS_INTEGER)
   if (errorCode.NE.EOS_OK) then
      call print_error(errorCode, 'setXandYVALS->eos_GetTableInfo')
   endif
@@ -791,7 +801,7 @@ subroutine setXandYVALS( &
   ! Get matID for current tableHandle
   call eos_GetTableInfo(tableHandles(THindex), 1_EOS_INTEGER, EOS_Material_ID, &
                         infoVal, errorCode)
-  matID = infoVal
+  matID = NINT(infoVal,EOS_INTEGER)
   if (errorCode.NE.EOS_OK) then
      call print_error(errorCode, 'setXandYVALS->eos_GetTableInfo')
   endif
@@ -900,7 +910,7 @@ end subroutine my_round_sub
 subroutine getCrossRefXYRanges(tableHandles, nTableHandles, &
   iType, matID, minD, maxD, minT, maxT, minX, maxX, minY, maxY)
   use eos_Interface2003
-  use test006_reallocate_mod
+  use test006__Fortran2003_APItest_reallocate_mod
   implicit none
 
   integer(EOS_INTEGER), intent(in) :: nTableHandles, iType, matID, &
@@ -946,13 +956,13 @@ subroutine getCrossRefXYRanges(tableHandles, nTableHandles, &
   do i = 1, nTables+nTableHandles
      call eos_GetTableInfo(tmpTH(i), 1_EOS_INTEGER, EOS_Table_Type, &
                            infoVal, errorCode)
-     tmpType = infoVal
+     tmpType = NINT(infoVal,EOS_INTEGER)
      if (errorCode.NE.EOS_OK) then
         call print_error(errorCode, 'getCrossRefXYRanges->eos_GetTableInfo')
      endif
      call eos_GetTableInfo(tmpTH(i), 1_EOS_INTEGER, EOS_Material_ID, &
                            infoVal, errorCode)
-     tmpMatID = infoVal
+     tmpMatID = NINT(infoVal,EOS_INTEGER)
      if (errorCode.NE.EOS_OK) then
         call print_error(errorCode, 'getCrossRefXYRanges->eos_GetTableInfo')
      endif
@@ -1835,3 +1845,16 @@ subroutine setConversionFactors(th, nh, reset, xconv, yconv, fconv, errorCode)
 
   enddo
 end subroutine setConversionFactors
+
+! ===========================================================================
+! test for EOPSAC6 error code equivalence
+! ===========================================================================
+function iseq(flag1, flag2)
+  use eos_Interface2003
+  implicit none
+  logical :: iseq
+  integer(EOS_INTEGER) :: flag1, flag2
+  logical :: result
+  call eos_ErrorCodesEqual(flag1, flag2, result)
+  iseq = result
+end function iseq

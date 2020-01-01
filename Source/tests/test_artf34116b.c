@@ -260,6 +260,13 @@ int main (int argc, char **argv)
       }
     }
 
+    free (X);
+    free (Y);
+    for (i = 0; i < nTables; i++) {
+      free (F[i]);
+      free (dFx[i]);
+      free (dFy[i]);
+    }
   }
 
   /* destroy all tables */
@@ -373,12 +380,11 @@ EOS_INTEGER populateXYArrays (EOS_INTEGER th_in, EOS_INTEGER n_interval, EOS_INT
   EOS_REAL *Y_tmp=NULL, *dFx=NULL, *dFy=NULL;
   EOS_INTEGER errorCode = EOS_OK;
   EOS_CHAR errorMessage[EOS_MaxErrMsgLen];
-  EOS_INTEGER cat, type, type0, matid, one = 1,indepVar2, th;
+  EOS_INTEGER cat, type, type0, matid, one = 1, th;
 
   matid = get_matID(th_in);
   type = get_table_type(th_in);
   cat = get_dataTypeCategory(type);
-  indepVar2 = get_dataTypeIndepVar2(type);
 
   switch (cat) {
   case 0: /* data already loaded for non-inverted type */

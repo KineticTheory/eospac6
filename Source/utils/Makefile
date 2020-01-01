@@ -36,7 +36,7 @@ README  = $(sort $(EXE:%=$(BASEDIR)/utils/%.readme))
 ##################################################################
 DEPDIR = $(BASEDIR)/utils/.depends
 df = $(DEPDIR)/$(*F)
-MAKEDEPEND = $(BASEDIR)/scripts/make_depends -d $(DEPDIR) -I $(BASEDIR)/src -I $(SESIOINC) $<
+MAKEDEPEND = $(BASEDIR)/scripts/make_depends -d $(DEPDIR) -I $(SRCDIR) -I $(SESIOINC) $<
 
 ##################################################################
 ### Target definitions                                         ###
@@ -69,19 +69,19 @@ $(BASEDIR)/utils/%.readme : %.c
 
 $(OBJDIR)/%.o : %.c
 	$(MAKEDEPEND)
-	${CC} $(C_ADDRESS_FLAG) ${CPPFLAGS} ${CFLAGS} -c $< -o $@
+	${CC} $(C_ADDRESS_FLAG) ${CPPFLAGS} ${CFLAGS} -I$(SRCDIR) -c $< -o $@
 	$(PURIFY) $(CC) $(C_ADDRESS_FLAG) $(LDFLAGS) -o $(EXEDIR)/$* $@ $(LIBS)  
 	@-rm $@
 
 $(OBJDIR)/%.o : %.cpp
 	$(MAKEDEPEND)
-	${CXX} $(C_ADDRESS_FLAG) ${CPPFLAGS} ${CXXFLAGS} -c $< -o $@
+	${CXX} $(C_ADDRESS_FLAG) ${CPPFLAGS} ${CXXFLAGS} -I$(SRCDIR) -c $< -o $@
 	$(PURIFY) $(CXX) $(C_ADDRESS_FLAG) $(LDFLAGS) -o $(EXEDIR)/$* $(OBJDIR)/$(TEST_FUNCTIONS_OBJ) $@ $(LIBS) 
 	@-rm $@
 
 $(OBJDIR)/%.o : %.f
 	$(MAKEDEPEND)
-	${F77} $(F_ADDRESS_FLAG) ${FFLAGS} -c $< -o $@
+	${F77} $(F_ADDRESS_FLAG) ${FFLAGS} -I$(SRCDIR) -c $< -o $@
 	$(PURIFY) $(F77) $(F_ADDRESS_FLAG) $(LDFLAGS) -o $(EXEDIR)/$* $@ $(OBJDIR)/$(TEST_FUNCTIONS_OBJ)  $(LIBS) 
 	@-rm $@
 
@@ -89,7 +89,7 @@ $(OBJDIR)/%.o : %.f90
 	$(MAKEDEPEND)
 	@(d=`pwd`; \
          cd $(OBJDIR); \
-         echo $(F90) $(F_ADDRESS_FLAG) ${F90FLAGS} -c $$d/$< -o $@; \
+         echo $(F90) $(F_ADDRESS_FLAG) ${F90FLAGS} -I$(SRCDIR) -c $$d/$< -o $@; \
          $(F90) $(F_ADDRESS_FLAG) ${F90FLAGS} -c $$d/$< -o $@; \
         )
 	$(PURIFY) $(F90) $(F_ADDRESS_FLAG) $(LDFLAGS) -o $(EXEDIR)/$* $@ $(PROFILE) $(OBJDIR)/$(TEST_FUNCTIONS_OBJ) $(LIBS) $(F90_LIBS) 
@@ -332,7 +332,7 @@ ifeq (0,${MAKELEVEL})
 	@$(MAKE) -C $(BASEDIR)/Examples clean
 else
 	-rm -fr $(EXAMPLEDIR) $(DEPDIR) $(EXEDIR) $(LIBDIR) \
-                `find . -name 'core*'` `find . -name '*.stackdump'`
+                `find . -name 'core*' -o -name '*.stackdump' -o -name '*.lst'` $(BUILD_LOG)
 	@$(MAKE) -C $(BASEDIR)/src clean
 endif
 
@@ -355,9 +355,7 @@ DISTCLEAN_SUBDIRS = $(notdir $(DISTCLEAN_DIRS))
 distclean: $(addprefix distclean_,$(DISTCLEAN_SUBDIRS))
 	-rm -fr $(INCDIR) $(DEPDIR) $(OBJDIR) $(LIBDIR) \
                 $(CPPDIR) $(MANGLED_SRCS) $(BUILD_LOG) \
-                `find . -name '$(JUNKFILE)*'` \
-                `find . -name 'core*'` `find . -name '*.stackdump'` \
-                `find . -name '*.MOD'` `find . -name '*.mod'`
+                `find . -name '$(JUNKFILE)*' -o -name 'core*' -o -name '*.stackdump' -o -name '*.MOD' -o -name '*.mod' -o -name '*.lst'`
 
 distclean_%:
 	@(loc=`pwd`; \

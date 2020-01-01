@@ -1,4 +1,5 @@
 eos_LoadTables ERROR  12009: EOS_MATERIAL_NOT_FOUND: Material ID specified for table handle 0 is not in library
+eos_LoadTables ERROR  22009: EOS_MATERIAL_NOT_FOUND: Material ID specified for table handle 1 is not in library
 
 TH 0: EOS_Pt_DT for material  93720
         i=2    X =   2.500000000000000E+03 Y =   6.500000000000000E+02 F =   9.626083763530962E+07 dFx =   6.900962612103367E+04 dFy =   9.952893373557444E-04
