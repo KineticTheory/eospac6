@@ -78,5 +78,7 @@ sparc-*
 x86_64-*
 
 # build system
-.vs
+.vs/
+Source/CMakeSettings.json
+
 

@@ -16,8 +16,26 @@
           "name": "CMAKE_INSTALL_PREFIX2",
           "value": "c:/work/vendors64/eospac-6.4.0",
           "type": "PATH"
+        },
+        {
+          "name": "EOSPAC6_LIBRARY_TYPE",
+          "value": "SHARED",
+          "type": "STRING"
         }
       ]
+    },
+    {
+      "name": "x64-Release",
+      "generator": "Visual Studio 16 2019 Win64",
+      "configurationType": "Release",
+      "buildRoot": "C:/work/vs2019-${name}/eospac6",
+      "installRoot": "c:/work/vs2019-${name}/install",
+      "cmakeExecutable": "C:/Program Files/CMake/bin/cmake.exe",
+      "cmakeCommandArgs": "-DEOSPAC6_LIBRARY_TYPE=STATIC",
+      "buildCommandArgs": "-verbosity:minimal -m:8",
+      "ctestCommandArgs": "",
+      "inheritEnvironments": [ "msvc_x64_x64" ],
+      "variables": []
     }
   ]
 }
