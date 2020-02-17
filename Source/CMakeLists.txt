@@ -132,7 +132,7 @@ if( MSVC )
   # For Debug under VS, also install the pdb files.
   install( FILES ${PROJECT_BINARY_DIR}/libeospac6.dir/Debug/libeospac6.pdb
     CONFIGURATIONS Debug 
-    DESTINATION bin)
+    DESTINATION lib)
 else()
   install( TARGETS libeospac6 
     LIBRARY DESTINATION lib
