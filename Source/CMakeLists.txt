@@ -54,7 +54,7 @@ if( "${CMAKE_C_COMPILER_ID}" STREQUAL "MSVC" )
       " /D_CRT_SECURE_NO_DEPRECATE /D_SCL_SECURE_NO_DEPRECATE /D_SECURE_SCL=0" )
   endif()
 
-  # If building static libraries, inlcude debugging information in the library.
+  # If building static libraries, include debugging information in the library.
   #if( ${EOSPAC6_LIBRARY_TYPE} MATCHES "STATIC" )
   #  string( APPEND CMAKE_C_FLAGS_DEBUG " /Z7"   )
   #endif()
@@ -126,13 +126,13 @@ endif()
 if( MSVC )
   install( TARGETS libeospac6 
     CONFIGURATIONS ${CMAKE_CONFIGURATION_TYPES}
-    LIBRARY DESTINATION lib/$<CONFIG>
-    RUNTIME DESTINATION bin/$<CONFIG>
-    ARCHIVE DESTINATION lib/$<CONFIG> )
+    LIBRARY DESTINATION lib
+    RUNTIME DESTINATION bin
+    ARCHIVE DESTINATION lib )
   # For Debug under VS, also install the pdb files.
-  #install( FILES ${PROJECT_BINARY_DIR}/Debug/eospac6.pdb
-  #  CONFIGURATIONS Debug 
-  #  DESTINATION lib/$<CONFIG>)
+  install( FILES ${PROJECT_BINARY_DIR}/Debug/eospac6.pdb
+    CONFIGURATIONS Debug 
+    DESTINATION bin)
 else()
   install( TARGETS libeospac6 
     LIBRARY DESTINATION lib

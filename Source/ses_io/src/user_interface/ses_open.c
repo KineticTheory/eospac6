@@ -212,7 +212,7 @@ ses_file_handle my_construct_file(ses_string filename, ses_open_type open_flags)
   switch(open_flags) {
   case 'R':
 
-    pFILE = fopen(filename, "r");  //  Note file not exist returns 0
+    pFILE = fopen(filename, "rb");  //  Note file not exist returns 0
     break;
 
   case 'A':
@@ -402,7 +402,7 @@ ses_file_type my_determine_file_type(ses_string filename, ses_open_type the_flag
 
   return_value = QUERY_4_TYPE;
   FILE* pFILE = (FILE*)NULL;
-  pFILE = fopen(filename, "r");  /*  Note file not exist returns 0 */
+  pFILE = fopen(filename, "rb");  /*  Note file not exist returns 0 */
 
 
   if (pFILE == (FILE*)NULL) {

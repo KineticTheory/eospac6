@@ -1181,7 +1181,7 @@ ses_boolean _read_and_define_tables_from_file(void) {
   ses_boolean return_value = SES_FALSE;
 
   char* filename = "table_defs.sesio";
-  FILE* cfh = fopen(filename, "r");  //  Note file not exist returns 0
+  FILE* cfh = fopen(filename, "rb");  //  Note file not exist returns 0
   if (cfh == NULL) {
   }
   else {

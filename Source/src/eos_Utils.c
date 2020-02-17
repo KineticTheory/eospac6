@@ -616,12 +616,20 @@ eos_getSesameFileNames (EOS_CHAR *** files, EOS_INTEGER * filesL, EOS_CHAR ** er
   {
 
     /* if indexFileName will be <= PATH_MAX, then define it and continue */
+#ifdef _MSC_VER
+    count = strlen(sesameIndexLocations[i]) + strlen("sesameFilesDir.txt") + 2;
+#else
     count = strlen (sesameIndexLocations[i]) + strlen ("sesameFilesDir.txt") + 1;
+#endif
     if (count > PATH_MAX)
       continue;
     strcpy (indexFilePath, sesameIndexLocations[i]);
     strcpy (indexFileName, sesameIndexLocations[i]);
+#ifdef _MSC_VER
+    strcat(indexFileName, "\\sesameFilesDir.txt");
+#else
     strcat (indexFileName, "/sesameFilesDir.txt");
+#endif
 
     fileExists = _eos_fileExistsAndValid(indexFileName);
 
@@ -1066,12 +1074,19 @@ _eos_addDefaultFileNames (EOS_CHAR * srchPathName, EOS_CHAR *** fileNames, EOS_I
 
   for (i = 0; i < EOS_NUMDEFAULTFILENAMES; i++)
     {
-
+#ifdef _MSC_VER
+    totChars = strlen(srchPathName) + 3 + strlen(defaultSesameFileNames[i]);
+#else
     totChars = strlen (srchPathName) + 2 + strlen (defaultSesameFileNames[i]);
+#endif
     tmp2 = realloc (tmp2, totChars * sizeof (EOS_CHAR));
 
     strcpy (tmp2, srchPathName);
+#ifdef _MSC_VER
+    strcat(tmp2, "\\");
+#else
     strcat (tmp2, "/");
+#endif
     strcat (tmp2, defaultSesameFileNames[i]);
 
     /* if file named tmp2 exists, is not a directory, is not longer than

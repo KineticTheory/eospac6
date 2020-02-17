@@ -5,10 +5,10 @@
       "generator": "Visual Studio 16 2019 Win64",
       "configurationType": "Debug",
       "inheritEnvironments": [ "msvc_x64_x64" ],
-      "buildRoot": "c:/work/vs2019-${name}/eospac64",
+      "buildRoot": "c:/work/vs2019-${name}/eospac6",
       "installRoot": "c:/work/vs2019-${name}/install",
-      "cmakeCommandArgs": "",
-      "buildCommandArgs": "-verbosity:minimal",
+      "cmakeCommandArgs": "-DEOSPAC6_LIBRARY_TYPE=STATIC",
+      "buildCommandArgs": "-verbosity:minimal -m:8",
       "ctestCommandArgs": "-j 8 --output-on-failures",
       "cmakeExecutable": "C:/Program Files/CMake/bin/cmake.exe",
       "variables": [
@@ -33,7 +33,7 @@
       "cmakeExecutable": "C:/Program Files/CMake/bin/cmake.exe",
       "cmakeCommandArgs": "-DEOSPAC6_LIBRARY_TYPE=STATIC",
       "buildCommandArgs": "-verbosity:minimal -m:8",
-      "ctestCommandArgs": "",
+      "ctestCommandArgs": "-j 8 --output-on-failures",
       "inheritEnvironments": [ "msvc_x64_x64" ],
       "variables": []
     }

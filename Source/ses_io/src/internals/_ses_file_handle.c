@@ -540,7 +540,7 @@ FILE* _getPFILE(struct _ses_file_handle* the_handle) {
 	  switch(the_handle->_the_open_mode) {
 		  case 'R':
   
-		  	pFILE = fopen(filename, "r");  /*  Note file not exist returns 0 */
+		  	pFILE = fopen(filename, "rb");  /*  Note file not exist returns 0 */
    		  	break;
   
   		  case 'A':

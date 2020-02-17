@@ -76,6 +76,10 @@ double _read_double_binary(struct _ses_file_handle* pSFH, unsigned int nsig, ses
   } myBuffer;
 
   int number_read = fread(&myBuffer.cbuffer[0], 8, 1, pFILE);
+  if (ferror(pFILE))
+    printf("Read error: __FILE__ (__LINE__)");
+  if (feof(pFILE))
+    printf("End-of-File error:  __FILE__ (__LINE__)");
   if (number_read <= 0) {
 #ifdef DEBUG_PRINT
     printf("_read_double_binary: Failure in reading double from pFILE at location %ld\n", ftell(pFILE));
@@ -297,6 +301,10 @@ long _read_long_binary(struct _ses_file_handle* pSFH) {
   }
 
   int number_read = fread(&myBuffer.cbuffer[0], 8, 1, pFILE);
+  if (ferror(pFILE))
+    printf("Read error: __FILE__ (__LINE__)");
+  if (feof(pFILE))
+    printf("End-of-File error:  __FILE__ (__LINE__)");
   if (number_read <= 0) {
 #ifdef DEBUG_PRINT
     printf("_read_long_binary: Failure in reading long from pFILE\n");
@@ -413,6 +421,10 @@ long _read_long_pFILE_binary(FILE* pFILE, ses_boolean needs_flip) {
 #endif
 
   int number_read = fread(&myBuffer.cbuffer[0], 8, 1, pFILE);
+  if (ferror(pFILE))
+    printf("Read error: __FILE__ (__LINE__)");
+  if (feof(pFILE))
+    printf("End-of-File error:  __FILE__ (__LINE__)");
 #ifdef DEBUG_READ_LONG_PFILE_BINARY
   printf("_read_long_pFILE_binary:  number_read is %d\n", number_read);
 #endif
