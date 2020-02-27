@@ -7,16 +7,11 @@
       "inheritEnvironments": [ "msvc_x64_x64" ],
       "buildRoot": "c:/work/vs2019-${name}/eospac6",
       "installRoot": "c:/work/vs2019-${name}/install",
-      "cmakeCommandArgs": "-DEOSPAC6_LIBRARY_TYPE=STATIC",
-      "buildCommandArgs": "-verbosity:minimal -m:8",
+      "cmakeCommandArgs": "",
+      "buildCommandArgs": "-verbosity:minimal -m:24",
       "ctestCommandArgs": "-j 8 --output-on-failures",
       "cmakeExecutable": "C:/Program Files/CMake/bin/cmake.exe",
       "variables": [
-        {
-          "name": "CMAKE_INSTALL_PREFIX2",
-          "value": "c:/work/vendors64/eospac-6.4.0",
-          "type": "PATH"
-        },
         {
           "name": "EOSPAC6_LIBRARY_TYPE",
           "value": "SHARED",
@@ -31,11 +26,17 @@
       "buildRoot": "C:/work/vs2019-${name}/eospac6",
       "installRoot": "c:/work/vs2019-${name}/install",
       "cmakeExecutable": "C:/Program Files/CMake/bin/cmake.exe",
-      "cmakeCommandArgs": "-DEOSPAC6_LIBRARY_TYPE=STATIC",
-      "buildCommandArgs": "-verbosity:minimal -m:8",
+      "cmakeCommandArgs": "",
+      "buildCommandArgs": "-verbosity:minimal -m:24",
       "ctestCommandArgs": "-j 8 --output-on-failures",
       "inheritEnvironments": [ "msvc_x64_x64" ],
-      "variables": []
+      "variables": [
+        {
+          "name": "EOSPAC6_LIBRARY_TYPE",
+          "value": "SHARED",
+          "type": "STRING"
+        }
+      ]
     }
   ]
 }

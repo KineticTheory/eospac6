@@ -38,11 +38,13 @@
 #define _get_temperature_address HEADER(_get_temperature_address)
 #define _get_function_address HEADER(_get_function_address)
 
+#ifdef USE_LIBXML2
 ses_error_flag _read_index_record_llnl_xml(struct _ses_index_record* the_index_record, struct _ses_file_handle* pSFH, long offset) {
 
   /*  function prototypes */
 
    ses_error_flag check_errors_READ_INDEX_RECORD_LLNL_XML(struct _ses_index_record* ptIR, struct _ses_file_handle* pSFH, long offset);
+
   ses_error_flag parse_my_material_tag(struct _ses_index_record* the_index_record, struct _ses_file_handle* pSFH, long offset);
 
    /*  end function prototypes */
@@ -65,6 +67,7 @@ ses_error_flag _read_index_record_llnl_xml(struct _ses_index_record* the_index_r
   return return_value;
 
 }
+#endif
 ses_error_flag check_errors_READ_INDEX_RECORD_LLNL_XML(struct _ses_index_record* the_index_record, struct _ses_file_handle* pSFH, long offset) {
 
    if (the_index_record == (struct _ses_index_record*)NULL) {

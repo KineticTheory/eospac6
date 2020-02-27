@@ -96,6 +96,7 @@ file( GLOB libincludes
   ${Eospac6_SOURCE_DIR}/ses_io/src/internals/llnl_xml/*.h
   ${Eospac6_SOURCE_DIR}/ses_io/src/internals/xml/*.h
   ${Eospac6_SOURCE_DIR}/ses_io/include/*.h)
+list( REMOVE_ITEM libsources ${Eospac6_SOURCE_DIR}/src/TEST_FUNCTIONS.h )
 if( MSVC )
   list(APPEND libsources ${libincludes}) # provide links to files in the IDE.
 endif()

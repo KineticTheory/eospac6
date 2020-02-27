@@ -2310,7 +2310,14 @@ eos_SetCustomMsg_str (EOS_CHAR ** msg, const EOS_CHAR * fmt, ...)
   va_end (args);
 }
 
-inline EOS_INTEGER
+/*! \bug I'm not sure what it means to have an 'inline' function defined in an
+ *       implementation file.  MSVC doesn't like it when creating a dll version 
+ *       of the library, so I've added this little hack.  Linux builds seem to
+ *       ignore the 'inline' part. */
+#ifndef _MSC_VER
+inline
+#endif 
+EOS_INTEGER
 eos_GetHandleFromCustomErrorCode (const EOS_INTEGER err)
 {
   /* remove the original err value from the err, returning the th (th<0 indicates no th included) */
@@ -2320,7 +2327,10 @@ eos_GetHandleFromCustomErrorCode (const EOS_INTEGER err)
   return(th);
 }
 
-inline EOS_INTEGER
+#ifndef _MSC_VER
+inline 
+#endif 
+EOS_INTEGER
 eos_GetStandardErrorCodeFromCustomErrorCode (const EOS_INTEGER err)
 {
   /* remove the th value from the err, returning the original err */
