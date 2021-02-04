@@ -30,36 +30,48 @@ static const EOS_REAL ONE = (EOS_REAL) 1;
 static const EOS_REAL ZERO = (EOS_REAL) 0;
 static const EOS_REAL EOS_MIN_MASS_FRACTION = (EOS_REAL) 1.0e-8;
 
-/************************************************************************
- * 
- * RecordType6 class constructor
- * 
- * Returned Values: none
+/************************************************************************/
+/*!
+ * \brief RecordType6 class constructor
  *
- * Input Value:
- * eos_RecordType6 *me         - this pointer (pointer to the instance of type eos_RecordType6
- * EOS_INTEGER      materialID - id of material to load.
- * EOS_INTEGER      th         - table handle.
- * 
+ * \param[in,out] *me        - eos_RecordType6 : data object pointer;
+ *                                               contents of object are initialized
+ * \param[in]     materialID - EOS_INTEGER     : id of material to load
+ * \param[in]     th         - EOS_INTEGER     : table handle
+ *
+ * \return none
+ *
  ************************************************************************/
 void eos_ConstructRecordType6 (eos_RecordType6 *me, EOS_INTEGER th,
                                EOS_INTEGER materialID)
 {
-  me->NR = 0;
-  me->NT = 0;
-  me->NP = 0;
+  /* SESAME table 201 data */
   me->avgAtomicNumber = (EOS_REAL) 0;
   me->avgAtomicWgt = (EOS_REAL) 0;
   me->refDensity = (EOS_REAL) 0;
   me->solidBulkModulus = (EOS_REAL) 0;
   me->exchangeCoefficient = (EOS_REAL) 0;
+
+  /* SESAME table data */
+  me->NR = 0;
+  me->NT = 0;
+  me->NP = 0;
   me->R = NULL;
   me->T = NULL;
   me->table = NULL;
+
+  /* Miscellaneous metadata */
+  me->eosData.varOrder = X_Y_F;
+  me->eosData.tmpVarOrder = -1;
+
   me->eosData.dataFileOffset = -1;
   me->eosData.dataFileIndex = -1;
   me->eosData.dataSize = 0;
+
+  /* Create eos_DataMap */
   eos_ConstructEosData ((eos_Data *) me, th, materialID);
+
+  /* Define class-specific virtual functions */
   me->eosData.Load = eos_LoadRecordType6;
   me->eosData.Create = eos_CreateRecordType6;
   me->eosData.Destroy = eos_DestroyRecordType6;
@@ -75,19 +87,29 @@ void eos_ConstructRecordType6 (eos_RecordType6 *me, EOS_INTEGER th,
   me->eosData.GetTableMetaData = eos_GetTableMetaDataRecordType6;
   me->eosData.GetLoadedBulkData = eos_GetLoadedBulkDataRecordType6;
   me->eosData.SetMonotonicity = eos_SetMonotonicityRecordType6;
-  me->eosData.AreMonotonicRequirementsCompatible =
-    eos_AreMonotonicRequirementsCompatibleRecordType6;
+  me->eosData.AreMonotonicRequirementsCompatible = eos_AreMonotonicRequirementsCompatibleRecordType6;
   me->eosData.SetSmoothing = eos_SetSmoothingRecordType6;
   me->eosData.GetMonotonicity = eos_GetMonotonicityRecordType6;
   me->eosData.GetSmoothing = eos_GetSmoothingRecordType6;
-  me->eosData.AreSmoothingRequirementsCompatible =
-    eos_AreSmoothingRequirementsCompatibleRecordType6;
+  me->eosData.AreSmoothingRequirementsCompatible = eos_AreSmoothingRequirementsCompatibleRecordType6;
   me->eosData.Interpolate = eos_InterpolateRecordType6;
   me->eosData.CheckExtrap = eos_CheckExtrapRecordType6;
   me->eosData.InvertAtSetup = NULL; /* no inversion at setup allowed */
   me->eosData.SetExtrapolationBounds = NULL; /* no extrapolation bounds stored */
-  me->eosData.varOrder = X_Y_F;
-  me->eosData.tmpVarOrder = -1;
+  me->eosData.eos_IsRequiredDataLoaded = eos_isRequiredDataLoadedRecordType6;
+  me->eosData.AreGhostDataRequired = NULL; /* no ghost node data required*/
+  me->eosData.AddGhostData = NULL; /* no ghost node data required*/
+  me->eosData.GenerateHashTables = eos_GenerateHashTablesRecordType6;
+
+#ifdef DO_OFFLOAD
+  EOS_INTEGER i;
+  for(i=0; i<MAX_TABLES_RECORDTYPE6; i++) {
+    me->gpu_xtbls[i]     = NULL;
+    me->gpu_ytbls[i]     = NULL;
+    me->gpu_ftbls[i]     = NULL;
+  }
+  me->eosData.GpuOffloadData = eos_GpuOffloadDataRecordType6;
+#endif /* DO_OFFLOAD */
 }
 
 /************************************************************************
@@ -97,7 +119,7 @@ void eos_ConstructRecordType6 (eos_RecordType6 *me, EOS_INTEGER th,
  * Returned Values: none
  *
  * Input Value:
- * eos_RecordType6 *me  - this pointer (pointer to the instance of type eos_RecordType6
+ * eos_RecordType6 *me  - this pointer (pointer to the instance of type eos_RecordType6)
  * 
  ************************************************************************/
 void eos_DestroyRecordType6 (void* ptr)
@@ -109,6 +131,25 @@ void eos_DestroyRecordType6 (void* ptr)
       eos_DestroyEosData (&(me->eosData));
     return;
   }
+
+#ifdef DO_OFFLOAD
+  {
+    EOS_INTEGER i;
+    int t_ = omp_get_default_device();
+    for(i=0; i<MAX_TABLES_RECORDTYPE6; i++) {
+      omp_target_free(me->gpu_xtbls[i], t_);
+      omp_target_free(me->gpu_ytbls[i], t_);
+      omp_target_free(me->gpu_ftbls[i], t_);
+      me->gpu_xtbls[i]     = NULL;
+      me->gpu_ytbls[i]     = NULL;
+      me->gpu_ftbls[i]     = NULL;
+    }
+  }
+#endif /* DO_OFFLOAD */
+
+  /* Free hashtables */
+  if (me->R_ht) eos_HashTable1D_free(me->R_ht);
+  if (me->T_ht) eos_HashTable1D_free(me->T_ht);
 
   eos_SetSizeRecordType6 (me, 0, 0, 0, 0);
 
@@ -123,7 +164,7 @@ void eos_DestroyRecordType6 (void* ptr)
  * Returned Values: none
  *
  * Input Value:
- * eos_RecordType6 *me  - this pointer (pointer to the instance of type eos_RecordType6
+ * eos_RecordType6 *me  - this pointer (pointer to the instance of type eos_RecordType6)
  * 
  ************************************************************************/
 void eos_CreateRecordType6 (void *ptr, EOS_INTEGER th)
@@ -236,7 +277,7 @@ void eos_SetFileIndexesRecordType6 (void *ptr, EOS_INTEGER th)
  * Returned Values: none
  *
  * Input Value:
- * eos_RecordType6 *me  - this pointer (pointer to the instance of type eos_RecordType6
+ * eos_RecordType6 *me  - this pointer (pointer to the instance of type eos_RecordType6)
  * 
  ************************************************************************/
 void eos_LoadRecordType6 (void *ptr, EOS_INTEGER th)
@@ -364,7 +405,7 @@ void eos_LoadRecordType6 (void *ptr, EOS_INTEGER th)
  * Returned Values: none
  *
  * Input Value:
- * eos_RecordType6 *me  - this pointer (pointer to the instance of type eos_RecordType6
+ * eos_RecordType6 *me  - this pointer (pointer to the instance of type eos_RecordType6)
  * EOS_INTEGER      NR  - size of R array
  * EOS_INTEGER      NT  - size of T array
  * EOS_INTEGER      NP  - number of subtables
@@ -459,12 +500,45 @@ void eos_SetSizeRecordType6 (eos_RecordType6 *me, EOS_INTEGER NR,
   me->eosData.isAllocated = 1;
 }
 
+/***********************************************************************/
+/*!
+ * \brief This function returns the dimensions of the specified table.
+ *
+ * \param[out]    NR  - EOS_INTEGER : size of R array
+ * \param[out]    NT  - EOS_INTEGER : size of T array
+ * \param[in]     *me - eos_RecordType6 : data object pointer;
+ *
+ * \return none
+ *
+ ***********************************************************************/
 void eos_GetSizeRecordType6 (eos_RecordType6 *me, EOS_INTEGER *NR,
                              EOS_INTEGER *NT)
 /* returns the size of a subtable */
 {
   *NR = me->NR;
   *NT = me->NT;
+}
+
+/***********************************************************************/
+/*!
+ * \brief This function returns EOS_TRUE or EOS_FALSE depending upon the existence
+ *        of loaded data table(s).
+ *
+ * \param[in]     *ptr     - void : data object pointer;
+ * \param[in]     dataType - EOS_INTEGER : data type
+ *
+ * \return EOS_BOOLEAN
+ *
+ ***********************************************************************/
+EOS_BOOLEAN eos_isRequiredDataLoadedRecordType6 (void *ptr, EOS_INTEGER dataType)
+{
+  eos_RecordType6 *me = (eos_RecordType6*) ptr;
+  EOS_BOOLEAN bval = EOS_TRUE;
+
+  EOS_INTEGER subTableNum = EOS_TYPE_TO_SUB_TAB_NUM (dataType);
+  bval = (subTableNum > me->eosData.numSubtablesLoaded) ? EOS_FALSE : EOS_TRUE;
+
+  return bval;
 }
 
 /************************************************************************
@@ -474,7 +548,7 @@ void eos_GetSizeRecordType6 (eos_RecordType6 *me, EOS_INTEGER *NR,
  * Returned Values: none
  *
  * Input Value:
- * eos_RecordType6 *me  - this pointer (pointer to the instance of type eos_RecordType6
+ * eos_RecordType6 *me  - this pointer (pointer to the instance of type eos_RecordType6)
  * EOS_REAL			**R  - output: holds R-pointer
  * EOS_REAL			**T  - output: holds T-pointer
  * EOS_REAL			***F - output: holds F-pointer (F is 2d array allocated as 1 d array NR * NT)
@@ -485,16 +559,34 @@ void eos_GetSizeRecordType6 (eos_RecordType6 *me, EOS_INTEGER *NR,
 void _eos_GetDataRecordType6 (eos_RecordType6 *me, EOS_REAL **R, EOS_REAL **T,
                               EOS_REAL ***F, EOS_INTEGER subTableNum)
 {
-  *R = me->R;
-  *T = me->T;
+  EOS_INTEGER i = MAX(subTableNum-1,0);
+#ifdef DO_OFFLOAD
+  if (gEosDataMap.useGpuData) {
+    *R = (me->R == NULL) ? NULL : me->gpu_xtbls;
+    *T = (me->T == NULL) ? NULL : me->gpu_ytbls;
 
-  if (me->eosData.numSubtablesLoaded < subTableNum) {
-    *R = *T = NULL;
-    *F = NULL;
-    return;
+    if (me->eosData.numSubtablesLoaded < subTableNum) {
+      *R = *T = NULL;
+      *F = NULL;
+      return;
+    }
+
+    *F = (me->table[i] == NULL) ? NULL : me->gpu_ftbls[i];
   }
+  else
+#endif /* DO_OFFLOAD */
+  {
+    *R = me->R;
+    *T = me->T;
 
-  *F = me->table[MAX(subTableNum-1,0)];
+    if (me->eosData.numSubtablesLoaded < subTableNum) {
+      *R = *T = NULL;
+      *F = NULL;
+      return;
+    }
+
+    *F = me->table[i];
+  }
 }
 
 /************************************************************************
@@ -504,7 +596,7 @@ void _eos_GetDataRecordType6 (eos_RecordType6 *me, EOS_REAL **R, EOS_REAL **T,
  * Returned Values: EOS_INTEGER *err - output error code
  *
  * Input Value:
- * void *ptr       - this pointer (pointer to the instance of type eos_RecordType6
+ * void *ptr       - this pointer (pointer to the instance of type eos_RecordType6)
  * EOS_CHAR * fname;
  * EOS_INTEGER append   - whether or not to append to file
  * EOS_INTEGER th   - table Handle
@@ -665,7 +757,7 @@ void eos_PrintRecordType6 (void *ptr, EOS_INTEGER th, EOS_CHAR *fname,
  *
  * Input Value:
  * EOS_INTEGER th - table handle
- * void *ptr       - this pointer (pointer to the instance of type eos_RecordType6
+ * void *ptr       - this pointer (pointer to the instance of type eos_RecordType6)
  * EOS_CHAR *packedTable - allocated by user char array large enough to store packed data
  * 
  ************************************************************************/
@@ -732,6 +824,17 @@ void eos_GetPackedTableRecordType6 (void *ptr, EOS_INTEGER th,
           sizeof (EOS_INTEGER));
   byteCount += sizeof (EOS_INTEGER);
 
+  /* Pack Hashtables */
+  if (me->eosData.isLoaded) {
+    if (me->R_ht != NULL) {
+      assert(me->R != NULL);
+      byteCount += eos_HashTable1D_pack(me->R_ht, packedTable + byteCount);
+    }
+    if (me->T_ht != NULL) {
+      assert(me->T != NULL);
+      byteCount += eos_HashTable1D_pack(me->T_ht, packedTable + byteCount);
+    }
+  }
 }
 
 
@@ -742,7 +845,7 @@ void eos_GetPackedTableRecordType6 (void *ptr, EOS_INTEGER th,
  * Returned Values: EOS_INTEGER *err - output error code
  *
  * Input Value:
- * void *ptr       - this pointer (pointer to the instance of type eos_RecordType6
+ * void *ptr       - this pointer (pointer to the instance of type eos_RecordType6)
  * EOS_CHAR *packedTable - allocated by user char array large enough to store packed data
  * EOS_INTEGER packedTableSize - size in chars of packed data array
  * EOS_INTEGER th - table handle
@@ -824,8 +927,24 @@ void eos_SetPackedTableRecordType6 (void *ptr, EOS_INTEGER th,
   memcpy (&(me->eosData.dataSize), packedTable + byteCount,
           sizeof (EOS_INTEGER));
   byteCount += sizeof (EOS_INTEGER);
+
   me->eosData.isLoaded = (me->eosData.numSubtablesLoaded > 0) ? 1 : 0;
 
+  /* Unpack Hashtables */
+  if (me->eosData.isLoaded) {
+    if (me->R != NULL) {
+      me->R_ht = (eos_HashTable1D*)malloc(sizeof(eos_HashTable1D));
+      byteCount += eos_HashTable1D_unpack(me->R_ht, packedTable + byteCount);
+    } else {
+      me->R_ht = NULL;
+    }
+    if (me->T != NULL) {
+      me->T_ht = (eos_HashTable1D*)malloc(sizeof(eos_HashTable1D));
+      byteCount += eos_HashTable1D_unpack(me->T_ht, packedTable + byteCount);
+    } else {
+      me->T_ht = NULL;
+    }
+  }
 }
 
 /************************************************************************
@@ -835,7 +954,7 @@ void eos_SetPackedTableRecordType6 (void *ptr, EOS_INTEGER th,
  * Returned Values: EOS_INTEGER *err - output error code
  *
  * Input Value:
- * void *ptr       - this pointer (pointer to the instance of type eos_RecordType6
+ * void *ptr       - this pointer (pointer to the instance of type eos_RecordType6)
  * EOS_INTEGER *packedTableSize - size in chars of packed data array
  * EOS_INTEGER th   - table handle
  * 
@@ -869,145 +988,19 @@ void eos_GetPackedTableSizeRecordType6 (void *ptr, EOS_INTEGER th,
     byteCount += me->eosData.numSubtablesLoaded * me->NR * sizeof (EOS_REAL);   /* cold curves for each subtable */
   byteCount += (sizeof (EOS_INTEGER) * 2 + sizeof (long));
 
+  /* Hashtables */
+  if (me->eosData.isLoaded) {
+    if (me->R_ht != NULL) {
+      assert(me->R != NULL);
+      byteCount += eos_HashTable1D_byteSize(me->R_ht);
+    }
+    if (me->T_ht != NULL) {
+      assert(me->T != NULL);
+      byteCount += eos_HashTable1D_byteSize(me->T_ht);
+    }
+  }
+  
   *packedTableSize = byteCount;
-}
-
-/*	function _eos_InterpolateRecordType6 (helping function for eos_InterpolateEosInterpolation() 
-	The eos_InterpolateEosInterpolation() routine provides interpolated values for a single material using a table handle associated with
-	Data stored within an data table.
-
-	The input arguments are:
-		void *ptr                 a pointer to a eos_RecordType6 instance from which to extract the data. 
-		EOS_INTEGER th            table Handle
-		EOS_INTEGER subTableNum   which subtable/phase to use for interpolation
-		EOS_INTEGER varOrder      order of variables
-		EOS_INTEGER dataType      dataType
-		EOS_INTEGER nXYPairs	  total number of pairs of independent variable values provided for interpolation.
-		EOS_REAL srchX[nXYPairs]  array of the primary independent variable values to use during interpolation.
-		EOS_REAL srchY[nXYPairs]  array of the secondary independent variable values to use during interpolation.
-
-	The output arguments are:
-		EOS_REAL fVals[nXYPairs]  array of the interpolated data corresponding to x and y. 
-		EOS_REAL dFx[nXYPairs]	  array of the interpolated partial derivatives of fVals with respect to x. 
-		EOS_REAL dFy[nXYPairs]	  array of the interpolated partial derivatives of fVals with respect to y. 
-		EOS_REAL dFCx[nXYPairs]	  optional array of the interpolated partial derivatives of cold curve with respect to x. 
-		EOS_REAL dFx0[nXYPairs]	  optional array of the interpolated partial derivatives of cat 0 F wrt x (for inverse functions mostly). 
-		EOS_REAL dFy0[nXYPairs]	  optional array of the interpolated partial derivatives of cat 0 F wrt y (for inverse functions mostly). 
-		EOS_INTEGER *xyBounds     interpolation errors per xy-pair
-		EOS_INTEGER errorCode	  error code of the interpolation: EOS_INTERP_EXTRAPOLATED or EOS_OK
-*/
-
-void _eos_InterpolateRecordType6 (void *ptr, EOS_INTEGER th, EOS_INTEGER subTableNum,
-                                  EOS_INTEGER varOrder, EOS_INTEGER dataType,
-                                  EOS_INTEGER nXYPairs, EOS_REAL *srchX,
-                                  EOS_REAL *srchY, EOS_REAL *fVals,
-                                  EOS_REAL *dFx, EOS_REAL *dFy,
-                                  EOS_INTEGER *xyBounds,
-                                  EOS_INTEGER *errorCode)
-{
-  EOS_INTEGER i, doRational =
-    0, err, nX, nY, cat, *ixv, *iyv, *xyBounds2;
-  EOS_REAL *X, *Y, **F, *xVals, *yVals;
-  eos_Data *eosData;
-  eos_RecordType6 *me;
-
-  *errorCode = EOS_OK;
-
-  if (nXYPairs <= 0) {
-    *errorCode = EOS_FAILED;
-    return;
-  }
-
-  err = EOS_OK;
-  eosData = (eos_Data *) ptr;
-  me = (eos_RecordType6 *) eosData;
-
-  /* make sure the data is record type 6 */
-  if (EOS_TYPE_TO_RECORD_TYPE (dataType) != EOS_RECORD_TYPE6) {
-    *errorCode = EOS_INVALID_TABLE_HANDLE;
-    ((eos_ErrorHandler *) me)->HandleError (me, th, *errorCode);
-    return;
-  }
-
-  cat = EOS_CATEGORY (dataType);
-
-  /* get the size of the data */
-  eos_GetSizeRecordType6 (me, &nX, &nY);
-
-  if (me->eosData.numSubtablesLoaded < subTableNum) {
-    *errorCode = EOS_DATA_TYPE_NOT_FOUND;
-    ((eos_ErrorHandler *) me)->HandleError (me, th, *errorCode);
-    return;
-  }
-
-  /* initialize F, dFx, dFy to zero */
-  for (i = 0; i < nXYPairs; i++) {
-    fVals[i] = ZERO;
-    dFx[i] = ZERO;
-    dFy[i] = ZERO;
-  }
-
-  _eos_GetDataRecordType6 (me, &X, &Y, &F, subTableNum);
-
-  xVals = srchX;
-  yVals = srchY;
-
-  switch (cat) {
-  case EOS_CATEGORY0:          /* indicates the table is not inverted */
-    {
-
-      /* force LINEAR interpolation */
-      gEosInterpolation.interpolationDataList[th]->interpolationType = EOS_LINEAR;
-
-      doRational = eos_getBoolOptionFromTableHandle (th, EOS_RATIONAL, &err);
-      if (doRational) {
-
-	/* .... perform table searches to load indices and spacings of nearest
-	   .... data table x,y values to x,searchYVals. */
-
-	iyv = (EOS_INTEGER *) malloc (nXYPairs * sizeof (EOS_INTEGER));       /* indexes of Y near which Y points are */
-	ixv = (EOS_INTEGER *) malloc (nXYPairs * sizeof (EOS_INTEGER));       /* indexes of X near which X points are */
-	xyBounds2 = (EOS_INTEGER *) malloc (nXYPairs * sizeof (EOS_INTEGER)); /* xy-bounds for y */
-
-	_eos_srchdf (nXYPairs, yVals, 1, nY - 1, Y, 1, iyv,
-		     xyBounds, errorCode);
-	_eos_srchdf (nXYPairs, xVals, 1, nX - 1, X, 1, ixv,
-		     xyBounds2, errorCode);
-
-	for (i = 0; i < nXYPairs; i++)
-	  xyBounds[i] = _eos_CombineExtrapErrors (xyBounds2[i], xyBounds[i]);
-
-        eos_BiRationalInterpolate (nXYPairs, nX, nY, X, Y, F, ixv, iyv, xVals, yVals,
-                                   fVals, dFx, dFy, xyBounds, &err);
-
-	EOS_FREE (xyBounds2);
-	EOS_FREE (ixv);
-	EOS_FREE (iyv);
-
-      }
-      else if (eos_getBoolOptionFromTableHandle (th, EOS_LINEAR, &err)) /* interpolate linearly instead */
-        eos_BiLineInterpolate (eos_getBoolOptionFromTableHandle (th, EOS_DISCONTINUOUS_DERIVATIVES, &err),
-			       nXYPairs, nX, nY, X, Y, F, xVals, yVals, fVals,
-                               dFx, dFy, xyBounds, &err);
-      if (eos_GetStandardErrorCodeFromCustomErrorCode(err) != EOS_OK)
-        *errorCode = err;
-
-      break;
-    }
-
-  default:
-    {
-      *errorCode = EOS_INVALID_TABLE_HANDLE;
-      ((eos_ErrorHandler *) me)->HandleError (me, th, *errorCode);
-      break;
-    }
-  } /* end switch (cat) */
-
-  if (srchX != xVals)
-    EOS_FREE (xVals);
-  if (srchY != yVals)
-    EOS_FREE (yVals);
-
 }
 
 /*
@@ -1153,212 +1146,6 @@ void eos_ApplyMassFracConstraintsRecordType6 (void *ptr, EOS_INTEGER th,
 
   return;
 }
-
-/***********************************************************************/
-/*!
- * \brief Function eos_InterpolateRecordType1 (helping function for
- *  eos_InterpolateEosInterpolation().
- *  The eos_InterpolateEosInterpolation() routine provides interpolated values
- *  for a single material using a table handle associated with Data stored
- *  within an data table.
- *
- * \param[out]   fVals[nXYPairs] - EOS_REAL : array of the interpolated data corresponding
- *                                 to x and y. 
- * \param[out]   dFx[nXYPairs]   - EOS_REAL : array of the interpolated partial derivatives
- *                                 of fVals with respect to x.
- * \param[out]   dFy[nXYPairs]   - EOS_REAL : array of the interpolated partial derivatives
- *                                 of fVals with respect to y.
- * \param[out]   *xyBounds       - EOS_INTEGER : interpolation errors per xy-pair
- * \param[out]   errorCode       - EOS_INTEGER : error code of the interpolation:
- *                                               EOS_INTERP_EXTRAPOLATED or EOS_OK
- *
- * The input arguments are:
- * void *ptr                 a pointer to a eos_RecordType1 instance from which to extract the data. 
- * EOS_INTEGER th            table Handle
- * EOS_INTEGER dataType      dataType
- * EOS_INTEGER nXYPairs      total number of pairs of independent variable values provided for interpolation.
- * EOS_REAL srchX[nXYPairs]  array of the primary independent variable values to use during interpolation. 
- * EOS_REAL srchY[nXYPairs]  array of the secondary independent variable values to use during interpolation. 
- *
- * \return none
- *
- ***********************************************************************/
-void eos_InterpolateRecordType6 (void *ptr, EOS_INTEGER th, EOS_INTEGER dataType,
-                                 EOS_INTEGER nXYPairs, EOS_REAL *srchX,
-                                 EOS_REAL *srchY, EOS_REAL *fVals,
-                                 EOS_REAL *dFx, EOS_REAL *dFy,
-                                 EOS_INTEGER *xyBounds,
-                                 EOS_INTEGER *errorCode)
-{
-
-  EOS_INTEGER numPhases = 1, subTableNum;
-  EOS_REAL *F, *dFx_ = dFx, *dFy_ = dFy;
-  eos_RecordType6 *me;
-  EOS_CHAR *errMsg = NULL;
-
-  *errorCode = EOS_OK;
-
-  me = (eos_RecordType6 *) ptr;
-
-  if (dataType == EOS_M_DT) {
-
-    /* The sizes of srchX, srchY, fVals, dFx, and dFy are NOT equal so new logic is required. */
-
-    /* fVals is allocated to contain nXYPairs*numPhases values; therefore,
-       interpolate for each material phase prior to applying data constraints.
-     */
-    numPhases = _eos_GetNumberOfPhases(ptr, errorCode, &errMsg);
-    if (errMsg) *errorCode = eos_SetCustomErrorMsg(th, *errorCode, "%s", errMsg);
-    EOS_FREE(errMsg);
-
-    /* no derivatives are returned to the host code for EOS_M_DT,
-       so temporary arrays are allocated here to simplify integration with
-       existing interpolation functions. */
-    dFx_ = (EOS_REAL *) malloc(nXYPairs * sizeof(EOS_REAL));
-    dFy_ = (EOS_REAL *) malloc(nXYPairs * sizeof(EOS_REAL));
-
-    for (subTableNum = 1; subTableNum <= numPhases; subTableNum++) {
-
-      F = &(fVals[(subTableNum-1)*nXYPairs]);
-      _eos_InterpolateRecordType6 (ptr, th, subTableNum, me->eosData.varOrder, dataType, nXYPairs,
-				   srchX, srchY, F, dFx_, dFy_, xyBounds, errorCode);
-
-    }
-
-    /* apply data constraints to interpolated values. */
-    eos_ApplyMassFracConstraintsRecordType6 (ptr, th, dataType, nXYPairs,
-					     fVals, errorCode);
-
-    /* free temporary arrays */
-    EOS_FREE(dFx_);
-    EOS_FREE(dFy_);
-
-  } /*end if (dataType == EOS_M_DT)*/
-
-}
-
-/* eos_CheckExtrap
-If the EOS_INTERP_EXTRAPOLATED error code is returned by either eos_Interp or eos_Mix, this routine allows the user 
-to determine which (x,y) pairs caused extrapolation and in which direction (high or low), it occurred.
-The input arguments are
-xVals	This is an array of the primary independent variable values to use during interpolation. There are nXYPairs elements in xVals.
-yVals	This is an array of the secondary independent variable values to use during interpolation. There are nXYPairs elements in yVals.
-
-The output arguments are 
-xyBounds	This is an array of size nXYPairs elements that returns EOS_OK if extrapolation did not occur. If extrapolation occurred the variable and direction are determined from Table 2.
-errorCode	This is a scalar EOS_INTEGER to contain an error code.
-
-In the case that eos_Mix returned EOS_INTERP_EXTRAPOLATED as an error code, an additional series of steps must be performed to determine which tableHandle(s) correspond to the extrapolation error:
-1.	For each tableHandle sent to eos_Mix, call eos_GetErrorCode and, optionally, eos_GetErrorMessage.
-2.	For each of these tableHandles, call eos_CheckExtrap to determine one of codes listed in Table 2.
-Table 2.	Extrapolation return codes.
-Code	Definition
-EOS_OK	No extrapolation occurred.
-EOS_xHi_yHi	Both the x and y arguments were high.
-EOS_xHi_yOk	The x argument was high, the y argument was OK.
-EOS_xHi_yLo	The x argument was high, the y argument was low.
-EOS_xOk_yLo	The x argument is OK and the y argument is low.
-EOS_xLo_yLo	Both the x and y arguments were low.
-EOS_xLo_yOk	The x argument was low, the y argument was OK.
-EOS_xLo_yHi	The x argument was low, the y argument was OK.
-   EOS_xOk_yHi	The x argument is OK and the y argument is high.
- */
-void eos_CheckExtrapRecordType6 (void *ptr, EOS_INTEGER th, EOS_INTEGER dataType,
-                                 EOS_INTEGER nXYPairs, EOS_REAL *srchX,
-                                 EOS_REAL *srchY, EOS_INTEGER *xyBounds,
-                                 EOS_INTEGER *errorCode)
-{
-  eos_Data *eosData;
-  EOS_INTEGER i, nX, nY, cat, subTableNum;
-  EOS_REAL *X, *Y, **F;
-  EOS_INTEGER err = EOS_OK;
-  EOS_REAL *xVals, *yVals;
-  eos_RecordType6 *me;
-  EOS_BOOLEAN isOneDimDatatype = EOS_FALSE;
-
-  *errorCode = EOS_OK;
-
-  eosData = (eos_Data *) ptr;
-  me = (eos_RecordType6 *) eosData;
-  cat = EOS_CATEGORY (dataType);
-  subTableNum = EOS_TYPE_TO_SUB_TAB_NUM (dataType);
-  /* get the size of the data */
-  eos_GetSizeRecordType6 (me, &nX, &nY);
-
-  /* make sure the data is record type 6 */
-  if (EOS_TYPE_TO_RECORD_TYPE (dataType) != EOS_RECORD_TYPE6) {
-    *errorCode = EOS_INVALID_TABLE_HANDLE;
-    ((eos_ErrorHandler *) me)->HandleError (me, th, *errorCode);
-    return;
-  }
-
-  if (me->eosData.numSubtablesLoaded < subTableNum) {
-    *errorCode = EOS_DATA_TYPE_NOT_FOUND;
-    ((eos_ErrorHandler *) me)->HandleError (me, th, *errorCode);
-    return;
-  }
-
-  /* is the datatpe a function with one independent variable? */
-  isOneDimDatatype = EOS_IS_ONE_DIM_TYPE (dataType);
-
-  _eos_GetDataRecordType6 (me, &X, &Y, &F, subTableNum);
-
-  xVals = srchX;
-  yVals = srchY;
-
-
-  switch (cat) {
-  case EOS_CATEGORY0:          /* indicates the table is not inverted */
-    {
-      for (i = 0; i < nXYPairs; i++) {
-        if (! isOneDimDatatype && yVals[i] < Y[0]) {
-          if (xVals[i] < X[0])
-            xyBounds[i] = EOS_xLo_yLo;
-          else if (xVals[i] > X[nX - 1])
-            xyBounds[i] = EOS_xHi_yLo;
-          else
-            xyBounds[i] = EOS_xOk_yLo;
-        }
-        else if (! isOneDimDatatype && yVals[i] > Y[nY - 1]) {
-          if (xVals[i] < X[0])
-            xyBounds[i] = EOS_xLo_yHi;
-          else if (xVals[i] > X[nX - 1])
-            xyBounds[i] = EOS_xHi_yHi;
-          else
-            xyBounds[i] = EOS_xOk_yHi;
-        }
-        else {                  /* y is either OK or not considered */
-
-          if (xVals[i] < X[0])
-            xyBounds[i] = EOS_xLo_yOk;
-          else if (xVals[i] > X[nX - 1])
-            xyBounds[i] = EOS_xHi_yOk;
-          else
-            xyBounds[i] = EOS_OK;
-        }
-      }
-      break;
-    }
-  default:
-    {
-      err = EOS_INVALID_TABLE_HANDLE;
-      break;
-    }
-  }                             /* switch statement */
-
-
-  if (srchX != xVals)
-    EOS_FREE (xVals);
-  if (srchY != yVals)
-    EOS_FREE (yVals);
-
-  if (eos_GetStandardErrorCodeFromCustomErrorCode(err) != EOS_OK) {
-    ((eos_ErrorHandler *) me)->HandleError (me, th, err);
-    *errorCode = err;
-    return;
-  }
-}
-
 
 /************************************************************************
  * 
@@ -1573,7 +1360,7 @@ void eos_GetTableInfoRecordType6 (void *ptr, EOS_INTEGER th,
  * EOS_CHAR *infoStr   - allocated string to contain all comments
  *
  * Input Value:
- * void *ptr           - this pointer (pointer to the instance of type eos_RecordType6
+ * void *ptr           - this pointer (pointer to the instance of type eos_RecordType6)
  * EOS_CHAR *infoItem  - flag specifying what meta data item to fetch
  * 
  ************************************************************************/
@@ -1624,7 +1411,7 @@ void eos_GetLoadedBulkDataRecordType6 (void *ptr, EOS_REAL *zbar,
  * Returned Values: EOS_INTEGER *err - output error code
  *
  * Input Value:
- * void *ptr       - this pointer (pointer to the instance of type eos_RecordType6
+ * void *ptr       - this pointer (pointer to the instance of type eos_RecordType6)
  * EOS_INTEGER th  - table handle for error handling
  * EOS_INTEGER dataType - data type of subtable to be made monotonic
  * EOS_BOOLEAN inX, inY - to make monotonic in x, in y, or both
@@ -1655,7 +1442,7 @@ void eos_MakeMonotonicRecordType6 (void *ptr, EOS_INTEGER th,
  * Returned Values: EOS_INTEGER *err - output error code
  *
  * Input Value:
- * void *ptr       - this pointer (pointer to the instance of type eos_RecordType6
+ * void *ptr       - this pointer (pointer to the instance of type eos_RecordType6)
  * EOS_BOOLEAN *isMonotonic - result
  * EOS_INTEGER *err
  * 
@@ -1680,7 +1467,7 @@ void eos_IsMonotonicRecordType6 (void *ptr, EOS_INTEGER dataType,
  * Returned Values: EOS_INTEGER *err - output error code
  *
  * Input Value:
- * void *ptr       - this pointer (pointer to the instance of type eos_RecordType6
+ * void *ptr       - this pointer (pointer to the instance of type eos_RecordType6)
  * EOS_INTEGER *err   - error flag
  * 
  ************************************************************************/
@@ -1844,3 +1631,72 @@ void eos_AreSmoothingRequirementsCompatibleRecordType6 (void *me,
   /* do nothing here since smoothing is not required for this class of data */
   *compatible = EOS_TRUE;
 }
+
+/**
+ * \brief This function generates search hash tables for record type 6
+ * 
+ * \param[in,out] *ptr  - void : data object pointer
+ */
+void eos_GenerateHashTablesRecordType6(void *ptr)
+{
+  eos_RecordType6 *me = (eos_RecordType6*)ptr;
+  me->T_ht = eos_HashTable1D_gen(me->T, me->NT);
+  me->R_ht = eos_HashTable1D_gen(me->R, me->NR);
+}
+
+#ifdef DO_OFFLOAD
+
+/***********************************************************************/
+/*! 
+ * \brief This function offloads object's data to the target GPU device.
+ * 
+ * \param[in,out] *ptr           - void : data object pointer
+ * \param[in]     th             - EOS_INTEGER : table Handle
+ * \param[out]    *errorCode     - EOS_INTEGER : error code
+ * 
+ * \return errorCode             - EOS_INTEGER : error code
+ *
+ ***********************************************************************/
+EOS_INTEGER eos_GpuOffloadDataRecordType6(void *ptr, EOS_INTEGER th)
+{
+  eos_RecordType6 *me = (eos_RecordType6*) ptr;
+  EOS_REAL *xtbls = NULL, *ytbls = NULL, **ftbls = NULL;
+  EOS_INTEGER dataType, subTableNum;
+  EOS_INTEGER i=0;
+  EOS_INTEGER err = EOS_OK;
+  EOS_REAL *_gpu_xtbls = NULL, *_gpu_ytbls = NULL, *_gpu_ftbls = NULL;
+  int h_ = omp_get_initial_device();
+  int t_ = omp_get_default_device();
+
+  assert(EOS_FALSE && "This setup is not ported to GPU");
+  dataType = eos_GetDataTypeFromTableHandle (th, &err);
+  if (eos_GetStandardErrorCodeFromCustomErrorCode(err) != EOS_OK)
+    return(err);
+  subTableNum = EOS_TYPE_TO_SUB_TAB_NUM(dataType);
+
+  // set numbers of and pointers to eos data table x,y,f values.
+  _eos_GetDataRecordType6 (me, &xtbls, &ytbls, &ftbls, EOS_TYPE_TO_SUB_TAB_NUM(dataType));
+
+  /* allocate necessary device memory */
+  if (xtbls)     _gpu_xtbls     = (EOS_REAL*) omp_target_alloc(sizeof(EOS_REAL)*me->NR, t_);
+  if (ytbls)     _gpu_ytbls     = (EOS_REAL*) omp_target_alloc(sizeof(EOS_REAL)*me->NT, t_);
+  if (ftbls)     _gpu_ftbls     = (EOS_REAL*) omp_target_alloc(sizeof(EOS_REAL)*me->NP*me->NR*me->NT, t_);
+
+  /* store new pointers in me for later use */
+  assert(EOS_TYPE_TO_SUB_TAB_NUM(dataType)>=1);
+  assert(EOS_TYPE_TO_SUB_TAB_NUM(dataType)<=MAX_TABLES_RECORDTYPE6);
+  i = EOS_TYPE_TO_SUB_TAB_NUM(dataType) - 1;
+  
+  me->gpu_xtbls[i]      = _gpu_xtbls;
+  me->gpu_ytbls[i]      = _gpu_ytbls;
+  me->gpu_ftbls[i]      = _gpu_ftbls;
+
+  /* copy necessary data to device */
+  if (xtbls)     omp_target_memcpy(_gpu_xtbls    , xtbls,     sizeof(EOS_REAL)*me->NR, 0, 0, t_, h_);
+  if (ytbls)     omp_target_memcpy(_gpu_ytbls    , xtbls,     sizeof(EOS_REAL)*me->NT, 0, 0, t_, h_);
+  if (ftbls)     omp_target_memcpy(_gpu_ftbls    , ftbls,     sizeof(EOS_REAL)*me->NP*me->NR*me->NT, 0, 0, t_, h_);
+
+  return(err);
+}
+
+#endif /* DO_OFFLOAD */

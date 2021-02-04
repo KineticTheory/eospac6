@@ -216,10 +216,10 @@ while (! $EOF) {
     $EOF += 2; print "At EOF: $file2\n" if($options->{"verbose"});;
   }
   if ($EOF && $EOF <= 2) {
-    print "ERROR $EOF: File sizes are different! $file1($line1) is ",
+    print "\nERROR $EOF: File sizes are different! $file1($line1) is ",
       (($EOF==2)?"bigger":"smaller")," than $file2($line1)\n";
-    print "$line_num_deviation_msg\n" if $line_num_deviation_msg;
-    exit $EOF;
+    # print "$line_num_deviation_msg\n" if $line_num_deviation_msg;
+    # exit $EOF;
   }
 
   if (($word1 =~ /^$number$/o || $word1 =~ /^$numberalt$/o) && ($word2 =~ /^$number$/o || $word2 =~ /^$numberalt$/o)) {

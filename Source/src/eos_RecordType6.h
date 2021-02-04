@@ -12,8 +12,12 @@
 
 #include "eos_Data.h"
 #include "eos_SesUtils.h"
+#include "eos_HashTable.h"
 
 // This class is designed to manipulate Sesame data stored in format #6 -- this is specific to Sesame table 321.
+
+/* This container is designed to contain the following number of 3-D tables: */
+#define MAX_TABLES_RECORDTYPE6 1
 
 typedef struct
 {
@@ -38,6 +42,15 @@ typedef struct
   // <B>Array containing one of the following kind of data:</B>
   // Mass fraction
   EOS_REAL ***table;            /* [NP][NT][NR] */
+
+  eos_HashTable1D* R_ht;        /**< Hashtable for Density array R */
+  eos_HashTable1D* T_ht;        /**< Hashtable for Temperature array T */
+
+#ifdef DO_OFFLOAD
+  EOS_REAL *gpu_xtbls[MAX_TABLES_RECORDTYPE6];
+  EOS_REAL *gpu_ytbls[MAX_TABLES_RECORDTYPE6];
+  EOS_REAL *gpu_ftbls[MAX_TABLES_RECORDTYPE6];
+#endif /* DO_OFFLOAD */
 } eos_RecordType6;
 
 #include "eos_RecordType6.proto.h"

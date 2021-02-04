@@ -16,13 +16,13 @@ ses_boolean _isit_my_format_ascii(FILE* pFILE) {
         ses_boolean needs_flip = SES_FALSE;
         
         long nfiles = 0;
-        nfiles = _read_long_pFILE_ascii(pFILE, needs_flip);
+        nfiles = _read_long_tomax_pFILE_ascii(pFILE, 2, needs_flip);
 #ifdef DEBUG_PRINT
         printf("_isit_my_format_ascii:  nfiles is %ld\n", nfiles);
 #endif
         if (nfiles == 0) {
             
-            //  read the next long, which should be the Table ID with 6 characters:
+            //  read the next long, which should be the Material ID with 6 characters:
             
             long dummy = _read_long_tomax_pFILE_ascii(pFILE, 6, needs_flip);
 #ifdef DEBUG_PRINT
@@ -38,7 +38,6 @@ ses_boolean _isit_my_format_ascii(FILE* pFILE) {
         rewind(pFILE);
         
     }
-    
     
     return return_value;
 }

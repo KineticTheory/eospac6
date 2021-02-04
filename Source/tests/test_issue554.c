@@ -8,7 +8,7 @@
  ********************************************************************/
 
 /*! \file
- * \ingroup tests quick
+ * \ingroup C tests quick
  * \brief Ensure graceful handling of missing table dependencies in eos_SetExtrapolationBoundsRecordType1.
  *        See eos/eospac-dev/eospac6#554 for more details:
  *        https://git.lanl.gov/eos/eospac-dev/eospac6/issues/554
@@ -64,10 +64,15 @@ int main (int argc, char *argv[])
   EOS_INTEGER nInsert = 0;
 
   if ((tableList_tmp = (EOS_INTEGER *) calloc (nTablesE, sizeof (EOS_INTEGER))) == NULL )
-    return (-10);
+  {
+    err = -10;
+    goto CLEANUP;
+  }
   if ((tableSize = (EOS_INTEGER *) calloc (nTablesE, sizeof (EOS_INTEGER))) == NULL )
-    return (-10);
-  
+  {
+    err = -10;
+    goto CLEANUP;
+  }  
   /* set matID */
   matIDs[0] = 5030;
 
@@ -79,12 +84,12 @@ int main (int argc, char *argv[])
     err = get_matidTableInfo (matIDs[0], &tableList_tmp, &tableSize);
     if (err < 0) {
       fprintf(stderr,"\n%s ERROR %d: %s\n\n", argv[0], err,  "fatal get_matidTableInfo()");
-      return((int)err);
+      goto CLEANUP;
     }
     else if (err >= EOS_MIN_ERROR_CODE_VALUE) {
       eos_GetErrorMessage (&err, errorMessage);
       fprintf (stderr, "get_matidTableInfo ERROR %d: %s\n\n", err,  errorMessage);
-      return((int)err);
+      goto CLEANUP;
     }
 
     nTables = 0;
@@ -110,7 +115,11 @@ int main (int argc, char *argv[])
       nTables = k;
     }
  
-    if (nTables >= nTablesE) return (-12);
+    if (nTables >= nTablesE)
+    {
+      err = -12;
+      goto CLEANUP;
+    }
 
     for (i=0; i<nTables; i++) {
       matIDs[i] = matIDs[0];
@@ -213,6 +222,7 @@ int main (int argc, char *argv[])
     }
   }
 
+ CLEANUP:
   /* Destroy all data objects */
   eos_DestroyAll (&errorCode);
   if (errorCode != EOS_OK) {
@@ -222,9 +232,9 @@ int main (int argc, char *argv[])
     printf ("eos_DestroyAll ERROR %i: %s\n", tableHandleErrorCode, errorMessage);
   }
 
-  free(tableList_tmp);
-  free(tableSize);
+  EOS_FREE(tableList_tmp);
+  EOS_FREE(tableSize);
 
-  return 0;
+  return((int)err);
 
 }

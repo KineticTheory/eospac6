@@ -43,6 +43,7 @@ static char *help_str =
   "     <OPTIONS>\n"
   "     -c <file>\n"
   "                   Specify the configuration <file>, which contains the desired options.\n"
+  "                   (default: config.interp_sesame_data)\n"
   "     -D <file>\n"
   "                   Create data dump file (see EOSPAC 6's TablesLoaded.dat file) with specified name, <file>.\n"
   "                   If <file> is an empty string, then the default, TablesLoaded.dat, will be used.\n"

@@ -8,7 +8,7 @@
  ********************************************************************/
 
 /* Define revision number for this file: */
-char *revision = "$Revision: 1.50 $";
+char *revision = "$Revision: 1.52 $";
 
 /*!
  * \file
@@ -54,6 +54,7 @@ char *revision = "$Revision: 1.50 $";
  * \arg <GENERAL OPTIONS>
  * \arg -c <file>
  *              Specify the configuration <file>, which contains the desired options.
+ *              (default: config.get_sesame_data)
  * \arg -D <file>
  *              Create data dump file (see EOSPAC 6's TablesLoaded.dat file) with specified name, <file>.
  *              If <file> is an empty string, then the default, TablesLoaded.dat, will be used.
@@ -524,7 +525,6 @@ int dumpDataGrid(EOS_INTEGER th,
     indepVar1Str = get_VarStr(get_dataTypeIndepVar1(tableType), 1);
     indepVar2Str = get_VarStr(get_dataTypeIndepVar2(tableType), 1);
     printf ("#\n# %s%s :: %s\n", " ", get_tableType_description(tableType), get_tableHandleFileName(th));
-    printf ("#%12s%24s\n", indepVar1Str, indepVar2Str);
 
     for (i=0; i<str_l; i++)
       str[i] = '\0';
@@ -536,23 +536,26 @@ int dumpDataGrid(EOS_INTEGER th,
 
     if (do_x && do_y) {
 
+      printf ("#%12s%24s\n", indepVar1Str, indepVar2Str);
       for(j=0; j<NT; j++) {
-	for(i=0; i<NR; i++)
-	  printf("%23.15E %23.15E\n", X[i], Y[j]);
-	//printf("\n");
+        for(i=0; i<NR; i++)
+          printf("%23.15E %23.15E\n", X[i], Y[j]);
+        //printf("\n");
       }
 
     }
     else if (do_x) {
 
+      printf ("#%12s\n", indepVar1Str);
       for(i=0; i<NR; i++)
-	printf("%23.15E\n", X[i]);
+        printf("%23.15E\n", X[i]);
 
     }
     else if (do_y) {
 
+      printf ("#%12s\n", indepVar2Str);
       for(j=0; j<NT; j++)
-	printf("%23.15E\n", Y[j]);
+        printf("%23.15E\n", Y[j]);
 
     }
 
@@ -621,7 +624,7 @@ int dumpData(EOS_INTEGER th,
     eos_GetTableInfo (&th, &nInfoItems, infoItems, infoVals, &err);
     if (err == EOS_OK)
       err = printf("Mean atomic number:  %23.15E\nMean atomic mass:    %23.15E\nNormal density:      %23.15E\nSolid bulk modulus:  %23.15E\nExchange coefficient:%23.15E\n",
-                    infoVals[0], infoVals[1], infoVals[2], infoVals[3], infoVals[4]);
+                   infoVals[0], infoVals[1], infoVals[2], infoVals[3], infoVals[4]);
     if (err < 0)
       err = FprintfError;
     else
@@ -729,7 +732,7 @@ int calculateCustomQuantities(EOS_INTEGER sesMaterialNum, EOS_INTEGER N, EOS_REA
   EOS_REAL c, c_alt, rc2, Gamma, rcT2, Cv, Cp;
   EOS_REAL F[nTablesE], dFx[nTablesE], dFy[nTablesE];
   int i, idx;
-  EOS_INTEGER indexFileCount;
+  /* EOS_INTEGER indexFileCount; */
 
   /* initialize arrays */
   for (i=0; i<nTables; i++) {
@@ -737,15 +740,22 @@ int calculateCustomQuantities(EOS_INTEGER sesMaterialNum, EOS_INTEGER N, EOS_REA
     matNum[i] = sesMaterialNum;
   }
 
-  indexFileCount = 0;
-  if (option['F'].flag) {
-    indexFileCount = createIndexFile(option['F'].arg);
-  }
-
   /* Load required data */
   eos_CreateTables (&nTables, tableType, matNum, tableHandle, &err);
   if (err != EOS_OK)
     return((int)err);
+
+  if (option['F'].flag) {
+    for (i=0; i<nTables; i++) {
+      eos_SetDataFileName(&tableHandle[i], &matNum[i], &tableType[i], option['F'].arg, &err);
+      if (err != EOS_OK) {
+        EOS_CHAR errStr[EOS_MaxErrMsgLen];
+        eos_GetErrorMessage(&err, errStr);
+        printf("\neos_SetDataFileName ERROR: %s\n\n", errStr);
+        return((int)err);
+      }
+    }
+  }
 
   for (i=0; i<nTables; i++)
   { /* conditionally-read the optional configuration file and set defined options */
@@ -772,15 +782,11 @@ int calculateCustomQuantities(EOS_INTEGER sesMaterialNum, EOS_INTEGER N, EOS_REA
     for (i=0; i<nTables; i++) {
       eos_SetOption (&tableHandle[i], &EOS_CREATE_TZERO, EOS_NullPtr, &err);
       if (err != EOS_OK)
-	return((int)err);
+        return((int)err);
     }
   }
 
   eos_LoadTables (&nTables, tableHandle, &err);
-
-  if (option['F'].flag) {
-    cleanIndexFile(indexFileCount);
-  }
 
   if (err != EOS_OK)
     return((int)err);
@@ -799,9 +805,9 @@ int calculateCustomQuantities(EOS_INTEGER sesMaterialNum, EOS_INTEGER N, EOS_REA
       EOS_BOOLEAN equal;
       eos_ErrorCodesEqual((EOS_INTEGER*)&EOS_INTERP_EXTRAPOLATED, &err, &equal);
       if (! equal)
-	return((int)err);
+        return((int)err);
       else
-	data[idx].P_extrap = EOS_TRUE;
+        data[idx].P_extrap = EOS_TRUE;
     }
 
     /* r * cT^2 */
@@ -814,9 +820,9 @@ int calculateCustomQuantities(EOS_INTEGER sesMaterialNum, EOS_INTEGER N, EOS_REA
       EOS_BOOLEAN equal;
       eos_ErrorCodesEqual((EOS_INTEGER*)&EOS_INTERP_EXTRAPOLATED, &err, &equal);
       if (! equal)
-	return((int)err);
+        return((int)err);
       else
-	data[idx].U_extrap = EOS_TRUE;
+        data[idx].U_extrap = EOS_TRUE;
     }
 
     /* specific Helmholtz free energy, A */
@@ -826,9 +832,9 @@ int calculateCustomQuantities(EOS_INTEGER sesMaterialNum, EOS_INTEGER N, EOS_REA
       EOS_BOOLEAN equal;
       eos_ErrorCodesEqual((EOS_INTEGER*)&EOS_INTERP_EXTRAPOLATED, &err, &equal);
       if (! equal)
-	return((int)err);
+        return((int)err);
       else
-	data[idx].A_extrap = EOS_TRUE;
+        data[idx].A_extrap = EOS_TRUE;
     }
 
     /* specific entropy, S */
@@ -838,9 +844,9 @@ int calculateCustomQuantities(EOS_INTEGER sesMaterialNum, EOS_INTEGER N, EOS_REA
       EOS_BOOLEAN equal;
       eos_ErrorCodesEqual((EOS_INTEGER*)&EOS_INTERP_EXTRAPOLATED, &err, &equal);
       if (! equal)
-	return((int)err);
+        return((int)err);
       else
-	data[idx].S_extrap = EOS_TRUE;
+        data[idx].S_extrap = EOS_TRUE;
     }
 
     /* sound speed, c = (dP/dr @ const. S)^0.5 */
@@ -931,8 +937,8 @@ int calculateCustomQuantities(EOS_INTEGER sesMaterialNum, EOS_INTEGER N, EOS_REA
       sprintf(pad, "%e", 1.0);
       p = pad;
       while (*p) {
-	*p = ' ';
-	p++;
+        *p = ' ';
+        p++;
       }
       printf("r = %e T = %e P = %e dP/dr = %e dP/dT = %e\n", data[idx].r, data[idx].T, data[idx].P, data[idx].dPdr_T, data[idx].dPdT_r);
       printf("    %s     %s => r*cT^2 = %e\n", pad, pad, data[idx].isothermalBulkModulus);
@@ -961,7 +967,7 @@ int calculateCustomQuantities(EOS_INTEGER sesMaterialNum, EOS_INTEGER N, EOS_REA
       printf("    %s     %s => gruneisen coefficient = %e\n", pad, pad, Gamma);
 
       printf("cT^2 <= c^2 ? %s ; Cv <= Cp ? %s\n",
-	     ((rcT2<=rc2)?"TRUE":"FALSE (numerical error)"), ((Cv<=Cp)?"TRUE":"FALSE (numerical error)"));
+             ((rcT2<=rc2)?"TRUE":"FALSE (numerical error)"), ((Cv<=Cp)?"TRUE":"FALSE (numerical error)"));
     }
   }
 
@@ -975,7 +981,7 @@ int calculateCustomQuantities(EOS_INTEGER sesMaterialNum, EOS_INTEGER N, EOS_REA
     if(option['v'].flag > 1) {
       printf("\ntableHandlesMap:\n");
       for (i=0; i<nTables; i++)
-	printf("\tth %d => %d\n",tableHandle[i],get_tableHandlesMap_val(tableHandle[i]));
+        printf("\tth %d => %d\n",tableHandle[i],get_tableHandlesMap_val(tableHandle[i]));
     }
   }
 
@@ -1166,7 +1172,7 @@ int main(int argc, char *argv[]) {
   char    *optionStr = NULL;
   int i, indepVarOptsCnt, minArgs = 2;
   EOS_CHAR *sesFileName = NULL;
-  EOS_INTEGER indexFileCount;
+  /* EOS_INTEGER indexFileCount; */
   EOS_CHAR *depVarStr, *indepVar1Str, *indepVar2Str, str[50];
 
   extern EOS_CHAR fName[PATH_MAX];
@@ -1222,10 +1228,10 @@ int main(int argc, char *argv[]) {
     }
   }
 
-  if (! strcmp(args[0],"id"))
-    minArgs = 1;
-
   // check main arguments
+
+  if (argsc > 0 && args && ! strcmp(args[0],"id"))
+    minArgs = 1;
 
   if (argsc < minArgs) {
     display_usage(argv);
@@ -1238,17 +1244,7 @@ int main(int argc, char *argv[]) {
     EOS_BOOLEAN fileExists;
     struct stat file_statbuf;
 
-    if (option['F'].flag) {
-      fileExists = (!(stat (option['F'].arg, &file_statbuf)))?EOS_TRUE:EOS_FALSE;
-      if (fileExists) {
-        /* push option['F'].arg onto args[] */
-        args = realloc(args,(++argsc)*sizeof(char*));
-        args[argsc-1] = (char*) malloc((strlen(option['F'].arg)+1)*sizeof(char));
-        strcpy(args[argsc-1],option['F'].arg);
-      }
-    }
-
-    if (argsc == minArgs) { /* Get all material id's from all known files */
+    if (argsc == minArgs && ! option['F'].flag) { /* Get all material id's from all known files */
 
       EOS_BOOLEAN equal;
 
@@ -1270,12 +1266,18 @@ int main(int argc, char *argv[]) {
     }
     else { /* Get all material id's from the specified file */
 
-      fileExists = (!(stat (args[1], &file_statbuf)))?EOS_TRUE:EOS_FALSE;
+      EOS_CHAR *fn = NULL;
+      if (option['F'].flag)
+        fn = option['F'].arg;
+      else
+        fn = args[1];
+      fileExists = (!(stat (fn, &file_statbuf)))?EOS_TRUE:EOS_FALSE;
+        
       if (! fileExists) {
         err = -3;
       }
       else {
-        err = get_matIdListFromFile(&matidlist, args[1]);
+        err = get_matIdListFromFile(&matidlist, fn);
       }
 
       if (err < 0) {
@@ -1308,13 +1310,28 @@ int main(int argc, char *argv[]) {
     return(InsufficientArguments);
   }
 
-  if (! strcmp(args[0],"tables") && argsc > 1) { /* Get all table numbers and table sizes for given matid(s) */
+  if (! strcmp(args[0],"tables") && argsc > 1) { /* Get all table numbers and table sizes for the given matid(s) */
 
     int j, rerror = 0;
 
-    indexFileCount = 0;
     if (option['F'].flag) {
-      indexFileCount = createIndexFile(option['F'].arg);
+      /* Initialize an arbitrary table handle in order to add a filename, option['F'].arg, to the search list */
+
+      sesMaterialNum   = (EOS_INTEGER)strtol(args[1], &p, 10);
+      nTables = 1;
+      tableType = EOS_Info;
+      eos_CreateTables (&nTables, &tableType, &sesMaterialNum, &tableHandle, &err);
+      if (err != EOS_OK) {
+        eos_GetErrorMessage (&err, errorMessage);
+        fprintf (stdout, "Material Number %d Comments:\n%s\n", sesMaterialNum, errorMessage);
+      }
+      eos_SetDataFileName(&tableHandle, &sesMaterialNum, &tableType, option['F'].arg, &err);
+      if (err != EOS_OK) {
+        EOS_CHAR errStr[EOS_MaxErrMsgLen];
+        eos_GetErrorMessage(&err, errStr);
+        printf("\neos_SetDataFileName ERROR: %s\n\n", errStr);
+        return((int)err);
+      }
     }
 
     for (j=1;j<argsc;j++) {
@@ -1350,14 +1367,6 @@ int main(int argc, char *argv[]) {
       printf("\n");
     }
 
-    if (option['F'].flag) {
-      cleanIndexFile(indexFileCount);
-    }
-
-    if (option['F'].flag) {
-      cleanIndexFile(indexFileCount);
-    }
-
     return(rerror);
   }
 
@@ -1366,11 +1375,6 @@ int main(int argc, char *argv[]) {
     int j, rerror = 0;
 
     fprintf (stdout, "\n");
-
-    indexFileCount = 0;
-    if (option['F'].flag) {
-      indexFileCount = createIndexFile(option['F'].arg);
-    }
 
     for (j=1;j<argsc;j++) {
 
@@ -1398,25 +1402,35 @@ int main(int argc, char *argv[]) {
         continue;
       }
 
-  { /* conditionally-read the optional configuration file and set defined options */
-    EOS_BOOLEAN fileExists = EOS_FALSE;
-    struct stat file_statbuf;
-    EOS_CHAR fn[PATH_MAX];
-    if (option['c'].flag)
-      sprintf(fn, "%s", option['c'].arg);
-    else
-      sprintf(fn, "config.%s", "get_sesame_data");
+      if (option['F'].flag) {
+        eos_SetDataFileName(&tableHandle, &sesMaterialNum, &tableType, option['F'].arg, &err);
+        if (err != EOS_OK) {
+          EOS_CHAR errStr[EOS_MaxErrMsgLen];
+          eos_GetErrorMessage(&err, errStr);
+          printf("\neos_SetDataFileName ERROR: %s\n\n", errStr);
+          return((int)err);
+        }
+      }
 
-    fileExists = (!((EOS_BOOLEAN) stat (fn, &file_statbuf)))?EOS_TRUE:EOS_FALSE;
-    if (fileExists) {
-      parse_optionFlags_KeyValue(fn, NULL, NULL, nTables, &tableHandle, EOS_TRUE);
-    }
-    else if (option['c'].flag) {
-      int err = MissingConfigFile;
-      fprintf (stderr, "\nget_sesame_data ERROR %d: %s\n\n", err, localErrorMessages[err]);
-      return err;
-    }
-  }
+      { /* conditionally-read the optional configuration file and set defined options */
+        EOS_BOOLEAN fileExists = EOS_FALSE;
+        struct stat file_statbuf;
+        EOS_CHAR fn[PATH_MAX];
+        if (option['c'].flag)
+          sprintf(fn, "%s", option['c'].arg);
+        else
+          sprintf(fn, "config.%s", "get_sesame_data");
+
+        fileExists = (!((EOS_BOOLEAN) stat (fn, &file_statbuf)))?EOS_TRUE:EOS_FALSE;
+        if (fileExists) {
+          parse_optionFlags_KeyValue(fn, NULL, NULL, nTables, &tableHandle, EOS_TRUE);
+        }
+        else if (option['c'].flag) {
+          int err = MissingConfigFile;
+          fprintf (stderr, "\nget_sesame_data ERROR %d: %s\n\n", err, localErrorMessages[err]);
+          return err;
+        }
+      }
 
       /* Load data */
       eos_LoadTables (&nTables, &tableHandle, &err);
@@ -1442,10 +1456,6 @@ int main(int argc, char *argv[]) {
       /* Destroy data */
       eos_DestroyAll (&err);
       rerror = (int)err;
-    }
-
-    if (option['F'].flag) {
-      cleanIndexFile(indexFileCount);
     }
 
     return(rerror);
@@ -1493,21 +1503,23 @@ int main(int argc, char *argv[]) {
     return((int)err);
   }
 
-  indexFileCount = 0;
-  if (option['F'].flag) {
-    indexFileCount = createIndexFile(option['F'].arg);
-  }
-
   // Initialize the table handle
   eos_CreateTables (&nTables, &tableType, &sesMaterialNum, &tableHandle, &err);
   if (err != EOS_OK) {
     eos_GetErrorMessage (&err, errorMessage);
     fprintf (stderr, "eos_CreateTables ERROR %i: %s\n", err, errorMessage);
 
-    if (option['F'].flag) {
-      cleanIndexFile(indexFileCount);
-    }
     return((int)err);
+  }
+
+  if (option['F'].flag) {
+    eos_SetDataFileName(&tableHandle, &sesMaterialNum, &tableType, option['F'].arg, &err);
+    if (err != EOS_OK) {
+      EOS_CHAR errStr[EOS_MaxErrMsgLen];
+      eos_GetErrorMessage(&err, errStr);
+      printf("\neos_SetDataFileName ERROR: %s\n\n", errStr);
+      return((int)err);
+    }
   }
 
   { /* conditionally-read the optional configuration file and set defined options */
@@ -1536,9 +1548,6 @@ int main(int argc, char *argv[]) {
       eos_GetErrorMessage (&err, errorMessage);
       fprintf (stderr, "eos_SetOption ERROR %i: %s\n", err, errorMessage);
 
-      if (option['F'].flag) {
-        cleanIndexFile(indexFileCount);
-      }
       return((int)err);
     }
   }
@@ -1549,9 +1558,6 @@ int main(int argc, char *argv[]) {
       eos_GetErrorMessage (&err, errorMessage);
       fprintf (stderr, "eos_SetOption ERROR %i: %s\n", err, errorMessage);
 
-      if (option['F'].flag) {
-        cleanIndexFile(indexFileCount);
-      }
       return((int)err);
     }
   }
@@ -1562,9 +1568,6 @@ int main(int argc, char *argv[]) {
       eos_GetErrorMessage (&err, errorMessage);
       fprintf (stderr, "eos_SetOption ERROR %i: %s\n", err, errorMessage);
 
-      if (option['F'].flag) {
-        cleanIndexFile(indexFileCount);
-      }
       return((int)err);
     }
   }
@@ -1575,9 +1578,6 @@ int main(int argc, char *argv[]) {
       eos_GetErrorMessage (&err, errorMessage);
       fprintf (stderr, "eos_SetOption ERROR %i: %s\n", err, errorMessage);
 
-      if (option['F'].flag) {
-        cleanIndexFile(indexFileCount);
-      }
       return((int)err);
     }
   }
@@ -1609,9 +1609,6 @@ int main(int argc, char *argv[]) {
       fprintf (stderr, "\nIf you wish to force the manufacture of %s, then use the -f option.\n\n",
                get_tableType_str(tableType));
 
-    if (option['F'].flag) {
-      cleanIndexFile(indexFileCount);
-    }
     return((int)err);
   }
 
@@ -1619,10 +1616,6 @@ int main(int argc, char *argv[]) {
     int err = 0;
     err = recoverTablesLoadedFile();
     if (err) return err;
-  }
-
-  if (option['F'].flag) {
-    cleanIndexFile(indexFileCount);
   }
 
   if (sesTableNum == 321) {

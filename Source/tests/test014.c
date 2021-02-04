@@ -8,7 +8,7 @@
  ********************************************************************/
 
 /*! \file
- *  \ingroup tests quick unit
+ *  \ingroup C tests quick unit
  *  \brief This is a unit test of the eos_Utils::_eos_QuickSort
  *  and eos_Utils::_eos_CompressArray functions.
  *

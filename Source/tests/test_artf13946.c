@@ -8,7 +8,7 @@
  ********************************************************************/
 
 /*! \file
- * \ingroup tests quick
+ * \ingroup C tests quick
  * \brief Ensure sesameFilesDir.txt parsing errors do not recur.
  *        See SourceForge© Issue #artf13946 for more details:
  *        https://tf.lanl.gov/sf/go/artf13946

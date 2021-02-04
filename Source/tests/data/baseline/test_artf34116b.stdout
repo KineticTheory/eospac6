@@ -1,3 +1,6 @@
+eos_SetOption ERROR 12031: EOS_INVALID_OPTION_FLAG: The option flag, EOS_INVERT_AT_SETUP, passed into eos_SetOption() is invalid and ignored because it is incompatible with the specified data table type, EOS_Pt_DT
+eos_SetOption ERROR 22031: EOS_INVALID_OPTION_FLAG: The option flag, EOS_INVERT_AT_SETUP, passed into eos_SetOption() is invalid and ignored because it is incompatible with the specified data table type, EOS_Pt_DT
+eos_SetOption ERROR 32031: EOS_INVALID_OPTION_FLAG: The option flag, EOS_INVERT_AT_SETUP, passed into eos_SetOption() is invalid and ignored because it is incompatible with the specified data table type, EOS_Pt_DT
 #
 # PACKING tableHandle[0..2] = ( 0 1 2 )
 #
@@ -8,6 +11,8 @@
 --------------------
 TH = 0
 --------------------
+EOS_XY_MODIFY: false
+EOS_XY_PASSTHRU: false
 
   0.000000000000000e+00   0.000000000000000e+00   0.000000000000000e+00  -1.528387169869514e-02   0.000000000000000e+00
   5.294117647058824e-08   0.000000000000000e+00  -8.091461487544483e-10  -1.528387169869514e-02   1.359484060768087e-12
@@ -24,6 +29,8 @@ TH = 0
 --------------------
 TH = 1
 --------------------
+EOS_XY_MODIFY: true
+EOS_XY_PASSTHRU: false
 
   0.000000000000000e+00   0.000000000000000e+00   0.000000000000000e+00  -1.528387169869514e-02   0.000000000000000e+00
   1.764705882352941e-08   0.000000000000000e+00  -8.091461487544483e-10  -1.528387169869514e-02   1.359484060768087e-12
@@ -40,6 +47,8 @@ TH = 1
 --------------------
 TH = 2
 --------------------
+EOS_XY_MODIFY: false
+EOS_XY_PASSTHRU: true
 
   0.000000000000000e+00   0.000000000000000e+00   0.000000000000000e+00  -1.528387169869514e-02   0.000000000000000e+00
   1.764705882352941e-08   0.000000000000000e+00  -8.091461487544483e-10  -1.528387169869514e-02   1.359484060768087e-12
@@ -57,8 +66,8 @@ TH = 2
 # TIMER_RESULTS
 #  TH     WCTIME    CPUTIME  CPUCYCLES        ERR  nInterval      num_X      num_Y          N
 #
-#   0         20      19.59       1965          0         50       5611       3928   22040008
-#   1         16      16.41       1642          0         50       5611       3928   22040008
-#   2         15      14.69       1472          0         50       5611       3928   22040008
+#   0         10       9.46        947          0         50       5611       3928   22040008
+#   1         10      10.65       1065          0         50       5611       3928   22040008
+#   2         10      10.14       1015          0         50       5611       3928   22040008
 
 

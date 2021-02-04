@@ -10,7 +10,9 @@
 
 //////////////////DEFINES///////////////////////
 //DEBUG_CONSTRUCT_STANDARD_TABLE - left in for convenience
+//#define DEBUG_CONSTRUCT_STANDARD_TABLE
 ////////////////////////////////////////////////
+#undef DEBUG_PRINT
 
 #include "_ses_table.h"
 #include "_json_interface.h"
@@ -20,6 +22,9 @@ struct       _standard_table* _copy_standard_table(struct _standard_table* the_t
 	
   struct _standard_table* return_value = malloc(1 * sizeof(struct _standard_table));
 
+#ifdef DEBUG_PRINT
+  printf("_ses_table::_copy_standard_table: the_table tid: %ld, nr: %ld, nt: %ld\n", the_table->_the_tid,the_table->_nr,the_table->_nt);
+#endif 
 
   if (the_table != (struct _standard_table*)NULL) {
 
@@ -103,6 +108,7 @@ struct _standard_table* _construct_standard_table(ses_string the_string1) {
 
 	int i = 0;
 #ifdef DEBUG_CONSTRUCT_STANDARD_TABLE
+    printf("num_keys: %d\n", num_keys);
 	for (i = 0; i < num_keys; i++) {
 		printf("key:%s| type: %s| value: %s|\n", the_keys[i], the_types[i], the_values[i]);
 	}
@@ -363,6 +369,7 @@ long*      _get_standard_sizes_for_table(struct _standard_table* the_table, long
 			int the_int = 0;
 			int i = 0;
 			char* the_expression2 = (char*)NULL;
+            
 			return_value = malloc(sizeof(long) * the_table->_num_arrays);
 			for (i = 0; i < the_table->_num_arrays; i++) {
 				the_expression2 = get_value_for_key("sizes", i, the_table->_the_parse_node);
@@ -375,7 +382,7 @@ long*      _get_standard_sizes_for_table(struct _standard_table* the_table, long
 					}
 				}
 
-                                return_value[i] = (long)the_int;
+                return_value[i] = (long)the_int;
 				free(the_expression2);
 				the_expression2 = (char*)NULL;
 			}

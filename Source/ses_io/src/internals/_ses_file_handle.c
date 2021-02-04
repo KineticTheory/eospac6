@@ -540,7 +540,7 @@ FILE* _getPFILE(struct _ses_file_handle* the_handle) {
 	  switch(the_handle->_the_open_mode) {
 		  case 'R':
   
-		  	pFILE = fopen(filename, "rb");  /*  Note file not exist returns 0 */
+		  	pFILE = fopen(filename, "r");  /*  Note file not exist returns 0 */
    		  	break;
   
   		  case 'A':
@@ -589,7 +589,7 @@ void _releasePFILE(struct _ses_file_handle* the_handle) {
 
 			/* int creturn = 0; */
 
-	 		/* creturn = */ fclose(the_handle->_c_file_handle);
+ 	 		/* creturn = */ fclose(the_handle->_c_file_handle);
 			the_handle->_c_file_handle = (FILE*)NULL;
 			the_handle->_is_valid = SES_FALSE;
 		}

@@ -17,32 +17,39 @@
 
 #include "eos_Utils.h"
 
-/************************************************************************
- * 
- * RecordType5 class constructor
- * 
- * Returned Values: none
+/************************************************************************/
+/*!
+ * \brief RecordType5 class constructor
  *
- * Input Value:
- * eos_RecordType5 *me         - this pointer (pointer to the instance of type eos_RecordType5
- * EOS_INTEGER      materialID - id of material to load.
- * EOS_INTEGER      th         - table handle.
- * 
+ * \param[in,out] *me        - eos_RecordType5 : data object pointer;
+ *                                               contents of object are initialized
+ * \param[in]     materialID - EOS_INTEGER     : id of material to load
+ * \param[in]     th         - EOS_INTEGER     : table handle
+ *
+ * \return none
+ *
  ************************************************************************/
 void eos_ConstructRecordType5 (eos_RecordType5 *me, EOS_INTEGER th,
                                EOS_INTEGER materialID)
 {
-  /* Mean Atomic Number */
-  me->meanAtomicNumber = 0;
-  /* Mean Atomic Mass */
-  me->meanAtomicMass = 0;
-  /* Normal (solid) Density<code></code> */
-  me->normalDensity = 0;
-  /* Solid Bulk Modulus<code></code> */
-  me->solidBulkModulus = 0;
-  /* Exchange Coefficient<code></code> */
-  me->exchangeCoefficient = 0;
+  /* SESAME table 201 data */
+  me->avgAtomicNumber = (EOS_REAL) 0;
+  me->avgAtomicWgt = (EOS_REAL) 0;
+  me->refDensity = (EOS_REAL) 0;
+  me->solidBulkModulus = (EOS_REAL) 0;
+  me->exchangeCoefficient = (EOS_REAL) 0;
+
+  /* Miscellaneous metadata */
+  me->eosData.varOrder = -1;
+  me->eosData.tmpVarOrder = -1;
+  me->eosData.dataFileOffset = -1;
+  me->eosData.dataFileIndex = -1;
+  me->eosData.dataSize = 0;
+
+  /* Create eos_DataMap */
   eos_ConstructEosData ((eos_Data *) me, th, materialID);
+
+  /* Define class-specific virtual functions */
   me->eosData.Load = eos_LoadRecordType5;
   me->eosData.Create = eos_CreateRecordType5;
   me->eosData.Destroy = eos_DestroyRecordType5;
@@ -60,20 +67,15 @@ void eos_ConstructRecordType5 (eos_RecordType5 *me, EOS_INTEGER th,
   me->eosData.SetMonotonicity = eos_SetMonotonicityRecordType5;
   me->eosData.GetMonotonicity = eos_GetMonotonicityRecordType5;
   me->eosData.GetSmoothing = eos_GetSmoothingRecordType5;
-  me->eosData.AreMonotonicRequirementsCompatible =
-    eos_AreMonotonicRequirementsCompatibleRecordType5;
+  me->eosData.AreMonotonicRequirementsCompatible = eos_AreMonotonicRequirementsCompatibleRecordType5;
   me->eosData.SetSmoothing = eos_SetSmoothingRecordType5;
-  me->eosData.AreSmoothingRequirementsCompatible =
-    eos_AreSmoothingRequirementsCompatibleRecordType5;
-  me->eosData.Interpolate = NULL;
-  me->eosData.CheckExtrap = NULL;
+  me->eosData.AreSmoothingRequirementsCompatible = eos_AreSmoothingRequirementsCompatibleRecordType5;
+  me->eosData.Interpolate = NULL; /* no interpolation allowed */
+  me->eosData.CheckExtrap = NULL; /* no interpolation allowed */
   me->eosData.InvertAtSetup = NULL; /* no inversion at setup allowed */
   me->eosData.SetExtrapolationBounds = NULL; /* no extrapolation bounds stored */
-  me->eosData.varOrder = -1;
-  me->eosData.tmpVarOrder = -1;
-  me->eosData.dataFileOffset = -1;
-  me->eosData.dataFileIndex = -1;
-  me->eosData.dataSize = 0;
+  me->eosData.AreGhostDataRequired = NULL; /* no ghost node data required*/
+  me->eosData.AddGhostData = NULL; /* no ghost node data required*/
 }
 
 /************************************************************************
@@ -220,9 +222,9 @@ void eos_LoadRecordType5 (void *ptr, EOS_INTEGER th)
 
   count = 0;
 
-  me->meanAtomicNumber = read_data[count++];    /* 0 */
-  me->meanAtomicMass = read_data[count++];      /* 0 */
-  me->normalDensity = read_data[count++];       /* 0 */
+  me->avgAtomicNumber = read_data[count++];    /* 0 */
+  me->avgAtomicWgt = read_data[count++];      /* 0 */
+  me->refDensity = read_data[count++];       /* 0 */
   me->solidBulkModulus = read_data[count++];    /* 0 */
   me->exchangeCoefficient = read_data[count++]; /* 0 */
   EOS_FREE (read_data);
@@ -300,14 +302,14 @@ void eos_PrintRecordType5 (void *ptr, EOS_INTEGER th, EOS_CHAR *fname,
            "Data Type = ", EOS_TYPE_TO_STRING (dataType),
            "Description = ", EOS_TYPE_TO_TAB_NAME (dataType));
 
-  _eos_dbl2String (me->meanAtomicNumber, _MIN_FIELD_WIDTH, buf);
+  _eos_dbl2String (me->avgAtomicNumber, _MIN_FIELD_WIDTH, buf);
   fprintf (tableFile, "ZBAR: %*f\n", _MIN_FIELD_WIDTH + 1,
-           me->meanAtomicNumber);
-  _eos_dbl2String (me->meanAtomicMass, _MIN_FIELD_WIDTH, buf);
+           me->avgAtomicNumber);
+  _eos_dbl2String (me->avgAtomicWgt, _MIN_FIELD_WIDTH, buf);
   fprintf (tableFile, "ABAR: %*f\n", _MIN_FIELD_WIDTH + 1,
-           me->meanAtomicMass);
-  _eos_dbl2String (me->normalDensity, _MIN_FIELD_WIDTH, buf);
-  fprintf (tableFile, "RHO0: %*f\n", _MIN_FIELD_WIDTH + 1, me->normalDensity);
+           me->avgAtomicWgt);
+  _eos_dbl2String (me->refDensity, _MIN_FIELD_WIDTH, buf);
+  fprintf (tableFile, "RHO0: %*f\n", _MIN_FIELD_WIDTH + 1, me->refDensity);
   _eos_dbl2String (me->solidBulkModulus, _MIN_FIELD_WIDTH, buf);
   fprintf (tableFile, "BO:   %*f\n", _MIN_FIELD_WIDTH + 1,
            me->solidBulkModulus);
@@ -339,12 +341,12 @@ void eos_GetPackedTableRecordType5 (void *ptr, EOS_INTEGER th,
   me = (eos_RecordType5 *) ptr;
   *err = EOS_OK;
 
-  memcpy (packedTable + byteCount, &(me->meanAtomicNumber),
+  memcpy (packedTable + byteCount, &(me->avgAtomicNumber),
           sizeof (EOS_REAL));
   byteCount += sizeof (EOS_REAL);
-  memcpy (packedTable + byteCount, &(me->meanAtomicMass), sizeof (EOS_REAL));
+  memcpy (packedTable + byteCount, &(me->avgAtomicWgt), sizeof (EOS_REAL));
   byteCount += sizeof (EOS_REAL);
-  memcpy (packedTable + byteCount, &(me->normalDensity), sizeof (EOS_REAL));
+  memcpy (packedTable + byteCount, &(me->refDensity), sizeof (EOS_REAL));
   byteCount += sizeof (EOS_REAL);
   memcpy (packedTable + byteCount, &(me->solidBulkModulus),
           sizeof (EOS_REAL));
@@ -393,12 +395,12 @@ void eos_SetPackedTableRecordType5 (void *ptr, EOS_INTEGER th,
   me = (eos_RecordType5 *) ptr;
   *err = EOS_OK;
 
-  memcpy (&(me->meanAtomicNumber), packedTable + byteCount,
+  memcpy (&(me->avgAtomicNumber), packedTable + byteCount,
           sizeof (EOS_REAL));
   byteCount += sizeof (EOS_REAL);
-  memcpy (&(me->meanAtomicMass), packedTable + byteCount, sizeof (EOS_REAL));
+  memcpy (&(me->avgAtomicWgt), packedTable + byteCount, sizeof (EOS_REAL));
   byteCount += sizeof (EOS_REAL);
-  memcpy (&(me->normalDensity), packedTable + byteCount, sizeof (EOS_REAL));
+  memcpy (&(me->refDensity), packedTable + byteCount, sizeof (EOS_REAL));
   byteCount += sizeof (EOS_REAL);
   memcpy (&(me->solidBulkModulus), packedTable + byteCount,
           sizeof (EOS_REAL));
@@ -571,11 +573,11 @@ void eos_GetTableInfoRecordType5 (void *ptr, EOS_INTEGER th,
       break;
 
     case EOS_Mean_Atomic_Num:
-      infoVals[i] = me->meanAtomicNumber;
+      infoVals[i] = me->avgAtomicNumber;
       break;
 
     case EOS_Mean_Atomic_Mass:
-      infoVals[i] = me->meanAtomicMass;
+      infoVals[i] = me->avgAtomicWgt;
       break;
 
     case EOS_Modulus:
@@ -583,7 +585,7 @@ void eos_GetTableInfoRecordType5 (void *ptr, EOS_INTEGER th,
       break;
 
     case EOS_Normal_Density:
-      infoVals[i] = me->normalDensity;
+      infoVals[i] = me->refDensity;
       break;
 
     case EOS_Exchange_Coeff:

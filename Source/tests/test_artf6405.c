@@ -8,7 +8,7 @@
  ********************************************************************/
 
 /*! \file
- *  \ingroup tests
+ *  \ingroup C tests
  *  \brief Perform the following tests:
  *    -# Verify fatal error while using EOS_PT_SMOOTHING, EOS_V_PtT and
  *       EOS_DUMP_DATA was fixed.

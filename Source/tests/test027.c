@@ -8,7 +8,7 @@
  ********************************************************************/
 
 /*! \file
- *  \ingroup tests
+ *  \ingroup C tests
  *  \brief Ensure the inverse bilinear interpolator works for
  *  category 1, record type 1
  *

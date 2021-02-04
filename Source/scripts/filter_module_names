@@ -14,7 +14,8 @@ print "DEBUG:\$regexFilter = $regexFilter\n" if ($options->{"debug"});
 while (<STDIN>) {
   print "$.: $_" if ($options->{"debug"});
   chomp;
-  @m=split(/[\s]+/);
+  s/\'//g;
+  @m=split(/[\s;]+/);
   print "DEBUG:\@m = @m\n" if ($options->{"debug"});
   @list=@ARGV;
   print "DEBUG:\@list = @list\n" if ($options->{"debug"});
@@ -25,6 +26,7 @@ while (<STDIN>) {
 	print "$m\n" if ($m=~/$s/i);
       }
       else {
+        print "DEBUG: ($m=~/$s/i) = ",($m=~/$s/i),"\n       ($m!~/$regexFilter/oi) = ",($m!~/$regexFilter/oi),"\n" if ($options->{"debug"});
 	print "$m\n" if ($m=~/$s/i && $m!~/$regexFilter/oi);
       }
     }

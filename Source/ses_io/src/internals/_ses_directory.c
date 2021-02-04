@@ -9,6 +9,7 @@
 #include "stdio.h"
 #include "string.h"
 
+#undef DEBUG_PRINT
 
 struct _ses_directory* _construct_ses_directory() {
 
@@ -55,6 +56,9 @@ struct _ses_directory* _construct_ses_directory_from_material_file_list(struct _
   /*  construct a ses directory from a ses material file list */
 
   /*  error check the arguments */
+#ifdef DEBUG_PRINT
+    printf("_ses_directory::_construct_ses_directory_from_material_file_list \n");
+#endif
 
   if (pMFL == (struct _ses_material_file_list*)NULL) {
 #ifdef DEBUG_PRINT
@@ -113,6 +117,12 @@ struct _ses_directory* _construct_ses_directory_from_material_file_list(struct _
         free(directory_name);
         directory_name = (char*)NULL;
   }
+
+  // GINGER print out the results:
+//  printf("_construct_ses_directory_from_mfl:: nfiles: %ld, date: %ld, version: %ld\n", the_directory->_nfiles, the_directory->_date, the_directory->_version);
+//  for (i=0; i < the_directory->_nfiles; i++){
+//    printf("\tmid: %ld, _nwds: %ld, _iadr: %ld\n", the_directory->_matid[i], the_directory->_nwds[i], the_directory->_iadr[i]);
+//  }
 
 
   /*  return */
@@ -236,6 +246,11 @@ struct _ses_directory* _copy_ses_directory(struct _ses_directory* ptDIR) {
 		}
   	}
   }
+  // GINGER print out the results:
+//  printf("_copy_ses_directory:: nfiles: %ld, date: %ld, version: %ld\n", return_value->_nfiles, return_value->_date, return_value->_version);
+//  for (i=0; i < return_value->_nfiles; i++){
+//    printf("\tmid: %ld, _nwds: %ld, _iadr: %ld\n", return_value->_matid[i], return_value->_nwds[i], return_value->_iadr[i]);
+//  }
 
   /*  return */
   return return_value;
@@ -418,6 +433,9 @@ ses_boolean _check_directory_for_material(struct _ses_directory* ptDIR, ses_mate
       is in the index */
 
   ses_boolean return_value = SES_FALSE;
+#ifdef DEBUG_PRINT
+    printf("_check_directory_for_material: handle: %ld, mid: %ld\n", ptDIR, the_mid);
+#endif
 
   /*  argument error checking */
 
@@ -439,22 +457,36 @@ ses_boolean _check_directory_for_material(struct _ses_directory* ptDIR, ses_mate
 
   if (ptDIR->_nfiles <= 0) {
 #ifdef DEBUG_PRINT
-    printf("_check_directory_for_material: nfiles <= 0 in _check_directory_for_material\n");
+    printf("_check_directory_for_material: nfiles <= 0, nfiles: %d\n", ptDIR->_nfiles);
 #endif
     _set_latest_error(SES_OBJECT_OUT_OF_RANGE);
     return SES_FALSE;
   }
 
   /*  find the material */
+#ifdef DEBUG_PRINT
+    printf("_check_directory_for_material: 10\n");
+#endif
 
   long i=0;
   for (i=0; i < ptDIR->_nfiles; i++) {
+#ifdef DEBUG_PRINT
+      printf("_check_directory_for_material: nfiles: %d, i: %d, mid: %ld\n", ptDIR->_nfiles, i, the_mid);
+#endif
+      
     if (the_mid == ptDIR->_matid[i]) {
+#ifdef DEBUG_PRINT
+        printf("_check_directory_for_material: ptDIR->_matid[i]: %ld\n", ptDIR->_matid[i]);
+#endif
       return_value = SES_TRUE;
     }
   }
 
   /*  return */
+  // GINGER print values:
+//  for (i = 0; i < ptDIR->_nfiles; i++) {
+//    printf("_check_directory_for_material: _matid: %ld, _nwds: %ld, _iadr: %ld\n",ptDIR->_matid[i],ptDIR->_nwds[i],ptDIR->_iadr[i] );
+//  }
 
   return return_value;
 }
@@ -559,6 +591,10 @@ ses_boolean _add_materials(struct _ses_directory* ptDIR, long* _matid,
     ptDIR->_nwds[i] = _nwds[i];
     ptDIR->_iadr[i] = _iadr[i];
   }
+  // GINGER print values:
+//  for (i = 0; i < _nfiles; i++) {
+//    printf("_add_materials: _matid: %ld, _nwds: %ld, _iadr: %ld\n",ptDIR->_matid[i],ptDIR->_nwds[i],ptDIR->_iadr[i] );
+//  }
   ptDIR->_ready = SES_TRUE; 
 
   /*  return */
@@ -717,6 +753,11 @@ ses_boolean _add_new_material(struct _ses_directory* the_directory, ses_material
   the_directory->_iadr = _new_iadr;
 
   the_directory->_ready = SES_FALSE;
+
+  // GINGER print values:
+//  for (i = 0; i < the_directory->_nfiles-1; i++) {
+//    printf("_add_new_material: _matid: %ld, _nwds: %ld, _iadr: %ld\n", the_directory->_matid[i],the_directory->_nwds[i],the_directory->_iadr[i] );
+//  }
 
   return SES_TRUE;
 

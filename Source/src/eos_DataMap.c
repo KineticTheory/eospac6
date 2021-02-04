@@ -13,11 +13,9 @@
 
 #define _EOS_DATAMAP_INTERNAL_PROTOTYPES
 #include "eos_types_internal.h"
-
 #include "eos_DataMap.h"
 
 #include "eos_Utils.h"
-
 #include "eos_SesUtils.h"
 
 /************************************************************************
@@ -35,6 +33,22 @@ void eos_ConstructEosDataMap (eos_DataMap *me)
   EOS_INTEGER i;
 
   me->initialized = EOS_FALSE; /* once this is initialized, it remains so until either eos_DestroyEosDataMap is called via eos_DestroyAll or execution stops */
+  me->skipExtrapCheck = EOS_FALSE;
+  //APG make sure compiled with DO_OFFLOAD if set to be true
+#ifdef DO_OFFLOAD
+  me->useGpuData = EOS_FALSE; /* once this is initialized, it remains so until either eos_DestroyEosDataMap is called via eos_DestroyAll or execution stops */
+  omp_set_num_threads(1);
+  me->eb_xLo = NULL;
+  me->eb_yLo = NULL;
+  me->eb_xHi = NULL;
+  me->eb_yHi = NULL;
+  me->eb_x   = NULL;
+  me->xinds  = NULL;
+  me->yinds  = NULL;
+  me->xarrinds  = NULL;
+
+#endif /* DO_OFFLOAD */
+
   me->nAlloc = 0;
   me->nTables = 0;
   me->nHandles = 0;
@@ -63,6 +77,21 @@ void eos_ConstructEosDataMap (eos_DataMap *me)
 void eos_DestroyEosDataMap (eos_DataMap *me)
 {
   EOS_INTEGER i;
+
+#ifdef DO_OFFLOAD
+  /* destroy the offloaded eos_ExtrapolationBoundsEosDataMap struct(s) for all table handles */
+  int t_ = omp_get_default_device();
+  omp_target_free(me->eb_xLo, t_);
+  omp_target_free(me->eb_yLo, t_);
+  omp_target_free(me->eb_xHi, t_);
+  omp_target_free(me->eb_yHi, t_);
+  omp_target_free(me->eb_x,   t_);
+  EOS_FREE(me->xinds);
+  EOS_FREE(me->yinds);
+  EOS_FREE(me->xarrinds);
+  /* set flag to prevent future usage of EOSPAC setup functions */
+  _EOS_SET_USEGPUDATA_EOSDATAMAP(EOS_TRUE);
+#endif /* DO_OFFLOAD */
 
   for (i = 0; i < me->nAlloc; i++) {
     if (!me->dataObjects[i])
@@ -180,7 +209,7 @@ void eos_AllocateExtrapolationBoundsEosDataMap(eos_DataMap *me, EOS_INTEGER nhan
 
 /************************************************************************/
 /*!
- * \brief Destroys eos_ExtrapolationBoundsEosDataMap struct for specified table handle
+ * \brief Fetches eos_ExtrapolationBoundsEosDataMap struct for specified table handle
  *
  * \param[in]     *me        - eos_DataMap     : this pointer (pointer to the instance of type eos_DataMap)
  * \param[in]     th         - EOS_INTEGER     : table handle (th >= 0 && th < me->nAlloc)
@@ -315,7 +344,11 @@ void _eos_CleanupTablesEosDataMap (eos_DataMap *me, EOS_INTEGER *errorCode)
 
   for (i = 0; i < me->nAlloc; i++) {
     /* if this handle already reuses another object , skip it */
-    if (!me->dataObjects[i] || ! eos_IsHandleValid(i))
+    if (!me->dataObjects[i])
+      continue;
+
+    /* if this handle is invalid , skip it */
+    if (!eos_IsHandleValid(i))
       continue;
 
     /* if this handle uses an unshareable object , skip it */
@@ -328,12 +361,16 @@ void _eos_CleanupTablesEosDataMap (eos_DataMap *me, EOS_INTEGER *errorCode)
       EOS_INTEGER tabNum1, tabNum2;
 
       /* if this handle already reuses another object , skip it */
-      if (!me->dataObjects[j] || ! eos_IsHandleValid(i) || j == i)
+      if (!me->dataObjects[j])
+        continue;
+
+      /* if this handle is invalid , skip it */
+      if (!eos_IsHandleValid(j))
         continue;
 
       /* if this handle uses an unshareable object , skip it */
       if (!me->dataObjects[j]->IsaShareableObject(me->dataObjects[j]))
-	continue;
+        continue;
 
       tabNum1 = me->dataObjects[j]->tableNum;
       tabNum2 = EOS_TYPE_TO_TAB_NUM (me->tableTypes[i]);
@@ -349,37 +386,37 @@ void _eos_CleanupTablesEosDataMap (eos_DataMap *me, EOS_INTEGER *errorCode)
        * If yes to all conditions, then re-use the table!
        */
       if (tabNum1 == tabNum2 &&
-	  me->dataObjects[i]->dataFileIndex == me->dataObjects[j]->dataFileIndex &&
-	  _eos_find_userdefined_fileindex_in_gEosDataMapDataObjects(me->dataObjects[i]->dataFileIndex) < 0 &&
-	  _eos_find_matid_in_gMatidMap(me->dataObjects[i]->materialID) < 0 &&
-	  _eos_find_matid_in_gMatidMap(me->dataObjects[j]->materialID) < 0) {
-	if (! me->dataObjects[i]->destructing)
-	  if (me->dataObjects[i]->materialID == me->dataObjects[j]->materialID)
-	    if (_eos_AreOptionsCompatibleEosData (me->dataObjects[j],
-						  me->dataObjects[i],
-						  me->tableTypes[j], -1,
-						  NULL, NULL, 0)) {
-	      eosData = me->dataObjects[j];
-	      newEosData = me->dataObjects[i];
-	      /* re-assign table mappings for other table handles pointing to this data */
-	      c = 0;
-	      while (eosData->refCounter > 1) {
-		if (c != j && me->tableHandlesMap[c] == j) {
-		  me->tableHandlesMap[c] = i;
-		  newEosData->refCounter++;   /* increase the counter for the new one */
-		  eosData->refCounter--;      /* decrease the refcount of what it used to point to */
-		}
-		c++;
-	      }
+          me->dataObjects[i]->dataFileIndex == me->dataObjects[j]->dataFileIndex &&
+          _eos_find_userdefined_fileindex_in_gEosDataMapDataObjects(me->dataObjects[i]->dataFileIndex) < 0 &&
+          _eos_find_matid_in_gMatidMap(me->dataObjects[i]->materialID) < 0 &&
+          _eos_find_matid_in_gMatidMap(me->dataObjects[j]->materialID) < 0) {
+        if (! me->dataObjects[i]->destructing)
+          if (me->dataObjects[i]->materialID == me->dataObjects[j]->materialID)
+            if (_eos_AreOptionsCompatibleEosData (me->dataObjects[j],
+                                                  me->dataObjects[i],
+                                                  me->tableTypes[j], -1,
+                                                  NULL, NULL, 0)) {
+              eosData = me->dataObjects[j];
+              newEosData = me->dataObjects[i];
+              /* re-assign table mappings for other table handles pointing to this data */
+              c = 0;
+              while (eosData->refCounter > 1) {
+                if (c != j && me->tableHandlesMap[c] == j) {
+                  me->tableHandlesMap[c] = i;
+                  newEosData->refCounter++;   /* increase the counter for the new one */
+                  eosData->refCounter--;      /* decrease the refcount of what it used to point to */
+                }
+                c++;
+              }
 
-	      /* now only I point to j-th object */
-	      eos_DestroyEosData (eosData);
-	      me->nTables--;
-	      newEosData->refCounter++;       /* increase the counter for the new one */
-	      eosData->refCounter--;          /* decrease the refcount of what it used to point to */
-	      me->tableHandlesMap[j] = i;
-	      eos_FreeEosData (&eosData, me->dataObjects[j]->recordType);
-	    }
+              /* now only I point to j-th object */
+              eos_DestroyEosData (eosData);
+              me->nTables--;
+              newEosData->refCounter++;       /* increase the counter for the new one */
+              eosData->refCounter--;          /* decrease the refcount of what it used to point to */
+              me->tableHandlesMap[j] = i;
+              eos_FreeEosData (&eosData, me->dataObjects[j]->recordType);
+            }
       }
     }                           /* j-loop */
   }
@@ -677,10 +714,10 @@ EOS_INTEGER _eos_setConversionFactors(eos_DataMap *me, EOS_INTEGER th, EOS_REAL 
 
   myerr[0] = myerr[1] = myerr[2] = err;
 
+  
   eos_SetOptionEosDataMap (me, th, EOS_X_CONVERT, convX, -1, &myerr[0]);
   eos_SetOptionEosDataMap (me, th, EOS_Y_CONVERT, convY, -1, &myerr[1]);
   eos_SetOptionEosDataMap (me, th, EOS_F_CONVERT, convF, -1, &myerr[2]);
-
   /* return first error encountered */
   for (i=0; i<3; i++) {
     if (myerr[i] == EOS_OK) continue;
@@ -729,7 +766,12 @@ void eos_LoadTablesEosDataMap (eos_DataMap *me, EOS_INTEGER nTables,
      the duplicates can appear  if tables have the same options which
      were set one by one */
 
+#ifdef __ONE_OBJECT_PER_TABLEHANDLE__
+#define __DISABLE_OBJECT_CONSOLIDATION__
+#endif
+#ifndef __DISABLE_OBJECT_CONSOLIDATION__
   _eos_CleanupTablesEosDataMap (me, errorCode);
+#endif
 
   for (i = 0; i < nTables; i++) {
 
@@ -764,7 +806,9 @@ void eos_LoadTablesEosDataMap (eos_DataMap *me, EOS_INTEGER nTables,
       eos_HandleErrorEosDataMap (me, tableHandles[i], combinedErr);
       /* print it if requested */
       me->dataObjects[me->tableHandlesMap[tableHandles[i]]]->dumpNotLoadedMsg = EOS_TRUE;
+      if (eosData->SetUseTmpGhostData) eosData->SetUseTmpGhostData(eosData, EOS_TRUE);
       eos_PrintTableEosDataMap (me, tableHandles[i], "TablesLoaded.dat", &combinedErr);
+      if (eosData->SetUseTmpGhostData) eosData->SetUseTmpGhostData(eosData, EOS_FALSE);
       me->dataObjects[me->tableHandlesMap[tableHandles[i]]]->dumpNotLoadedMsg = EOS_FALSE;
       combinedErr = *errorCode;
       continue;
@@ -841,8 +885,9 @@ void eos_LoadTablesEosDataMap (eos_DataMap *me, EOS_INTEGER nTables,
         eosData->SetExtrapolationBounds(eosData, tableHandles[i], dataType);
 
       /* print it if requested */
+      if (eosData->SetUseTmpGhostData) eosData->SetUseTmpGhostData(eosData, EOS_TRUE);
       eos_PrintTableEosDataMap (me, tableHandles[i], "TablesLoaded.dat", errorCode);
-
+      if (eosData->SetUseTmpGhostData) eosData->SetUseTmpGhostData(eosData, EOS_FALSE);
       me->dataObjects[me->tableHandlesMap[tableHandles[i]]]->dumpNotLoadedMsg = EOS_FALSE;
 
       if (reqNumSubTables > eosData->numSubtablesLoaded) {
@@ -880,6 +925,11 @@ void eos_LoadTablesEosDataMap (eos_DataMap *me, EOS_INTEGER nTables,
         eosData->SetExtrapolationBounds(eosData, tableHandles[i], dataType);
     }
 
+#ifdef __ONE_OBJECT_PER_TABLEHANDLE__
+    /* Only one subtable may be allocated at this point */
+    reqNumSubTables = 1;
+#endif
+
     /* return error if the requested subtable is not actually loaded */
     if (eos_GetStandardErrorCodeFromCustomErrorCode(c) != EOS_WARNING &&
         eos_GetStandardErrorCodeFromCustomErrorCode(c) != EOS_SPLIT_FAILED &&
@@ -907,7 +957,9 @@ void eos_LoadTablesEosDataMap (eos_DataMap *me, EOS_INTEGER nTables,
       /* restore conversion factors */
       err = _eos_setConversionFactors(me, tableHandles[i], convX, convY, convF);
 #endif
+      if (eosData->SetUseTmpGhostData) eosData->SetUseTmpGhostData(eosData, EOS_TRUE);
       eos_PrintTableEosDataMap (me, tableHandles[i], "TablesLoaded.dat", errorCode);
+      if (eosData->SetUseTmpGhostData) eosData->SetUseTmpGhostData(eosData, EOS_FALSE);
       me->dataObjects[me->tableHandlesMap[tableHandles[i]]]->dumpNotLoadedMsg = EOS_FALSE;
 
       /* invalidate the current table handle */
@@ -937,7 +989,9 @@ void eos_LoadTablesEosDataMap (eos_DataMap *me, EOS_INTEGER nTables,
       /* restore conversion factors */
       err = _eos_setConversionFactors(me, tableHandles[i], convX, convY, convF);
 #endif
+      if (eosData->SetUseTmpGhostData) eosData->SetUseTmpGhostData(eosData, EOS_TRUE);
       eos_PrintTableEosDataMap (me, tableHandles[i], "TablesLoaded.dat", errorCode);
+      if (eosData->SetUseTmpGhostData) eosData->SetUseTmpGhostData(eosData, EOS_FALSE);
       me->dataObjects[me->tableHandlesMap[tableHandles[i]]]->dumpNotLoadedMsg = EOS_FALSE;
       continue;
     }
@@ -959,7 +1013,9 @@ void eos_LoadTablesEosDataMap (eos_DataMap *me, EOS_INTEGER nTables,
           /* restore conversion factors */
           err = _eos_setConversionFactors(me, tableHandles[i], convX, convY, convF);
 #endif
+          if (eosData->SetUseTmpGhostData) eosData->SetUseTmpGhostData(eosData, EOS_TRUE);
           eos_PrintTableEosDataMap (me, tableHandles[i], "TablesLoaded.dat", errorCode);
+          if (eosData->SetUseTmpGhostData) eosData->SetUseTmpGhostData(eosData, EOS_FALSE);
           me->dataObjects[me->tableHandlesMap[tableHandles[i]]]->dumpNotLoadedMsg = EOS_FALSE;
 
           /* invalidate the current table handle */
@@ -994,7 +1050,9 @@ void eos_LoadTablesEosDataMap (eos_DataMap *me, EOS_INTEGER nTables,
         /* restore conversion factors */
         err = _eos_setConversionFactors(me, tableHandles[i], convX, convY, convF);
 #endif
+        if (eosData->SetUseTmpGhostData) eosData->SetUseTmpGhostData(eosData, EOS_TRUE);
         eos_PrintTableEosDataMap (me, tableHandles[i], "TablesLoaded.dat", errorCode);
+        if (eosData->SetUseTmpGhostData) eosData->SetUseTmpGhostData(eosData, EOS_FALSE);
         me->dataObjects[me->tableHandlesMap[tableHandles[i]]]->dumpNotLoadedMsg = EOS_FALSE;
 
         /* invalidate the current table handle */
@@ -1013,6 +1071,7 @@ void eos_LoadTablesEosDataMap (eos_DataMap *me, EOS_INTEGER nTables,
         continue;
       }
     }
+
     if (makeMonotonicInY) {
       eosData->IsMonotonic (eosData, me->tableTypes[tableHandles[i]],
                             &isMonotonicY, EOS_FALSE, EOS_TRUE, errorCode);
@@ -1032,7 +1091,9 @@ void eos_LoadTablesEosDataMap (eos_DataMap *me, EOS_INTEGER nTables,
         /* restore conversion factors */
         err = _eos_setConversionFactors(me, tableHandles[i], convX, convY, convF);
 #endif
+        if (eosData->SetUseTmpGhostData) eosData->SetUseTmpGhostData(eosData, EOS_TRUE);
         eos_PrintTableEosDataMap (me, tableHandles[i], "TablesLoaded.dat", errorCode);
+        if (eosData->SetUseTmpGhostData) eosData->SetUseTmpGhostData(eosData, EOS_FALSE);
         me->dataObjects[me->tableHandlesMap[tableHandles[i]]]->dumpNotLoadedMsg = EOS_FALSE;
 
         /* invalidate the current table handle */
@@ -1068,7 +1129,9 @@ void eos_LoadTablesEosDataMap (eos_DataMap *me, EOS_INTEGER nTables,
           /* restore conversion factors */
           err = _eos_setConversionFactors(me, tableHandles[i], convX, convY, convF);
 #endif
+          if (eosData->SetUseTmpGhostData) eosData->SetUseTmpGhostData(eosData, EOS_TRUE);
           eos_PrintTableEosDataMap (me, tableHandles[i], "TablesLoaded.dat", errorCode);
+          if (eosData->SetUseTmpGhostData) eosData->SetUseTmpGhostData(eosData, EOS_FALSE);
           me->dataObjects[me->tableHandlesMap[tableHandles[i]]]->dumpNotLoadedMsg = EOS_FALSE;
 
           /* invalidate the current table handle */
@@ -1109,6 +1172,7 @@ void eos_LoadTablesEosDataMap (eos_DataMap *me, EOS_INTEGER nTables,
         continue;
       }
     }
+
     if (makeMonotonicInY1) {
       eosData->IsMonotonic (eosData, makeMonotonicType1, &isMonotonicY,
                             EOS_FALSE, EOS_TRUE, errorCode);
@@ -1127,7 +1191,9 @@ void eos_LoadTablesEosDataMap (eos_DataMap *me, EOS_INTEGER nTables,
         /* restore conversion factors */
         err = _eos_setConversionFactors(me, tableHandles[i], convX, convY, convF);
 #endif
+        if (eosData->SetUseTmpGhostData) eosData->SetUseTmpGhostData(eosData, EOS_TRUE);
         eos_PrintTableEosDataMap (me, tableHandles[i], "TablesLoaded.dat", errorCode);
+        if (eosData->SetUseTmpGhostData) eosData->SetUseTmpGhostData(eosData, EOS_FALSE);
         me->dataObjects[me->tableHandlesMap[tableHandles[i]]]->dumpNotLoadedMsg = EOS_FALSE;
 
         /* invalidate the current table handle */
@@ -1163,7 +1229,9 @@ void eos_LoadTablesEosDataMap (eos_DataMap *me, EOS_INTEGER nTables,
           /* restore conversion factors */
           err = _eos_setConversionFactors(me, tableHandles[i], convX, convY, convF);
 #endif
+          if (eosData->SetUseTmpGhostData) eosData->SetUseTmpGhostData(eosData, EOS_TRUE);
           eos_PrintTableEosDataMap (me, tableHandles[i], "TablesLoaded.dat", errorCode);
+          if (eosData->SetUseTmpGhostData) eosData->SetUseTmpGhostData(eosData, EOS_FALSE);
           me->dataObjects[me->tableHandlesMap[tableHandles[i]]]->dumpNotLoadedMsg = EOS_FALSE;
 
           /* invalidate the current table handle */
@@ -1197,7 +1265,9 @@ void eos_LoadTablesEosDataMap (eos_DataMap *me, EOS_INTEGER nTables,
         /* restore conversion factors */
         err = _eos_setConversionFactors(me, tableHandles[i], convX, convY, convF);
 #endif
+        if (eosData->SetUseTmpGhostData) eosData->SetUseTmpGhostData(eosData, EOS_TRUE);
         eos_PrintTableEosDataMap (me, tableHandles[i], "TablesLoaded.dat", errorCode);
+        if (eosData->SetUseTmpGhostData) eosData->SetUseTmpGhostData(eosData, EOS_FALSE);
         me->dataObjects[me->tableHandlesMap[tableHandles[i]]]->dumpNotLoadedMsg = EOS_FALSE;
 
         /* invalidate the current table handle */
@@ -1216,6 +1286,7 @@ void eos_LoadTablesEosDataMap (eos_DataMap *me, EOS_INTEGER nTables,
         continue;
       }
     }
+
     if (makeMonotonicInY2) {
       eosData->IsMonotonic (eosData, makeMonotonicType2, &isMonotonicY,
                             EOS_FALSE, EOS_TRUE, errorCode);
@@ -1234,7 +1305,9 @@ void eos_LoadTablesEosDataMap (eos_DataMap *me, EOS_INTEGER nTables,
         /* restore conversion factors */
         err = _eos_setConversionFactors(me, tableHandles[i], convX, convY, convF);
 #endif
+        if (eosData->SetUseTmpGhostData) eosData->SetUseTmpGhostData(eosData, EOS_TRUE);
         eos_PrintTableEosDataMap (me, tableHandles[i], "TablesLoaded.dat", errorCode);
+        if (eosData->SetUseTmpGhostData) eosData->SetUseTmpGhostData(eosData, EOS_FALSE);
         me->dataObjects[me->tableHandlesMap[tableHandles[i]]]->dumpNotLoadedMsg = EOS_FALSE;
 
         /* invalidate the current table handle */
@@ -1244,6 +1317,7 @@ void eos_LoadTablesEosDataMap (eos_DataMap *me, EOS_INTEGER nTables,
 
         if (eosData->refCounter <= 0) {
           /* this data object is no longer referenced by any table handle */
+
           eos_DestroyEosData (eosData);
           eos_FreeEosData (&eosData, eosData->recordType);
           me->dataObjects[dataObjectIndex] = eosData;
@@ -1272,7 +1346,9 @@ void eos_LoadTablesEosDataMap (eos_DataMap *me, EOS_INTEGER nTables,
         /* restore conversion factors */
         err = _eos_setConversionFactors(me, tableHandles[i], convX, convY, convF);
 #endif
+        if (eosData->SetUseTmpGhostData) eosData->SetUseTmpGhostData(eosData, EOS_TRUE);
         eos_PrintTableEosDataMap (me, tableHandles[i], "TablesLoaded.dat", errorCode);
+        if (eosData->SetUseTmpGhostData) eosData->SetUseTmpGhostData(eosData, EOS_FALSE);
         me->dataObjects[me->tableHandlesMap[tableHandles[i]]]->dumpNotLoadedMsg = EOS_FALSE;
 
         /* invalidate the current table handle */
@@ -1309,7 +1385,9 @@ void eos_LoadTablesEosDataMap (eos_DataMap *me, EOS_INTEGER nTables,
         /* restore conversion factors */
         err = _eos_setConversionFactors(me, tableHandles[i], convX, convY, convF);
 #endif
+        if (eosData->SetUseTmpGhostData) eosData->SetUseTmpGhostData(eosData, EOS_TRUE);
         eos_PrintTableEosDataMap (me, tableHandles[i], "TablesLoaded.dat", errorCode);
+        if (eosData->SetUseTmpGhostData) eosData->SetUseTmpGhostData(eosData, EOS_FALSE);
         me->dataObjects[me->tableHandlesMap[tableHandles[i]]]->dumpNotLoadedMsg = EOS_FALSE;
 
         /* invalidate the current table handle */
@@ -1329,6 +1407,10 @@ void eos_LoadTablesEosDataMap (eos_DataMap *me, EOS_INTEGER nTables,
       }
     }
 
+    /* Conditionally-dump tables to a debug file */
+    if (eosData->DumpExpandedGrid)
+      eosData->DumpExpandedGrid (eosData, tableHandles[i], "EOS_EXPANDGRIDINTERPOLATE.POSTMONO.txt", errorCode);
+
     /* check if inversion at setup is required */
     optVal = _eos_getOptionEosData (eosData, EOS_INVERT_AT_SETUP);
 
@@ -1345,7 +1427,7 @@ void eos_LoadTablesEosDataMap (eos_DataMap *me, EOS_INTEGER nTables,
         combinedErr = *errorCode;
         ((eos_ErrorHandler *) eosData)->HandleError (eosData, tableHandles[i], *errorCode);
       }
-    }    
+    }
 
 #ifdef __SAVE_CONVERSION_FACTORS__
     /* restore conversion factors */
@@ -1353,15 +1435,57 @@ void eos_LoadTablesEosDataMap (eos_DataMap *me, EOS_INTEGER nTables,
 #endif
 
     /* print it if requested */
+    if (eosData->SetUseTmpGhostData) eosData->SetUseTmpGhostData(eosData, EOS_TRUE);
     eos_PrintTableEosDataMap (me, tableHandles[i], "TablesLoaded.dat",
                               errorCode);
+    if (eosData->SetUseTmpGhostData) eosData->SetUseTmpGhostData(eosData, EOS_FALSE);
     if (eos_GetStandardErrorCodeFromCustomErrorCode(*errorCode) != EOS_OK) {
       combinedErr = *errorCode;
       continue;
     }
 
   }                             /* table handle loop */
-  *errorCode = combinedErr;
+
+  /* Add ghost node data as necessary to arrays in objects */
+  for (i = 0; i < nTables; i++) {
+
+    EOS_INTEGER nGhostData = 1;
+
+    *errorCode = EOS_OK;
+    if (tableHandles[i] < 0) /* negative tableHandle will cause fatal errors if we proceed further */
+    {
+      *errorCode = EOS_INVALID_TABLE_HANDLE;
+      continue;
+    }
+
+    if (!eos_IsHandleValidEosDataMap (me, tableHandles[i])) {
+      if (!combinedErr) {
+        combinedErr = EOS_INVALID_TABLE_HANDLE;
+        eos_HandleErrorEosDataMap (me, tableHandles[i], combinedErr);
+      }
+      continue;
+    }
+
+    /* define eosData for tableHandles[i] */
+    eosData = me->dataObjects[me->tableHandlesMap[tableHandles[i]]];
+
+    /* eosData->isLoaded = -1; indicates that data can't be loaded, in preparation of
+                               possible eosData->Create() call in eos_SetDataFileName() */
+    if (!eosData->isLoaded || eosData->isLoaded < 0) continue;
+
+    if (eosData->AreGhostDataRequired && eosData->AreGhostDataRequired(eosData)) {
+      if (eosData->AddGhostData)
+        eosData->AddGhostData (eosData, nGhostData, errorCode);
+    }
+
+    /* Generate hashtables AFTER ghost data */
+    if (eosData->GenerateHashTables) {
+      eosData->GenerateHashTables(eosData);
+    }
+ 
+  }
+
+  if (combinedErr) *errorCode = combinedErr; /* conditionally-restore previous error code */
 
   /* Cleanup error code(s) that are not to be returned from this function */
   if (eos_GetStandardErrorCodeFromCustomErrorCode(*errorCode) == EOS_INTERP_EXTRAPOLATED)
@@ -1376,12 +1500,12 @@ void eos_LoadTablesEosDataMap (eos_DataMap *me, EOS_INTEGER nTables,
     if (eos_GetStandardErrorCodeFromCustomErrorCode(me->errorCodes[tableHandles[i]]) == EOS_INTERP_EXTRAPOLATED)
       me->errorCodes[tableHandles[i]] = EOS_OK;
   }
+  
 }
 
 /*************************************************************************
  * PACK and UNPACK debugging functions
  *************************************************************************/
-//#define _DEBUG_PACKING_FUNCTIONS
 #ifdef _DEBUG_PACKING_FUNCTIONS
 static EOS_INTEGER *packedByteTotals = NULL;
 static EOS_INTEGER packedByteTotalsSize = 0;
@@ -1390,6 +1514,56 @@ static EOS_INTEGER packedBytesSize = 0;
 static EOS_INTEGER eos_GetPackedTablesIndex0 = 0;
 static EOS_INTEGER eos_SetPackedTablesIndex0 = 0;
 EOS_INTEGER packedBytesResetOverride = EOS_FALSE;
+
+#ifdef __GNUC__
+#include <execinfo.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <sys/types.h>
+#include <unistd.h>
+#endif
+
+/* Obtain a backtrace and print it to stdout. */
+void
+print_trace (void)
+{
+#ifdef __GNUC__
+  void *trace[50];
+  size_t trace_size;
+  char **strings;
+  size_t i;
+  char exe[1024];
+  int ret;
+  ret = readlink("/proc/self/exe",exe,sizeof(exe)-1);
+  if(ret != -1)
+    exe[ret] = 0;
+  trace_size = backtrace (trace, 50);
+  strings = backtrace_symbols (trace, trace_size);
+
+  printf ("TRACE: %zd stack frames\n", trace_size);
+
+  for (i = 0; i < trace_size; i++) {
+    char syscom[2048];
+    FILE *fp = NULL;
+    printf ("\t%s :: ", strings[i]);
+    sprintf(syscom,"addr2line %p -e %s\n", trace[i], exe);
+    if ((fp = popen(syscom, "r")) != NULL) {
+      char line[2048];
+      while (fgets(line, sizeof(line)-1, fp) != NULL) {
+        printf("%s", line);
+      }
+      pclose (fp);
+    }
+    else {
+      /* printf ("\t+ %s\n", syscom); */
+      system(syscom);
+    }
+    /* printf ("\n"); */
+  }
+
+  free (strings);
+#endif
+}
 #endif
 
 void _EOS_CHECK_PACKEDBYTES (EOS_CHAR *errortype, EOS_INTEGER *i,
@@ -1415,12 +1589,14 @@ void _EOS_CHECK_PACKEDBYTES (EOS_CHAR *errortype, EOS_INTEGER *i,
     printf
       ("\n%s INC-ERROR for TableHandle=%i: '%s' expected %i bytes, but %i bytes were packed\n",
        errortype, th, s, packedBytes[*i], b);
+    print_trace();
     assert (packedBytes[*i] == b);
   }
   if (packedByteTotals[*i] != tot) {
     printf
       ("\n%s TOT-ERROR for TableHandle=%i: '%s' expected %i bytes, but %i bytes were packed\n",
        errortype, th, s, packedByteTotals[*i], tot);
+    print_trace();
     assert (packedByteTotals[*i] == tot);
   }
   (*i)++;
@@ -1566,7 +1742,12 @@ void eos_GetPackedTablesEosDataMap (eos_DataMap *me, EOS_INTEGER nTables,
   for (i = 0; i < nTables; i++) {
 
 #ifdef _DEBUG_PACKING_FUNCTIONS
-    printf ("\nTableHandle %3i: ", tableHandles[i]);
+    {
+      EOS_INTEGER err = EOS_OK;
+      EOS_INTEGER type = eos_GetDataTypeFromTableHandle (tableHandles[i], &err);
+      printf ("\nTableHandle %3i (DataType=%i, RecordType=%i, err=%i): ",
+              tableHandles[i], type, EOS_TYPE_TO_RECORD_TYPE(type), err);
+    }
 #endif
     /* pack tableHandles[i] */
     if (!getSizeOnly)
@@ -1921,7 +2102,7 @@ void eos_SetPackedTablesEosDataMap (eos_DataMap *me, EOS_INTEGER nTables,
     }
 
 #ifdef _DEBUG_PACKING_FUNCTIONS
-    printf ("\nTableHandle %3i: ", tableHandles[i]);
+      printf ("\nTableHandle %3i: ", tableHandles[i]);
 #endif
     /* unpack tableHandles[i] */
     memcpy (&oldHandle, packedTables + sizeUnpacked, sizeof (oldHandle));
@@ -2093,7 +2274,6 @@ void eos_SetPackedTablesEosDataMap (eos_DataMap *me, EOS_INTEGER nTables,
     if (eos_GetStandardErrorCodeFromCustomErrorCode(c) != EOS_OK)
       *errorCode = c;
     _EOS_CHECK_PACKEDBYTES ("UNPACK", &index, size, sizeUnpacked, "data", tableHandles[i], EOS_FALSE);
-
   }
 
   /* unpack extrapolationBounds[] */
@@ -2373,7 +2553,7 @@ void eos_CreateTablesEosDataMap (eos_DataMap *me, EOS_INTEGER nTables,
                                  EOS_INTEGER updateOnly, EOS_INTEGER userDefinedDataFileIndex,
                                  EOS_INTEGER *errorCode)
 {
-  EOS_INTEGER oldAlloc, i, c, newIndex, j;
+  EOS_INTEGER oldAlloc, i, c, newIndex;
   EOS_INTEGER makeMonotonicX1, makeMonotonicY1, makeMonotonicX2,
     makeMonotonicY2, dataType1, dataType2;
 
@@ -2398,9 +2578,14 @@ void eos_CreateTablesEosDataMap (eos_DataMap *me, EOS_INTEGER nTables,
 #endif
 
     if (! updateOnly) {
+#ifndef __ONE_OBJECT_PER_TABLEHANDLE__
+      EOS_INTEGER j;
+#endif
       me->tableHandlesMap[newIndex] = tableHandles[i] = newIndex;
       me->isHandlePublic[newIndex] = isPublic;
 
+/* #ifndef __ONE_OBJECT_PER_TABLEHANDLE__ */
+#ifndef __DISABLE_OBJECT_CONSOLIDATION__
       /*
        * Now figure out if we need to create new dataObject or can re-use an
        * existing one.
@@ -2419,8 +2604,8 @@ void eos_CreateTablesEosDataMap (eos_DataMap *me, EOS_INTEGER nTables,
           continue;
 
         if (_eos_find_matid_in_gMatidMap(matID[i]) >= 0 ||
-            (me->dataObjects[i] &&
-             _eos_find_userdefined_fileindex_in_gEosDataMapDataObjects(me->dataObjects[i]->dataFileIndex)))
+            (me->dataObjects[tableHandles[i]] &&
+             _eos_find_userdefined_fileindex_in_gEosDataMapDataObjects(me->dataObjects[tableHandles[i]]->dataFileIndex)))
           continue;
         /* is tableNumber and material id the same and options haven't been changed, then reuse existing table */
 #ifdef MY_DEBUG
@@ -2457,6 +2642,7 @@ void eos_CreateTablesEosDataMap (eos_DataMap *me, EOS_INTEGER nTables,
         }
         continue;
       }
+#endif
     }
 
     /* create new dataObject, assign tableHandle to be an index */
@@ -3419,3 +3605,104 @@ EOS_REAL** _eos_AllocateColdCurveEosDataMap (void *ptr, EOS_INTEGER NR, EOS_INTE
   return(rptr);
 }
 
+#ifdef DO_OFFLOAD
+
+/***********************************************************************/
+/*! 
+ * \brief This function allocates memory on a GPU device, copies the
+ * required data from the CPU data structures to the corresponding device
+ * memory, and sets the gEosDataMap.useGpuData=EOS_TRUE to prevent future
+ * usage of EOSPAC setup functions prior to calling eos_DestroyAll.
+ * 
+ * \param[in,out] *me           - eos_DataMap : singleton instance of eos_DataMap object
+ * \param[out]    *errorCode    - EOS_INTEGER : error code
+ * 
+ * \return none
+ *
+ ***********************************************************************/
+void eos_GpuOffloadDataEosDataMap (eos_DataMap * me, EOS_INTEGER * errorCode)
+{
+  int th;
+  int h_ = omp_get_initial_device();
+  int t_ = omp_get_default_device();
+  EOS_INTEGER err = EOS_OK, nHandles = me->nHandles;
+
+  EOS_INTEGER nxtot=0, nytot=0,nxarrtot=0;
+  me->xinds = (EOS_INTEGER *) malloc ((1+nHandles) * sizeof (EOS_INTEGER));
+  me->yinds = (EOS_INTEGER *) malloc ((1+nHandles) * sizeof (EOS_INTEGER));
+  me->xarrinds = (EOS_INTEGER *) malloc ((1+nHandles) * sizeof (EOS_INTEGER));
+  me->xinds[0] = nxtot; 
+  me->yinds[0] = nytot;
+  me->xarrinds[0] = nxarrtot;
+
+  for (th=0; th<me->nHandles; th++) {
+    if (me->tableHandlesMap[th] < 0) continue; /* skip invalid handles */
+
+    eos_Data *eosData = me->dataObjects[me->tableHandlesMap[th]];
+
+    eos_ExtrapolationBoundsEosDataMap *extrapolationBounds = eos_GetExtrapolationBoundsEosDataMap(&gEosDataMap, th);
+    if (eosData && extrapolationBounds->stored) { /* process data for non-NULL object pointer */
+      nxtot = nxtot+extrapolationBounds->nx;
+      nytot = nytot+extrapolationBounds->ny;
+      EOS_INTEGER dataType = me->tableTypes[th];
+      EOS_INTEGER cat = EOS_CATEGORY (dataType);
+      if      (cat==EOS_CATEGORY1 || cat==EOS_CATEGORY3) nxarrtot=nxarrtot+extrapolationBounds->nx;
+      else if (cat==EOS_CATEGORY2 || cat==EOS_CATEGORY4) nxarrtot=nxarrtot+extrapolationBounds->ny;
+    } 
+    me->xinds[th+1] = nxtot; 
+    me->yinds[th+1] = nytot;
+    me->xarrinds[th+1] = nxarrtot; 
+  }
+
+  me->eb_xLo = (EOS_REAL*) omp_target_alloc(sizeof(EOS_REAL*)*2*nxtot, t_);
+  me->eb_yLo = (EOS_REAL*) omp_target_alloc(sizeof(EOS_REAL*)*2*nytot, t_);
+  me->eb_xHi = (EOS_REAL*) omp_target_alloc(sizeof(EOS_REAL*)*2*nxtot, t_);
+  me->eb_yHi = (EOS_REAL*) omp_target_alloc(sizeof(EOS_REAL*)*2*nytot, t_);
+  me->eb_x   = (EOS_REAL*) omp_target_alloc(sizeof(EOS_REAL*)*2*nxarrtot, t_);
+  EOS_REAL *xLod, *yLod, *xHid, *yHid, *xd;
+  xLod = me->eb_xLo;
+  xHid = me->eb_xHi;
+  yLod = me->eb_yLo;
+  yHid = me->eb_yHi;
+  xd   = me->eb_x;
+  for (th=0; th<me->nHandles; th++) {
+    if (me->tableHandlesMap[th] < 0) continue; /* skip invalid handles */
+
+    eos_Data *eosData = me->dataObjects[me->tableHandlesMap[th]];
+    eos_ExtrapolationBoundsEosDataMap *extrapolationBounds = eos_GetExtrapolationBoundsEosDataMap(&gEosDataMap, th);
+
+    if (eosData && extrapolationBounds->stored) { /* process data for non-NULL object pointer */
+      EOS_INTEGER nx, ny;
+      EOS_REAL *xLo, *yLo, *xHi, *yHi, *x;
+
+      nx  = extrapolationBounds->nx;
+      ny  = extrapolationBounds->ny;
+      xLo = extrapolationBounds->xLo;
+      yLo = extrapolationBounds->yLo;
+      xHi = extrapolationBounds->xHi;
+      yHi = extrapolationBounds->yHi;
+      x   = extrapolationBounds->x;
+
+      EOS_INTEGER dataType = me->tableTypes[th];
+      EOS_INTEGER cat = EOS_CATEGORY (dataType);
+      int xind = me->xinds[th];
+      int yind = me->yinds[th];
+      int xarrind = me->xarrinds[th]; 
+      /* copy data to device */
+      omp_target_memcpy(xLod, xLo, sizeof(EOS_REAL)*nx, sizeof(EOS_REAL)*xind, 0, t_, h_);
+      omp_target_memcpy(yLod, yLo, sizeof(EOS_REAL)*ny, sizeof(EOS_REAL)*yind, 0, t_, h_);
+      omp_target_memcpy(xHid, xHi, sizeof(EOS_REAL)*nx, sizeof(EOS_REAL)*xind, 0, t_, h_);
+      omp_target_memcpy(yHid, yHi, sizeof(EOS_REAL)*ny, sizeof(EOS_REAL)*yind, 0, t_, h_);
+      int nxarr = me->xarrinds[th+1]-me->xarrinds[th];
+      if (x!=NULL) omp_target_memcpy(xd, x, sizeof(EOS_REAL)*nxarr, sizeof(EOS_REAL)*xarrind, 0, t_, h_);
+    }
+    /* offload tables for the specified th */
+    if (eosData) err = eosData->GpuOffloadData((void*)eosData, th);
+    *errorCode = (err != EOS_OK) ? eos_SetCustomErrorCode (th, err) : *errorCode;
+  }
+
+  /* set flag to prevent future usage of EOSPAC setup functions */
+  _EOS_SET_USEGPUDATA_EOSDATAMAP(EOS_TRUE);
+}
+
+#endif /* DO_OFFLOAD */

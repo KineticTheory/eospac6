@@ -14,6 +14,7 @@
 #define my_destruct_ses_data HEADER(my_destruct_ses_data)
 #define x HEADER(x)
 
+#undef DEBUG_PRINT
 
 struct _ses_data_record*  _construct_ses_data_record(long maddress, long nr, long nt, long ntab, ses_material_id the_mid, ses_table_id the_tid, long date1, long date2, long vers) {
 
@@ -31,9 +32,13 @@ struct _ses_data_record*  _construct_ses_data_record(long maddress, long nr, lon
 
   /*  construct the current data record */
 
+#ifdef DEBUG_PRINT
+  printf ("\n_construct_ses_data_record: nr: %ld, nt: %ld, ntab: %ld, mid: %ld, tid: %d\n", nr, nt, ntab, the_mid, the_tid);
+  printf ("_construct_ses_data_record: date1: %ld, date2: %ld, vers: %ld\n", date1, date2, vers);
+#endif
 
-  struct _ses_data_record* return_value = 
-       malloc(sizeof(struct _ses_data_record)*1);
+
+  struct _ses_data_record* return_value =  malloc(sizeof(struct _ses_data_record)*1);
   if (return_value == (struct _ses_data_record*)NULL) {
 #ifdef DEBUG_PRINT
     printf("_construct_ses_data_record: malloc error in _construct_ses_data_record\n");

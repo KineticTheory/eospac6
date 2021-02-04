@@ -15,6 +15,7 @@
 const int PARSE_SUCCESS = 0;
 const int PARSE_FAILURE = 1;
 
+//#define DEBUG_PARSE_JSON
 
 //  user interface -- defined in json_interface.h //
 
@@ -555,6 +556,8 @@ char* parse_json(char* the_string, char* prefix, enum node_type object_type, str
 
 	char* sub1 = (char*)NULL;
 	char* sub2 = (char*)NULL;
+  char* without_quotes = (char*)NULL;
+  
 	enum node_type the_node_type = STRING;
 
 	switch (object_type) {
@@ -717,12 +720,12 @@ char* parse_json(char* the_string, char* prefix, enum node_type object_type, str
 
 			sub1 = get_substring_for_object_type(the_string, STRING);
 #ifdef DEBUG_PARSE_JSON
-                        printf("STRING sub1 is %s\n", sub1); 
+      printf("STRING sub1 is %s\n", sub1);
 #endif
-			char* without_quotes = strtrim(remove_quotes(sub1));
+			without_quotes = strtrim(remove_quotes(sub1));
 			
 #ifdef DEBUG_PARSE_JSON
-                        printf("STRING without_quotes is %s\n", without_quotes); 
+      printf("STRING without_quotes is %s\n", without_quotes);
 #endif
 			strcpy(the_node->the_value, without_quotes);
 
@@ -743,7 +746,7 @@ char* parse_json(char* the_string, char* prefix, enum node_type object_type, str
 			sub1 = get_substring_for_object_type(the_string, NUMBER);
 
 #ifdef DEBUG_PARSE_JSON
-                        printf("NUMBER the_string is |%s| sub1 is |%s|\n", the_string, sub1); 
+      printf("NUMBER the_string is |%s| sub1 is |%s|\n", the_string, sub1);
 #endif
 			if (sub1 != (char*)NULL) {
 				free(sub1);
@@ -755,7 +758,7 @@ char* parse_json(char* the_string, char* prefix, enum node_type object_type, str
 
 			sub1 = get_substring_for_object_type(the_string, ARRAY);
 #ifdef DEBUG_PARSE_JSON
-                         printf("ARRAY sub1 is %s\n", sub1); 
+      printf("ARRAY sub1 is %s\n", sub1);
 #endif
 			the_node->the_node1= malloc(sizeof(struct json_node)*1);
 			return_value = parse_json(sub1, prefix, ELEMENT, the_node->the_node1);
@@ -775,7 +778,7 @@ char* parse_json(char* the_string, char* prefix, enum node_type object_type, str
 			if (sub1 != (char*)NULL) {
 			
 #ifdef DEBUG_PARSE_JSON
-	                        printf("ELEMENT sub1 is %s\n", sub1); 
+        printf("ELEMENT sub1 is %s\n", sub1);
 #endif
 				
 				the_node->the_node1= malloc(sizeof(struct json_node)*1);
@@ -797,7 +800,7 @@ char* parse_json(char* the_string, char* prefix, enum node_type object_type, str
 			if (sub2 != (char*)NULL) {
 				the_node->the_node2 = malloc(sizeof(struct json_node)*1);
 #ifdef DEBUG_PARSE_JSON
-                                printf("ELEMENT sub2 is %s\n", sub2); 
+        printf("ELEMENT sub2 is %s\n", sub2);
 #endif
 				return_value = parse_json(sub2, prefix, ELEMENT, the_node->the_node2);
 				free(sub2);
@@ -809,7 +812,7 @@ char* parse_json(char* the_string, char* prefix, enum node_type object_type, str
 
 			sub1 = the_string;
 #ifdef DEBUG_PARSE_JSON
-                        printf("BOOLEAN sub1 is %s\n", sub1); 
+      printf("BOOLEAN sub1 is %s\n", sub1);
 #endif
 
 
@@ -818,7 +821,7 @@ char* parse_json(char* the_string, char* prefix, enum node_type object_type, str
 
 			sub1 = the_string;
 #ifdef DEBUG_PARSE_JSON
-                        printf("MYNULL sub1 is %s\n", sub1); 
+      printf("MYNULL sub1 is %s\n", sub1);
 #endif
 
 			break;
@@ -835,8 +838,8 @@ char* parse_json(char* the_string, char* prefix, enum node_type object_type, str
 
 			the_node->the_expression = create_expression_node(sub1);
 #ifdef DEBUG_PARSE_JSON
-                        printf("the_node->the_expression is %s\n", the_node->the_expression->the_value);
-                        printf("the_node->the_expression->the_operator is %c\n", the_node->the_expression->the_operator);
+      printf("the_node->the_expression is %s\n", the_node->the_expression->the_value);
+      printf("the_node->the_expression->the_operator is %c\n", the_node->the_expression->the_operator);
 #endif
 
 
@@ -845,7 +848,7 @@ char* parse_json(char* the_string, char* prefix, enum node_type object_type, str
 
 			sub1 = the_string;
 #ifdef DEBUG_PARSE_JSON
-                        printf("NOT_VALID sub1 is %s\n", sub1); 
+      printf("NOT_VALID sub1 is %s\n", sub1);
 #endif
 
 
@@ -856,7 +859,7 @@ char* parse_json(char* the_string, char* prefix, enum node_type object_type, str
 	//////////////////////////////////////////////////////////
 
 #ifdef DEBUG_PARSE_JSON
-        printf("return_value is %s\n", return_value);
+  printf("return_value is %s\n", return_value);
 #endif
 	return return_value;
 }

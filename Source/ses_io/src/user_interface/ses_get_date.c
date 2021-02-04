@@ -8,7 +8,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#undef DEBUG_SES_GET_DATE
+//#define DEBUG_SES_GET_DATE
 
 long  ses_get_date(ses_file_handle the_handle) {
 

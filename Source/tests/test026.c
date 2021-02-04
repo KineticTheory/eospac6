@@ -8,7 +8,7 @@
  ********************************************************************/
 
 /*! \file
- *  \ingroup tests
+ *  \ingroup C tests
  *  \brief Ensure the bilinear interpolator works.
  *
  * \note

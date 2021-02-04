@@ -23,7 +23,7 @@ FCMP_OPT = ./fcmp.opt
 
 ##################################################################
 
-NORUN     = FALSE
+NORUN     =
 NODISPLAY = TRUE
 EXEDIR    = $(TESTEXEDIR)
 OBJDIR    = $(EXEDIR)/_OBJ
@@ -33,7 +33,7 @@ ifdef norun
   NORUN     = TRUE
 endif
 ifdef nodisplay
-  NODISPLAY = FALSE
+  NODISPLAY =
 endif
 
 ##################################################################
@@ -58,44 +58,48 @@ endif
 
 $(OBJDIR)/%.o : %.c
 	$(MAKEDEPEND)
-	${CC} $(C_ADDRESS_FLAG) ${CPPFLAGS} ${CFLAGS} $(MORE_COMPILE_OPTS) -I$(SRCDIR) -c $< -o $@
-	$(PURIFY) $(CC) $(C_ADDRESS_FLAG) $(LDFLAGS) $(MORE_LD_OPTS) -o $(EXEDIR)/$* $@ $(LIBS) $(MORELIBS)
+	mkdir -p $(OBJDIR)/tests/$<.tmpdir
+	cd $(OBJDIR)/tests/$<.tmpdir; ${CC} $(C_ADDRESS_FLAG) ${CPPFLAGS} ${CFLAGS} $(MORE_COMPILE_OPTS) -I$(SRCDIR) -c $(BASEDIR)/tests/$< -o $@
+	cd $(OBJDIR)/tests/$<.tmpdir; $(PURIFY) $(CC) $(C_ADDRESS_FLAG) $(LDFLAGS) $(MORE_LD_OPTS) -o $(EXEDIR)/$* $@ $(LIBS) $(MORELIBS)
 	@(if [ ! -d "$(EXEDIR)/$*.workdir" ]; then mkdir -p "$(EXEDIR)/$*.workdir"; fi; \
-          d=`echo $(EXEDIR)/$*.workdir | sed -e 's:$(BASEDIR)/*::' | sed -e 's:[^/]:\.\.:g;s:\.\.*:..:g'`; \
+          d=`echo $(EXEDIR)/$*.workdir | sed -e 's:$(BASEDIR)/*::' | sed -e 's:/\./:/:g;s:[^/]:\.\.:g;s:\.\.*:..:g'`; \
           sed -e "/^[[:space:]]*#/!s:<BASEDIR_PATTERN>:$$d:" sesameFilesDir.txt.template > "$(EXEDIR)/$*.workdir/sesameFilesDir.txt" ; \
           if [ -f $*.inp ]; then cp $*.inp "$(EXEDIR)/$*.workdir/." ; fi; \
          )
 
 $(OBJDIR)/%.o : %.cpp
 	$(MAKEDEPEND)
-	${CXX} $(C_ADDRESS_FLAG) ${CPPFLAGS} ${CXXFLAGS} $(CPUFLAGS)  $(MORE_COMPILE_OPTS) -I$(SRCDIR) -c $< -o $@
-	$(PURIFY) $(CXX) $(C_ADDRESS_FLAG) $(LDFLAGS) $(CPUFLAGS) $(MORE_LD_OPTS) -o $(EXEDIR)/$* $@ $(LIBS) $(MORELIBS)
+	mkdir -p $(OBJDIR)/tests/$<.tmpdir
+	cd $(OBJDIR)/tests/$<.tmpdir; ${CXX} $(C_ADDRESS_FLAG) ${CPPFLAGS} ${CXXFLAGS} $(CPUFLAGS) $(MORE_COMPILE_OPTS) -I$(SRCDIR) -c $(BASEDIR)/tests/$< -o $@
+	cd $(OBJDIR)/tests/$<.tmpdir; $(PURIFY) $(CXX) $(C_ADDRESS_FLAG) $(LDFLAGS) $(CPUFLAGS) $(MORE_LD_OPTS) -o $(EXEDIR)/$* $@ $(LIBS) $(MORELIBS)
 	@(if [ ! -d "$(EXEDIR)/$*.workdir" ]; then mkdir -p "$(EXEDIR)/$*.workdir"; fi; \
-          d=`echo $(EXEDIR)/$*.workdir | sed -e 's:$(BASEDIR)/*::' | sed -e 's:[^/]:\.\.:g;s:\.\.*:..:g'`; \
+          d=`echo $(EXEDIR)/$*.workdir | sed -e 's:$(BASEDIR)/*::' | sed -e 's:/\./:/:g;s:[^/]:\.\.:g;s:\.\.*:..:g'`; \
           sed -e "/^[[:space:]]*#/!s:<BASEDIR_PATTERN>:$$d:" sesameFilesDir.txt.template > "$(EXEDIR)/$*.workdir/sesameFilesDir.txt" ; \
           if [ -f $*.inp ]; then cp $*.inp "$(EXEDIR)/$*.workdir/." ; fi; \
          )
 
 $(OBJDIR)/%.o : %.f
 	$(MAKEDEPEND)
-	${F77} $(F_ADDRESS_FLAG) ${FFLAGS} $(MORE_COMPILE_OPTS) -I$(SRCDIR) -c $< -o $@
-	$(PURIFY) $(F77) $(F_ADDRESS_FLAG) $(LDFLAGS) $(MORE_LD_OPTS) -o $(EXEDIR)/$* $@ $(LIBS) $(F77_LIBS) $(MORELIBS)
+	mkdir -p $(OBJDIR)/tests/$<.tmpdir
+	cd $(OBJDIR)/tests/$<.tmpdir; ${F77} $(F_ADDRESS_FLAG) ${FFLAGS} $(MORE_COMPILE_OPTS) -I$(SRCDIR) -c $(BASEDIR)/tests/$< -o $@
+	cd $(OBJDIR)/tests/$<.tmpdir; $(PURIFY) $(F77) $(F_ADDRESS_FLAG) $(LDFLAGS) $(MORE_LD_OPTS) -o $(EXEDIR)/$* $@ $(LIBS) $(F77_LIBS) $(MORELIBS)
 	@(if [ ! -d "$(EXEDIR)/$*.workdir" ]; then mkdir -p "$(EXEDIR)/$*.workdir"; fi; \
-          d=`echo $(EXEDIR)/$*.workdir | sed -e 's:$(BASEDIR)/*::' | sed -e 's:[^/]:\.\.:g;s:\.\.*:..:g'`; \
+          d=`echo $(EXEDIR)/$*.workdir | sed -e 's:$(BASEDIR)/*::' | sed -e 's:/\./:/:g;s:[^/]:\.\.:g;s:\.\.*:..:g'`; \
           sed -e "/^[[:space:]]*#/!s:<BASEDIR_PATTERN>:$$d:" sesameFilesDir.txt.template > "$(EXEDIR)/$*.workdir/sesameFilesDir.txt" ; \
           if [ -f $*.inp ]; then cp $*.inp "$(EXEDIR)/$*.workdir/." ; fi; \
          )
 
 $(OBJDIR)/%.o : %.f90
 	$(MAKEDEPEND)
+	mkdir -p $(OBJDIR)/tests/$<.tmpdir
 	@(d=`pwd`; \
          cd $(OBJDIR); \
          set -x; \
          $(F90) $(F_ADDRESS_FLAG) ${F90FLAGS} $(MORE_COMPILE_OPTS) -I$(SRCDIR) -c $$d/$< -o $@; \
         )
-	$(PURIFY) $(F90) $(F_ADDRESS_FLAG) $(LDFLAGS) $(MORE_LD_OPTS) -o $(EXEDIR)/$* $@ $(PROFILE) $(LIBS) $(F90_LIBS) $(MORELIBS)
+	cd $(OBJDIR)/tests/$<.tmpdir; $(PURIFY) $(F90) $(F_ADDRESS_FLAG) $(LDFLAGS) $(MORE_LD_OPTS) -o $(EXEDIR)/$* $@ $(PROFILE) $(LIBS) $(F90_LIBS) $(MORELIBS)
 	@(if [ ! -d "$(EXEDIR)/$*.workdir" ]; then mkdir -p "$(EXEDIR)/$*.workdir"; fi; \
-          d=`echo $(EXEDIR)/$*.workdir | sed -e 's:$(BASEDIR)/*::' | sed -e 's:[^/]:\.\.:g;s:\.\.*:..:g'`; \
+          d=`echo $(EXEDIR)/$*.workdir | sed -e 's:$(BASEDIR)/*::' | sed -e 's:/\./:/:g;s:[^/]:\.\.:g;s:\.\.*:..:g'`; \
           sed -e "/^[[:space:]]*#/!s:<BASEDIR_PATTERN>:$$d:" sesameFilesDir.txt.template > "$(EXEDIR)/$*.workdir/sesameFilesDir.txt" ; \
           if [ -f $*.inp ]; then cp $*.inp "$(EXEDIR)/$*.workdir/." ; fi; \
          )
@@ -116,7 +120,8 @@ GET_SESAME_DATA = $(firstword $(wildcard $(BASEDIR)/bin/$(ARCH)/get_sesame_data 
 #$(warning XCOMPILE = $(XCOMPILE))
 ifeq ($(XCOMPILE),$(false))
   _EXCLUDED_EXE  := $(sort $(basename $(notdir $(shell $(BASEDIR)/scripts/excluded_codes $(GET_SESAME_DATA) $(if $(_NODEFAULTDATA),--noDefaultData,) 2>/dev/null))))
-  #$(warning "***" $(BASEDIR)/scripts/excluded_codes $(GET_SESAME_DATA) --included $(if $(_NODEFAULTDATA),--noDefaultData,))
+  #$(warning "***"   $(BASEDIR)/scripts/excluded_codes $(GET_SESAME_DATA) --included $(if $(_NODEFAULTDATA),--noDefaultData,))
+  #$(warning $(shell $(BASEDIR)/scripts/excluded_codes $(GET_SESAME_DATA) --included $(if $(_NODEFAULTDATA),--noDefaultData,)))
   _INCLUDED_EXE  = $(sort $(basename $(notdir $(shell $(BASEDIR)/scripts/excluded_codes $(GET_SESAME_DATA) --included $(if $(_NODEFAULTDATA),--noDefaultData,) 2>/dev/null))))
 else
   # force all tests to be included for cross-compilation and backend execution
@@ -124,13 +129,26 @@ else
   _EXCLUDED_EXE  :=
   _INCLUDED_EXE  := $(sort $(basename $(notdir $(wildcard $(BASEDIR)/tests/test*.[fc]*))))
 endif
+
+ifeq ($(strip $(DO_OFFLOAD)),)
+  # remove all tests that require OpenMP offload
+  TESTFILES = $(foreach ext,c f cpp f90, $(wildcard *.$(ext)))
+  _OFFLOAD_TEST_LIST = $(shell grep -l DO_OFFLOAD $(TESTFILES))
+  #$(warning "***" _OFFLOAD_TEST_LIST = $(_OFFLOAD_TEST_LIST))
+  OFFLOAD_TEST_LIST = $(basename $(notdir $(_OFFLOAD_TEST_LIST)))
+  #$(warning "***" OFFLOAD_TEST_LIST = $(OFFLOAD_TEST_LIST))
+  _TMP_INCLUDED_EXE := $(_INCLUDED_EXE)
+  _INCLUDED_EXE = $(filter-out $(OFFLOAD_TEST_LIST),$(_TMP_INCLUDED_EXE))
+  MORE_COMPILE_OPTS += -DDISABLE_OFFLOAD
+endif
+
 #$(warning "***" _EXCLUDED_EXE = $(_EXCLUDED_EXE))
 #$(warning "***" _INCLUDED_EXE = $(_INCLUDED_EXE))
 EXCLUDED_EXE ?=$(sort $(if $(wildcard $(INCDIR)/*2003.[Mm][Oo][Dd]),,$(basename $(SRCS_F03))) $(_EXCLUDED_EXE))
 INCLUDED_EXE ?= $(filter $(EXE),$(sort $(_INCLUDED_EXE)))
 #$(warning "***" $(BASEDIR)/scripts/excluded_codes $(GET_SESAME_DATA) $(if $(_NODEFAULTDATA),--noDefaultData,))
 #$(warning "***" EXCLUDED_EXE = $(EXCLUDED_EXE))
-#$(warning "***" $(BASEDIR)/scripts/excluded_codes $(GET_SESAME_DATA) --included $(if $(_NODEFAULTDATA),--noDefaultData,))
+$(warning "***" $(BASEDIR)/scripts/excluded_codes $(GET_SESAME_DATA) --included $(if $(_NODEFAULTDATA),--noDefaultData,))
 #$(warning "***" INCLUDED_EXE = $(INCLUDED_EXE))
 
 EXCLUDED_OBJS            ?= $(sort $(addprefix $(OBJDIR)/,$(addsuffix .o,$(EXCLUDED_EXE))))
@@ -186,12 +204,14 @@ endif
 	@echo '*** Creating ' $(OBJDIR)/$@.o
 	@echo '**************************************************************'
 	@($(MAKE) $(OBJDIR)/$@.o; \
-          if [ "$(NORUN)" = "FALSE" ]; then \
+          if [ -z $(NORUN) ]; then \
              $(MAKE) EXECUTE_MESSAGE $(addprefix $(EXEDIR)/,$@); \
              $(MAKE) $(addsuffix compare,$(addprefix $(EXEDIR)/,$@)); \
              $(MAKE) EXE=$@; \
              $(MAKE) GATHER_COMPARE_DATA; \
              $(MAKE) -j1 EXE=$@ MAKE_HTML_OPT=--totaltests=$(words $(@) $(@)) make_html make_xml; \
+          else \
+             echo "*** Execution is disabled"; \
           fi; \
          )
 
@@ -204,11 +224,17 @@ $(addprefix $(EXEDIR)/,$(EXE)):
               printf "*** Execute %s\n" $$exe; \
               rm -f $(DATADUMPFILE) $$exe.$(DATADUMPFILE) $$exe.status_error > $(JUNKFILE) 2>&1; \
               if [ -n "$(VALGRIND)" ]; then \
+                if [ -f $(BASEDIR)/tests/$$exe.valgrind.error.suppression.rules ]; then SUPPRESSION_RULES="--suppressions=$(BASEDIR)/tests/$$exe.valgrind.error.suppression.rules"; fi; \
                 valgrind_opt="--tool=memcheck --leak-check=full --show-reachable=yes --log-file=$$exe.valgrind --freelist-vol=10000000000 --track-origins=yes"; \
-                valgrind_opt="--leak-check=full --show-reachable=yes --log-file=$$exe.valgrind"; \
-                printf "\t($(VALGRIND) $$valgrind_opt ./$$exe)\n"; \
+                valgrind_opt="--tool=memcheck --leak-check=full --show-reachable=yes --gen-suppressions=all --log-file=$$exe.valgrind"; \
+                valgrind_opt="--tool=memcheck --leak-check=full --show-reachable=yes $(MORE_VALGRIND_OPTIONS) $${SUPPRESSION_RULES} --log-file=$$exe.valgrind --freelist-vol=10000000000 --track-origins=yes"; \
+                printf "\t($(VALGRIND) $$valgrind_opt ../$$exe)\n"; \
               else \
                 valgrind_opt=""; \
+              fi; \
+              LRUN=`which lrun 2>/dev/null`; \
+              if [ -n "$${LRUN}" ]; then \
+                LRUN="$${LRUN} -n 1 --pack --threads=1 -v"; \
               fi; \
               if [ -n "$(DEBUGGER)" ]; then \
                 $(DEBUGGER) ../$$exe ../$$exe > ../$$exe.stdout 2>&1; \
@@ -227,9 +253,9 @@ $(addprefix $(EXEDIR)/,$(EXE)):
                 fi;\
                 echo name: $$exe > $$exe.$(TIMINGFILE_P); \
                 if [ -n "$(VALGRIND)" ]; then \
-                  $$timer $(VALGRIND) $$valgrind_opt ../$$exe > ../$$exe.stdout 2>> $$exe.$(TIMINGFILE_P); \
+                  $$LRUN $$timer $(VALGRIND) $$valgrind_opt ../$$exe > ../$$exe.stdout 2>> $$exe.$(TIMINGFILE_P); \
                 else \
-                  $$timer ../$$exe > ../$$exe.stdout 2>> $$exe.$(TIMINGFILE_P); \
+                  $$LRUN $$timer ../$$exe > ../$$exe.stdout 2>> $$exe.$(TIMINGFILE_P); \
                 fi;\
               fi; \
               exe_status=$$?; \
@@ -253,13 +279,19 @@ $(addprefix $(EXEDIR)/,$(EXE)):
                   sed -i -e 's/^ *== *[0-9][0-9]* *== *$$//;' $(EXEDIR)/$$exe.valgrind; \
                   grep '=  *[^ ][^ ]* *lost:  *[^0]' $(EXEDIR)/$$exe.valgrind | sed 's/^.*= / /' > $(EXEDIR)/$$exe.leak.summary 2>&1; \
                   grep '=  *[^ ][^ ]* *reachable:  *[^0]' $(EXEDIR)/$$exe.valgrind | sed 's/^.*= / /' >> $(EXEDIR)/$$exe.leak.summary 2>&1; \
-                  grep '=  *[^ ][^ ]* *suppressed:  *[^0]' $(EXEDIR)/$$exe.valgrind | sed 's/^.*= / /' >> $(EXEDIR)/$$exe.leak.summary 2>&1; \
+                  if [ -n "$(SHOW_SUPPRESSED)" ]; then \
+                    grep '= *suppressed: *[^0]' $(EXEDIR)/$$exe.valgrind | sed 's/^.*= / /' >> $(EXEDIR)/$$exe.leak.summary 2>&1; \
+                  fi; \
                   grep 'Process terminating' $(EXEDIR)/$$exe.valgrind | sed 's/^.*= / /' >> $(EXEDIR)/$$exe.leak.summary 2>&1; \
                   egrep -C 1 '=  *[^ ][^ ]* *\(at|by\)' $(EXEDIR)/$$exe.valgrind | sed 's/^.*= / /' >> $(EXEDIR)/$$exe.leak.summary 2>&1; \
                 fi; \
-                if [ ! -s "$(EXEDIR)/$$exe.leak.summary" ]; then \
+                leak_summary=`grep -v 'suppressed:' "$(EXEDIR)/$$exe.leak.summary"`; \
+                if [ -z "$${leak_summary}" ]; then \
                   echo $@ ":: No memory leaks found"; \
-                  rm -f $(EXEDIR)/$$exe.leak.summary $(EXEDIR)/$$exe.valgrind; \
+                  rm -f $(EXEDIR)/$$exe.valgrind; \
+                fi; \
+                if [ ! -s "$(EXEDIR)/$$exe.leak.summary" ]; then \
+                  rm -f $(EXEDIR)/$$exe.leak.summary; \
                 fi; \
               fi; \
            else \
@@ -274,22 +306,26 @@ TIMINGXML    = test_times.xml
 
 .PHONY: check test
 check test: all
+ifeq ($(NORUN),)
   ifeq ($(XCOMPILE)$(USE_SLURM),$(false))
-	@$(MAKE) execute_only
+	$(MAKE) execute_only
   else
     ifeq ($(USE_SLURM),$(false))
-	@$(MAKE) EXECUTE_MESSAGE check_on_compute_node
+	$(MAKE) EXECUTE_MESSAGE check_on_compute_node
     else
-	@$(MAKE) XCOMPILE=$(USE_SLURM) EXECUTE_MESSAGE check_on_compute_node
+	$(MAKE) XCOMPILE=$(USE_SLURM) EXECUTE_MESSAGE check_on_compute_node
     endif
+  endif
+else
+	@echo "*** Execution is disabled"
   endif
 
 .PHONY: execute_only
 execute_only: CLEAN_WORK_DIRS
     ifeq ($(wildcard $(INCDIR)/*2003.[Mm][Oo][Dd]),)
-	@$(MAKE) EXECUTE_MESSAGE $(filter-out %Fortran2003_APItest,$(FILTERED_EXE))
+	@$(MAKE) NORUN=$(NORUN) EXECUTE_MESSAGE $(filter-out %Fortran2003_APItest,$(FILTERED_EXE))
     else
-	@$(MAKE) EXECUTE_MESSAGE $(FILTERED_EXE)
+	@$(MAKE) NORUN=$(NORUN) EXECUTE_MESSAGE $(FILTERED_EXE)
     endif
     ifeq ($(wildcard $(INCDIR)/*2003.[Mm][Oo][Dd]),)
 	@$(MAKE) EXCEPTION_MESSAGE $(filter-out %Fortran2003_APItest%,$(EXCEPTION_TARGETS)) EXCEPTION_COUNT_MESSAGE
@@ -307,16 +343,30 @@ execute_only: CLEAN_WORK_DIRS
 	@(if [ -n "$(VALGRIND)" ]; then \
             $(MAKE) GATHER_VALGRIND_DATA; \
           fi;)
+	$(MAKE) coverage
+
+.PHONY: coverage
+coverage:
+ifeq ($(strip $(notdir $(RUN_COVERAGE_TOOL))),gcov)
+	-(cd $(SRCDIR); \
+      gcov -o $(BASEDIR)/_OBJ/$(ARCH) eos_*.c | tr "'" " " | awk 'BEGIN{t=0;s=0}/File/{f=$$2;next}/Lines/{if(f){gsub(":",": ");t=t+$$NF;s=s+$$3/100*$$NF;print f,$$0;f=""}}END{print "TOTAL Lines executed:",s/t*100 "% of",t}' | column -t; \
+     )
+endif
 #	@(echo '--- BEGIN XML ($(MAKEFILE_LIST)) ---'; cat $(PASSFAILOUTPUTXML); echo '---- END XML ($(MAKEFILE_LIST)) ----';)
 
 .PHONY: check_on_compute_node
 check_on_compute_node: create_parallel_job_list
 	@-rm -f $(EXEDIR)/run_tests_on_compute_node.msub.out $(EXEDIR)/run_tests_on_compute_node.slurm.out
 	@echo 'START:' `date`
-	@(STARTDIR=$(EXEDIR);export STARTDIR;pwd;set -x; \
+	@(SBATCH_RESERVATION=`scontrol show res PreventMaint | grep 'ReservationName=PreventMaint' | grep -o PreventMaint`;export SBATCH_RESERVATION; \
+      printenv | grep -e SBATCH -e SLURM; \
+      STARTDIR=$(EXEDIR);export STARTDIR;pwd;set -x; \
           job_cmd=`which sbatch msub 2>/dev/null | head -n1 | xargs basename`; \
           case $$job_cmd in \
-            sbatch) $$job_cmd -D ${EXEDIR} -W $(BASEDIR)/scripts/run_tests_on_$(XCOMPILE)_node.sbatch;; \
+            sbatch) \
+                    c=`echo $(CRAY_CPU_TARGET)_$(_MODULES_FC) $(findstring DO_OFFLOAD,$(MORE_COMPILE_OPTS)) | sed -e 's:/::g;s:  *:_:g'`; \
+                    o="$(if $(filter -O%,$(DEBUG)),_optimized,_debug)"; \
+                    $$job_cmd --job-name="$(LIBRARY)$(MAJOR_VER)_$$c$$o" -D ${EXEDIR} -W $(BASEDIR)/scripts/run_tests_on_$(XCOMPILE)_node.sbatch;; \
             msub)   $$job_cmd -d ${EXEDIR} -K $(BASEDIR)/scripts/run_tests_on_$(XCOMPILE)_node.msub;; \
             *)      echo 'ERROR: A valid job launcher was not found';; \
           esac; \
@@ -324,6 +374,20 @@ check_on_compute_node: create_parallel_job_list
 	@echo '  END:' `date`
 	@$(MAKE) compare
 	@$(MAKE) -j1 MAKE_HTML_OPT=$(MAKE_HTML_OPT) make_html make_xml
+
+.PHONY: run_slurm_batch
+run_slurm_batch:
+	@(SBATCH_RESERVATION=`scontrol show res PreventMaint | grep 'ReservationName=PreventMaint' | grep -o PreventMaint`;export SBATCH_RESERVATION; \
+      echo ' '; \
+      printenv | grep -e SBATCH -e SLURM; \
+          echo '***' Execute SLURM script for $(PARTITION) to compile and execute tests:; \
+          c=`echo $(MODULES2LOAD) $(findstring DO_OFFLOAD,$(MORE_COMPILE_OPTS)) | sed -e 's:/::g;s:  *:_:g'`; \
+          cd $(BASEDIR); \
+          set -x; NPROC=`$(BASEDIR)/scripts/parallel --number-of-cores`; export NPROC; \
+          o="$(if $(filter -O%,$(DEBUG)),_optimized,_debug)"; \
+          sbatch --job-name="$(LIBRARY)$(MAJOR_VER)_$$c$$o" --wait --partition=$(PARTITION) --output=$(BASEDIR)/tests/compile_and_run_tests_on_$(PARTITION)_$${c}_slurm_node.sbatch.out $(BASEDIR)/scripts/compile_and_run_tests_on_slurm_node.sbatch; \
+          set -x; cat $(BASEDIR)/tests/compile_and_run_tests_on_$(PARTITION)_$${c}_slurm_node.sbatch.out; \
+         )
 
 .PHONY: create_parallel_job_list
 create_parallel_job_list:
@@ -349,7 +413,13 @@ GATHER_VALGRIND_DATA:
                 if [ -n "$$h" ]; then printf "\n%s\n" "VALGRIND SUMMARY:"; fi; \
                 printf "  %s:\n" "$${f_root}"; \
                 cat $$f | sed -e 's/^/\t/'; \
-                printf "\t***see %s for details\n\n" "$(EXEDIR)/$${f_root}.valgrind"; \
+                leak_summary=`grep -v 'suppressed: *[^0]' "$$f"`; \
+                if [ -n "$${leak_summary}" ]; then \
+                  printf "\t***see %s for details\n" "$(EXEDIR)/$${f_root}.valgrind"; \
+                else \
+                  printf "\t***no unsuppressed memory leaks\n"; \
+                fi; \
+                printf "\n"; \
                 h=""; \
               else \
                 echo $@ ":: No memory leaks found"; \
@@ -625,17 +695,20 @@ make_xml:
 	@$(BASEDIR)/scripts/make_html $(MAKE_HTML_OPT) --verbose --xml $(PASSFAILOUTPUTFILE) --compiler_info_file $(COMPILER_INFO_FILE) --test_times_file $(EXEDIR)/$(TIMINGFILE) > $(PASSFAILOUTPUTXML)
 
 .PHONY: send_report
+RECIPIENT_EMAIL = eospac_testing@lanl.gov
 send_report: make_html make_xml
-	@-(my_system_name=`uname -n`; \
-           cntr=`grep -c FAILED: $(PASSFAILOUTPUTFILE)`; \
-           tmpcntr=`grep -c PASSED: $(PASSFAILOUTPUTFILE)`; \
-           cntr_ignored=`grep -c IGNORED: $(PASSFAILOUTPUTFILE)`; \
-           cntr_warning=`grep -c WARNING: $(PASSFAILOUTPUTFILE)`; \
+	@-(my_git_branch_name=`git rev-parse --abbrev-ref HEAD 2>/dev/null`; \
+           if [ -n "$$my_git_branch_name" ]; then my_info=" ($$my_git_branch_name:v$(MAJOR_VER))"; fi; \
+           my_system_name=`uname -n`; \
+           cntr=`grep -c '^FAILED:' $(PASSFAILOUTPUTFILE)`; \
+           tmpcntr=`grep -c '^PASSED:' $(PASSFAILOUTPUTFILE)`; \
+           cntr_ignored=`grep -c '^IGNORED:' $(PASSFAILOUTPUTFILE)`; \
+           cntr_warning=`grep -c '^WARNING:' $(PASSFAILOUTPUTFILE)`; \
            time_per_test=`grep -c 'average time' $(PASSFAILOUTPUTFILE)`; \
            totcntr=`expr $$tmpcntr + $$cntr + $$cntr_warning`; \
            optimized="$(if $(filter -O%,$(DEBUG)),; optimized,)"; \
-           $(BASEDIR)/scripts/send_html_mail -p $(PASSFAILOUTPUTFILE) \
-                 -s "EOSPAC 6: $$tmpcntr of $$totcntr PASSED ($$my_system_name: $(ARCH)$${optimized})" $(PASSFAILOUTPUTHTML); \
+           $(BASEDIR)/scripts/send_html_mail -p $(PASSFAILOUTPUTFILE) -e $(RECIPIENT_EMAIL) \
+                 -s "EOSPAC 6$$my_info: $$tmpcntr of $$totcntr PASSED ($$my_system_name: $(ARCH)$${optimized})" $(PASSFAILOUTPUTHTML); \
          )
 
 .PHONY: $(GET_MOD_FILES)
@@ -696,7 +769,7 @@ ifeq (0,${MAKELEVEL})
 	@$(MAKE) -C $(BASEDIR)/Examples clean
 else
 	-rm -fr $(EXAMPLEDIR) $(DEPDIR) $(EXEDIR) $(LIBDIR) \
-                `find . -name 'core*' -o -name '*.stackdump' -o -name '*.lst'` $(BUILD_LOG)
+                `find . -name 'core*' -o -name '*.stackdump' -o -name '*.lst' -o -name '*.gcov'` $(BUILD_LOG)
 	@$(MAKE) -C $(BASEDIR)/src clean
 endif
 
@@ -722,7 +795,7 @@ DISTCLEAN_SUBDIRS = $(notdir $(DISTCLEAN_DIRS))
 .PHONY: distclean
 distclean: $(addprefix distclean_,$(DISTCLEAN_SUBDIRS))
 	-rm -fr $(DEPDIR) $(BUILD_LOG) \
-                `find . -name '$(JUNKFILE)*' -o -name '*.lst'` \
+                `find . -name '$(JUNKFILE)*' -o -name '*.lst' -o -name '*.gcov'` \
                 `find . -name data -prune -o -name '*.MOD' -o -name '*.mod' -print` \
                 `find . -name data -prune -o -name 'core*' -o -name '*.stackdump' -print`
 	-rm -f  `find ./data -name '*.ed' -o -name '*.?diff' | sed 's/\.[a-zA-Z0-9]\{1,\}$$//'`

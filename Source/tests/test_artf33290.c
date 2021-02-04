@@ -8,7 +8,7 @@
  ********************************************************************/
 
 /*! \file
- *  \ingroup tests
+ *  \ingroup C tests
  *  \brief Test for EOS_DISCONTINUOUS_DERIVATIVES option. Compare to default
  *         continuous derivatives in conjuncion with EOS_LINEAR option.
  *         In addition to interpolation, ensure the following functions
@@ -121,6 +121,28 @@ int main ()
     /* report errors, but do not exit */
   }
 
+#if 0
+  /* print some data */
+  printf ("#\n# BEFORE PACKING:\n#\n");
+
+  errorCode = _printDataForHandle (tableHandle[0], 0);
+  if (errorCode != EOS_OK) {
+    eos_GetErrorMessage (&errorCode, errorMessage);
+    printf ("%d: %s\n", errorCode, errorMessage);
+  }
+
+  printf("\n\n"); /* insert two blank lines */
+
+  for (i = 0; i < nTables; i++) {
+    errorCode = _printDataForHandle (tableHandle[i], _N_INTERVAL_);
+    if (errorCode != EOS_OK) {
+      eos_GetErrorMessage (&errorCode, errorMessage);
+      printf ("%d: %s\n", errorCode, errorMessage);
+    }
+    if (i+1 < nTables) printf("\n"); /* insert line if another table pending */
+  }
+#endif
+
   /* print some data */
   printf ("#\n# PACKING tableHandle[%d..%d] = (",0,nTables-1);
   for (i = 0; i < nTables; i++) printf(" %d",tableHandle[i]);
@@ -198,8 +220,7 @@ static EOS_INTEGER max_recursion_level = 0;
 enum { OK = 0,
        exceededQuicksortRecursionLimit = 13
 };
-EOS_INTEGER _QuickSort (EOS_INTEGER N, EOS_REAL a[], EOS_INTEGER lvl,
-			EOS_INTEGER *err)
+EOS_INTEGER _QuickSort (EOS_INTEGER N, EOS_REAL a[], EOS_INTEGER lvl, EOS_INTEGER *err)
 {
   EOS_INTEGER i = 0, j = N - 1;
   EOS_REAL x = a[N / 2], h;
@@ -255,7 +276,8 @@ EOS_INTEGER _QuickSort (EOS_INTEGER N, EOS_REAL a[], EOS_INTEGER lvl,
  * \param[in] **argv      - char** : pointer to array of cmdline arguments;
  *
  */
-int getSamples(EOS_BOOLEAN random, int N, EOS_REAL v_lower, EOS_REAL v_upper, EOS_REAL *v) {
+int getSamples(EOS_BOOLEAN random, int N, EOS_REAL v_lower, EOS_REAL v_upper, EOS_REAL *v)
+{
   int i, nparam=1;
   double *vdata, a=0, b=1;
   EOS_INTEGER err = EOS_OK;
@@ -324,10 +346,10 @@ EOS_INTEGER _printDataForHandle (EOS_INTEGER th, EOS_INTEGER n_interval)
   if (errorCode != EOS_OK) return errorCode;
 
   printf("# TableHandle: %d\tDataType: %s\tMaterialID: %d\n# Description: %s\n",
-	 th, get_tableType_str(type), matid, get_tableType_description(type));
+         th, get_tableType_str(type), matid, get_tableType_description(type));
   printf("# EOS_LINEAR: %s\tEOS_DISCONTINUOUS_DERIVATIVES: %s\n#\n",
-	 (get_interpolationOptions_bval(th, EOS_LINEAR)?"true":"false"),
-	 (get_interpolationOptions_bval(th, EOS_DISCONTINUOUS_DERIVATIVES)?"true":"false"));
+         (get_interpolationOptions_bval(th, EOS_LINEAR)?"true":"false"),
+         (get_interpolationOptions_bval(th, EOS_DISCONTINUOUS_DERIVATIVES)?"true":"false"));
 
   /* print interpolated interval data to stdout */
   printf ("# %21s %23s", "density", "temperature");
@@ -347,24 +369,24 @@ EOS_INTEGER _printDataForHandle (EOS_INTEGER th, EOS_INTEGER n_interval)
     for (k = 0; k < 3 /* num_temp */; k++) {
 
       for (j = 0; j < n_interval; j++)
-	Y_tmp[j] = Y[k];
+        Y_tmp[j] = Y[k];
 
       for (l = 1; l < num_dens; l++) {
 
-	getSamples(EOS_FALSE, n_interval-1, X[l-1], X[l], X_tmp+1);
-	X_tmp[0] = X[l-1];
+        getSamples(EOS_FALSE, n_interval-1, X[l-1], X[l], X_tmp+1);
+        X_tmp[0] = X[l-1];
 
-	eos_Interpolate (&th, &n_interval, X_tmp, Y_tmp, F_tmp, dFx_tmp, dFy_tmp, &errorCode);
-	eos_ErrorCodesEqual (&errorCode, (EOS_INTEGER *)&EOS_INTERP_EXTRAPOLATED, &equal);
+        eos_Interpolate (&th, &n_interval, X_tmp, Y_tmp, F_tmp, dFx_tmp, dFy_tmp, &errorCode);
+        eos_ErrorCodesEqual (&errorCode, (EOS_INTEGER *)&EOS_INTERP_EXTRAPOLATED, &equal);
 
-	if (errorCode != EOS_OK && ! equal) {
-	  eos_GetErrorMessage (&errorCode, errorMessage);
-	  printf ("%d: %s\n", errorCode, errorMessage);
-	}
+        if (errorCode != EOS_OK && ! equal) {
+          eos_GetErrorMessage (&errorCode, errorMessage);
+          printf ("%d: %s\n", errorCode, errorMessage);
+        }
 
-	for (j = 0; j < n_interval; j++)
-	  printf ("%23.15e %23.15e %23.15e %23.15e %23.15e\n",
-		  X_tmp[j], Y_tmp[j], F_tmp[j], dFx_tmp[j], dFy_tmp[j]);
+        for (j = 0; j < n_interval; j++)
+          printf ("%23.15e %23.15e %23.15e %23.15e %23.15e\n",
+                  X_tmp[j], Y_tmp[j], F_tmp[j], dFx_tmp[j], dFy_tmp[j]);
 
       }
 
@@ -383,8 +405,8 @@ EOS_INTEGER _printDataForHandle (EOS_INTEGER th, EOS_INTEGER n_interval)
 
     for (j=num_temp-1; j>=0; j--) { /* spread samples in arrays */
       for (i=0; i<num_dens; i++) {
-	X_tmp[i+j*num_dens] = X[i];
-	Y_tmp[i+j*num_dens] = Y[j];
+        X_tmp[i+j*num_dens] = X[i];
+        Y_tmp[i+j*num_dens] = Y[j];
       }
     }
 
@@ -401,9 +423,9 @@ EOS_INTEGER _printDataForHandle (EOS_INTEGER th, EOS_INTEGER n_interval)
 
       for (l = 0; l < num_dens; l++) {
 
-	printf ("%23.15e %23.15e %23.15e %23.15e %23.15e\n",
-		X_tmp[j], Y_tmp[j], F_tmp[j], dFx_tmp[j], dFy_tmp[j]);
-	j++;
+        printf ("%23.15e %23.15e %23.15e %23.15e %23.15e\n",
+                X_tmp[j], Y_tmp[j], F_tmp[j], dFx_tmp[j], dFy_tmp[j]);
+        j++;
 
       }
 

@@ -4,6 +4,7 @@
 #include "ses_externs.h"
 #include "ses_internals.h"
 
+#undef DEBUG_PRINT
 
 ses_error_flag ses_set_date(ses_file_handle the_handle, long the_date) {
 
@@ -25,6 +26,9 @@ ses_error_flag ses_set_date(ses_file_handle the_handle, long the_date) {
     return SES_SETUP_ERROR;
   }
 
+#ifdef DEBUG_PRINT
+  printf("ses_set_date: setting to: %ld\n", the_date);
+#endif
 
   the_setup->_date_changed = SES_TRUE;
   the_setup->_date = the_date;

@@ -8,7 +8,7 @@
  ********************************************************************/
 
 /*! \file
- *  \ingroup tests
+ *  \ingroup CPP tests
  *  \brief Verify eos_LoadTables functionality on qsc.lanl.gov, and
  *  attempt to produce strange extrapolation behavior in eos_Interpolate.
  *
@@ -85,12 +85,14 @@ int main ()
   cout << "&&&&& Before eos_CreateTables" << endl;
   eos_CreateTables (&nTables, tableType, matID, tableHandle, &errorCode);
   if (errorCode != EOS_OK) {
-    tableHandleErrorCode = EOS_OK;
-    eos_GetErrorCode (&tableHandle[0], &tableHandleErrorCode);
-    eos_GetErrorMessage (&tableHandleErrorCode, errorMessage);
-    //cout << "eos_CreateTables ERROR " << tableHandleErrorCode << ": " << errorMessage << endl;
-    printf ("eos_CreateTables ERROR %i: %s\n", tableHandleErrorCode,
-            errorMessage);
+    eos_GetErrorMessage (&errorCode, errorMessage);
+    printf ("eos_CreateTables ERROR %d: %s\n", errorCode, errorMessage);
+    for (i = 0; i < nTables; i++) {
+      tableHandleErrorCode = EOS_OK;
+      eos_GetErrorCode (&tableHandle[i], &tableHandleErrorCode);
+      eos_GetErrorMessage (&tableHandleErrorCode, errorMessage);
+      printf ("TH=%d eos_CreateTables ERROR %d: %s\n", tableHandle[i], tableHandleErrorCode, errorMessage);
+    }
   }
 
   /* Enable data dump to file */
@@ -111,12 +113,14 @@ int main ()
   cout << "&&&&& Before eos_LoadTables" << endl;
   eos_LoadTables (&nTables, tableHandle, &errorCode);
   if (errorCode != EOS_OK) {
-    tableHandleErrorCode = EOS_OK;
-    eos_GetErrorCode (&tableHandle[0], &tableHandleErrorCode);
-    eos_GetErrorMessage (&tableHandleErrorCode, errorMessage);
-    //cout << "eos_LoadTables ERROR " << tableHandleErrorCode << ": " << errorMessage << endl;
-    printf ("eos_LoadTables ERROR %i: %s\n", tableHandleErrorCode,
-            errorMessage);
+    eos_GetErrorMessage (&errorCode, errorMessage);
+    printf ("eos_LoadTables ERROR %d: %s\n", errorCode, errorMessage);
+    for (i = 0; i < nTables; i++) {
+      tableHandleErrorCode = EOS_OK;
+      eos_GetErrorCode (&tableHandle[i], &tableHandleErrorCode);
+      eos_GetErrorMessage (&tableHandleErrorCode, errorMessage);
+      printf ("TH=%d eos_LoadTables ERROR %d: %s\n", tableHandle[i], tableHandleErrorCode, errorMessage);
+    }
   }
 
   cout << "&&&&& Interpolation 1:" << endl;

@@ -34,11 +34,7 @@
 static const EOS_REAL ZERO = (EOS_REAL) 0;
 /* static const EOS_REAL EOS_MIN_MASS_FRACTION = (EOS_REAL) 1.0e-8; */
 
-#if 0
-
 /*	function _eos_InterpolateRecordType6 (helping function for eos_InterpolateEosInterpolation() 
-	The eos_InterpolateEosInterpolation() routine provides interpolated values for a single material using a table handle associated with
-	Data stored within an data table.
 
 	The input arguments are:
 		void *ptr                 a pointer to a eos_RecordType6 instance from which to extract the data. 
@@ -98,7 +94,7 @@ void _eos_InterpolateRecordType6 (void *ptr, EOS_INTEGER th, EOS_INTEGER subTabl
   /* get the size of the data */
   eos_GetSizeRecordType6 (me, &nX, &nY);
 
-  if (me->eosData.numSubtablesLoaded < subTableNum) {
+  if (me->eosData.eos_IsRequiredDataLoaded && ! me->eosData.eos_IsRequiredDataLoaded(me, dataType)) {
     *errorCode = EOS_DATA_TYPE_NOT_FOUND;
     ((eos_ErrorHandler *) me)->HandleError (me, th, *errorCode);
     return;
@@ -126,33 +122,33 @@ void _eos_InterpolateRecordType6 (void *ptr, EOS_INTEGER th, EOS_INTEGER subTabl
       doRational = eos_getBoolOptionFromTableHandle (th, EOS_RATIONAL, &err);
       if (doRational) {
 
-	/* .... perform table searches to load indices and spacings of nearest
-	   .... data table x,y values to x,searchYVals. */
+        /* .... perform table searches to load indices and spacings of nearest
+           .... data table x,y values to x,searchYVals. */
 
-	iyv = (EOS_INTEGER *) malloc (nXYPairs * sizeof (EOS_INTEGER));       /* indexes of Y near which Y points are */
-	ixv = (EOS_INTEGER *) malloc (nXYPairs * sizeof (EOS_INTEGER));       /* indexes of X near which X points are */
-	xyBounds2 = (EOS_INTEGER *) malloc (nXYPairs * sizeof (EOS_INTEGER)); /* xy-bounds for y */
+        iyv = (EOS_INTEGER *) malloc (nXYPairs * sizeof (EOS_INTEGER));       /* indexes of Y near which Y points are */
+        ixv = (EOS_INTEGER *) malloc (nXYPairs * sizeof (EOS_INTEGER));       /* indexes of X near which X points are */
+        xyBounds2 = (EOS_INTEGER *) malloc (nXYPairs * sizeof (EOS_INTEGER)); /* xy-bounds for y */
 
-	_eos_srchdf (nXYPairs, yVals, 1, nY - 1, Y, 1, iyv,
-		     xyBounds, errorCode);
-	_eos_srchdf (nXYPairs, xVals, 1, nX - 1, X, 1, ixv,
-		     xyBounds2, errorCode);
+        _eos_srchdf (nXYPairs, yVals, 1, nY, Y, 1, iyv, me->T_ht,
+                     xyBounds, errorCode);
+        _eos_srchdf (nXYPairs, xVals, 1, nX, X, 1, ixv, me->R_ht,
+                     xyBounds2, errorCode);
 
-	for (i = 0; i < nXYPairs; i++)
-	  xyBounds[i] = _eos_CombineExtrapErrors (xyBounds2[i], xyBounds[i]);
+        for (i = 0; i < nXYPairs; i++)
+          xyBounds[i] = _eos_CombineExtrapErrors (xyBounds2[i], xyBounds[i]);
 
         eos_BiRationalInterpolate (nXYPairs, nX, nY, X, Y, F, ixv, iyv, xVals, yVals,
                                    fVals, dFx, dFy, xyBounds, &err);
 
-	EOS_FREE (xyBounds2);
-	EOS_FREE (ixv);
-	EOS_FREE (iyv);
+        EOS_FREE (xyBounds2);
+        EOS_FREE (ixv);
+        EOS_FREE (iyv);
 
       }
       else if (eos_getBoolOptionFromTableHandle (th, EOS_LINEAR, &err)) /* interpolate linearly instead */
         eos_BiLineInterpolate (eos_getBoolOptionFromTableHandle (th, EOS_DISCONTINUOUS_DERIVATIVES, &err),
-			       nXYPairs, nX, nY, X, Y, F, xVals, yVals, fVals,
-                               dFx, dFy, xyBounds, &err);
+                               nXYPairs, nX, nY, X, Y, F, 0, xVals, yVals, fVals,
+                               dFx, dFy, me->R_ht, me->T_ht, xyBounds, &err);
       if (eos_GetStandardErrorCodeFromCustomErrorCode(err) != EOS_OK)
         *errorCode = err;
 
@@ -176,11 +172,7 @@ void _eos_InterpolateRecordType6 (void *ptr, EOS_INTEGER th, EOS_INTEGER subTabl
 
 /***********************************************************************/
 /*!
- * \brief Function eos_InterpolateRecordType1 (helping function for
- *  eos_InterpolateEosInterpolation().
- *  The eos_InterpolateEosInterpolation() routine provides interpolated values
- *  for a single material using a table handle associated with Data stored
- *  within an data table.
+ * \brief Function eos_InterpolateRecordType1 (helping function for eos_InterpolateEosInterpolation().
  *
  * \param[out]   fVals[nXYPairs] - EOS_REAL : array of the interpolated data corresponding
  *                                 to x and y. 
@@ -296,6 +288,10 @@ void eos_CheckExtrapRecordType6 (void *ptr, EOS_INTEGER th, EOS_INTEGER dataType
   eos_RecordType6 *me;
   EOS_BOOLEAN isOneDimDatatype = EOS_FALSE;
 
+  EOS_BOOLEAN skipExtrap = _EOS_GET_SKIPEXTRAPCHECK_EOSDATAMAP;;
+  if (skipExtrap) 
+    return;
+
   *errorCode = EOS_OK;
 
   eosData = (eos_Data *) ptr;
@@ -312,7 +308,7 @@ void eos_CheckExtrapRecordType6 (void *ptr, EOS_INTEGER th, EOS_INTEGER dataType
     return;
   }
 
-  if (me->eosData.numSubtablesLoaded < subTableNum) {
+  if (me->eosData.eos_IsRequiredDataLoaded && ! me->eosData.eos_IsRequiredDataLoaded(me, dataType)) {
     *errorCode = EOS_DATA_TYPE_NOT_FOUND;
     ((eos_ErrorHandler *) me)->HandleError (me, th, *errorCode);
     return;
@@ -378,5 +374,3 @@ void eos_CheckExtrapRecordType6 (void *ptr, EOS_INTEGER th, EOS_INTEGER dataType
     return;
   }
 }
-
-#endif

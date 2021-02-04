@@ -1,4 +1,15 @@
  -----------------------------------------
+/eospac6-data/data/eos
+/usr/projects/data/eos
+/opt/local/codes/data/eos
+/usr/gapps/lanl-data/eos
+/projects/lanl-data/eos
+-----------------------------------------
+Selected files to be used below:
+     /opt/local/codes/data/eos/sesame
+     /opt/local/codes/data/eos/export-controlled/ieee64/sesame
+-----------------------------------------
+
       MATERIAL ID=        2030
  AFTER create tables err1=       0 : 
  AFTER call TO SetDataFilename errorcode=       0 : 
@@ -671,15 +682,15 @@
  AFTER create tables err1=       0 : 
  AFTER SetDataFilename err1=     0 itabletype=    14 : 
                fcmp_ignore filename = /opt/local/codes/data/eos/sesame
- AFTER load tables err1= 1232011 : EOS_NO_DATA_TABLE: Data table, EOS_T_DUt, is not in EOS table area and it could not be manufactured for table handle 122
+ AFTER load tables err1=    2011 : EOS_NO_DATA_TABLE: Data table is not in EOS table area
  AFTER create tables err1=       0 : 
  AFTER SetDataFilename err1=     0 itabletype=     6 : 
                fcmp_ignore filename = /opt/local/codes/data/eos/export-controlled/ieee64/sesame
- AFTER load tables err1= 1242011 : EOS_NO_DATA_TABLE: Data table, EOS_Pt_DUt, is not in EOS table area and it could not be manufactured for table handle 123
+ AFTER load tables err1=    2011 : EOS_NO_DATA_TABLE: Data table is not in EOS table area
  AFTER create tables err1=       0 : 
  AFTER SetDataFilename err1=     0 itabletype=    12 : 
                fcmp_ignore filename = /opt/local/codes/data/eos/export-controlled/ieee64/sesame
- AFTER load tables err1= 1252011 : EOS_NO_DATA_TABLE: Data table, EOS_Ut_DT, is not in EOS table area and it could not be manufactured for table handle 124
+ AFTER load tables err1=    2011 : EOS_NO_DATA_TABLE: Data table is not in EOS table area
  -----------------------------------------
       MATERIAL ID=        2983
  AFTER create tables err1=       0 : 

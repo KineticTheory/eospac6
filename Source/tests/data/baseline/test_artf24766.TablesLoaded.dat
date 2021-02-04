@@ -27,7 +27,7 @@ Dependent upon the Helmholtz Free Energy Taylor polynomial surface fit parameter
 
 TableHandle=2 matid =  3720 source = ./../../../../../tests/data/ses3720_taylor
 Data Type = EOS_At_DT
-Description = Total Specific-Free-Energy (MJ/kg) (Density (Mg/m^3)- and Temperature (K)-dependent)
+Description = Total Specific-Helmholtz-Free-Energy (MJ/kg) (Density (Mg/m^3)- and Temperature (K)-dependent)
 Taylor polynomial surface fit parameters
   fconv =   1.000000000000000E+00         xconv =   1.000000000000000E+00         yconv =   1.000000000000000E+00
 

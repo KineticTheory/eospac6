@@ -8,7 +8,7 @@
  ********************************************************************/
 
 /*! \file
- *  \ingroup tests quick
+ *  \ingroup C tests quick
  *  \brief This is a unit test of the eos_Utils::_eos_CreateGhostData
  *  and eos_Utils::_eos_DestroyGhostData functions.
  *
@@ -88,7 +88,7 @@ int main ()
     printf("\n");
   }
 
-  _eos_CreateGhostData (nGhostData, nxtbl_in, nytbl_in, xtbls_in, ytbls_in, ftbls_in, coldCurve_in,
+  _eos_CreateGhostData (EOS_FALSE, nGhostData, nxtbl_in, nytbl_in, xtbls_in, ytbls_in, ftbls_in, coldCurve_in,
 			&nxtbl, &nytbl, &xtbls, &ytbls, &ftbls, &coldCurve, &err, &errorMsg);
 
   printf ("\n**** AFTER 2-D EXPANSION ****\n");
@@ -147,7 +147,7 @@ int main ()
     }
   }
 
-  _eos_CreateGhostData (nGhostData, nxtbl_in, nytbl_in, xtbls_in, ytbls_in, ftbls_in, NULL,
+  _eos_CreateGhostData (EOS_FALSE, nGhostData, nxtbl_in, nytbl_in, xtbls_in, ytbls_in, ftbls_in, NULL,
 			&nxtbl, &nytbl, &xtbls, &ytbls, &ftbls, NULL, &err, &errorMsg);
 
   printf ("\n**** AFTER 1-D EXPANSION ****\n");
@@ -191,7 +191,7 @@ int main ()
 	    i, xtbls_in[i], j, i, ftbls_in[j][i]);
   }
 
-  _eos_CreateGhostData (nGhostData, nxtbl_in, nytbl_in, xtbls_in, NULL, ftbls_in, NULL,
+  _eos_CreateGhostData (EOS_FALSE, nGhostData, nxtbl_in, nytbl_in, xtbls_in, NULL, ftbls_in, NULL,
 			&nxtbl, &nytbl, &xtbls, &ytbls, &ftbls, NULL, &err, &errorMsg);
 
   printf ("\n**** AFTER 1-D EXPANSION WITH YTBLS=NULL ****\n");
@@ -221,7 +221,7 @@ int main ()
   printf ("\n**** FORCED ERRORS ****\n");
 
   nytbl_in = 0;
-  _eos_CreateGhostData (nGhostData, nxtbl_in, nytbl_in, xtbls_in, ytbls_in, ftbls_in, coldCurve_in,
+  _eos_CreateGhostData (EOS_FALSE, nGhostData, nxtbl_in, nytbl_in, xtbls_in, ytbls_in, ftbls_in, coldCurve_in,
 			&nxtbl, &nytbl, &xtbls, &ytbls, &ftbls, NULL, &err, &errorMsg);
 
   if (err != EOS_OK) {
@@ -234,7 +234,7 @@ int main ()
 
   nxtbl_in = 0;
   nytbl_in = 5;
-  _eos_CreateGhostData (nGhostData, nxtbl_in, nytbl_in, xtbls_in, NULL, ftbls_in, coldCurve_in,
+  _eos_CreateGhostData (EOS_FALSE, nGhostData, nxtbl_in, nytbl_in, xtbls_in, NULL, ftbls_in, coldCurve_in,
 			&nxtbl, &nytbl, &xtbls, &ytbls, &ftbls, NULL, &err, &errorMsg);
 
   if (err != EOS_OK) {

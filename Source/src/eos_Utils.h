@@ -1,5 +1,5 @@
 /*********************************************************************
- * Class Name : eos_utils
+ * Class Name : eos_Utils
  * ---------------------------------------------------------
  * Filetype: (HEADER)
  * 
@@ -31,22 +31,12 @@
 #  define __ADD_VAL__(v) 0
 #endif
 
-/* The following macro enables logic that removes the cold curve from a
- * pre-inverted (EOS_INVERT_AT_SETUP) table before it is constructed:
- */
-#define __REMOVE_COLD_CURVE_FROM_SELECTED_INVERSIONS__
+/* The following define enables debug output in eos_RecordType1 packing/unpacking functions */
+//#define _DEBUG_PACKING_FUNCTIONS
 
-#ifdef __REMOVE_COLD_CURVE_FROM_SELECTED_INVERSIONS__
-/* The following macro enables logic that normalizes data with X[] for the
- * pre-inverted (EOS_INVERT_AT_SETUP) table before it is constructed:
- */
-#define __NORMALIZE_WITH_X_FOR_SELECTED_INVERSIONS__
-#endif
+/* The following define enables debug output in eos_DumpExpandedGridRecordType1 function */
+//#define DEBUG_EOS_EXPANDGRIDINTERPOLATE
 
-#ifdef __NORMALIZE_WITH_X_FOR_SELECTED_INVERSIONS__
-//#define __DISALLOW_POSITIVE_XF_EXTRAPOLATION_IF_INVERTATSETUP__
-//#define __DISALLOW_NEGATIVE_XF_EXTRAPOLATION_IF_INVERTATSETUP__
-#endif
 
 /************************************************************************
  * 

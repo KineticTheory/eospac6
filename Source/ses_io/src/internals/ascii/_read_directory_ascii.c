@@ -70,8 +70,9 @@ ses_error_flag _read_directory_ascii(struct _ses_directory* the_directory, struc
 #endif
     
     int current_line_location = ftell(pSFH->_c_file_handle);
-    
+   
 #ifdef DEBUG_PRINT
+    printf("_read_directory_ascii: current_line_location: %d \n", current_line_location);
     printf("_read_directory_ascii: after ftell\n");
 #endif
 
@@ -87,8 +88,12 @@ ses_error_flag _read_directory_ascii(struct _ses_directory* the_directory, struc
         char line [ 128 ]; /* or other suitable maximum line size */
         while ( fgets ( line, sizeof line, pSFH->_c_file_handle) != NULL ) /* read a line */
         {
-            
-            if ((line[0] == ' ') && (line[1] == '0') && (line[2] == ' ') && (line[74] == ' ') && (line[75] == ' ') && (line[76] == ' ') && (line[77] == ' ') && (line[78] == ' ') && ((line[79] == '1') || (line[79] == '0'))) {
+#ifdef DEBUG_PRINT
+            printf("_read_directory_ascii: line: %s, length: %ld\n", line, sizeof line);
+#endif
+            // The following is a poor woman's parser. These are indexes that the line should be a zero or
+            // blank when describing a beginning record of a material.
+            if ((line[0] == ' ') && (line[1] == '0') && (line[74] == ' ') && (line[75] == ' ') && (line[76] == ' ') && (line[77] == ' ') && (line[78] == ' ') && ((line[79] == '1') || (line[79] == '0'))) {
                 iadr[nfiles] = current_line_location;
                 if (nfiles > 0) {
                     nwds[nfiles] = iadr[nfiles] - iadr[nfiles - 1];
@@ -106,15 +111,25 @@ ses_error_flag _read_directory_ascii(struct _ses_directory* the_directory, struc
                 else {
                     rewind(pSFH->_c_file_handle);
                 }
-                /* long tag = 0; */
-                /* tag = */ _read_long_ascii(pSFH);
-                matid[nfiles] = _read_long_ascii(pSFH);
-                /* dummy = */ _read_long_ascii(pSFH);
-                /* dummy = */ _read_long_ascii(pSFH);
-                /* dummy = */ _read_long_ascii(pSFH);
-                date = _read_long_ascii(pSFH);
-                version = _read_long_ascii(pSFH);
+                // Values that are not kept at this time:
+                int  file_num     = 0;      // Start of header marker: 0 first header, 2 last header,
+                                            // 1 all headers in between.
+                int  mat_id       = 0;      // Material ID
+                int  table_id     = 0;      // Table ID for the following information.
+                int  num_words    = 0;      // Number of words (bytes for comments) in the data.
+                char r_value      = 'v';    // Has never been used
+                     date  = 0;             // Creation Date
+                int  update_date  = 0;      // Updated the data date
+                     version      = 0;      // Version of the data
+                int  end_file_num = 0;      // End of header marker: 0 first header, 2 last header, 1 all headers in between.
                 
+                fscanf( pSFH->_c_file_handle, "%1d%6d%6d%6d   %c%9ld%9d%4ld%34d", &file_num, &mat_id, &table_id, &num_words,
+                       &r_value, &date, &update_date, &version, &end_file_num );
+
+                matid[nfiles] = (long)mat_id;
+#ifdef DEBUG_PRINT
+                printf("_read_directory_ascii: matid[%i]: %ld\n", nfiles, matid[nfiles]);
+#endif
                 /* return_status = */ fseek(pSFH->_c_file_handle, after_line, SEEK_SET);
                 nfiles++;
             }
@@ -176,11 +191,11 @@ ses_error_flag _read_directory_ascii(struct _ses_directory* the_directory, struc
     
     the_directory->_nfiles = nfiles;
     
-    the_directory->_date = date;
+    the_directory->_date    = date;
     the_directory->_version = version;
     
     the_directory->_has_multiple_files = SES_FALSE;
-    the_directory->_ready = SES_TRUE;
+    the_directory->_ready              = SES_TRUE;
     
     /*  return */
     return return_value;

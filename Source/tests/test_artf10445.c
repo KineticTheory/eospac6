@@ -8,7 +8,7 @@
  ********************************************************************/
 
 /*! \file
- * \ingroup tests
+ * \ingroup C tests
  * \brief Verify elimination of _eos_CompressArray platform-dependency
  *        problems. See SourceForge© Issue #artf10445 for more details:
  *        https://tf.lanl.gov/sf/go/artf10445

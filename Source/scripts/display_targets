@@ -31,11 +31,17 @@ while (<>) {
   }
 }
 
+# define terminal width (character count)
+my $stty = `stty size`;
+my @stty_list = split(" ", `stty size`);
+my $width = 0.8 * $stty_list[$#stty_list];
+$width = 80 if $width < 80;
+
 # define and evaluate report format
 $max=0;
 foreach $k (sort keys %h) { $max=(length($k)>$max)?length($k):$max; }
 $max += 5;
-my $def = "format = \n^" . ('<'x($max+2)) . '~~^' . ('<'x(80-$max-2)) . "~~\n\$target, \$deps\n.";
+my $def = "format = \n^" . ('<'x($max+2)) . '~~^' . ('<'x($width-$max-2)) . "~~\n\$target, \$deps\n.";
 #print "\n$def\n\n";
 print "\n";
 eval $def;

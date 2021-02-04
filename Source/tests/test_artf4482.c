@@ -8,7 +8,7 @@
  ********************************************************************/
 
 /*! \file
- *  \ingroup tests
+ *  \ingroup C tests
  *  \brief Test for memory leak in eos_DestroyEosDataMap.
  *
  *  See SourceForge issue 

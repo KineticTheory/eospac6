@@ -8,12 +8,12 @@ use FindBin;
 use File::Basename;
 use lib $FindBin::Bin;
 use MyDumper;
-#use Data::Dumper;
-#$Data::Dumper::Terse = 1;
+use Data::Dumper;
+$Data::Dumper::Terse = 1;
 
 BEGIN {
   # Define script version
-  $version = '$Revision: 1.9 $';
+  $version = '$Revision: 1.10 $';
   $version =~ s/\$Revision:\s+//;
   $version =~ s/([\d\.]+).+/$1/;
 
@@ -34,12 +34,19 @@ $brief =
    "brief"         => "Display a brief description of this tool.",
    "count_only"    => "Count the number of data sets within the specified file(s).",
    "debug"         => "Display the sesplot commands that would be executed without this option.",
+   "diffs_only"    => "Plot only the data that contain differences in the specified files. This requires the user" .
+                      " to provide two data files, and, like the --interleave option, this requires that the" .
+                      " specified file(s) have the same number of data sets.",
    "help"          => "Display this help.",
    "interleave"    => "Interleave plots from like-numbered data sets in each specified file(s)." .
                       " This requires that the specified file(s) have the same number of data sets.",
    "keep"          => "Keep temporary/intermediate files.",
+   "list_diffs"    => "List only the tables that contain differences in the specified files. This requires the user" .
+                      " to provide two data files, and, like the --interleave option, this requires that the" .
+                      " specified file(s) have the same number of data sets.",
    "matid=i@"      => "Specify the SESAME material ID <NUMBER> used to select the data sets within the specified" .
                       " file(s). Multiple instances of this option may be specified on the command line.",
+   "passthru=s"    => "Specify options to pass through to the sesplot tool.",
    "print"         => "Send the generated plots to the printer via the 'lp' tool.",
    "postscript|ps" => "Send the generated plots to postscript file(s) in the current directory.",
    "pdf=s"         => "Send the generated plots to a PDF file, <NAME>.",
@@ -66,11 +73,18 @@ GetOptions($options,
 die "\nERROR: At least one file name must be specified.\n\n"
   if scalar(@ARGV) == 0;
 
+die "\nERROR: The --diffs_only option requires 2 file names, but you have provided " . scalar(@ARGV) . " file name(s).\n\n"
+  if $options->{diffs_only} and scalar(@ARGV) != 2;
+
+die "\nERROR: The --list_diffs option requires 2 file names, but you have provided " . scalar(@ARGV) . " file name(s).\n\n"
+  if $options->{list_diffs} and scalar(@ARGV) != 2;
+
 $options->{postscript}++ if $options->{pdf};
 
 #$sesplot = "~/SCRIPTS/sesplot";
 #$sesplot = "~/FILES/sesame_viz/sesplot";
 $sesplot = which("sesplot");
+$sesplot .= " " . $options->{passthru} if $options->{passthru};
 print MyDumper::Dump(__FILE__, __LINE__, [ \$sesplot ], [ qw(*sesplot) ]) if $options->{verbose};
 
 $printme = "";
@@ -84,29 +98,44 @@ print MyDumper::Dump(__FILE__, __LINE__, [ \$printme ], [ qw(*printme) ]) if $op
 my %MASTER = ();
 my %COMMON = ();
 my @COMMON = ();
+my %LINE_NUMBERS = ();
 
 for $file (@ARGV) {
 
   # capture all MATIDS and related meta data
   open(my $fh,"$file");
   my %MASTER = ();
-  while (<$fh>) {
-    if (/^TableHandle=(\d+)\s*matid\s*=\s*(\d+)\s*source\s*=\s*\S+\s*(page\s*=\s*(\d+))?/) {
+  my $i = 0;
+  while (my $s = <$fh>) {
+    print "$s" if ($options->{verbose} > 4);
+    my $linenum = $.;
+    if ($s =~ /^TableHandle=(\d+)\s*matid\s*=\s*(\d+)\s*source\s*=\s*\S+\s*(page\s*=\s*(\d+))?/) {
       my ($h, $m, $p) = ($1, $2, $4);
       if ($p == 1 or not defined $p) {
-        my $s = <$fh>;
+        $LINE_NUMBERS{$file}{$i}{linenum}{0} = $linenum;
+        $LINE_NUMBERS{$file}{$i-1}{linenum}{1} = $linenum - 1 if $i > 0 and defined $LINE_NUMBERS{$file}{$i-1}{linenum}{0};
+        $s = <$fh>;
         if ($s =~ /^Data Type\s*=\s*(\S+)/) {
-          $MASTER{$file}{$m}{$h}{type} = $1;
+          $MASTER{$file}{$m}{$i}{type} = $1;
           $s = <$fh>;
           my $o = "default";
           if ($s =~ /^Loading Options:\s*(.+)/) {
             $o = $1;
           }
-          push @{$MASTER{$file}{$m}{$h}{options}}, $o;
+          push @{$MASTER{$file}{$m}{$i}{options}}, $o;
+          $i++;
         }
       }
     }
   }
+
+  # clean up empty hash elements
+  for my $m (sort { $a <=> $b } keys %{$MASTER{$file}}) {
+    for my $h (sort { $a <=> $b } keys %{$MASTER{$file}{$m}}) {
+      delete($MASTER{$file}{$m}{$h}) if not scalar(keys %{$MASTER{$file}{$m}{$h}});
+    }
+  }
+  
   if ($options->{verbose} > 3) {
     local $Data::Dumper::Indent = 1;
     local $Data::Dumper::Sortkeys = sub{
@@ -137,8 +166,77 @@ for $file (@ARGV) {
     $m .= " " . $h{$file}{$m};
   }
 
-  print $MATIDS_TYPES{$file}{N}," data sets available in $file\n";
+}
 
+# ensure correct population of %LINE_NUMBERS
+for my $f (sort keys %LINE_NUMBERS) {
+  my $imax = 0;
+  for my $i (sort { $a <=> $b } keys %{$LINE_NUMBERS{$f}}) {
+    $imax = ($imax < $i) ? $i : $imax;
+    $LINE_NUMBERS{$f}{$i-1}{linenum}{1} = $LINE_NUMBERS{$f}{$i}{linenum}{0} - 1
+      if $i > 0 and not defined $LINE_NUMBERS{$f}{$i-1}{linenum}{1};
+  }
+  if (not defined $LINE_NUMBERS{$f}{$imax}{linenum}{1}) {
+    my $v = `wc -l "$f"`;
+    my @v = split " ", $v;
+    $LINE_NUMBERS{$f}{$imax}{linenum}{1} = $v[0];
+  }
+}
+
+if ($options->{diffs_only} or $options->{list_diffs}) {
+  # identify in %LINE_NUMBERS which tables differ
+  my @diffs = `diff -wiI TableHandle= -I Options @ARGV | grep '^[0-9][0-9]*.*'`;
+  chomp @diffs;
+  print MyDumper::Dump(__FILE__, __LINE__, [ \@diffs ], [ qw(*diffs) ]) if $options->{verbose} > 3;
+  for my $d (@diffs) {
+    my ($d1,$d2) = split /c/, $d;
+    my @nums1 = split /,/, $d1;
+    my @nums2 = split /,/, $d2;
+    {
+      $f = $ARGV[0];
+      for my $i (sort { $a <=> $b } keys %{$LINE_NUMBERS{$f}}) {
+        if ($nums1[0] >= $LINE_NUMBERS{$f}{$i}{linenum}{0} and $nums1[0] <= $LINE_NUMBERS{$f}{$i}{linenum}{1}) {
+          $LINE_NUMBERS{$f}{$i}{diffs}++;
+          last;
+        }
+      }
+      $f = $ARGV[1];
+      for my $i (sort { $a <=> $b } keys %{$LINE_NUMBERS{$f}}) {
+        if ($nums2[0] >= $LINE_NUMBERS{$f}{$i}{linenum}{0} and $nums2[0] <= $LINE_NUMBERS{$f}{$i}{linenum}{1}) {
+          $LINE_NUMBERS{$f}{$i}{diffs}++;
+          last;
+        }
+      }
+    }
+  }
+}
+
+if ($options->{verbose} > 3)
+{
+  local $Data::Dumper::Indent = 1;
+  local $Data::Dumper::Sortkeys = sub{
+    no warnings 'numeric';
+    [ sort { $a <=> $b } keys %{$_[0]} ]
+  };
+  print MyDumper::Dump(__FILE__, __LINE__, [ \%LINE_NUMBERS ], [ qw(*LINE_NUMBERS) ]);
+}
+
+# print data set counts
+for $file (@ARGV) {
+  if ($options->{diffs_only} or $options->{list_diffs}) {
+    my $c = 0;
+    for my $i (sort { $a <=> $b } keys %{$LINE_NUMBERS{$file}}) {
+      if ($LINE_NUMBERS{$file}{$i}{diffs}) {
+        $c++;
+        print __FILE__,":",__LINE__,"::\$LINE_NUMBERS{$file}{$i}{diffs} = ",$LINE_NUMBERS{$file}{$i}{diffs},"\n"
+          if $options->{verbose} > 2;
+      }
+    }
+    print $c, " of ", $MATIDS_TYPES{$file}{N}," differing data sets available in $file\n";
+  }
+  else {
+    print $MATIDS_TYPES{$file}{N}," data sets available in $file\n";
+  }
 }
 
 # compile hash of list for each file
@@ -147,7 +245,14 @@ for $file (@ARGV) {
       $MATIDS_TYPES{$file}{hash}{$m}++;
   }
 }
-print MyDumper::Dump(__FILE__, __LINE__, [ \%MATIDS_TYPES ], [ qw(*MATIDS_TYPES) ]) if $options->{verbose} > 2;
+{
+  local $Data::Dumper::Indent = 1;
+  local $Data::Dumper::Sortkeys = sub{
+    no warnings 'numeric';
+    [ sort { $a <=> $b } keys %{$_[0]} ]
+  };
+  print MyDumper::Dump(__FILE__, __LINE__, [ \%MATIDS_TYPES ], [ qw(*MATIDS_TYPES) ]) if $options->{verbose} > 2;
+}
 
 %h = ();
 for $file (@ARGV) {
@@ -162,7 +267,31 @@ exit if $options->{count_only};
 
 my @ps_files = ();
 
-if ($options->{interleave}) {
+if ($options->{list_diffs}) {
+  for my $file (sort keys %MATIDS_TYPES) {
+
+    my $N = $MATIDS_TYPES{$file}{N} if not $N;
+    my $MATIDS_TYPES = join " ", @{$MATIDS_TYPES{$file}{list}} if not $MATIDS_TYPES;
+    my @MATIDS_TYPES = @{$MATIDS_TYPES{$file}{list}} if not scalar @MATIDS_TYPES;
+
+    %SUBTABLE = ();
+    my $i = -1;
+    for my $p (@MATIDS_TYPES) {
+      ($m,$t,$k) = split " ", $p;
+      $SUBTABLE{"$m $t"}++;
+      $s = $SUBTABLE{"$m $t"};
+
+      $i++;
+
+      print __FILE__, ":",__LINE__, ":: ", "\$LINE_NUMBERS{$file}{$i} = ", Dumper($LINE_NUMBERS{$file}{$i}) if $options->{verbose};
+      next if $options->{list_diffs} and not $LINE_NUMBERS{$file}{$i}{diffs};
+      printf("  $file: MATERIAL %-7s TYPE %-15s INDEX %-4s: %d diffs\n",
+             "$m,", "$t,", "$k", $LINE_NUMBERS{$file}{$i}{diffs});
+    }
+  }
+
+}
+elsif ($options->{interleave}) {
   &interleavePlotOrder;
 }
 else {
@@ -255,6 +384,7 @@ sub defaultPlotOrder {
 
       next if not &is_wanted("matid", $m);
       next if not &is_wanted("type", $t);
+      next if $options->{diffs_only} and not $LINE_NUMBERS{$file}{$i-1}{diffs};
 
       my $psfile = join(".", "sesplot", $m, $t, $k, $flabel, "ps");
 
@@ -273,7 +403,9 @@ sub defaultPlotOrder {
       $cmd = "set -x;$cmd" if $options->{verbose} > 1;
 
       my $filter = $options->{verbose} > 1 ? "cat" : "grep -v ': OK'";
-      system("( $cmd 2>/dev/null ) | $filter");
+      # system("( $cmd 2>/dev/null ) | $filter");
+      my $result = `( $cmd 2>&1 ) | $filter`;
+      print "\n+ $cmd$result\n" if $result =~ /(ERROR|WARNING|function to plot expected)/;
 
       $plotted_count++;
 
@@ -336,6 +468,7 @@ sub interleavePlotOrder {
         print MyDumper::Dump(__FILE__, __LINE__, [ ":: skipping type, $t" ]) if $options->{verbose} > 1;
         next;
       }
+      next if $options->{diffs_only} and not $LINE_NUMBERS{$file}{$i-1}{diffs};
 
       my $psfile = join(".", "sesplot", $m, $t, $k, $flabel, "ps");
 
@@ -354,7 +487,9 @@ sub interleavePlotOrder {
       $cmd = "set -x;$cmd" if $options->{verbose} > 1;
 
       my $filter = $options->{verbose} > 1 ? "cat" : "grep -v ': OK'";
-      system("( $cmd 2>/dev/null ) | $filter");
+      # system("( $cmd 2>/dev/null ) | $filter");
+      my $result = `( $cmd 2>&1 ) | $filter`;
+      print "\n+ $cmd$result\n" if $result =~ /(ERROR|WARNING|function to plot expected)/;
 
       if ($options->{postscript}) {
         push @ps_files, $psfile if -r "$psfile";

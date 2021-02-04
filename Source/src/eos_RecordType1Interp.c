@@ -99,6 +99,8 @@ void _eos_InterpolateRecordType1 (void *ptr, EOS_INTEGER th,
   EOS_REAL *X, *Y, **F, **F2, *uVals, *dUy, *dUx, *dFCx1, *dUCx, *dYx, *dXy,
     *coldCurve, *newColdCurve = NULL, *newColdCurve_dFdx = NULL,
     *newFVals, *xVals, *yVals, *null_val = NULL;
+  
+  eos_HashTable2D *F_ht;
 
   eos_Data *eosData;
   eos_RecordType1 *me;
@@ -107,9 +109,12 @@ void _eos_InterpolateRecordType1 (void *ptr, EOS_INTEGER th,
 
   EOS_REAL *xtbls, *ytbls, **ftbls; /* temporary arrays to include ghost node data */
   EOS_BOOLEAN optVal = EOS_FALSE;
-  EOS_INTEGER nxtbl, nytbl;
   EOS_CHAR *errMsg = NULL;
-  eos_ExtrapolationBoundsEosDataMap *extrapolationBounds = eos_GetExtrapolationBoundsEosDataMap(&gEosDataMap, th);;
+  eos_ExtrapolationBoundsEosDataMap *extrapolationBounds = eos_GetExtrapolationBoundsEosDataMap(&gEosDataMap, th);
+
+  EOS_INTEGER nxtbl, nytbl;
+
+  EOS_BOOLEAN skipExtrap = _EOS_GET_SKIPEXTRAPCHECK_EOSDATAMAP;;
 
 #ifdef _EOS_DUMP_INDEX_DATA_INTERPOLATE_RECORDTYPE1
   char fn[50] = "eos_RationalInterpolate_RecordType1.indices";
@@ -128,6 +133,9 @@ void _eos_InterpolateRecordType1 (void *ptr, EOS_INTEGER th,
   eosData = (eos_Data *) ptr;
   me = (eos_RecordType1 *) eosData;
 
+  eos_HashTable1D *X_ht = me->R_hashTable;
+  eos_HashTable1D *Y_ht = me->T_hashTable;
+
   if (me->isInvertedAtSetup) {
     cat = EOS_INVERTED_AT_SETUP;
     subTableNum = 1;
@@ -141,14 +149,14 @@ void _eos_InterpolateRecordType1 (void *ptr, EOS_INTEGER th,
   /* note, when the data is log 10 - cold curve, we need to take the indep. var into this form when inverting */
   tableNum = EOS_TYPE_TO_TAB_NUM (dataType);
 
-  if (me->eosData.numSubtablesLoaded < subTableNum) {
+  if (me->eosData.eos_IsRequiredDataLoaded && ! me->eosData.eos_IsRequiredDataLoaded(me, dataType)) {
     *errorCode = EOS_DATA_TYPE_NOT_FOUND;
     ((eos_ErrorHandler *) me)->HandleError (me, th, *errorCode);
     return;
   }
 
   /* Fetch data array pointers */
-  _eos_GetDataRecordType1 (me, &X, &Y, &F, &coldCurve, subTableNum);
+  _eos_GetDataRecordType1 (me, &X, &Y, &F, &coldCurve, &F_ht, subTableNum);
 
   /* initialize F, dFx, dFy to zero */
   for (i = 0; i < nXYPairs; i++) {
@@ -196,20 +204,28 @@ void _eos_InterpolateRecordType1 (void *ptr, EOS_INTEGER th,
 
   doRational = eos_getBoolOptionFromTableHandle (th, EOS_RATIONAL, &err);
 
-  if (! me->isInvertedAtSetup && ! optVal && doRational && (nX > 1) && (nY > 1)/*  && (cat != EOS_CATEGORY0) */) {
+  if ((!me->isInvertedAtSetup || me->useTmpGhostData) && ! me->nGhostData && (nX > 1) && (nY > 1)) {
     /* add "ghost node" data prior to interpolation */
     nGhostData = 1;
     if (EOS_TYPE_TO_INDEP_VAR1 (dataType) != EOS_NullTable
         && EOS_TYPE_TO_INDEP_VAR2 (dataType) == EOS_NullTable) {
       /* use a NULL pointer for Y input array if operating on a 1-D table */
-      _eos_CreateGhostData (nGhostData, nX, nY, X, NULL, F, NULL,
+      _eos_CreateGhostData (EOS_FALSE, nGhostData, nX, nY, X, NULL, F, NULL,
+                            &nxtbl, &nytbl, &xtbls, &ytbls, &ftbls, NULL, &err, &errMsg);
+      if (errMsg) err = eos_SetCustomErrorMsg(th, err, "%s", errMsg);
+      EOS_FREE(errMsg);
+    }
+    else if (EOS_TYPE_TO_INDEP_VAR1 (dataType) == EOS_NullTable
+             && EOS_TYPE_TO_INDEP_VAR2 (dataType) != EOS_NullTable) {
+      /* use a NULL pointer for X input array if operating on a 1-D table */
+      _eos_CreateGhostData (EOS_FALSE, nGhostData, nX, nY, NULL, Y, F, NULL,
                             &nxtbl, &nytbl, &xtbls, &ytbls, &ftbls, NULL, &err, &errMsg);
       if (errMsg) err = eos_SetCustomErrorMsg(th, err, "%s", errMsg);
       EOS_FREE(errMsg);
     }
     else {
       /* operating on a 2-D table */
-      _eos_CreateGhostData (nGhostData, nX, nY, X, Y, F, NULL,
+      _eos_CreateGhostData (EOS_FALSE, nGhostData, nX, nY, X, Y, F, NULL,
                             &nxtbl, &nytbl, &xtbls, &ytbls, &ftbls, NULL, &err, &errMsg);
       if (errMsg) err = eos_SetCustomErrorMsg(th, err, "%s", errMsg);
       EOS_FREE(errMsg);
@@ -225,7 +241,9 @@ void _eos_InterpolateRecordType1 (void *ptr, EOS_INTEGER th,
     Y = ytbls;
     F = ftbls;
   }
-
+  else {
+    nGhostData = me->nGhostData;
+  }
 
   /* Check if 1-D interpolation is required by dataType */
   if (EOS_TYPE_TO_INDEP_VAR1 (dataType) != EOS_NullTable
@@ -235,14 +253,14 @@ void _eos_InterpolateRecordType1 (void *ptr, EOS_INTEGER th,
     if (cat == EOS_CATEGORY3) {
       ind = EOS_EOS_TABLE_TYPE_REF2(dataType);
       subTableNum2 = EOS_TYPE_TO_SUB_TAB_NUM (ind);
-      _eos_GetDataRecordType1 (me, &X, &Y, &F2, &coldCurve, subTableNum2);
+      _eos_GetDataRecordType1 (me, &X, &Y, &F2, &coldCurve, &F_ht, subTableNum2);
     }
     else
       F2 = &null_val;
 
     /* interpolate */
-    _eos_InterpolateRecordType_1D (nX, X, *F, *F2, th, dataType,
-                                   nXYPairs, srchX, fVals, dFx, xyBounds,
+    _eos_InterpolateRecordType_1D (EOS_FALSE, nX, X, *F, *F2, th, dataType,
+                                   nXYPairs, srchX, fVals, dFx, X_ht, NULL, xyBounds,
                                    errorCode, &errMsg);
     if (errMsg) *errorCode = eos_SetCustomErrorMsg(th, *errorCode, "%s", errMsg);
     EOS_FREE(errMsg);
@@ -257,15 +275,15 @@ void _eos_InterpolateRecordType1 (void *ptr, EOS_INTEGER th,
     if (cat == EOS_CATEGORY3) {
       ind = EOS_EOS_TABLE_TYPE_REF2(dataType);
       subTableNum2 = EOS_TYPE_TO_SUB_TAB_NUM (ind);
-      _eos_GetDataRecordType1 (me, &X, &Y, &F2, &coldCurve, subTableNum2);
-      _eos_GetDataRecordType1 (me, &X, &Y, &F2, &coldCurve, subTableNum);
+      _eos_GetDataRecordType1 (me, &X, &Y, &F2, &coldCurve, &F_ht, subTableNum2);
+      _eos_GetDataRecordType1 (me, &X, &Y, &F2, &coldCurve, &F_ht, subTableNum);
     }
     else
       F2 = &null_val;
 
     /* interpolate */
-    _eos_InterpolateRecordType_1D (nY, Y, *F, *F2, th, dataType,
-                                   nXYPairs, srchX, fVals, dFx, xyBounds,
+    _eos_InterpolateRecordType_1D (EOS_FALSE, nY, Y, *F, *F2, th, dataType,
+                                   nXYPairs, srchX, fVals, dFx, Y_ht, NULL, xyBounds,
                                    errorCode, &errMsg);
     if (errMsg) *errorCode = eos_SetCustomErrorMsg(th, *errorCode, "%s", errMsg);
     EOS_FREE(errMsg);
@@ -291,8 +309,8 @@ void _eos_InterpolateRecordType1 (void *ptr, EOS_INTEGER th,
           /* interpolate cold curve at the given density */
           newColdCurve = (EOS_REAL *) malloc (nXYPairs * sizeof (EOS_REAL));
           newColdCurve_dFdx = (EOS_REAL *) malloc (nXYPairs * sizeof (EOS_REAL));
-          _eos_InterpolateRecordType_1D (nX, X, coldCurve, NULL, th, dataType,
-                                         nXYPairs, xVals, newColdCurve, newColdCurve_dFdx,
+          _eos_InterpolateRecordType_1D (EOS_FALSE, nX, X, coldCurve, NULL, th, dataType,
+                                         nXYPairs, xVals, newColdCurve, newColdCurve_dFdx, X_ht, NULL,
                                          xyBounds, &err, &errMsg);
           if (errMsg) err = eos_SetCustomErrorMsg(th, err, "%s", errMsg);
           EOS_FREE(errMsg);
@@ -306,7 +324,6 @@ void _eos_InterpolateRecordType1 (void *ptr, EOS_INTEGER th,
         }
 
       }
-#ifdef __REMOVE_COLD_CURVE_FROM_SELECTED_INVERSIONS__
       else {
 
         /* Selectively apply the required transformation of independent data values, so that yVals[]
@@ -320,18 +337,19 @@ void _eos_InterpolateRecordType1 (void *ptr, EOS_INTEGER th,
             newColdCurve_dFdx = (EOS_REAL *) malloc (nXYPairs * sizeof (EOS_REAL));
             yVals = (EOS_REAL*)malloc(nXYPairs*sizeof(EOS_REAL));
 
+	    
             if (doRational)
-              eos_RationalInterpolate (nXYPairs, extrapolationBounds->ny, 1, 0,
+              eos_RationalInterpolate (EOS_FALSE, nXYPairs, extrapolationBounds->ny, 1, 0,
                                        extrapolationBounds->x, extrapolationBounds->yLo,
-                                       xVals, newColdCurve, newColdCurve_dFdx, 'y', xyBounds, &err);
+                                       xVals, newColdCurve, newColdCurve_dFdx, 'y', NULL, xyBounds, &err);
             else if (eos_getBoolOptionFromTableHandle (th, EOS_LINEAR, &err)) /* interpolate linearly instead */
               eos_LineInterpolate (EOS_TRUE, nXYPairs, extrapolationBounds->ny, 1, 0,
                                    extrapolationBounds->x, &(extrapolationBounds->yLo),
-                                   xVals, newColdCurve, newColdCurve_dFdx, 'y', xyBounds, &err);
-
-            for (i = 0; i < nXYPairs; i++) yVals[i] = srchY[i] - newColdCurve[i];
-
-#ifdef __NORMALIZE_WITH_X_FOR_SELECTED_INVERSIONS__
+                                   xVals, newColdCurve, newColdCurve_dFdx, 'y', NULL, xyBounds, &err);
+	  
+            for (i = 0; i < nXYPairs; i++) {
+	      yVals[i] = srchY[i] - newColdCurve[i];
+	    }
             switch (EOS_TYPE_TO_INDEP_VAR2(dataType)) {
               /* special cases for pressure tables that include cold curve data */
             case EOS_Pt:
@@ -343,7 +361,6 @@ void _eos_InterpolateRecordType1 (void *ptr, EOS_INTEGER th,
               // do nothing
               break;
             }
-#endif
           }
           break;
         default:
@@ -352,12 +369,11 @@ void _eos_InterpolateRecordType1 (void *ptr, EOS_INTEGER th,
         }
 
       }
-#endif
 
       if (doRational) {
 
         eos_RationalInterpolateXY (nXYPairs, xVals, yVals, dFx, dFy, fVals,
-                                   nX, nY, X, Y, F, coldCurve, nGhostData, xyBounds, &err);
+                                   nX, nY, X, Y, F, coldCurve, nGhostData, X_ht, Y_ht, xyBounds, &err);
 
       }
       else if (eos_getBoolOptionFromTableHandle (th, EOS_LINEAR, &err)) { /* interpolate linearly instead */
@@ -367,9 +383,9 @@ void _eos_InterpolateRecordType1 (void *ptr, EOS_INTEGER th,
         ixv = (EOS_INTEGER *) malloc (nXYPairs * sizeof (EOS_INTEGER));       /* indexes of X near which X points are */
         xyBounds2 = (EOS_INTEGER *) malloc (nXYPairs * sizeof (EOS_INTEGER)); /* xy-bounds for y */
 
-        _eos_srchdf (nXYPairs, yVals, 1, nY - 1, Y, 1, iyv,
+        _eos_srchdf (nXYPairs, yVals, 1, nY, Y, 1, iyv, Y_ht,
                      xyBounds, errorCode);
-        _eos_srchdf (nXYPairs, xVals, 1, nX - 1, X, 1, ixv,
+        _eos_srchdf (nXYPairs, xVals, 1, nX, X, 1, ixv, X_ht,
                      xyBounds2, errorCode);
         _eos_DumpIndicesToFile (fn, mode, nXYPairs, X, Y, F,
                                 ixv, iyv, NULL, NULL);
@@ -378,8 +394,8 @@ void _eos_InterpolateRecordType1 (void *ptr, EOS_INTEGER th,
         EOS_FREE (iyv);
 #endif
         eos_BiLineInterpolate (eos_getBoolOptionFromTableHandle (th, EOS_DISCONTINUOUS_DERIVATIVES, &err),
-                               nXYPairs, nX, nY, X, Y, F, xVals, yVals, fVals,
-                               dFx, dFy, xyBounds, &err);
+                               nXYPairs, nX, nY, X, Y, F, nGhostData, xVals, yVals, fVals,
+                               dFx, dFy, X_ht, Y_ht, xyBounds, &err);
       }
       if (eos_GetStandardErrorCodeFromCustomErrorCode(err) != EOS_OK)
         *errorCode = err;
@@ -409,10 +425,10 @@ void _eos_InterpolateRecordType1 (void *ptr, EOS_INTEGER th,
 
           if (dFx0)
             dFx0[i] = dFx[i];
-          if (dFy0)
+          if (dFy0){
             dFy0[i] = dFy[i];
-
-          if (xyBounds[i])
+	  }
+          if (!skipExtrap && xyBounds[i])
             *errorCode = EOS_INTERP_EXTRAPOLATED;
 
         }
@@ -426,9 +442,8 @@ void _eos_InterpolateRecordType1 (void *ptr, EOS_INTEGER th,
       else {
 
         /* check extrapolation to override incorrect values returned by interpolator wrappers above */
-        me->eosData.CheckExtrap(ptr, th, dataType, nXYPairs, xVals, yVals, xyBounds, &err);
+        if (!skipExtrap) me->eosData.CheckExtrap(ptr, th, dataType, nXYPairs, xVals, yVals, xyBounds, &err);
 
-#ifdef __REMOVE_COLD_CURVE_FROM_SELECTED_INVERSIONS__
         /* appropriately correct derivatives for cat. 2 or 4 results */
         switch (EOS_CATEGORY(dataType)) {
         case EOS_CATEGORY2:          /* indicates the table is inverted with respect to 2nd independent variable */
@@ -439,13 +454,11 @@ void _eos_InterpolateRecordType1 (void *ptr, EOS_INTEGER th,
               /* special cases for tables that include cold curve data */
             case EOS_Pt:
             case EOS_Pic:
-#ifdef __NORMALIZE_WITH_X_FOR_SELECTED_INVERSIONS__
               for (i = 0; i < nXYPairs; i++) {
                 dFx[i] = dFx[i] - (dFy[i] / xVals[i]) * (yVals[i] + newColdCurve_dFdx[i]); /* correct dFx */
                 dFy[i] = dFy[i] / FLOOR(xVals[i]);                                         /* correct dFy */
               }
               break;
-#endif
             case EOS_Ut:
             case EOS_Uic:
             case EOS_At:
@@ -464,7 +477,6 @@ void _eos_InterpolateRecordType1 (void *ptr, EOS_INTEGER th,
           break;
         }
 
-#endif
       }
 #ifdef _EOS_DUMP_INDEX_DATA_INTERPOLATE_RECORDTYPE1
       mode = appendMode; /* reset mode for indices output file */
@@ -483,14 +495,14 @@ void _eos_InterpolateRecordType1 (void *ptr, EOS_INTEGER th,
       if (doRational) {
         err = EOS_OK;
         eos_InverseRationalInterpolateFY (nXYPairs, yVals, xVals, dFx, dFy,
-                                          fVals, nX, nY, X, Y, F, coldCurve, nGhostData,
+                                          fVals, nX, nY, X, Y, F, coldCurve, nGhostData, X_ht, Y_ht, F_ht,
                                           xyBounds, &err, &errMsg);
         if (errMsg) err = eos_SetCustomErrorMsg(th, err, "%s", errMsg);
         EOS_FREE(errMsg);
       }
       else if (eos_getBoolOptionFromTableHandle (th, EOS_LINEAR, &err)) /* interpolate linearly instead */
         eos_InverseBilinearInterpolateFY (nXYPairs, yVals, xVals, dFx, dFy,
-                                          fVals, nX, nY, X, Y, F, coldCurve,
+                                          fVals, nX, nY, X, Y, F, coldCurve, Y_ht, F_ht, nGhostData,
                                           xyBounds, &err);
       if (eos_GetStandardErrorCodeFromCustomErrorCode(err) != EOS_OK)
         *errorCode = err;
@@ -516,13 +528,13 @@ void _eos_InterpolateRecordType1 (void *ptr, EOS_INTEGER th,
            This is a temporary kludge to prevent SIGFPE. */
         /* dFy in this case needs to be transformed to dx/dy */
         if (EOS_CHECK_PRODUCT(dFy[i], -ONE/dFx[i]))
-          dFy[i] =(-ONE/dFx[i])*dFy[i];
+          dFy[i] =(-ONE/FLOOR(dFx[i]))*dFy[i];
         else
-          dFy[i] = SIGN(dFy[i]) * SIGN(-ONE/dFx[i]) *
-            (EOS_IS_PRODUCT_GT_MAX(dFy[i], -ONE/dFx[i]) ? DBL_MAX : DBL_MIN);
+          dFy[i] = SIGN(dFy[i]) * SIGN(-ONE/FLOOR(dFx[i])) *
+            (EOS_IS_PRODUCT_GT_MAX(dFy[i], -ONE/FLOOR(dFx[i])) ? DBL_MAX : DBL_MIN);
 
         /*calculate dx/dF*/
-        dFx[i] = ONE / dFx[i];
+        dFx[i] = ONE / FLOOR(dFx[i]);
 
         /* compute EOS_V_PtT differently: v = 1/r, dv/dP = -(1/r^2) * dr/dP = -1/xVals[i]^2 * dFx[i] */
         if (dataType == EOS_V_PtT) {
@@ -559,13 +571,13 @@ void _eos_InterpolateRecordType1 (void *ptr, EOS_INTEGER th,
           (EOS_REAL *) malloc (nXYPairs * sizeof (EOS_REAL));
 
         if (doRational)
-          eos_RationalInterpolate (nXYPairs, nX, 1, 0, X, coldCurve, xVals,
-                                   newColdCurve, newColdCurve_dFdx, 'y',
+          eos_RationalInterpolate (EOS_FALSE, nXYPairs, nX, 1, 0, X, coldCurve, xVals,
+                                   newColdCurve, newColdCurve_dFdx, 'y', NULL,
                                    xyBounds, &err);
         else if (eos_getBoolOptionFromTableHandle (th, EOS_LINEAR, &err)) { /* interpolate linearly instead */
           eos_LineInterpolate (eos_getBoolOptionFromTableHandle (th, EOS_DISCONTINUOUS_DERIVATIVES, &err),
                                nXYPairs, nX, 1, 0, X, &coldCurve,
-                               xVals, newColdCurve, newColdCurve_dFdx, 'y',
+                               xVals, newColdCurve, newColdCurve_dFdx, 'y', X_ht,
                                xyBounds, &err);
           for (i = 0; i < nXYPairs; i++) {
             if (xyBounds[i] == EOS_UNDEFINED) {
@@ -589,14 +601,14 @@ void _eos_InterpolateRecordType1 (void *ptr, EOS_INTEGER th,
       if (doRational) {
         err = EOS_OK;
         eos_InverseRationalInterpolateXF (nXYPairs, xVals, newFVals, dFx, dFy,
-                                          fVals, nX, nY, X, Y, F, nGhostData, xyBounds, dataType, invertAtSetup,
+                                          fVals, nX, nY, X, Y, F, X_ht, Y_ht, F_ht, nGhostData, xyBounds, dataType, invertAtSetup,
                                           &err, &errMsg);
         if (errMsg) err = eos_SetCustomErrorMsg(th, err, "%s", errMsg);
-        EOS_FREE(errMsg);
+         EOS_FREE(errMsg);
       }
       else if (eos_getBoolOptionFromTableHandle (th, EOS_LINEAR, &err)) /* interpolate linearly instead */
         eos_InverseBilinearInterpolateXF (nXYPairs, xVals, newFVals, dFx, dFy,
-                                          fVals, nX, nY, X, Y, F, xyBounds,
+                                          fVals, nX, nY, X, Y, F, X_ht, F_ht, nGhostData, xyBounds,
                                           &err);
       if (eos_GetStandardErrorCodeFromCustomErrorCode(err) != EOS_OK)
         *errorCode = err;
@@ -623,7 +635,7 @@ void _eos_InterpolateRecordType1 (void *ptr, EOS_INTEGER th,
           dFy0[i] = dFy[i];
 
         /* transform dFy from dF/dy to dy/dF */
-        dFy[i] = ONE/dFy[i];
+        dFy[i] = ONE/FLOOR(dFy[i]);
 
         if ((tableNum == 301 || tableNum == 303) && newColdCurve) {
           if (dFx0)
@@ -729,7 +741,8 @@ void _eos_InterpolateRecordType1 (void *ptr, EOS_INTEGER th,
             (EOS_IS_PRODUCT_GT_MAX(dYx[i], dFy[i]) ? DBL_MAX : DBL_MIN);
 
         /* combine extrapolation codes */
-        xyBounds[i] = _eos_CombineExtrapErrors (xyBounds[i], xyBounds2[i]);
+	
+	if (!skipExtrap)  xyBounds[i] = _eos_CombineExtrapErrors (xyBounds[i], xyBounds2[i]);
       }
       EOS_FREE (dUy);
       EOS_FREE (uVals);
@@ -796,7 +809,7 @@ void _eos_InterpolateRecordType1 (void *ptr, EOS_INTEGER th,
             (EOS_IS_PRODUCT_GT_MAX(dXy[i], dFx[i]) ? DBL_MAX : DBL_MIN);
 
         /* combine extrapolation codes */
-        xyBounds[i] = _eos_CombineExtrapErrors (xyBounds[i], xyBounds2[i]);
+        if (!skipExtrap) xyBounds[i] = _eos_CombineExtrapErrors (xyBounds[i], xyBounds2[i]);
       }
       EOS_FREE (dUx);
       EOS_FREE (uVals);
@@ -814,7 +827,7 @@ void _eos_InterpolateRecordType1 (void *ptr, EOS_INTEGER th,
   }
 
   /* Finally, check for extrapolation using the most current and correct method */
-  if (me->eosData.CheckExtrap)
+  if (!skipExtrap && me->eosData.CheckExtrap)
     me->eosData.CheckExtrap(ptr, th, dataType, nXYPairs, xVals, yVals, xyBounds, errorCode);
 
   if (srchX != xVals)
@@ -824,9 +837,289 @@ void _eos_InterpolateRecordType1 (void *ptr, EOS_INTEGER th,
   EOS_FREE (newColdCurve);
   EOS_FREE (newColdCurve_dFdx);
 
-  /* free arrays, which were allocated within _eos_CreateGhostData above */
-  *errorCode = _eos_DestroyGhostData (&nGhostData, &xtbls, &ytbls, &ftbls, NULL);
+ if ((!me->isInvertedAtSetup || me->useTmpGhostData) && ! me->nGhostData && (nX > 1) && (nY > 1)) {
+    /* free arrays, which were allocated within _eos_CreateGhostData above */
+    *errorCode = _eos_DestroyGhostData (&nGhostData, &xtbls, &ytbls, &ftbls, NULL);
+  }
+}
 
+/***********************************************************************/
+/*!
+ * \brief Function _eos_InterpolateRecordType1GpuLimited (helping function for
+ *  eos_InterpolateRecordType1().
+ *
+ * \param[out]   fVals[nXYPairs] - EOS_REAL : array of the interpolated data corresponding
+ *                                            to x and y.
+ * \param[out]   dFx[nXYPairs]   - EOS_REAL : array of the interpolated partial derivatives
+ *                                            of fVals with respect to x.
+ * \param[out]   dFy[nXYPairs]   - EOS_REAL : array of the interpolated partial derivatives
+ *                                            of fVals with respect to y.
+ * \param[out]   dFCx[nXYPairs]  - EOS_REAL : optional array of the interpolated partial
+ *                                            derivatives of cold curve with respect to x.
+ * \param[out]   dFx0[nXYPairs]  - EOS_REAL : optional array of the interpolated partial
+ *                                            derivatives of cat 0 F wrt x (for inverse
+ *                                            functions mostly).
+ * \param[out]   dFy0[nXYPairs]  - EOS_REAL : optional array of the interpolated partial
+ *                                            derivatives of cat 0 F wrt y (for inverse
+ *                                            functions mostly).
+ * \param[out]   *xyBounds       - EOS_INTEGER : interpolation errors per xy-pair
+ * \param[out]   errorCode       - EOS_INTEGER : error code of the interpolation:
+ *                                               EOS_INTERP_EXTRAPOLATED or EOS_OK
+ * \param[in]    *ptr            - void : data object pointer;
+ *                                        internally recast to eos_RecordType1*
+ * \param[in]    th              - EOS_INTEGER : table Handle
+ * \param[in]    varOrder        - EOS_INTEGER : order of variables
+ * \param[in]    dataType        - EOS_INTEGER : dataType
+ * \param[in]    nXYPairs        - EOS_INTEGER : total number of pairs of independent variable values provided for interpolation.
+ * \param[in]    srchX[nXYPairs] - EOS_REAL : array of the primary independent variable values to use during interpolation.
+ * \param[in]    srchY[nXYPairs] - EOS_REAL : array of the secondary independent variable values to use during interpolation.
+ *
+ * \return none
+ *
+ ***********************************************************************/
+
+void _eos_InterpolateRecordType1GpuLimited (void *ptr, EOS_INTEGER th,
+                                  EOS_INTEGER varOrder, EOS_INTEGER dataType,
+                                  EOS_INTEGER nXYPairs, EOS_REAL *srchX,
+                                  EOS_REAL *srchY, EOS_REAL *fVals,
+                                  EOS_REAL *dFx, EOS_REAL *dFy,
+                                  EOS_REAL *dFCx, EOS_REAL *dFx0,
+                                  EOS_REAL *dFy0, EOS_INTEGER *xyBounds,
+                                  EOS_INTEGER *errorCode)
+{
+
+#ifdef DO_OFFLOAD
+  EOS_INTEGER i, ind, doRational = 0,
+    err, nX, nY, cat, subTableNum, subTableNum2, tableNum;
+  EOS_REAL *X, *Y, **F, **F2,
+    *coldCurve, *newColdCurve = NULL, *newColdCurve_dFdx = NULL, *null_val = NULL;
+
+  eos_Data *eosData;
+  eos_RecordType1 *me;
+  EOS_BOOLEAN isPtSmooth = EOS_FALSE, useCustomInterp = EOS_FALSE;
+  EOS_INTEGER nGhostData=0;
+
+  EOS_BOOLEAN optVal = EOS_FALSE;
+  EOS_CHAR *errMsg = NULL;
+  eos_ExtrapolationBoundsEosDataMap *extrapolationBounds = eos_GetExtrapolationBoundsEosDataMap(&gEosDataMap, th);
+
+  doRational = eos_getBoolOptionFromTableHandle (th, EOS_RATIONAL, &err);
+
+  *errorCode = EOS_OK;
+  if (nXYPairs <= 0) {
+    *errorCode = EOS_FAILED;
+    return;
+  }
+
+  err = EOS_OK;
+  eosData = (eos_Data *) ptr;
+  me = (eos_RecordType1 *) eosData;
+
+  if (me->isInvertedAtSetup) {
+    cat = EOS_INVERTED_AT_SETUP;
+    subTableNum = 1;
+  }
+  else {
+    cat = EOS_CATEGORY (dataType);
+    subTableNum = EOS_TYPE_TO_SUB_TAB_NUM (dataType);
+  }
+  /* get the size of the data */
+  eos_GetSizeRecordType1 (me, &nX, &nY);
+  /* note, when the data is log 10 - cold curve, we need to take the indep. var into this form when inverting */
+  tableNum = EOS_TYPE_TO_TAB_NUM (dataType);
+
+  if (me->eosData.eos_IsRequiredDataLoaded && ! me->eosData.eos_IsRequiredDataLoaded(me, dataType)) {
+    *errorCode = EOS_DATA_TYPE_NOT_FOUND;
+    ((eos_ErrorHandler *) me)->HandleError (me, th, *errorCode);
+    return;
+  }
+  
+  /* Fetch data array pointers */
+  _eos_GetDataRecordType1 (me, &X, &Y, &F, &coldCurve, NULL, subTableNum);
+
+    /* Use custom interpolator if EOS_PT_SMOOTHING is set for th */
+  isPtSmooth =
+    eos_getBoolOptionFromTableHandle (th, EOS_PT_SMOOTHING, errorCode);
+  if (eos_GetStandardErrorCodeFromCustomErrorCode(*errorCode) != EOS_OK) {
+    ((eos_ErrorHandler *) me)->HandleError (me, th, *errorCode);
+    return;
+  }
+  useCustomInterp =
+    eos_getBoolOptionFromTableHandle (th, EOS_USE_CUSTOM_INTERP, errorCode);
+  if (eos_GetStandardErrorCodeFromCustomErrorCode(*errorCode) != EOS_OK) {
+    ((eos_ErrorHandler *) me)->HandleError (me, th, *errorCode);
+    return;
+  }
+  if (isPtSmooth && useCustomInterp &&
+		  (dataType == EOS_V_PtT || dataType == EOS_Ut_PtT)) {
+	  assert(EOS_FALSE && "This setup is not ported to GPU");
+  }
+
+  /* get EOS_DISABLE_GHOST_NODES setting for this handle */
+  eos_GetOptionEosInterpolation (&gEosInterpolation, th, EOS_DISABLE_GHOST_NODES, &optVal, errorCode);
+  if (eos_GetStandardErrorCodeFromCustomErrorCode(*errorCode) != EOS_OK)  {
+    ((eos_ErrorHandler *) me)->HandleError (me, th, *errorCode);
+    return;
+  }
+
+  if ((!me->isInvertedAtSetup || me->useTmpGhostData) && ! me->nGhostData && (nX > 1) && (nY > 1)) {
+	  assert(EOS_FALSE && "This setup is not ported to GPU");
+  }
+  else {
+    nGhostData = me->nGhostData;
+  }
+
+  /* Check if 1-D interpolation is required by dataType */
+  if (EOS_TYPE_TO_INDEP_VAR1 (dataType) != EOS_NullTable
+      && EOS_TYPE_TO_INDEP_VAR2 (dataType) == EOS_NullTable) {
+    /* fetch cross-reference data if category 3 interpolation */
+    if (cat == EOS_CATEGORY3) {
+      ind = EOS_EOS_TABLE_TYPE_REF2(dataType);
+      subTableNum2 = EOS_TYPE_TO_SUB_TAB_NUM (ind);
+      _eos_GetDataRecordType1 (me, &X, &Y, &F2, &coldCurve, NULL, subTableNum2);
+    }
+    else
+      F2 = &null_val;
+
+    /* interpolate */
+    _eos_InterpolateRecordType_1D_GpuLimited (EOS_FALSE, nX, X, F, F2, th, dataType,
+                                   nXYPairs, srchX, fVals, dFx, xyBounds,
+                                   errorCode, &errMsg);
+    return;
+  }
+  else if (EOS_TYPE_TO_INDEP_VAR1 (dataType) == EOS_NullTable
+           && EOS_TYPE_TO_INDEP_VAR2 (dataType) != EOS_NullTable) {
+	  assert(EOS_FALSE && "This setup is not ported to GPU");
+  }
+
+
+  EOS_BOOLEAN isValidCat = (cat==EOS_CATEGORY0 || cat==EOS_INVERTED_AT_SETUP);
+  assert(isValidCat && "This setup is not ported to GPU");
+
+  /*unsupported cats: EOS_CATEGORY1/2/4/3  when !inverted-at-setup*/
+
+  /* Selectively apply the required transformation of independent data values, so that yVals[]
+   * contains data that is compatible with the data stored in the me->T[] array. */
+
+  EOS_BOOLEAN isValidCat2 = (EOS_CATEGORY(dataType)==EOS_CATEGORY2 || EOS_CATEGORY(dataType)==EOS_CATEGORY4);
+ 
+  
+ 
+  assert(isValidCat2 && "This setup not ported to GPU");
+
+  int h = omp_get_initial_device();
+  int t = omp_get_default_device();
+  newColdCurve = omp_target_alloc(nXYPairs * sizeof (EOS_REAL),t);
+  newColdCurve_dFdx =omp_target_alloc(nXYPairs * sizeof (EOS_REAL),t);
+ 
+  int yind = gEosDataMap.yinds[th];
+  int xarrind = gEosDataMap.xarrinds[th];
+  EOS_REAL* eb_yLo=&gEosDataMap.eb_yLo[yind];
+  EOS_REAL* eb_x=&gEosDataMap.eb_x[xarrind];      
+ 
+  
+
+  if (doRational)
+    eos_RationalInterpolate (EOS_FALSE, nXYPairs, extrapolationBounds->ny, 1, 0,
+			     eb_x, eb_yLo,
+			     srchX, newColdCurve, newColdCurve_dFdx, 'y', NULL, xyBounds, &err);
+  
+  else if (eos_getBoolOptionFromTableHandle (th, EOS_LINEAR, &err)) /* interpolate linearly instead */{
+    EOS_BOOLEAN useOrigDeriv=EOS_TRUE;
+
+    if (useOrigDeriv) 
+      _eos_LineInterpolateWithOriginalDerivatives(nXYPairs, extrapolationBounds->ny, 1, 0,eb_x, 
+						  eb_yLo,srchX, newColdCurve, 
+						  newColdCurve_dFdx, 'y', NULL, xyBounds, &err);
+    else 
+      _eos_LineInterpolateWithContinuousDerivatives(nXYPairs, extrapolationBounds->ny, 1, 0,eb_x, 
+						  eb_yLo,srchX, newColdCurve, 
+						  newColdCurve_dFdx, 'y', NULL, xyBounds, &err);
+  }
+
+#pragma omp target is_device_ptr(srchY, newColdCurve)
+  {
+    #pragma omp teams distribute parallel for
+    for (i = 0; i < nXYPairs; i++) {
+      srchY[i] = srchY[i] - newColdCurve[i];
+   }
+  }
+
+  if (EOS_TYPE_TO_INDEP_VAR2(dataType)==EOS_Pt || EOS_TYPE_TO_INDEP_VAR2(dataType)==EOS_Pic) {
+    /* special cases for pressure tables that include cold curve data */
+#pragma omp target is_device_ptr(srchY, srchX)
+    {
+#pragma omp teams distribute parallel for
+      for (i = 0; i < nXYPairs; i++) srchY[i] /= FLOOR(srchX[i]);
+    }
+  }
+
+  if (doRational)
+    eos_RationalInterpolateXY (nXYPairs, srchX, srchY, dFx, dFy, fVals,
+			       nX, nY, X, Y, F, coldCurve, nGhostData, NULL, NULL, xyBounds, &err);
+  else if (eos_getBoolOptionFromTableHandle (th, EOS_LINEAR, &err))  {/* interpolate linearly instead */
+    if (eos_getBoolOptionFromTableHandle (th, EOS_DISCONTINUOUS_DERIVATIVES, &err))
+      _eos_BiLineInterpolateWithOriginalDerivatives(nXYPairs, nX, nY, X, Y, F, nGhostData, srchX, srchY, fVals,
+			  dFx, dFy, NULL, NULL, xyBounds, &err);
+    else
+      _eos_BiLineInterpolateWithContinuousDerivatives(nXYPairs, nX, nY, X, Y, F, nGhostData, srchX, srchY, fVals,
+			  dFx, dFy, NULL, NULL, xyBounds, &err);
+  }
+  if (cat != EOS_INVERTED_AT_SETUP) {
+
+    if ((tableNum == 301 || tableNum == 303) && newColdCurve) {
+      assert(EOS_FALSE && "This setup is not ported to GPU");
+    } else {
+#pragma omp target is_device_ptr(dFCx,dFx0,dFy0)
+      {
+#pragma omp teams distribute parallel for
+	for (i = 0; i < nXYPairs; i++) {
+	  if (dFCx) dFCx[i] = ZERO;
+	  if (dFx0) dFx0[i] = dFx[i];
+	  if (dFy0) dFy0[i] = dFy[i];
+	}
+      }
+    }
+  } else {
+
+    /* appropriately correct derivatives for cat. 2 or 4 results */
+    if (EOS_TYPE_TO_INDEP_VAR2(dataType)==EOS_Pt || EOS_TYPE_TO_INDEP_VAR2(dataType)==EOS_Pic){
+#pragma omp target is_device_ptr(dFx,dFy,srchX,srchY,newColdCurve_dFdx)
+      {
+#pragma omp teams distribute parallel for
+	for (i = 0; i < nXYPairs; i++) {
+	  dFx[i] = dFx[i] - (dFy[i] / srchX[i]) * (srchY[i] + newColdCurve_dFdx[i]); /* correct dFx */
+	  dFy[i] = dFy[i] / FLOOR(srchX[i]);                                         /* correct dFy */
+	}
+      }
+    } else if (EOS_TYPE_TO_INDEP_VAR2(dataType)==EOS_Ut || EOS_TYPE_TO_INDEP_VAR2(dataType)==EOS_Uic ||
+	       EOS_TYPE_TO_INDEP_VAR2(dataType)==EOS_At || EOS_TYPE_TO_INDEP_VAR2(dataType)==EOS_Aic) {
+#pragma omp target is_device_ptr(dFx,dFy, newColdCurve_dFdx)
+      {
+#pragma omp teams distribute parallel for
+	for (i = 0; i < nXYPairs; i++) dFx[i] = dFx[i] - dFy[i] * newColdCurve_dFdx[i]; /* correct dFx */
+      }
+    }
+  }
+
+
+  if (EOS_TYPE_TO_INDEP_VAR2(dataType)==EOS_Pt || EOS_TYPE_TO_INDEP_VAR2(dataType)==EOS_Pic) {
+              /* revert special cases for pressure tables that include cold curve data */
+#pragma omp target is_device_ptr(srchY, srchX)
+    {
+#pragma omp teams distribute parallel for
+	  for (i = 0; i < nXYPairs; i++) srchY[i] *= FLOOR(srchX[i]);
+    }
+  }
+#pragma omp target is_device_ptr(srchY, newColdCurve)
+  {
+#pragma omp teams distribute parallel for
+    for (i = 0; i < nXYPairs; i++) srchY[i] = srchY[i] + newColdCurve[i];
+  }
+  omp_target_free(newColdCurve, t);
+  omp_target_free(newColdCurve_dFdx, t);
+
+#endif
 }
 
 EOS_INTEGER _eos_EvaluateTransformedTaylorFor_Pt_DT (eos_Taylor *T, EOS_REAL x, EOS_REAL y, EOS_REAL *f, EOS_REAL *dFx, EOS_REAL *dFy)
@@ -962,8 +1255,9 @@ void _eos_EvaluateTaylorRecordType1 (void *ptr, EOS_INTEGER th, EOS_INTEGER data
       inverse_srchX[i] = 1.0 / MAX(srchX[i], TINY_D);
     }
 
-    _eos_srchdf (nXYPairs, inverse_srchX, 1, me->M, me->TX, 1, ix_low, xyBounds, &err);
-    _eos_srchdf (nXYPairs, srchY, 1, me->N, me->TY, 1, iy_low, xyBounds, &err);
+    // TODO: Should the n args be +1?
+    _eos_srchdf (nXYPairs, inverse_srchX, 1, me->M + 1, me->TX, 1, ix_low, NULL, xyBounds, &err);
+    _eos_srchdf (nXYPairs, srchY, 1, me->N + 1, me->TY, 1, iy_low, NULL, xyBounds, &err);
 
     /* evaluate */
     for (i=0;i<nXYPairs;i++) {
@@ -984,7 +1278,8 @@ void _eos_EvaluateTaylorRecordType1 (void *ptr, EOS_INTEGER th, EOS_INTEGER data
       T = (me->Taylor_objects[subTableNum])[(me->M - 1) + (me->N - 1) * me->M];
       xMax = T->tx_interval[1];
       yMax = T->ty_interval[1];
-      *errorCode = _eos_CheckExtrapEosInterpolationGeneric(xMin, xMax, yMin, yMax, nXYPairs, srchX, srchY, xyBounds);
+      EOS_BOOLEAN skipExtrap = _EOS_GET_SKIPEXTRAPCHECK_EOSDATAMAP;;
+      if (!skipExtrap) *errorCode = _eos_CheckExtrapEosInterpolationGeneric(xMin, xMax, yMin, yMax, nXYPairs, srchX, srchY, xyBounds);
     }
     else {
       *errorCode = err;
@@ -1004,11 +1299,7 @@ void _eos_EvaluateTaylorRecordType1 (void *ptr, EOS_INTEGER th, EOS_INTEGER data
 
 /***********************************************************************/
 /*!
- * \brief Function eos_InterpolateRecordType1 (helping function for
- *  eos_InterpolateEosInterpolation().
- *  The eos_InterpolateEosInterpolation() routine provides interpolated values
- *  for a single material using a table handle associated with Data stored
- *  within an data table.
+ * \brief Function eos_InterpolateRecordType1 (helping function for eos_InterpolateEosInterpolation().
  *
  * \param[out]   fVals[nXYPairs] - EOS_REAL : array of the interpolated data corresponding
  *                                 to x and y. 
@@ -1070,10 +1361,27 @@ void eos_InterpolateRecordType1 (void *ptr, EOS_INTEGER th, EOS_INTEGER dataType
       eos_SetOptionEosInterpolation (&gEosInterpolation, th, EOS_DISABLE_GHOST_NODES, EOS_TRUE, errorCode);
 
     /* Interpolate tabular data */
-    _eos_InterpolateRecordType1 (ptr, th, me->eosData.varOrder, dataType, nXYPairs, srchX,
+
+
+
+#ifdef DO_OFFLOAD
+    EOS_BOOLEAN  useGpuData=_EOS_GET_USEGPUDATA_EOSDATAMAP;
+
+    if (!useGpuData)
+#endif /* DO_OFFLOAD */
+    {
+      _eos_InterpolateRecordType1 (ptr, th, me->eosData.varOrder, dataType, nXYPairs, srchX,
 				 srchY, fVals, dFx, dFy, NULL, NULL, NULL,
 				 xyBounds, errorCode);
-
+    }
+#ifdef DO_OFFLOAD
+    else
+    {
+      _eos_InterpolateRecordType1GpuLimited (ptr, th, me->eosData.varOrder, dataType, nXYPairs, srchX,
+				 srchY, fVals, dFx, dFy, NULL, NULL, NULL,
+				 xyBounds, errorCode);
+    }
+#endif /* DO_OFFLOAD */
   }
 }
 
@@ -1130,7 +1438,11 @@ void eos_CheckExtrapRecordType1_using_extrapolationBounds (void *ptr, EOS_INTEGE
   EOS_REAL *xVals, *yVals;
   eos_RecordType1 *me;
   EOS_BOOLEAN isOneDimDatatype = EOS_FALSE, doRational;
-  eos_ExtrapolationBoundsEosDataMap *extrapolationBounds = eos_GetExtrapolationBoundsEosDataMap(&gEosDataMap, th);;
+  eos_ExtrapolationBoundsEosDataMap *extrapolationBounds = eos_GetExtrapolationBoundsEosDataMap(&gEosDataMap, th);
+
+  EOS_BOOLEAN skipExtrap = _EOS_GET_SKIPEXTRAPCHECK_EOSDATAMAP;;
+  if (skipExtrap) 
+    return;
 
   *errorCode = EOS_OK;
 
@@ -1158,7 +1470,7 @@ void eos_CheckExtrapRecordType1_using_extrapolationBounds (void *ptr, EOS_INTEGE
     return;
   }
 
-  if (me->eosData.numSubtablesLoaded < subTableNum) {
+  if (me->eosData.eos_IsRequiredDataLoaded && ! me->eosData.eos_IsRequiredDataLoaded(me, dataType)) {
     *errorCode = EOS_DATA_TYPE_NOT_FOUND;
     ((eos_ErrorHandler *) me)->HandleError (me, th, *errorCode);
     return;
@@ -1167,7 +1479,7 @@ void eos_CheckExtrapRecordType1_using_extrapolationBounds (void *ptr, EOS_INTEGE
   /* is the datatpe a function with one independent variable? */
   isOneDimDatatype = EOS_IS_ONE_DIM_TYPE (dataType);
 
-  _eos_GetDataRecordType1 (me, &X, &Y, &F, &coldCurve, subTableNum);
+  _eos_GetDataRecordType1 (me, &X, &Y, &F, &coldCurve, NULL, subTableNum);
 
   xVals = srchX;
   yVals = (! isOneDimDatatype) ? srchY : NULL;
@@ -1221,20 +1533,20 @@ void eos_CheckExtrapRecordType1_using_extrapolationBounds (void *ptr, EOS_INTEGE
         doRational = eos_getBoolOptionFromTableHandle (th, EOS_RATIONAL, &err);
 
         if (doRational) {
-          eos_RationalInterpolate (nXYPairs, extrapolationBounds->nx, 1, 0,
+          eos_RationalInterpolate (EOS_FALSE, nXYPairs, extrapolationBounds->nx, 1, 0,
                                    extrapolationBounds->x, extrapolationBounds->xLo,
-                                   yVals, fValsLo, NULL, 'y', xyBounds, &err);
-          eos_RationalInterpolate (nXYPairs, extrapolationBounds->nx, 1, 0,
+                                   yVals, fValsLo, NULL, 'y', NULL, xyBounds, &err);
+          eos_RationalInterpolate (EOS_FALSE, nXYPairs, extrapolationBounds->nx, 1, 0,
                                    extrapolationBounds->x, extrapolationBounds->xHi,
-                                   yVals, fValsHi, NULL, 'y', xyBounds, &err);
+                                   yVals, fValsHi, NULL, 'y', NULL, xyBounds, &err);
         }
         else {
           eos_LineInterpolate (EOS_TRUE, nXYPairs, extrapolationBounds->nx, 1, 0,
                                extrapolationBounds->x, &(extrapolationBounds->xLo),
-                               yVals, fValsLo, NULL, 'y', xyBounds, &err);
+                               yVals, fValsLo, NULL, 'y', NULL, xyBounds, &err);
           eos_LineInterpolate (EOS_TRUE, nXYPairs, extrapolationBounds->nx, 1, 0,
                                extrapolationBounds->x, &(extrapolationBounds->xHi),
-                               yVals, fValsHi, NULL, 'y', xyBounds, &err);
+                               yVals, fValsHi, NULL, 'y', NULL, xyBounds, &err);
         }
 
         for (i = 0; i < nXYPairs; i++) {
@@ -1299,20 +1611,20 @@ void eos_CheckExtrapRecordType1_using_extrapolationBounds (void *ptr, EOS_INTEGE
         doRational = eos_getBoolOptionFromTableHandle (th, EOS_RATIONAL, &err);
 
         if (doRational) {
-          eos_RationalInterpolate (nXYPairs, extrapolationBounds->ny, 1, 0,
+          eos_RationalInterpolate (EOS_FALSE, nXYPairs, extrapolationBounds->ny, 1, 0,
                                    extrapolationBounds->x, extrapolationBounds->yLo,
-                                   xVals, fValsLo, NULL, 'y', xyBounds, &err);
-          eos_RationalInterpolate (nXYPairs, extrapolationBounds->ny, 1, 0,
+                                   xVals, fValsLo, NULL, 'y', NULL, xyBounds, &err);
+          eos_RationalInterpolate (EOS_FALSE, nXYPairs, extrapolationBounds->ny, 1, 0,
                                    extrapolationBounds->x, extrapolationBounds->yHi,
-                                   xVals, fValsHi, NULL, 'y', xyBounds, &err);
+                                   xVals, fValsHi, NULL, 'y', NULL, xyBounds, &err);
         }
         else {
           eos_LineInterpolate (EOS_TRUE, nXYPairs, extrapolationBounds->ny, 1, 0,
                                extrapolationBounds->x, &(extrapolationBounds->yLo),
-                               xVals, fValsLo, NULL, 'y', xyBounds, &err);
+                               xVals, fValsLo, NULL, 'y', NULL, xyBounds, &err);
           eos_LineInterpolate (EOS_TRUE, nXYPairs, extrapolationBounds->ny, 1, 0,
                                extrapolationBounds->x, &(extrapolationBounds->yHi),
-                               xVals, fValsHi, NULL, 'y', xyBounds, &err);
+                               xVals, fValsHi, NULL, 'y', NULL, xyBounds, &err);
         }
 
         for (i = 0; i < nXYPairs; i++) {

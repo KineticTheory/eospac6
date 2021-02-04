@@ -8,7 +8,7 @@
  ********************************************************************/
 
 /*! \file
- * \ingroup tests
+ * \ingroup C tests
  * \brief Test the data loaded for 301 tables to verify the following:
  *           -# pressure and internal energy tables are loaded properly
  *           -# free energy and entropy tables are loaded properly

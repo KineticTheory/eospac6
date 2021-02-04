@@ -29,11 +29,7 @@
 
 /***********************************************************************/
 /*!
- * \brief Function eos_InterpolateRecordType1 (helping function for
- *  eos_InterpolateEosInterpolation().
- *  The eos_InterpolateEosInterpolation() routine provides interpolated values
- *  for a single material using a table handle associated with Data stored
- *  within an data table.
+ * \brief Function eos_InterpolateRecordType1 (helping function for eos_InterpolateEosInterpolation().
  *
  * \param[out]   fVals[nXYPairs] - EOS_REAL : array of the interpolated data corresponding
  *                                 to x. 
@@ -67,6 +63,7 @@ void eos_InterpolateRecordType2 (void *ptr, EOS_INTEGER th, EOS_INTEGER dataType
   eos_Data *eosData;
   eos_RecordType2 *me;
   EOS_CHAR *errMsg = NULL;
+  eos_HashTable1D* F_ht = NULL;
 
   *errorCode = EOS_OK;
   eosData = (eos_Data *) ptr;
@@ -83,15 +80,15 @@ void eos_InterpolateRecordType2 (void *ptr, EOS_INTEGER th, EOS_INTEGER dataType
     return;
   }
 
-  _eos_GetDataRecordType2 (me, &X, &F, subTableNum);
+  _eos_GetDataRecordType2 (me, &X, &F, &F_ht, subTableNum);
   if (cat == EOS_CATEGORY3)
-    _eos_GetDataRecordType2 (me, &X, &F2,
+    _eos_GetDataRecordType2 (me, &X, &F2, NULL,
                              EOS_TYPE_TO_SUB_TAB_NUM (EOS_EOS_TABLE_TYPE_REF2
                                                       (dataType)));
 
   /* Perform 1-D interpolation required by dataType */
-  _eos_InterpolateRecordType_1D (nX, X, F, F2, th, dataType,
-                                 nXYPairs, srchX, fVals, dFx, xyBounds,
+  _eos_InterpolateRecordType_1D (EOS_TRUE, nX, X, F, F2, th, dataType,
+                                 nXYPairs, srchX, fVals, dFx, me->T_ht, F_ht, xyBounds,
                                  errorCode, &errMsg);
   if (errMsg) *errorCode = eos_SetCustomErrorMsg(th, *errorCode, "%s", errMsg);
   EOS_FREE(errMsg);
@@ -134,6 +131,10 @@ void eos_CheckExtrapRecordType2 (void *ptr, EOS_INTEGER th, EOS_INTEGER dataType
   EOS_REAL *xVals;
   eos_RecordType2 *me;
 
+  EOS_BOOLEAN skipExtrap = _EOS_GET_SKIPEXTRAPCHECK_EOSDATAMAP;;
+  if (skipExtrap) 
+    return;
+
   *errorCode = EOS_OK;
   eosData = (eos_Data *) ptr;
   me = (eos_RecordType2 *) eosData;
@@ -149,7 +150,7 @@ void eos_CheckExtrapRecordType2 (void *ptr, EOS_INTEGER th, EOS_INTEGER dataType
     return;
   }
 
-  _eos_GetDataRecordType2 (me, &X, &F, subTableNum);
+  _eos_GetDataRecordType2 (me, &X, &F, NULL, subTableNum);
 
   xVals = srchX;
   /* srchY is unused here and should be NULL */

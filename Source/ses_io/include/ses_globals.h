@@ -283,7 +283,7 @@ extern int             _number_registered_formats;
 extern ses_boolean     (**pt2_registered_functions)(FILE* pFILE);
 extern ses_boolean     (*pt2_isit_my_format)(FILE* pFILE);
 
-int            _number_open_handles;
+extern int            _number_open_handles;
 
 
 

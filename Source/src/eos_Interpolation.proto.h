@@ -11,171 +11,170 @@
 
 #define EOS_INTERPOLATION_PROTOTYPES
 
+#include "eos_HashTable.h"
+
 /*
  * ------------------------------------------------------
  * 31 PUBLIC FUNCTION PROTOTYPES FOR eos_Interpolation.c
  * ------------------------------------------------------
  */
 void _eos_CheckExtrapCategory0 (EOS_INTEGER nGhostData, EOS_INTEGER nxtbl, EOS_INTEGER nytbl, EOS_REAL * xtbls,
-				EOS_REAL * ytbls, EOS_INTEGER nsrch, EOS_REAL * xvals, EOS_REAL * yvals,
-				EOS_INTEGER * xyBounds, EOS_INTEGER * err);
+                                EOS_REAL * ytbls, EOS_INTEGER nsrch, EOS_REAL * xvals, EOS_REAL * yvals,
+                                EOS_INTEGER * xyBounds, EOS_INTEGER * err);
 void _eos_CheckExtrapCategory1 (EOS_BOOLEAN use_discontinuous_derivatives,
-				EOS_INTEGER nGhostData, EOS_INTEGER * iy_low, EOS_BOOLEAN doRational,
-				EOS_INTEGER nxtbl, EOS_INTEGER nytbl, EOS_REAL * xtbls, EOS_REAL * ytbls,
-				EOS_REAL ** ftbls, EOS_INTEGER nsrch, EOS_REAL * fvals, EOS_REAL * yvals,
-				EOS_INTEGER * xyBounds, EOS_INTEGER * err);
+                                EOS_INTEGER nGhostData, EOS_INTEGER * iy_low, EOS_BOOLEAN doRational,
+                                EOS_INTEGER nxtbl, EOS_INTEGER nytbl, EOS_REAL * xtbls, EOS_REAL * ytbls,
+                                EOS_REAL ** ftbls, EOS_INTEGER nsrch, EOS_REAL * fvals, EOS_REAL * yvals,
+                                eos_HashTable1D *xtbls_ht, eos_HashTable1D* ytbls_ht,
+                                EOS_INTEGER * xyBounds, EOS_INTEGER * err);
 void _eos_CheckExtrapCategory2 (EOS_BOOLEAN use_discontinuous_derivatives,
-				EOS_INTEGER nGhostData, EOS_INTEGER * ix_low, EOS_BOOLEAN doRational,
-				EOS_INTEGER nxtbl, EOS_INTEGER nytbl, EOS_REAL * xtbls, EOS_REAL * ytbls,
-				EOS_REAL ** ftbls, EOS_INTEGER nsrch, EOS_REAL * xvals, EOS_REAL * fvals,
-				EOS_INTEGER * xyBounds, EOS_INTEGER * err);
+                                EOS_INTEGER nGhostData, EOS_INTEGER * ix_low, EOS_BOOLEAN doRational,
+                                EOS_INTEGER nxtbl, EOS_INTEGER nytbl, EOS_REAL * xtbls, EOS_REAL * ytbls,
+                                EOS_REAL ** ftbls, EOS_INTEGER nsrch, EOS_REAL * xvals, EOS_REAL * fvals,
+                                eos_HashTable1D* xtbls_ht, eos_HashTable1D* ytbls_ht,
+                                EOS_INTEGER * xyBounds, EOS_INTEGER * err);
 EOS_INTEGER _eos_CheckExtrapEosInterpolationGeneric (EOS_REAL xMin, EOS_REAL xMax, EOS_REAL yMin, EOS_REAL yMax,
-						     EOS_INTEGER nsrch, EOS_REAL * xvals, EOS_REAL * yvals,
-						     EOS_INTEGER * xyBounds);
+                                                     EOS_INTEGER nsrch, EOS_REAL * xvals, EOS_REAL * yvals,
+                                                     EOS_INTEGER * xyBounds);
 EOS_INTEGER _eos_CombineExtrapErrors (EOS_INTEGER xErr_in, EOS_INTEGER yErr_in);
 void _eos_DumpIndicesToFile (char *fn, char *mode, EOS_INTEGER nsrch, EOS_REAL * xtbls, EOS_REAL * ytbls,
-			     EOS_REAL ** ftbls, EOS_INTEGER * ix_low, EOS_INTEGER * iy_low, EOS_REAL * lowerbound,
-			     EOS_REAL * upperbound);
-void _eos_srchdf (EOS_INTEGER my, EOS_REAL y[], EOS_INTEGER iy, EOS_INTEGER n, EOS_REAL x[], EOS_INTEGER ix,
-		  EOS_INTEGER j[], EOS_INTEGER * xyBounds, EOS_INTEGER * errorCode);
+                             EOS_REAL ** ftbls, EOS_INTEGER * ix_low, EOS_INTEGER * iy_low, EOS_REAL * lowerbound,
+                             EOS_REAL * upperbound);
+void _eos_srchdf (EOS_INTEGER my, EOS_REAL* y, EOS_INTEGER iy, EOS_INTEGER n, EOS_REAL* x, EOS_INTEGER ix,
+                  EOS_INTEGER* j, eos_HashTable1D* x_ht, EOS_INTEGER * xyBounds, EOS_INTEGER * errorCode);
 void eos_BiLineInterpolate (EOS_BOOLEAN use_discontinuous_derivatives, EOS_INTEGER numZones, EOS_INTEGER numXVals,
-			    EOS_INTEGER numYVals, EOS_REAL * XValues, EOS_REAL * YValues, EOS_REAL ** FValues,
-			    EOS_REAL * searchXVals, EOS_REAL * searchYVals, EOS_REAL * searchFVals,
-			    EOS_REAL * searchDFx, EOS_REAL * searchDFy, EOS_INTEGER * xyBounds, EOS_INTEGER * err);
+                            EOS_INTEGER numYVals, EOS_REAL * XValues, EOS_REAL * YValues, EOS_REAL ** FValues, EOS_INTEGER nGhostData,
+                            EOS_REAL * searchXVals, EOS_REAL * searchYVals, EOS_REAL * searchFVals,
+                            EOS_REAL * searchDFx, EOS_REAL * searchDFy, eos_HashTable1D* XValues_ht, eos_HashTable1D* YValues_ht,
+                            EOS_INTEGER * xyBounds, EOS_INTEGER * err);
 void eos_BiRationalInterpolate (EOS_INTEGER numZones, EOS_INTEGER numXVals, EOS_INTEGER numYVals,
-				EOS_REAL * XValues, EOS_REAL * YValues, EOS_REAL ** FValues, EOS_INTEGER * ixv,
-				EOS_INTEGER * iyv, EOS_REAL * searchXVals, EOS_REAL * searchYVals,
-				EOS_REAL * searchFVals, EOS_REAL * searchDFx, EOS_REAL * searchDFy,
-				EOS_INTEGER * xyBounds, EOS_INTEGER * err);
+                                EOS_REAL * XValues, EOS_REAL * YValues, EOS_REAL ** FValues, EOS_INTEGER * ixv,
+                                EOS_INTEGER * iyv, EOS_REAL * searchXVals, EOS_REAL * searchYVals,
+                                EOS_REAL * searchFVals, EOS_REAL * searchDFx, EOS_REAL * searchDFy,
+                                EOS_INTEGER * xyBounds, EOS_INTEGER * err);
 void eos_CheckExtrapEosInterpolation (eos_Interpolation * me, EOS_INTEGER tableHandle, EOS_INTEGER nXYPairs,
-				      EOS_REAL * srchX, EOS_REAL * srchY, EOS_INTEGER * xyBounds,
-				      EOS_INTEGER * errorCode);
+                                      EOS_REAL * srchX, EOS_REAL * srchY, EOS_INTEGER * xyBounds,
+                                      EOS_INTEGER * errorCode);
 void eos_ConstructEosInterpolation (eos_Interpolation * me);
 void eos_DestroyEosInterpolation (eos_Interpolation * me);
 void eos_ExpandGridInterpolate (EOS_INTEGER nAdd, EOS_INTEGER nX, EOS_INTEGER nY, EOS_REAL * X, EOS_REAL * Y,
-				EOS_REAL ** F, EOS_REAL * newX, EOS_REAL * newY, EOS_REAL ** newF,
-				EOS_INTEGER * err);
+                                EOS_REAL ** F, EOS_REAL * newX, EOS_REAL * newY, EOS_REAL ** newF,
+                                EOS_INTEGER * err);
 void eos_GetMachinePrecision (EOS_REAL * eps, EOS_REAL * epsneg);
 void eos_GetOptionEosInterpolation (eos_Interpolation * me, EOS_INTEGER tableHandle, EOS_INTEGER optionFlag,
-				    EOS_BOOLEAN * optionVal, EOS_INTEGER * err);
+                                    EOS_BOOLEAN * optionVal, EOS_INTEGER * err);
 void eos_InterpolateEosInterpolation (eos_Interpolation * me, EOS_INTEGER tableHandle, EOS_INTEGER nXYPairs,
-				      EOS_REAL * xVals, EOS_REAL * yVals, EOS_REAL * fVals, EOS_REAL * dFx,
-				      EOS_REAL * dFy, EOS_INTEGER * dt, EOS_INTEGER * errorCode);
+                                      EOS_REAL * xVals, EOS_REAL * yVals, EOS_REAL * fVals, EOS_REAL * dFx,
+                                      EOS_REAL * dFy, EOS_INTEGER * dt, EOS_INTEGER * errorCode);
 void eos_InverseBilinearInterpolateFY (EOS_INTEGER numZones, EOS_REAL * searchY, EOS_REAL * searchF,
-				       EOS_REAL * searchDFx, EOS_REAL * searchDFy, EOS_REAL * resultX,
-				       EOS_INTEGER numXVals, EOS_INTEGER numYVals, EOS_REAL * X, EOS_REAL * Y,
-				       EOS_REAL ** F, EOS_REAL * coldCurve, EOS_INTEGER * xyBounds,
-				       EOS_INTEGER * err);
+                                       EOS_REAL * searchDFx, EOS_REAL * searchDFy, EOS_REAL * resultX,
+                                       EOS_INTEGER numXVals, EOS_INTEGER numYVals, EOS_REAL * X, EOS_REAL * Y,
+                                       EOS_REAL ** F, EOS_REAL * coldCurve, eos_HashTable1D *Y_ht, eos_HashTable2D *F_ht, EOS_INTEGER nGhostData,
+                                       EOS_INTEGER * xyBounds, EOS_INTEGER * err);
 void eos_InverseBilinearInterpolateXF (EOS_INTEGER numZones, EOS_REAL * searchX, EOS_REAL * searchF,
-				       EOS_REAL * searchDFx, EOS_REAL * searchDFy, EOS_REAL * resultY,
-				       EOS_INTEGER numXVals, EOS_INTEGER numYVals, EOS_REAL * X, EOS_REAL * Y,
-				       EOS_REAL ** F, EOS_INTEGER * xyBounds, EOS_INTEGER * err);
+                                       EOS_REAL * searchDFx, EOS_REAL * searchDFy, EOS_REAL * resultY,
+                                       EOS_INTEGER numXVals, EOS_INTEGER numYVals, EOS_REAL * X, EOS_REAL * Y,
+                                       EOS_REAL ** F, eos_HashTable1D* X_ht, eos_HashTable2D* F_ht, EOS_INTEGER nGhostData, EOS_INTEGER * xyBounds, EOS_INTEGER * err);
 void eos_InverseInterpolateF (EOS_INTEGER nsrch, EOS_REAL * searchF, EOS_REAL * searchDFx, EOS_REAL * resultX,
-			      EOS_INTEGER nxtbl, EOS_REAL * X, EOS_REAL * F, EOS_INTEGER * xyBounds,
-			      EOS_INTEGER * err);
-void eos_InverseRationalInterpolateF (EOS_BOOLEAN iterative, EOS_INTEGER nsrch, EOS_REAL * searchF, EOS_REAL * searchDFx,
-				      EOS_REAL * resultX, EOS_INTEGER nxtbl, EOS_REAL * xtbls, EOS_REAL * ftbls,
-				      EOS_INTEGER * xyBounds, EOS_INTEGER * err);
+                              EOS_INTEGER nxtbl, EOS_REAL * X, EOS_REAL * F, eos_HashTable1D* F_ht, EOS_INTEGER * xyBounds,
+                              EOS_INTEGER * err);
+void eos_InverseRationalInterpolateF (EOS_BOOLEAN _create_ghostdata,
+                                      EOS_INTEGER nsrch, EOS_REAL * searchF, EOS_REAL * searchDFx,
+                                      EOS_REAL * resultX, EOS_INTEGER nxtbl, EOS_REAL * xtbls, EOS_REAL * ftbls, eos_HashTable1D* ftbls_ht,
+                                      EOS_INTEGER * xyBounds, EOS_INTEGER * err);
 void eos_InverseRationalInterpolateFY (EOS_INTEGER nsrch, EOS_REAL * searchY, EOS_REAL * searchF,
-				       EOS_REAL * searchDFx, EOS_REAL * searchDFy, EOS_REAL * resultX,
-				       EOS_INTEGER nxtbl, EOS_INTEGER nytbl, EOS_REAL * xtbls, EOS_REAL * ytbls,
-				       EOS_REAL ** ftbls, EOS_REAL * coldCurve, EOS_INTEGER nGhostData,
-				       EOS_INTEGER * xyBounds, EOS_INTEGER * err, EOS_CHAR ** errMsg);
+                                       EOS_REAL * searchDFx, EOS_REAL * searchDFy, EOS_REAL * resultX,
+                                       EOS_INTEGER nxtbl, EOS_INTEGER nytbl, EOS_REAL * xtbls, EOS_REAL * ytbls,
+                                       EOS_REAL ** ftbls, EOS_REAL * coldCurve, EOS_INTEGER nGhostData, eos_HashTable1D *xtbls_ht, eos_HashTable1D *ytbls_ht, eos_HashTable2D *ftbls_ht, 
+                                       EOS_INTEGER * xyBounds, EOS_INTEGER * err, EOS_CHAR ** errMsg);
 void eos_InverseRationalInterpolateXF (EOS_INTEGER nsrch, EOS_REAL * searchX, EOS_REAL * searchF,
-				       EOS_REAL * searchDFx, EOS_REAL * searchDFy, EOS_REAL * resultY,
-				       EOS_INTEGER nxtbl, EOS_INTEGER nytbl, EOS_REAL * xtbls, EOS_REAL * ytbls,
-				       EOS_REAL ** ftbls, EOS_INTEGER nGhostData, EOS_INTEGER * xyBounds,
-				       EOS_INTEGER dataType, EOS_BOOLEAN invertAtSetup, EOS_INTEGER * err, EOS_CHAR ** errMsg);
+                                       EOS_REAL * searchDFx, EOS_REAL * searchDFy, EOS_REAL * resultY,
+                                       EOS_INTEGER nxtbl, EOS_INTEGER nytbl, EOS_REAL * xtbls, EOS_REAL * ytbls,
+                                       EOS_REAL ** ftbls, eos_HashTable1D *X_ht, eos_HashTable1D *Y_ht, eos_HashTable2D *F_ht, EOS_INTEGER nGhostData, EOS_INTEGER * xyBounds,
+                                       EOS_INTEGER dataType, EOS_BOOLEAN invertAtSetup, EOS_INTEGER * err, EOS_CHAR ** errMsg);
 void eos_LineInterpolate (EOS_BOOLEAN use_discontinuous_derivatives, EOS_INTEGER numZones, EOS_INTEGER numXVals,
-			  EOS_INTEGER numYVals, EOS_INTEGER fixedIndex, EOS_REAL * YValues, EOS_REAL ** FVals,
-			  EOS_REAL * searchYVals, EOS_REAL * searchFVals, EOS_REAL * searchDFy, EOS_CHAR fixedVar,
-			  EOS_INTEGER * xyBounds, EOS_INTEGER * err);
+                          EOS_INTEGER numYVals, EOS_INTEGER fixedIndex, EOS_REAL * YValues, EOS_REAL ** FVals,
+                          EOS_REAL * searchYVals, EOS_REAL * searchFVals, EOS_REAL * searchDFy, EOS_CHAR fixedVar,
+                          eos_HashTable1D* YValues_ht, EOS_INTEGER * xyBounds, EOS_INTEGER * err);
 void eos_MixInterpolate (eos_Interpolation * me, EOS_INTEGER nTables, EOS_INTEGER * tableHandles,
-			 EOS_INTEGER nXYPairs, EOS_REAL * concInMix, EOS_REAL * xVals, EOS_REAL * yVals,
-			 EOS_REAL * fVals, EOS_REAL * dFx, EOS_REAL * dFy, EOS_INTEGER * errorCode);
-void eos_RationalInterpolate (EOS_INTEGER nsrch, EOS_INTEGER nxtbl, EOS_INTEGER nytbl, EOS_INTEGER ixtbl,
-			      EOS_REAL * ytbls, EOS_REAL * ftbls, EOS_REAL * yvalv, EOS_REAL * fvalv,
-			      EOS_REAL * dfvalv, char fixedVar, EOS_INTEGER * xyBounds, EOS_INTEGER * err);
-void eos_RationalInterpolate4 (EOS_REAL srchX, EOS_REAL * X, EOS_REAL * F, EOS_REAL * fvalv, EOS_REAL * dfvalv);
+                         EOS_INTEGER nXYPairs, EOS_REAL * concInMix, EOS_REAL * xVals, EOS_REAL * yVals,
+                         EOS_REAL * fVals, EOS_REAL * dFx, EOS_REAL * dFy, EOS_INTEGER * errorCode);
+void eos_RationalInterpolate (EOS_BOOLEAN _create_ghostdata, EOS_INTEGER nsrch, EOS_INTEGER nxtbl, EOS_INTEGER nytbl, EOS_INTEGER ixtbl,
+                              EOS_REAL * ytbls, EOS_REAL * ftbls, EOS_REAL * yvalv, EOS_REAL * fvalv,
+                              EOS_REAL * dfvalv, char fixedVar, eos_HashTable1D *ytbls_ht, EOS_INTEGER * xyBounds, EOS_INTEGER * err);
+void eos_RationalInterpolate4 (EOS_BOOLEAN _create_ghostdata, EOS_REAL * srchX, EOS_REAL * X, EOS_REAL * F, EOS_REAL * fvalv, EOS_REAL * dfvalv, EOS_INTEGER ninds);
 void eos_RationalInterpolateXY (EOS_INTEGER nsrch, EOS_REAL * searchX, EOS_REAL * searchY, EOS_REAL * searchDFx,
-				EOS_REAL * searchDFy, EOS_REAL * resultF, EOS_INTEGER nxtbl, EOS_INTEGER nytbl,
-				EOS_REAL * xtbls, EOS_REAL * ytbls, EOS_REAL ** ftbls, EOS_REAL * coldCurve,
-				EOS_INTEGER nGhostData, EOS_INTEGER * xyBounds, EOS_INTEGER * err);
+                                EOS_REAL * searchDFy, EOS_REAL * resultF, EOS_INTEGER nxtbl, EOS_INTEGER nytbl,
+                                EOS_REAL * xtbls, EOS_REAL * ytbls, EOS_REAL ** ftbls, EOS_REAL * coldCurve,
+                                EOS_INTEGER nGhostData, eos_HashTable1D* xtbls_ht, eos_HashTable1D* ytbls_ht, EOS_INTEGER * xyBounds, EOS_INTEGER * err);
 void eos_ResetOptionEosInterpolation (eos_Interpolation * me, EOS_INTEGER tableHandle, EOS_INTEGER optionFlag,
-				      EOS_INTEGER * err);
+                                      EOS_INTEGER * err);
 void eos_SetNumberOfHandles (eos_Interpolation * me, EOS_INTEGER nHandles, EOS_INTEGER * err);
 void eos_SetOptionEosInterpolation (eos_Interpolation * me, EOS_INTEGER tableHandle, EOS_INTEGER optionFlag,
-				    EOS_BOOLEAN optionVal, EOS_INTEGER * err);
+                                    EOS_BOOLEAN optionVal, EOS_INTEGER * err);
 EOS_INTEGER eos_TrapezoidIntegrate (EOS_INTEGER ilower, EOS_INTEGER iupper, EOS_REAL x, EOS_INTEGER nData,
-				    EOS_REAL * fData, EOS_REAL * xData, EOS_INTEGER nInsert, EOS_REAL * result,
-				    EOS_BOOLEAN keepTempArays);
+                                    EOS_REAL * fData, EOS_REAL * xData, EOS_INTEGER nInsert, EOS_REAL * result,
+                                    EOS_BOOLEAN keepTempArays);
 
 #ifdef _EOS_INTERPOLATION_INTERNAL_PROTOTYPES
 
 /*
  * -------------------------------------------------------
- * 17 PRIVATE FUNCTION PROTOTYPES FOR eos_Interpolation.c
+ * 13 PRIVATE FUNCTION PROTOTYPES FOR eos_Interpolation.c
  * -------------------------------------------------------
  */
 void _eos_BiLineInterpolateWithContinuousDerivatives (EOS_INTEGER numZones, EOS_INTEGER numXVals,
-						      EOS_INTEGER numYVals, EOS_REAL * XValues, EOS_REAL * YValues,
-						      EOS_REAL ** FValues, EOS_REAL * searchXVals,
-						      EOS_REAL * searchYVals, EOS_REAL * searchFVals,
-						      EOS_REAL * searchDFx, EOS_REAL * searchDFy,
-						      EOS_INTEGER * xyBounds, EOS_INTEGER * err);
+                                                      EOS_INTEGER numYVals, EOS_REAL * XValues, EOS_REAL * YValues,
+                                                      EOS_REAL ** FValues, EOS_INTEGER nGhostData, EOS_REAL * searchXVals,
+                                                      EOS_REAL * searchYVals, EOS_REAL * searchFVals,
+                                                      EOS_REAL * searchDFx, EOS_REAL * searchDFy, eos_HashTable1D* XValues_ht, eos_HashTable1D* YValues_ht,
+                                                      EOS_INTEGER * xyBounds, EOS_INTEGER * err);
 void _eos_BiLineInterpolateWithOriginalDerivatives (EOS_INTEGER numZones, EOS_INTEGER numXVals,
-						    EOS_INTEGER numYVals, EOS_REAL * XValues, EOS_REAL * YValues,
-						    EOS_REAL ** FValues, EOS_REAL * searchXVals,
-						    EOS_REAL * searchYVals, EOS_REAL * searchFVals,
-						    EOS_REAL * searchDFx, EOS_REAL * searchDFy,
-						    EOS_INTEGER * xyBounds, EOS_INTEGER * err);
+                                                    EOS_INTEGER numYVals, EOS_REAL * XValues, EOS_REAL * YValues,
+                                                    EOS_REAL ** FValues, EOS_INTEGER nGhostData, EOS_REAL * searchXVals,
+                                                    EOS_REAL * searchYVals, EOS_REAL * searchFVals,
+                                                    EOS_REAL * searchDFx, EOS_REAL * searchDFy, eos_HashTable1D* XValues_ht, eos_HashTable1D* YValues_ht,
+                                                    EOS_INTEGER * xyBounds, EOS_INTEGER * err);
 void _eos_LineInterpolateWithContinuousDerivatives (EOS_INTEGER numZones, EOS_INTEGER numXVals,
-						    EOS_INTEGER numYVals, EOS_INTEGER fixedIndex,
-						    EOS_REAL * YValues, EOS_REAL ** FVals, EOS_REAL * searchYVals,
-						    EOS_REAL * searchFVals, EOS_REAL * searchDFy,
-						    EOS_CHAR fixedVar, EOS_INTEGER * xyBounds, EOS_INTEGER * err);
+                                                    EOS_INTEGER numYVals, EOS_INTEGER fixedIndex,
+                                                    EOS_REAL * YValues, EOS_REAL ** FVals, EOS_REAL * searchYVals,
+                                                    EOS_REAL * searchFVals, EOS_REAL * searchDFy,
+                                                    EOS_CHAR fixedVar, eos_HashTable1D* YValues_ht, EOS_INTEGER * xyBounds, EOS_INTEGER * err);
 void _eos_LineInterpolateWithOriginalDerivatives (EOS_INTEGER numZones, EOS_INTEGER numXVals, EOS_INTEGER numYVals,
-						  EOS_INTEGER fixedIndex, EOS_REAL * YValues, EOS_REAL ** FVals,
-						  EOS_REAL * searchYVals, EOS_REAL * searchFVals,
-						  EOS_REAL * searchDFy, EOS_CHAR fixedVar, EOS_INTEGER * xyBounds,
-						  EOS_INTEGER * err);
+                                                  EOS_INTEGER fixedIndex, EOS_REAL * YValues, EOS_REAL ** FVals,
+                                                  EOS_REAL * searchYVals, EOS_REAL * searchFVals,
+                                                  EOS_REAL * searchDFy, EOS_CHAR fixedVar, eos_HashTable1D* YValues_ht, EOS_INTEGER * xyBounds,
+                                                  EOS_INTEGER * err);
 void _eos_SplitExtrapErrors (EOS_INTEGER xyBounds, EOS_INTEGER * xErr, EOS_INTEGER * yErr);
-int _eos_hunt (EOS_REAL x[], EOS_INTEGER n, EOS_INTEGER ix, EOS_REAL y, EOS_INTEGER jlower, EOS_INTEGER * err);
-int _eos_locate (EOS_REAL x[], EOS_INTEGER jlower, EOS_INTEGER jupper, EOS_INTEGER ix, EOS_REAL y, EOS_INTEGER * l,
-		 EOS_INTEGER * u);
-void eos_BilinearDerivatives (EOS_REAL * XValues, EOS_REAL * YValues, EOS_REAL ** FValues, EOS_INTEGER numXVals,
-			      EOS_INTEGER numYVals, EOS_INTEGER ixv, EOS_INTEGER iyv, EOS_REAL searchXVal,
-			      EOS_REAL searchYVal, EOS_REAL * derivs);
-void eos_GenerateXSubgrid (EOS_INTEGER nVals, EOS_INTEGER * ix, EOS_REAL srchY, EOS_INTEGER iy, EOS_INTEGER nX,
-			   EOS_INTEGER nY, EOS_REAL * Y, EOS_REAL ** F, EOS_REAL * srchF, EOS_REAL * dFy,
-			   EOS_INTEGER * err);
-void eos_GenerateYSubgrid (EOS_INTEGER nVals, EOS_INTEGER * iy, EOS_REAL srchX, EOS_INTEGER ix, EOS_INTEGER nX,
-			   EOS_INTEGER nY, EOS_REAL * X, EOS_REAL ** F, EOS_REAL * srchF, EOS_REAL * dFx,
-			   EOS_INTEGER * err);
+void eos_BilinearDerivatives(EOS_REAL *XValues, EOS_REAL *YValues, EOS_REAL **FValues, 
+			     EOS_INTEGER numXVals, EOS_INTEGER numYVals,
+                             EOS_INTEGER* ixv, EOS_INTEGER min_ixv, EOS_INTEGER* iyv, 
+			     EOS_INTEGER min_iyv, EOS_INTEGER numZones, EOS_REAL* searchXVal, 
+			     EOS_REAL* searchYVal, EOS_REAL *searchDFx, EOS_REAL *searchDFy);
 void eos_HandleErrorEosInterpolation (void *ptr, EOS_INTEGER errorCode);
 void eos_MixEnergyInterpolation (eos_Interpolation * me, EOS_INTEGER nTables, EOS_INTEGER * tableHandles,
-				 EOS_INTEGER nXYPairs, EOS_REAL * concInMix, EOS_REAL * xVals, EOS_REAL * yVals,
-				 EOS_REAL * fVals, EOS_REAL * dFx, EOS_REAL * dFy, EOS_INTEGER * errorCode);
+                                 EOS_INTEGER nXYPairs, EOS_REAL * concInMix, EOS_REAL * xVals, EOS_REAL * yVals,
+                                 EOS_REAL * fVals, EOS_REAL * dFx, EOS_REAL * dFy, EOS_INTEGER * errorCode);
 void eos_MixPressureInterpolation (eos_Interpolation * me, EOS_INTEGER nTables, EOS_INTEGER * tableHandles,
-				   EOS_INTEGER nXYPairs, EOS_REAL * concInMix, EOS_REAL * xVals, EOS_REAL * yVals,
-				   EOS_REAL * fVals, EOS_REAL * dFx, EOS_REAL * dFy, EOS_INTEGER * errorCode);
+                                   EOS_INTEGER nXYPairs, EOS_REAL * concInMix, EOS_REAL * xVals, EOS_REAL * yVals,
+                                   EOS_REAL * fVals, EOS_REAL * dFx, EOS_REAL * dFy, EOS_INTEGER * errorCode);
 void eos_MixTempInterpolation (eos_Interpolation * me, EOS_INTEGER nTables, EOS_INTEGER * tableHandles,
-			       EOS_INTEGER nXYPairs, EOS_REAL * concInMix, EOS_REAL * xVals, EOS_REAL * yVals,
-			       EOS_REAL * fVals, EOS_REAL * dFx, EOS_REAL * dFy, EOS_INTEGER * errorCode);
+                               EOS_INTEGER nXYPairs, EOS_REAL * concInMix, EOS_REAL * xVals, EOS_REAL * yVals,
+                               EOS_REAL * fVals, EOS_REAL * dFx, EOS_REAL * dFy, EOS_INTEGER * errorCode);
 void eos_SearchIndices_XF (EOS_REAL X0[], EOS_REAL F0[], EOS_INTEGER npoints, EOS_REAL X[], EOS_REAL Y[],
-			   EOS_REAL ** F, EOS_INTEGER nx, EOS_INTEGER ny, EOS_INTEGER nGhostData,
-			   EOS_INTEGER Low_IY0[], EOS_INTEGER Low_IX0[], EOS_INTEGER High_IY0[],
-			   EOS_INTEGER High_IX0[], EOS_REAL * coldCurve, EOS_INTEGER adjustF,
-			   EOS_INTEGER * xyBounds, EOS_INTEGER * err);
+                           EOS_REAL ** F, EOS_INTEGER nx, EOS_INTEGER ny, EOS_INTEGER nGhostData,
+                           EOS_INTEGER Low_IY0[], EOS_INTEGER Low_IX0[], EOS_INTEGER High_IY0[],
+                           EOS_INTEGER High_IX0[], EOS_REAL * coldCurve, eos_HashTable1D* X_ht, eos_HashTable2D* F_ht,EOS_INTEGER adjustF,
+                           EOS_INTEGER * xyBounds, EOS_INTEGER * err);
 void eos_SearchIndices_YF (EOS_REAL Y0[], EOS_REAL F0[], EOS_INTEGER npoints, EOS_REAL X[], EOS_REAL Y[],
-			   EOS_REAL ** F, EOS_INTEGER nx, EOS_INTEGER ny, EOS_INTEGER nGhostData,
-			   EOS_INTEGER Low_IY0[], EOS_INTEGER Low_IX0[], EOS_INTEGER High_IY0[],
-			   EOS_INTEGER High_IX0[], EOS_REAL * coldCurve, EOS_INTEGER adjustF,
-			   EOS_INTEGER * xyBounds, EOS_INTEGER * err);
-void eos_bilinearInterpolate (EOS_REAL x1, EOS_REAL x2, EOS_REAL y1, EOS_REAL y2, EOS_REAL ftg11, EOS_REAL ftg21,
-			      EOS_REAL ftg12, EOS_REAL ftg22, EOS_REAL searchX, EOS_REAL searchY,
-			      EOS_REAL * searchF);
-
+                           EOS_REAL ** F, EOS_INTEGER nx, EOS_INTEGER ny, EOS_INTEGER nGhostData,
+                           EOS_INTEGER Low_IY0[], EOS_INTEGER Low_IX0[], EOS_INTEGER High_IY0[],
+                           EOS_INTEGER High_IX0[], EOS_REAL * coldCurve, eos_HashTable1D* Y_ht, eos_HashTable2D* F_ht,EOS_INTEGER adjustF,
+                           EOS_INTEGER * xyBounds, EOS_INTEGER * err);
+void eos_bilinearInterpolate(EOS_REAL* XValues, EOS_INTEGER numXVals, EOS_REAL* YValues, 
+			     EOS_INTEGER numYVals, EOS_REAL** FValues, EOS_INTEGER* ixv, 
+			     EOS_INTEGER* iyv, EOS_INTEGER numZones,EOS_REAL* searchXVals, 
+			     EOS_REAL* searchYVals, EOS_REAL* searchFVals);
 #endif /* _EOS_INTERPOLATION_INTERNAL_PROTOTYPES */
 
 #endif /* EOS_INTERPOLATION_PROTOTYPES */

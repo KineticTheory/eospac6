@@ -8,7 +8,7 @@
  ********************************************************************/
 
 /*! \file
- *  \ingroup tests
+ *  \ingroup C tests
  *  \brief Verify results of features associated with the following
  *  options:
  *    -# EOS_SPLIT_FORCED,

@@ -27,9 +27,12 @@ endif
 
 # Define some general variables
 LIBRARY = eospac
-MAJOR_VER = 6
+MAJOR_VER := 6
+ifneq ($(strip $(DO_OFFLOAD)),)
+  MAJOR_VER := $(addsuffix gpu,$(MAJOR_VER))
+endif
 
-CVS_BASE_TAG_NAME = $(filter-out ame: ame,$(filter-out \$,$(subst -,.,$Name: v6-4-0 $)))
+CVS_BASE_TAG_NAME = $(filter-out ame: ame,$(filter-out \$,$(subst -,.,$Name: v6-5-0alpha-1 $ )))
 ifeq ($(strip $(CVS_BASE_TAG_NAME)),)
   # Assign a default value to CVS_BASE_TAG_NAME if empty
   CVS_BASE_TAG_NAME = v$(MAJOR_VER).unreleased
@@ -50,35 +53,6 @@ filefound = $(strip $(call whichloc,$(1)))
 match = $(if $(findstring $(1),$(2)),TRUE,)
 match_r1 = $(if $(findstring x$(notdir $(1)),x$(notdir $(2))),$(1),)
 strip-trailing-slash = $(patsubst %/,%,$(1))
-#
-# Function: define_version_cmd
-# Arguments: 1: Compiler executable (i.e., $(CC), $(F77), etc.) with path removed
-#               so it is consistent with keys of the associative array named
-#               VERSION_FLAG
-#            2: Default version flag
-# Returns:   Executable statement composed of the Compiler executable and
-#            a version flag stored in associative array named VERSION_FLAG
-define_version_cmd  = $(firstword $(1)) $(if $(call defined,VERSION_FLAG,$(notdir $(firstword $(1)))),$(call get,VERSION_FLAG,$(notdir $(firstword $(1)))),$(2))
-#
-# Function: set_if_undefined
-# Description: Conditional form of gmsl::set function will set hash entry if not already set
-# Function:  set
-# Arguments: 1: Name of associative array
-#            2: The key value to associate
-#            3: The value associated with the key
-# Returns:   None
-set_if_undefined = $(if $(call defined,$(1),$(firstword $(2))),,$(call set,$(1),$(firstword $(2)),$(3)))
-#
-# Function: ifseq_set
-# Description: Conditional form of gmsl::set function returns one of two supplied values based upon
-#              string equivalence condition
-# Function:  set
-# Arguments: 1: A string to compare against...
-#            2: ...this string
-#            3: Return value if $(1) == $(2)
-#            4: Return value if $(1) != $(2)
-# Returns:   None
-ifseq_set = $(if $(call seq,$(1),$(2)),$(3),$(4))
 
 ##################################################################
 ### Start of system configuration section.                     ###
@@ -114,6 +88,52 @@ LIBRARY_AR = lib$(LIBRARY)$(MAJOR_VER).a
 LIBRARY_README = lib$(LIBRARY)$(MAJOR_VER).readme
 WINLIB_AR = lib$(LIBRARY)$(MAJOR_VER).lib
 BUILD_LOG = build.log
+
+##################################################################
+### Use the gmsl (gnu standard library) from                   ###
+### http://sourceforge.net/projects/gmsl/                      ###
+##################################################################
+ifeq ($(MAKEFILE_LIST),)
+  __gmsl_root := $(BASEDIR)/config/
+endif
+include $(BASEDIR)/config/gmsl
+
+##################################################################
+### More useful functions that are dependent upon the GMSL.    ###
+##################################################################
+#
+# Function: define_version_cmd
+# Arguments: 1: Compiler executable (i.e., $(CC), $(F77), etc.) with path removed
+#               so it is consistent with keys of the associative array named
+#               VERSION_FLAG
+#            2: Default version flag
+# Returns:   Executable statement composed of the Compiler executable and
+#            a version flag stored in associative array named VERSION_FLAG
+define_version_cmd  = $(firstword $(1)) $(if $(call defined,VERSION_FLAG,$(notdir $(firstword $(1)))),$(call get,VERSION_FLAG,$(notdir $(firstword $(1)))),$(2))
+#
+# Function: set_if_undefined
+# Description: Conditional form of gmsl::set function will set hash entry if not already set
+# Function:  set
+# Arguments: 1: Name of associative array
+#            2: The key value to associate
+#            3: The value associated with the key
+# Returns:   true/false
+set_if_undefined = $(if $(call defined,$(1),$(firstword $(2))),,$(call set,$(1),$(firstword $(2)),$(3)))
+#
+# Function: ifseq_set
+# Description: Conditional form of gmsl::set function returns one of two supplied values based upon
+#              string equivalence condition
+# Function:  ifseq_set
+# Arguments: 1: A string to compare against...
+#            2: ...this string
+#            3: Return value if $(1) == $(2)
+#            4: Return value if $(1) != $(2)
+# Returns:   true/false
+ifseq_set = $(if $(call seq,$(1),$(2)),$(3),$(4))
+
+# Append value $(3) to current value of associative array, $(1), key value, $(2)
+# Example: $(call append,_COMP_FLAGS,gfortran, -I"$(INCDIR)" -Wno-c-binding-type -std=legacy )
+append = $(call set,$(1),$(2), $(call get,$(1),$(2)) $(3) )
 
 ##################################################################
 ### Define BASE_* variables                                    ###
@@ -195,12 +215,15 @@ DEBUG  = -g
 PURIFY =
 VALGRIND =
 
-ifneq ($(strip $(memcheck)),)
-  VALGRIND = $(call pathsearch,valgrind)
+ifneq ($(strip $(memcheck))$(strip $(VALGRIND)),)
+  NOVECT = 1
+  ifeq ($(strip $(VALGRIND)),)
+    VALGRIND = $(call pathsearch,valgrind)
+  endif
   ifeq ($(strip $(VALGRIND)),)
     PURIFY = $(call pathsearch,purify)
   else
-  VALGRIND += --leak-check=full
+    VALGRIND += --leak-check=full
   endif
 endif
 
@@ -217,6 +240,16 @@ C_ADDRESS_FLAG =
 F_ADDRESS_FLAG =
 ALT_SUBDIR = $(shell $(BASEDIR)/scripts/define_module_subdir $(F90))
 N32 =
+
+
+ifneq ($(strip $(DO_OFFLOAD)$(findstring DO_OFFLOAD,$(MORE_COMPILE_OPTS))),)
+  override DO_OFFLOAD := 1
+# Change specific compiler options as required for tests
+  override CFLAGS   += -DDO_OFFLOAD
+  override CXXFLAGS += -DDO_OFFLOAD
+  override FFLAGS   += -DDO_OFFLOAD
+  override F90FLAGS += -DDO_OFFLOAD
+endif
 
 ##################################################################
 ### Define default installation locations.                     ###
@@ -235,15 +268,6 @@ exec_prefix = $(strip ${prefix})
 install_subdir = $(strip $(ARCH))
 
 export CVS_BASE_TAG_NAME F_ADDRESS_FLAG C_ADDRESS_FLAG ALT_SUBDIR N32 SERIES
-
-##################################################################
-### Use the gmsl (gnu standard library) from                   ###
-### http://sourceforge.net/projects/gmsl/                      ###
-##################################################################
-ifeq ($(MAKEFILE_LIST),)
-  __gmsl_root := $(BASEDIR)/config/
-endif
-include $(BASEDIR)/config/gmsl
 
 ##################################################################
 ### Platform-dependent system configuration section tests for  ###
@@ -569,7 +593,7 @@ else
       EXE1 = $(filter $(addsuffix %,$(SERIES)),$(EXE0))
       override EXE = $(sort $(filter $(EXE1),$(EXE0)))
       ifeq ($(strip $(EXE)),)
-        EXE1 = $(foreach v,$(SERIES),$(shell egrep -l '(ingroup.*$(v))' $(SRCS_ALL)) $(wildcard *.$(v)))
+        EXE1 = $(foreach v,$(SERIES),$(shell egrep -l -e '(ingroup.*$(v)[ ])' -e '(ingroup.*$(v)$$)' $(SRCS_ALL)) $(wildcard *.$(v)))
         override EXE = $(sort $(basename $(EXE1)))
       endif
     endif

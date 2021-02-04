@@ -8,7 +8,7 @@
  ********************************************************************/
 
 /*! \file
- *  \ingroup tests quick
+ *  \ingroup C tests quick
  *  \brief Ensure eos_CreateTables returns EOS_OK when the number of
  *  tables requested is zero.
  *

@@ -9,11 +9,11 @@
 
 !> \file
 !! \ingroup Fortran2003 tests
-!! \brief Test Interpolation and Mixing functionality using the Fortran 90 interface.
+!! \brief Test Interpolation functionality using the Fortran 90 interface.
 !! EOS_RATIONAL and EOS_LINEAR interpolation options.
 !!
 !! The interpolated results of the tabulated ideal gas data is compared to an
-!! analytic ideal gas equation of state (EOS) for bot mixed and non-mixed EOS.
+!! analytic ideal gas equation of state (EOS) for non-mixed EOS.
 !! Also test the capability of using multiple collections of table handles on
 !! the same processor.
 !! Also test usage of conversion factors.
@@ -51,26 +51,24 @@ program test006
   integer(EOS_INTEGER),parameter :: nColdTables = nTableTypes * nMatIDs
   integer(EOS_INTEGER),parameter :: nXYPairs = 10
 
-  integer(EOS_INTEGER) ::  i, j, k, m, n
+  integer(EOS_INTEGER) ::  i, j
   real(EOS_REAL) :: X(nXYPairs), Y(nXYPairs), Ycold(nXYPairs), F(nXYPairs), dFx(nXYPairs), &
                     dFy(nXYPairs), xconv, yconv, fconv
   real(EOS_REAL) :: Fideal(nXYPairs,3) ! Fideal and dF/dx and dF/dx for each nXYPair
   real(EOS_REAL) :: fcold(nXYPairs,3,2) ! Fcold and dF/dx for each nXYPair
   integer(EOS_INTEGER) :: tableTypes(nTables), matID(nTables), coldCurveTypes(nTables), &
-                          tableHandles(nTables), coldCurveTH(nColdTables), &
-                          tableHandlesToMix(nMatIDsToMix)
-  logical :: mask(nTables), testConvert=.FALSE.
+                          tableHandles(nTables), coldCurveTH(nColdTables)
+  logical :: testConvert=.FALSE.
   logical :: dumpData=.FALSE.
   integer(EOS_INTEGER) :: tableTypesList(nTableTypes), matIDList(nMatIDs), &
                           coldCurveTypesList(nTableTypes)
-  integer(EOS_INTEGER) :: errorCode, errorCodeMix, iType, materialID, extrapCode(nXYPairs)
+  integer(EOS_INTEGER) :: errorCode, iType, materialID, extrapCode(nXYPairs)
   real(EOS_REAL) :: atomicWeight(nMatIDs), gamma(nMatIDs), &
                     atomicWeights(nTables), gammas(nTables)
   real(EOS_REAL) :: A_scalar(1)     ! array containing single scalar for rank compatibility
   real(EOS_REAL) :: C_scalar(1)     ! array containing single scalar for rank compatibility
   real(EOS_REAL) :: gamma_scalar(1) ! array containing single scalar for rank compatibility
-  real(EOS_REAL) :: cmixrVals(nMatIDsToMix,nMixSets), C(nXYPairs,nMatIDsToMix), gamma_bar, Abar
-  real(EOS_REAL) :: cmixrVals_i(nMatIDsToMix)
+  real(EOS_REAL) :: cmixrVals(nMatIDsToMix,nMixSets), gamma_bar, Abar
 
   real(EOS_REAL) :: wctmp = 0_EOS_REAL, cputmp = 0_EOS_REAL, cpucyclestmp = 0_EOS_REAL
   real(EOS_REAL) :: wctime_setup6 = 0_EOS_REAL, cputime_setup6 = 0_EOS_REAL, cpucycles_setup6 = 0_EOS_REAL
@@ -402,224 +400,6 @@ program test006
      
      write(*,998) ' ',' ', ' ', ' ', ' ----------------------', ' ----------------------', ' ----------------------'
      write(*,996) ' ', 'eos_Interpolate BIGGEST DIFFERENCE:', mxdiff1, mxdiff2, mxdiff3, 'fcmp_ignore'
-     
-  enddo
-
-!  stop 'DO NOT TEST eos_Mix'
-
-  !
-  !     interpolate material mixtures
-  !
-  k = -1
-  do i=1, nMixSets
-
-     Ycold  = 0_EOS_REAL
-     fcold  = 0_EOS_REAL
-     Fideal = 0_EOS_REAL
-     F      = 0_EOS_REAL
-     dFx    = 0_EOS_REAL
-     dFy    = 0_EOS_REAL
-
-     ! Set X and Y values for all nXYPairs and get data type and material ID for
-     ! the current tableHandle
-     call setXandYVALS(tableHandles, nTables, i, nXYPairs, X, Y, iType, materialID)
-
-     C = spread(cmixrVals(:,i),1,nXYPairs)
-     if (mod((i-1),nTableTypes).EQ.0_EOS_INTEGER) then
-        k = k + 1
-        m = k * nTableTypes * nMatIDsToMix + 1
-        n = m - 1 + nTableTypes * nMatIDsToMix
-     endif
-     mask = .FALSE.
-     where (tableTypes(m:n).EQ.tableTypes(i)) mask(m:n) = .TRUE.
-     tableHandlesToMix = pack(tableHandles,mask)
-
-     write(s1,*) 'tableHandlesToMix: ',tableHandlesToMix
-     write(s4,*) '"--- Interpolate using tableType ', &
-                trim(typeLabel(iType)), '(', iType, ') and materialID(s) ', &
-                pack(matID,mask), ' ---"'
-     write(*,"(a)") trim(s4)
-
-     ! set conversion factors and adjust X and Y accordingly
-     if (testConvert) then
-        xconv = 2.0_EOS_REAL
-        yconv = 2.0_EOS_REAL
-        fconv = xconv * yconv
-        call setConversionFactors(tableHandlesToMix, nMatIDsToMix, .FALSE., &
-                                  xconv, yconv, fconv, errorCode)
-        X = X * xconv
-        Y = Y * yconv
-     endif
-
-     call eos_time(.TRUE.,wctmp,cputmp,cpucyclestmp,errtmp)
-
-     call eos_Mix(nMatIDsToMix, tableHandlesToMix, nXYPairs, C, X, Y, F, dFx, dFy, errorCode)
-
-     call eos_time(.FALSE.,wctmp,cputmp,cpucyclestmp,errtmp)
-     wctime_mix = wctime_mix + wctmp
-     cputime_mix = cputime_mix + cputmp
-     cpucycles_mix = cpucycles_mix + cpucyclestmp
-
-     errorCodeMix = EOS_OK
-     extrapCode = EOS_OK
-     if (errorCode.NE.EOS_OK) then
-        errorCodeMix = errorCode
-        if (iseq(errorCode,EOS_INTERP_EXTRAPOLATED) .OR. &
-             iseq(errorCode,EOS_INTERP_EXTRAP_PBAL) .OR. &
-             iseq(errorCode,EOS_INTERP_EXTRAP_TBAL)) then
-           call eos_CheckExtrap(tableHandles(i), nXYPairs, X, Y, extrapCode, errorCode)
-        else
-           call print_error(errorCode, 'eos_Mix')
-        endif
-     endif
-
-     ! reset conversion factors and adjust X, Y, F, dFx and dFy so they match idealGas' units
-     if (testConvert) then
-        call setConversionFactors(tableHandlesToMix, nMatIDsToMix, .TRUE., &
-                                  xconv, yconv, fconv, errorCode)
-        X = X / xconv
-        Y = Y / yconv
-        F = F / fconv
-        dFx = dFx / fconv * xconv
-        dFy = dFy / fconv * yconv
-     endif
-
-     ! get Pressure cold curve data
-     if (mod(i,2).NE.0) then
-        j = i
-     else
-        j = i - 1
-     endif
-
-     mask = .FALSE.
-     where (tableTypes(m:n).EQ.tableTypes(j)) mask(m:n) = .TRUE.
-     tableHandlesToMix = pack(coldCurveTH,mask)
-
-     write(s2,*) ' Pc_ToMix: ',tableHandlesToMix
-
-     call eos_time(.TRUE.,wctmp,cputmp,cpucyclestmp,errtmp)
-
-     call eos_Mix(nMatIDsToMix, tableHandlesToMix, nXYPairs, C, X, Ycold, fcold(:,1,1), fcold(:,2,1), fcold(:,3,1), errorCode)
-
-     call eos_time(.FALSE.,wctmp,cputmp,cpucyclestmp,errtmp)
-     wctime_mix = wctime_mix + wctmp
-     cputime_mix = cputime_mix + cputmp
-     cpucycles_mix = cpucycles_mix + cpucyclestmp
-
-     if (errorCode.NE.EOS_OK) then
-        if (errorCode.NE.EOS_INTERP_EXTRAPOLATED .AND. &
-             errorCode.NE.EOS_INTERP_EXTRAP_PBAL .AND. &
-             errorCode.NE.EOS_INTERP_EXTRAP_TBAL) then
-           call print_error(errorCode, 'eos_Mix(Pc)')
-        endif
-     endif
-
-     ! get Internal Energy cold curve data
-     if (mod(i,2).NE.0) then
-        j = i + 1
-     else
-        j = i
-     endif
-
-     mask = .FALSE.
-     where (tableTypes(m:n).EQ.tableTypes(j)) mask(m:n) = .TRUE.
-     tableHandlesToMix = pack(coldCurveTH,mask)
-
-     write(s3,*) ' Uc_ToMix: ',tableHandlesToMix
-     write(*,"(a)") '"' // trim(s1) // trim(s2) // trim(s3) // '"'
-
-     call eos_time(.TRUE.,wctmp,cputmp,cpucyclestmp,errtmp)
-
-     call eos_Mix(nMatIDsToMix, tableHandlesToMix, nXYPairs, C, X, Ycold, fcold(:,1,2), fcold(:,2,2), fcold(:,3,2), errorCode)
-
-     call eos_time(.FALSE.,wctmp,cputmp,cpucyclestmp,errtmp)
-     wctime_mix = wctime_mix + wctmp
-     cputime_mix = cputime_mix + cputmp
-     cpucycles_mix = cpucycles_mix + cpucyclestmp
-
-     if (errorCode.NE.EOS_OK) then
-        if (errorCode.NE.EOS_INTERP_EXTRAPOLATED .AND. &
-             errorCode.NE.EOS_INTERP_EXTRAP_PBAL .AND. &
-             errorCode.NE.EOS_INTERP_EXTRAP_TBAL) then
-           call print_error(errorCode, 'eos_Mix(Uc)')
-        endif
-     endif
-
-     ! calculate ideal gas data
-     cmixrVals_i = cmixrVals(:,i)
-     call idealGas(nMatIDsToMix, iType, nXYPairs, X, Y, R, fcold, &
-                   pack(atomicWeights,mask), cmixrVals_i, pack(gammas,mask), Fideal, gamma_bar, Abar)
-
-     ! write results to STDOUT
-     s=' '
-     if (iseq(errorCodeMix,EOS_INTERP_EXTRAPOLATED)) then
-        where (extrapCode.NE.EOS_OK)
-           s='F'
-        end where
-     elseif (iseq(errorCodeMix,EOS_INTERP_EXTRAP_PBAL)) then
-        where (extrapCode.NE.EOS_OK)
-           s='PBAL'
-        end where
-     elseif (iseq(errorCodeMix,EOS_INTERP_EXTRAP_TBAL)) then
-        where (extrapCode.NE.EOS_OK)
-           s='TBAL'
-        end where
-     endif
-
-     write(s4,*) 'Atomic Weight: ',Abar,'  A_i:'
-     do j=1,size(mask)
-        if (mask(j)) then
-           write(s1,'(es23.14)') atomicWeights(j)
-           s4 = trim(s4) // trim(s1)
-        endif
-     enddo
-     s4 = trim(s4) //  ' C_i:'
-     do j=1,size(cmixrVals(:,i))
-        write(s1,'(es23.14)') cmixrVals(j,i)
-        s4 = trim(s4) // trim(s1)
-     enddo
-     write(*,"(a)") trim(s4)
-
-     write(s4,*) '    gamma_bar: ',gamma_bar,'  gamma_i:'
-     do j=1,size(mask)
-        if (mask(j)) then
-           write(s1,'(es23.14)') gammas(j)
-           s4 = trim(s4) // trim(s1)
-        endif
-     enddo
-     write(*,"(a)") trim(s4)
-
-     write(*,998) 'EXTRAP','i','X','Y','F','dF/dx','dF/dy','Fideal','dFideal/dx','dFideal/dy','Pc','dPc/dx','Uc','dUc/dx'
-     do j=1, nXYPairs
-        write(*,999) s(j),j,X(j),Y(j),F(j),dFx(j),dFy(j),Fideal(j,1),Fideal(j,2),Fideal(j,3), &
-                     fcold(j,1,1),fcold(j,2,1),fcold(j,1,2),fcold(j,2,2)
-     enddo
-
-     write(*,*) ' '
-     write(*,"(a)") 'RELATIVE DIFFERENCES (EOSPAC 6 eos_Mix versus Ideal Gas Function)'
-     write(*,998) ' ','i',' ',' ','F','dF/dx','dF/dy'
-     mxdiff1 = 0.0_EOS_REAL
-     mxdiff2 = 0.0_EOS_REAL
-     mxdiff3 = 0.0_EOS_REAL
-     do j=1, nXYPairs
-        d1 = 1.0_EOS_REAL
-        d2 = 1.0_EOS_REAL
-        d3 = 1.0_EOS_REAL
-        if (Fideal(j,1) .NE. 0.0_EOS_REAL) d1 = Fideal(j,1)
-        if (Fideal(j,2) .NE. 0.0_EOS_REAL) d2 = Fideal(j,2)
-        if (Fideal(j,3) .NE. 0.0_EOS_REAL) d3 = Fideal(j,3)
-        diff1 = (F(j)-Fideal(j,1))/d1
-        diff2 = (dFx(j)-Fideal(j,2))/d2
-        diff3 = (dFy(j)-Fideal(j,3))/d3
-        if (abs(mxdiff1) .LT. abs(diff1)) mxdiff1 = diff1
-        if (abs(mxdiff2) .LT. abs(diff2)) mxdiff2 = diff2
-        if (abs(mxdiff3) .LT. abs(diff3)) mxdiff3 = diff3
-        
-        write(*,997) j,' ',' ', diff1, diff2, diff3, 'fcmp_ignore'
-     enddo
-     
-     write(*,998) ' ',' ', ' ', ' ', ' ----------------------', ' ----------------------', ' ----------------------'
-     write(*,996) ' ', 'eos_Mix BIGGEST DIFFERENCE:', mxdiff1, mxdiff2, mxdiff3, 'fcmp_ignore'
 
   enddo
 
@@ -1847,7 +1627,7 @@ subroutine setConversionFactors(th, nh, reset, xconv, yconv, fconv, errorCode)
 end subroutine setConversionFactors
 
 ! ===========================================================================
-! test for EOPSAC6 error code equivalence
+! test for EOSPAC6 error code equivalence
 ! ===========================================================================
 function iseq(flag1, flag2)
   use eos_Interface2003

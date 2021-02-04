@@ -32,6 +32,7 @@ void eos_InterpolateRecordType1 (void *ptr, EOS_INTEGER th, EOS_INTEGER dataType
  */
 void _eos_EvaluateTaylorRecordType1 (void *ptr, EOS_INTEGER th, EOS_INTEGER dataType, EOS_INTEGER nXYPairs, EOS_REAL *srchX, EOS_REAL *srchY, EOS_REAL *fVals, EOS_REAL *dFx, EOS_REAL *dFy, EOS_REAL *dFCx, EOS_REAL *dFx0, EOS_REAL *dFy0, EOS_INTEGER *xyBounds, EOS_INTEGER *errorCode);
 void _eos_InterpolateRecordType1 (void *ptr, EOS_INTEGER th, EOS_INTEGER varOrder, EOS_INTEGER dataType, EOS_INTEGER nXYPairs, EOS_REAL *srchX, EOS_REAL *srchY, EOS_REAL *fVals, EOS_REAL *dFx, EOS_REAL *dFy, EOS_REAL *dFCx, EOS_REAL *dFx0, EOS_REAL *dFy0, EOS_INTEGER *xyBounds, EOS_INTEGER *errorCode);
+void _eos_InterpolateRecordType1GpuLimited (void *ptr, EOS_INTEGER th, EOS_INTEGER varOrder, EOS_INTEGER dataType, EOS_INTEGER nXYPairs, EOS_REAL *srchX, EOS_REAL *srchY, EOS_REAL *fVals, EOS_REAL *dFx, EOS_REAL *dFy, EOS_REAL *dFCx, EOS_REAL *dFx0, EOS_REAL *dFy0, EOS_INTEGER *xyBounds, EOS_INTEGER *errorCode);
 
 #endif /* _EOS_RECORDTYPE1INTERP_INTERNAL_PROTOTYPES */
 

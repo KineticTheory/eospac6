@@ -94,12 +94,18 @@ EOS_CHAR* get_header_str(EOS_CHAR *n, EOS_CHAR *r) {
   EOS_CHAR *prefix = "Revision: ";
   EOS_CHAR tmp[HEADER_L];
   EOS_INTEGER start = 0;
+  int l, m, i;
   strncpy(tool_name,       n, TOOL_NAME_L-1);
   if (strstr(r,prefix))    start = strlen(prefix)+1;
-  int l = strcspn(r+start,"$");
+  l = strcspn(r+start,"$");
   strncpy(revision_number, r+start, l-1);
   l = sprintf(tmp,"%s(%s)",tool_name,revision_number);
-  sprintf(header,"%s%*s",tmp,100-l,tmp);
+  m = 100 - 2 * l;
+  strncat(header,tmp,40);
+  for(i=0; i<m; i++) {
+    strncat(header," ",20);
+  }
+  strncat(header,tmp,40);
   return header;
 }
 

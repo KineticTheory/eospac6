@@ -148,7 +148,15 @@ EOS_INTEGER eos_SesGetFileInfoFromCache (EOS_INTEGER jfile, EOS_INTEGER* nmats,
     /*  open and get the ses file handle */
 
     if (ses_is_valid(sesameFileCache[jfile].sesFile) == SES_FALSE)
+    {
+#ifdef DEBUG
+      printf("%s(%d):: pre-ses_open sesameFileCache[%d].sesFile = %d _next_empty_file = %d\n", __FILE__, __LINE__, jfile, sesameFileCache[jfile].sesFile, _next_empty_file);
+#endif
       sesameFileCache[jfile].sesFile = ses_open (sesameFiles[jfile], 'R'); /* open file */
+#ifdef DEBUG
+      printf("%s(%d)::post-ses_open sesameFileCache[%d].sesFile = %d _next_empty_file = %d\n", __FILE__, __LINE__, jfile, sesameFileCache[jfile].sesFile, _next_empty_file);
+#endif
+    }
     *sesFile = sesameFileCache[jfile].sesFile;
 
     if (ses_is_valid(sesameFileCache[jfile].sesFile) == SES_FALSE) {
@@ -199,10 +207,16 @@ EOS_INTEGER eos_SesGetFileInfoFromCache (EOS_INTEGER jfile, EOS_INTEGER* nmats,
     printf("eos_SesGetFileInfoFromCache - after get from cache:  nmats is %d\n", *nmats);
 #endif
     if (ses_is_valid(sesameFileCache[jfile].sesFile) == SES_FALSE) { /* reopen file since information is cached */
-	sesameFileCache[jfile].sesFile = ses_open(sesameFiles[jfile], 'R');
-        if (ses_is_valid(sesameFileCache[jfile].sesFile) == SES_FALSE) {
+#ifdef DEBUG
+      printf("%s(%d):: pre-ses_open sesameFileCache[%d].sesFile = %d _next_empty_file = %d\n", __FILE__, __LINE__, jfile, sesameFileCache[jfile].sesFile, _next_empty_file);
+#endif
+      sesameFileCache[jfile].sesFile = ses_open (sesameFiles[jfile], 'R'); /* open file */
+#ifdef DEBUG
+      printf("%s(%d)::post-ses_open sesameFileCache[%d].sesFile = %d _next_empty_file = %d\n", __FILE__, __LINE__, jfile, sesameFileCache[jfile].sesFile, _next_empty_file);
+#endif
+      if (ses_is_valid(sesameFileCache[jfile].sesFile) == SES_FALSE) {
 		return EOS_OPEN_SESAME_FILE_FAILED;
-	}
+      }
     }
     *sesFile = sesameFileCache[jfile].sesFile;
         
@@ -632,10 +646,16 @@ EOS_INTEGER eos_SesCleanFileCache ()
   for (i = 0; i < sesameFilesL; i++) {
     if (sesameFileCache[i].materialListLoaded) {
       if (sesameFileCache[i].sesFile > 0) {
-	ses_error_flag didit_close = ses_close (sesameFileCache[i].sesFile);
-	if (didit_close != SES_NO_ERROR) {
-	  /* DAP: do nothing for now */
-	}
+#ifdef DEBUG
+        printf("%s(%d):: pre-ses_close sesameFileCache[%d].sesFile = %d _next_empty_file = %d\n", __FILE__, __LINE__, i, sesameFileCache[i].sesFile, _next_empty_file);
+#endif
+        ses_error_flag didit_close = ses_close (sesameFileCache[i].sesFile);
+#ifdef DEBUG
+        printf("%s(%d)::post-ses_close sesameFileCache[%d].sesFile = %d _next_empty_file = %d\n", __FILE__, __LINE__, i, sesameFileCache[i].sesFile, _next_empty_file);
+#endif
+        if (didit_close != SES_NO_ERROR) {
+          /* DAP: do nothing for now */
+        }
       }     
     }
     EOS_FREE (sesameFiles[i]);

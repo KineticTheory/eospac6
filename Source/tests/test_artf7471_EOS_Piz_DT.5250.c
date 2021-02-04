@@ -8,7 +8,7 @@
  ********************************************************************/
 
 /*! \file
- *  \ingroup tests quick
+ *  \ingroup C tests quick
  *  \brief Check that the correct tables are being loaded for EOS_Piz_DT
  *         and material 5250 with a forced EOS_SPLIT_NUM_PROP option.
  *

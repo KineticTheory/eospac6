@@ -1,7 +1,6 @@
 
 #include "ses_defines.h"
 #include "ses_globals.h"
-
 #include "ses_externs.h"
 #include "ses_internals.h"
 #include <string.h>
@@ -76,15 +75,16 @@ ses_string ses_version(ses_file_handle the_handle) {
 }
 
 ses_string _make_into_string(long the_long) {
+  /*  make  a long into a string */
+
+ 
+  void itoa(long n, char s[]);
 
   ses_string return_value = malloc(sizeof(char)*8);
-#ifndef _MSC_VER
   itoa(the_long, return_value);
-#else
-  int radix = 10;
-  itoa(the_long, return_value, radix);
-#endif
+
+
 
   return return_value;
-}
 
+}

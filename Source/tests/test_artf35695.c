@@ -8,7 +8,7 @@
  ********************************************************************/
 
 /*! \file
- *  \ingroup tests
+ *  \ingroup C tests
  *  \brief Test the EOS_INVERT_AT_SETUP option, and compare interpolation results
  *         of tables loaded both with and without EOS_INVERT_AT_SETUP enabled.
  *

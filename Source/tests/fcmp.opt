@@ -7,9 +7,9 @@
 test001.stdout	-r 1.0e-6 -i -e fcmp_ignore
 test002.stdout	-r 1.0e-6 -i -e fcmp_ignore
 test003.stdout	-a 0
-test004.stdout	-a 0
+test004.stdout	-a 0 -e fcmp_ignore
 test007.stdout	-r 1.0e-6 -i -e fcmp_ignore
-test008.stdout	-a 0
+test008.stdout	-a 0 -e fcmp_ignore
 test009.stdout	-a 0
 test010.stdout	-r 1.0e-6 -i -e fcmp_ignore
 test011.stdout	-r 1.0e-6 -i -e fcmp_ignore
@@ -19,7 +19,9 @@ test017.stdout	-r 1.0e-6 -i -e fcmp_ignore
 test_artf6005.stdout	-a 0
 test_artf6005.TablesLoaded.dat	-Q
 test006.TablesLoaded.dat	-Q
+test006mix.TablesLoaded.dat	-Q
 test016.TablesLoaded.dat	-Q
+test016_short.TablesLoaded.dat	-Q
 test020.TablesLoaded.dat	-Q
 test021.TablesLoaded.dat	-Q
 test022.TablesLoaded.dat	-Q
@@ -295,6 +297,7 @@ test_artf37549.TablesLoaded.dat	-Q
 test_artf37571.stdout	-a 0
 test_artf37571.TablesLoaded.dat	-Q
 test006__Fortran2003_APItest.TablesLoaded.dat	-Q
+test006mix__Fortran2003_APItest.TablesLoaded.dat	-Q
 test_artf21800__Fortran2003_APItest.TablesLoaded.dat	-Q
 test_artf22076__Fortran2003_APItest.TablesLoaded.dat	-Q
 test_artf28105__Fortran2003_APItest.TablesLoaded.dat	-Q
@@ -312,4 +315,109 @@ test_artf47577.TablesLoaded.dat	-Q
 test_eos_GetTableInfo.TablesLoaded.dat	-Q
 test_artf50835.TablesLoaded.dat	-Q
 test_issue562.TablesLoaded.dat	-Q
+test_issueDP585a2.stdout	-e fcmp_ignore
+test_issueDP585b.stdout	-e fcmp_ignore
 test_issue587.TablesLoaded.dat	-Q
+test007_AllRecordTypes.TablesLoaded.dat	-Q
+test_issue603.TablesLoaded.dat	-Q
+test_issue603.invert_at_setup.TablesLoaded.dat	-Q
+test_issue611datacrawler.TablesLoaded.dat	-Q
+test_issue627.TablesLoaded.dat	-Q
+test_ses003720.301.cropped.datacrawler.TablesLoaded.dat	-Q
+test_getAllMaterials.TablesLoaded.dat	-Q
+test_unitSearch.TablesLoaded.dat	-Q
+test_issue676.TablesLoaded.dat	-Q
+test001_se.TablesLoaded.dat	-Q
+test002_se.TablesLoaded.dat	-Q
+test004_se.TablesLoaded.dat	-Q
+test005_se.TablesLoaded.dat	-Q
+test007_se.TablesLoaded.dat	-Q
+test008_se.TablesLoaded.dat	-Q
+test011_se.TablesLoaded.dat	-Q
+test017_se.TablesLoaded.dat	-Q
+test018__Fortran2003_APItest_se.TablesLoaded.dat	-Q
+test018_se.TablesLoaded.dat	-Q
+test019_se.TablesLoaded.dat	-Q
+test026_se.TablesLoaded.dat	-Q
+test027_se.TablesLoaded.dat	-Q
+test028_se.TablesLoaded.dat	-Q
+test030.TablesLoaded.dat	-Q
+test030_se.TablesLoaded.dat	-Q
+test_artf10445_se.TablesLoaded.dat	-Q
+test_artf11054_se.TablesLoaded.dat	-Q
+test_artf11292_se.TablesLoaded.dat	-Q
+test_artf11602_se.TablesLoaded.dat	-Q
+test_artf16524_se.TablesLoaded.dat	-Q
+test_artf16562_se.TablesLoaded.dat	-Q
+test_artf19452__Fortran2003_APItest_se.TablesLoaded.dat	-Q
+test_artf19452_se.TablesLoaded.dat	-Q
+test_artf24766_se.TablesLoaded.dat	-Q
+test_artf26182_se.TablesLoaded.dat	-Q
+test_artf33290_se.TablesLoaded.dat	-Q
+test_artf34116b_se.TablesLoaded.dat	-Q
+test_artf34116_se.TablesLoaded.dat	-Q
+test_artf38112_se.TablesLoaded.dat	-Q
+test_artf3926_se.TablesLoaded.dat	-Q
+test_artf39622_se.TablesLoaded.dat	-Q
+test_artf4482_se.TablesLoaded.dat	-Q
+test_artf4640_se.TablesLoaded.dat	-Q
+test_artf47921a0_se.TablesLoaded.dat	-Q
+test_artf47921a_se.TablesLoaded.dat	-Q
+test_artf47921b0_se.TablesLoaded.dat	-Q
+test_artf47921b_se.TablesLoaded.dat	-Q
+test_artf47921c0_se.TablesLoaded.dat	-Q
+test_artf47921c_se.TablesLoaded.dat	-Q
+test_artf47921d0_se.TablesLoaded.dat	-Q
+test_artf47921d_se.TablesLoaded.dat	-Q
+test_artf47921e0_se.TablesLoaded.dat	-Q
+test_artf47921e_se.TablesLoaded.dat	-Q
+test_artf5435_2_se.TablesLoaded.dat	-Q
+test_artf5435_se.TablesLoaded.dat	-Q
+test_artf6088_se.TablesLoaded.dat	-Q
+test_artf6118_se.TablesLoaded.dat	-Q
+test_artf6288__Fortran2003_APItest_se.TablesLoaded.dat	-Q
+test_artf6288_se.TablesLoaded.dat	-Q
+test_artf6405_se.TablesLoaded.dat	-Q
+test_artf6976_se.TablesLoaded.dat	-Q
+test_artf8688_se.TablesLoaded.dat	-Q
+test_artf9708__Fortran2003_APItest_se.TablesLoaded.dat	-Q
+test_artf9708_se.TablesLoaded.dat	-Q
+test_issue541_se.TablesLoaded.dat	-Q
+test_issue583_se.TablesLoaded.dat	-Q
+test_issue594_se.TablesLoaded.dat	-Q
+test_issue598_se.TablesLoaded.dat	-Q
+test_issue627_se.TablesLoaded.dat	-Q
+test_issue628_se.TablesLoaded.dat	-Q
+test_issue632_se.TablesLoaded.dat	-Q
+test_issue639_se.TablesLoaded.dat	-Q
+test_task1606_2_se.TablesLoaded.dat	-Q
+test_task1606_3_se.TablesLoaded.dat	-Q
+test_task1606_4_se.TablesLoaded.dat	-Q
+test_task1606_5_se.TablesLoaded.dat	-Q
+test_task1606_6_se.TablesLoaded.dat	-Q
+test_task1606_se.TablesLoaded.dat	-Q
+test006mix_se.TablesLoaded.dat	-Q
+test006mix__Fortran2003_APItest_se.TablesLoaded.dat	-Q
+test006_se.TablesLoaded.dat	-Q
+test006__Fortran2003_APItest_se.TablesLoaded.dat	-Q
+test016_short_se.TablesLoaded.dat			-Q
+test_artf12051_se.TablesLoaded.dat			-Q
+test_artf44296_se.stdout			-r 1.0e-11 -d -i -e fcmp_ignore
+test_artf44296_se.TablesLoaded.dat			-Q
+test_artf44811.stdout			-r 1.0e-11 -d -i -e fcmp_ignore
+test_artf44811_se.stdout			-r 1.0e-11 -d -i -e fcmp_ignore
+test_artf44811_se.TablesLoaded.dat			-Q
+test_issue170_se.TablesLoaded.dat			-Q
+test010_se.TablesLoaded.dat			-Q
+test016_se.TablesLoaded.dat			-Q
+test_artf12977_se.TablesLoaded.dat			-Q
+test_artf35695_2_se.TablesLoaded.dat			-Q
+test_artf35695_se.TablesLoaded.dat			-Q
+test_artf47921c0_se.TablesLoaded.dat			-Q
+test_artf47921c_se.TablesLoaded.dat			-Q
+test_artf47921d0_se.TablesLoaded.dat			-Q
+test_artf47921d_se.TablesLoaded.dat			-Q
+test_artf47921e0_se.TablesLoaded.dat			-Q
+test_artf47921e_se.TablesLoaded.dat			-Q
+test_issue675_works.TablesLoaded.dat			-Q
+test_issue675_segf.TablesLoaded.dat			-Q

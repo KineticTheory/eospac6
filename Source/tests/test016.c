@@ -8,7 +8,7 @@
  ********************************************************************/
 
 /*! \file
- *  \ingroup tests
+ *  \ingroup C tests
  *  \brief Verify results of features associated with EOS_PT_SMOOTHING
  *  and EOS_USE_CUSTOM_INTERP options.
  *

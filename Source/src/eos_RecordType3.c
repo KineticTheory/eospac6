@@ -17,31 +17,44 @@
 
 #include "eos_Utils.h"
 
-/************************************************************************
- * 
- * RecordType3 class constructor
- * 
- * Returned Values: none
+/************************************************************************/
+/*!
+ * \brief RecordType3 class constructor
  *
- * Input Value:
- * eos_RecordType3 *me         - this pointer (pointer to the instance of type eos_RecordType3
- * EOS_INTEGER      materialID - id of material to load.
- * EOS_INTEGER      th         - table handle.
- * 
+ * \param[in,out] *me        - eos_RecordType3 : data object pointer;
+ *                                               contents of object are initialized
+ * \param[in]     materialID - EOS_INTEGER     : id of material to load
+ * \param[in]     th         - EOS_INTEGER     : table handle
+ *
+ * \return none
+ *
  ************************************************************************/
-
 void eos_ConstructRecordType3 (eos_RecordType3 *me, EOS_INTEGER th,
                                EOS_INTEGER materialID)
 {
-  me->T = NULL;
-  me->R = NULL;
-  me->N = 0;
+  /* SESAME table 201 data */
   me->avgAtomicNumber = (EOS_REAL) 0;
   me->avgAtomicWgt = (EOS_REAL) 0;
   me->refDensity = (EOS_REAL) 0;
   me->solidBulkModulus = (EOS_REAL) 0;
   me->exchangeCoefficient = (EOS_REAL) 0;
+
+  /* SESAME table data */
+  me->N = 0;
+  me->T = NULL;
+  me->R = NULL;
+
+  /* Miscellaneous metadata */
+  me->eosData.varOrder = -1;
+  me->eosData.tmpVarOrder = -1;
+  me->eosData.dataFileOffset = -1;
+  me->eosData.dataFileIndex = -1;
+  me->eosData.dataSize = 0;
+
+  /* Create eos_DataMap */
   eos_ConstructEosData ((eos_Data *) me, th, materialID);
+
+  /* Define class-specific virtual functions */
   me->eosData.Load = eos_LoadRecordType3;
   me->eosData.Create = eos_CreateRecordType3;
   me->eosData.Destroy = eos_DestroyRecordType3;
@@ -59,20 +72,15 @@ void eos_ConstructRecordType3 (eos_RecordType3 *me, EOS_INTEGER th,
   me->eosData.SetMonotonicity = eos_SetMonotonicityRecordType3;
   me->eosData.GetMonotonicity = eos_GetMonotonicityRecordType3;
   me->eosData.GetSmoothing = eos_GetSmoothingRecordType3;
-  me->eosData.AreMonotonicRequirementsCompatible =
-    eos_AreMonotonicRequirementsCompatibleRecordType3;
+  me->eosData.AreMonotonicRequirementsCompatible = eos_AreMonotonicRequirementsCompatibleRecordType3;
   me->eosData.SetSmoothing = eos_SetSmoothingRecordType3;
-  me->eosData.AreSmoothingRequirementsCompatible =
-    eos_AreSmoothingRequirementsCompatibleRecordType3;
-  me->eosData.Interpolate = NULL;
-  me->eosData.CheckExtrap = NULL;
+  me->eosData.AreSmoothingRequirementsCompatible = eos_AreSmoothingRequirementsCompatibleRecordType3;
+  me->eosData.Interpolate = NULL; /* no interpolation allowed */
+  me->eosData.CheckExtrap = NULL; /* no interpolation allowed */
   me->eosData.InvertAtSetup = NULL; /* no inversion at setup allowed */
   me->eosData.SetExtrapolationBounds = NULL; /* no extrapolation bounds stored */
-  me->eosData.varOrder = -1;
-  me->eosData.tmpVarOrder = -1;
-  me->eosData.dataFileOffset = -1;
-  me->eosData.dataFileIndex = -1;
-  me->eosData.dataSize = 0;
+  me->eosData.AreGhostDataRequired = NULL; /* no ghost node data required*/
+  me->eosData.AddGhostData = NULL; /* no ghost node data required*/
 }
 
 /************************************************************************
@@ -286,7 +294,6 @@ void eos_DestroyRecordType3 (void* ptr)
  * EOS_INTEGER      size of T and R arrays.
  * 
  ************************************************************************/
-
 void eos_SetSizeRecordType3 (eos_RecordType3 *me, EOS_INTEGER N)
 {
   if (me->T)
@@ -299,6 +306,38 @@ void eos_SetSizeRecordType3 (eos_RecordType3 *me, EOS_INTEGER N)
 
   if (me->T && me->R)
     me->eosData.isAllocated = 1;
+}
+
+/***********************************************************************/
+/*!
+ * \brief This function returns the dimensions of the specified table.
+ *
+ * \param[out]    N  - EOS_INTEGER : size of R array
+ * \param[in]     *me - eos_RecordType3 : data object pointer;
+ *
+ * \return none
+ *
+ ***********************************************************************/
+void eos_GetSizeRecordType3 (eos_RecordType3 *me, EOS_INTEGER *N)
+{
+  *N = me->N;
+}
+
+/***********************************************************************/
+/*!
+ * \brief This function returns pointers to data of class eos_RecordType3
+ *
+ * \param[in]     *me         - eos_RecordType3 : data object pointer;
+ * \param[out]    **R         - EOS_REAL : holds R-pointer
+ * \param[out]    **T         - EOS_REAL : holds T-pointer
+ *
+ * \return none
+ *
+ ***********************************************************************/
+void _eos_GetDataRecordType3 (eos_RecordType3 *me, EOS_REAL **R, EOS_REAL **T)
+{
+  *R = me->R;
+  *T = me->T;
 }
 
 /************************************************************************
@@ -393,28 +432,22 @@ void eos_GetPackedTableRecordType3 (void *ptr, EOS_INTEGER dataType,
 
   memcpy (packedTable + byteCount, &(me->N), sizeof (EOS_INTEGER));
   byteCount += sizeof (EOS_INTEGER);
-  memcpy (packedTable + byteCount, &(me->T), me->N * sizeof (EOS_REAL));
+  memcpy (packedTable + byteCount, me->T, me->N * sizeof (EOS_REAL));
   byteCount += me->N * sizeof (EOS_REAL);
-  memcpy (packedTable + byteCount, &(me->R), me->N * sizeof (EOS_REAL));
+  memcpy (packedTable + byteCount, me->R, me->N * sizeof (EOS_REAL));
   byteCount += me->N * sizeof (EOS_REAL);
-  memcpy (packedTable + byteCount, &(me->eosData.numSubtablesLoaded),
-          sizeof (EOS_INTEGER));
+  memcpy (packedTable + byteCount, &(me->eosData.numSubtablesLoaded), sizeof (EOS_INTEGER));
   byteCount += sizeof (EOS_INTEGER);
-  memcpy (packedTable + byteCount, &(me->eosData.isLoaded),
-          sizeof (EOS_INTEGER));
+  memcpy (packedTable + byteCount, &(me->eosData.isLoaded), sizeof (EOS_INTEGER));
   byteCount += sizeof (EOS_INTEGER);
 
-  memcpy (packedTable + byteCount, &(me->eosData.dataFileIndex),
-          sizeof (EOS_INTEGER));
+  memcpy (packedTable + byteCount, &(me->eosData.dataFileIndex), sizeof (EOS_INTEGER));
   byteCount += sizeof (EOS_INTEGER);
-  memcpy (packedTable + byteCount, &(me->eosData.dataFileOffset),
-          sizeof (long));
+  memcpy (packedTable + byteCount, &(me->eosData.dataFileOffset), sizeof (long));
   byteCount += sizeof (long);
-  memcpy (packedTable + byteCount, &(me->eosData.dataSize),
-          sizeof (EOS_INTEGER));
+  memcpy (packedTable + byteCount, &(me->eosData.dataSize), sizeof (EOS_INTEGER));
   byteCount += sizeof (EOS_INTEGER);
 }
-
 
 /************************************************************************
  * 
@@ -452,30 +485,25 @@ void eos_SetPackedTableRecordType3 (void *ptr, EOS_INTEGER th,
   memcpy (&n, packedTable + byteCount, sizeof (EOS_INTEGER));
   byteCount += sizeof (EOS_INTEGER);
 
-  if (n > me->N)
-    eos_SetSizeRecordType3 (me, n);
-  me->N = n;
-  memcpy (&(me->N), packedTable + byteCount, sizeof (EOS_INTEGER));
-  byteCount += sizeof (EOS_INTEGER);
-  memcpy (&(me->T), packedTable + byteCount, me->N * sizeof (EOS_REAL));
+  if (n > me->N) eos_SetSizeRecordType3 (me, n);
+  /* me->N = n; */
+  /* memcpy (&(me->N), packedTable + byteCount, sizeof (EOS_INTEGER)); */
+  /* byteCount += sizeof (EOS_INTEGER); */
+  memcpy (me->T, packedTable + byteCount, me->N * sizeof (EOS_REAL));
   byteCount += me->N * sizeof (EOS_REAL);
-  memcpy (&(me->R), packedTable + byteCount, me->N * sizeof (EOS_REAL));
+  memcpy (me->R, packedTable + byteCount, me->N * sizeof (EOS_REAL));
   byteCount += me->N * sizeof (EOS_REAL);
-  memcpy (&(me->eosData.numSubtablesLoaded), packedTable + byteCount,
-          sizeof (EOS_INTEGER));
+  memcpy (&(me->eosData.numSubtablesLoaded), packedTable + byteCount, sizeof (EOS_INTEGER));
   byteCount += sizeof (EOS_INTEGER);
   memcpy (&(tmpINT), packedTable + byteCount, sizeof (EOS_INTEGER));
   me->eosData.isLoaded = (tmpINT != 0) ? 1 : 0;
   byteCount += sizeof (EOS_INTEGER);
 
-  memcpy (&(me->eosData.dataFileIndex), packedTable + byteCount,
-          sizeof (EOS_INTEGER));
+  memcpy (&(me->eosData.dataFileIndex), packedTable + byteCount, sizeof (EOS_INTEGER));
   byteCount += sizeof (EOS_INTEGER);
-  memcpy (&(me->eosData.dataFileOffset), packedTable + byteCount,
-          sizeof (long));
+  memcpy (&(me->eosData.dataFileOffset), packedTable + byteCount, sizeof (long));
   byteCount += sizeof (long);
-  memcpy (&(me->eosData.dataSize), packedTable + byteCount,
-          sizeof (EOS_INTEGER));
+  memcpy (&(me->eosData.dataSize), packedTable + byteCount, sizeof (EOS_INTEGER));
   byteCount += sizeof (EOS_INTEGER);
 }
 
@@ -501,18 +529,20 @@ void eos_GetPackedTableSizeRecordType3 (void *ptr, EOS_INTEGER th,
   me = (eos_RecordType3 *) ptr;
   *err = EOS_OK;
 
-  byteCount += sizeof (EOS_REAL);
-  byteCount += sizeof (EOS_REAL);
-  byteCount += sizeof (EOS_REAL);
-  byteCount += sizeof (EOS_REAL);
-  byteCount += sizeof (EOS_REAL);
+  byteCount += sizeof (EOS_REAL);         /* me->avgAtomicNumber */    
+  byteCount += sizeof (EOS_REAL);         /* me->avgAtomicWgt */       
+  byteCount += sizeof (EOS_REAL);         /* me->refDensity */         
+  byteCount += sizeof (EOS_REAL);         /* me->solidBulkModulus */   
+  byteCount += sizeof (EOS_REAL);         /* me->exchangeCoefficient */
 
-  byteCount += sizeof (EOS_INTEGER);
-  byteCount += me->N * sizeof (EOS_REAL);
-  byteCount += me->N * sizeof (EOS_REAL);
-  byteCount += 2 * sizeof (EOS_INTEGER);        /* me->eosData.numSubtablesLoaded and
-                                                   me->eosData.isLoaded */
-  byteCount += (sizeof (EOS_INTEGER) * 2 + sizeof (long));
+  byteCount += sizeof (EOS_INTEGER);      /* me->N */
+  byteCount += me->N * sizeof (EOS_REAL); /* me->T[] */
+  byteCount += me->N * sizeof (EOS_REAL); /* me->R[] */
+  byteCount += sizeof (EOS_INTEGER);      /* me->eosData.numSubtablesLoaded */
+  byteCount += sizeof (EOS_INTEGER);      /* me->eosData.isLoaded */
+  byteCount += sizeof (EOS_INTEGER);      /* me->eosData.dataFileIndex */
+  byteCount += sizeof (long);             /* me->eosData.dataFileOffset */
+  byteCount += sizeof (EOS_INTEGER);      /* me->eosData.dataSize */
   *packedTableSize = byteCount;
 }
 

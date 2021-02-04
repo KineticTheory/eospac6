@@ -8,7 +8,7 @@
  ********************************************************************/
 
 /*! \file
- *  \ingroup tests
+ *  \ingroup C tests
  *  \brief Check that the correct tables are being loaded for EOS_Ae_DT
  *         and material 3717.
  *

@@ -11,9 +11,7 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
-#ifndef WIN32
 #include <dirent.h>
-#endif
 
 #define _write_directory_llnl_xml HEADER(_write_directory_llnl_xml)
 #define _write_xml_material_tag HEADER(_write_xml_material_tag)
@@ -125,12 +123,7 @@ void _create_xml_directory(char* path) {
 	struct stat fileStat;
     	if(stat(path,&fileStat) < 0)    {
 		//  directory path does not exist, so make it
-		/* didit_work = */ 
-#ifndef WIN32
-			mkdir(path, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
-#else
-			mkdir(path);
-#endif
+		/* didit_work = */ mkdir(path, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
 	}
 	else {
 	}
@@ -179,7 +172,6 @@ char* _get_descriptive_material_name(ses_material_id mid) {
 	return return_value;
 
 }
-
 
 
 

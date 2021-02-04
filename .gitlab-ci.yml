@@ -6,16 +6,52 @@ test:gcc:
   #    - ${CI_PROJECT_DIR}
   script:
     - echo "proxy=http://proxyout.lanl.gov:8080" >> /etc/dnf/dnf.conf
-    - dnf install -y make gcc gcc-gfortran gcc-c++ perl findutils which git
+    - dnf install -y make gcc gcc-gfortran gcc-c++ perl findutils diffutils which git
     - git clone https://${EOSPAC6_CI_USERNAME}:${EOSPAC6_CI_PASSWORD}@git.lanl.gov/eos/eospac-dev/eospac6-data.git
     - export SESAMEPATH="${CI_PROJECT_DIR}/eospac6-data/data/eos:${CI_PROJECT_DIR}/eospac6-data/data/eos/export-controlled/ieee64"
     - cd Source/
-    - export CORECOUNT=$(./scripts/corecount)
+    - export CONCURRENT=3
+    - CORECOUNT=$(./scripts/corecount)
+    - export CORECOUNT
     - echo "CORECOUNT=${CORECOUNT}"
-    - make -j ${CORECOUNT} check 2>&1 | tee tmp.out
+    - export MORE_COMPILE_OPTS='-fprofile-arcs -ftest-coverage -pg'
+    - export MORE_LD_OPTS='-fprofile-arcs -ftest-coverage -pg'
+    - export RUN_COVERAGE_TOOL=gcov
+    - printenv
+    - make -j ${CORECOUNT} checkutils 2>&1 | tee checkutils.tmp.out
     - |
-      if [ "$(grep -c "FAILED" tmp.out)" -ge 1 ]; 
-      then exit 1; 
+      if [ "$(grep -c "FAILED" checkutils.tmp.out)" -ge 1 ]; 
+      then
+        grep "FAILED" checkutils.tmp.out;
+        exit 1;
       fi
-    - rm tmp.out
-    - make install prefix=${CI_PROJECT_DIR}/install
+    - |
+      if [ "$(grep -c "PASSED" checkutils.tmp.out)" -eq 0 ]; 
+      then
+        echo "No utils test results were found";
+        exit 2;
+      fi
+    - make -j ${CORECOUNT} check 2>&1 | tee check.tmp.out
+    - |
+      if [ "$(grep -c "FAILED" check.tmp.out)" -ge 1 ]; 
+      then
+        ./scripts/compare.FAILED.sh -l;
+        STDOUT_FILES=`./scripts/compare.FAILED.sh -L -s -S`;
+        for f in ${STDOUT_FILES};
+        do
+           g=`echo ${f} | sed 's/.stdout/.workdir\/\*.test_times_portable.txt/'`;
+           echo --- ${g};
+           cat ${g};
+           #echo --- ${f};
+           #cat ${f};
+        done
+        exit 3;
+      fi
+    - |
+      if [ "$(grep -c "PASSED" check.tmp.out)" -eq 0 ]; 
+      then
+        echo "No test results were found";
+        exit 4;
+      fi
+    - rm checkutils.tmp.out
+    - rm check.tmp.out

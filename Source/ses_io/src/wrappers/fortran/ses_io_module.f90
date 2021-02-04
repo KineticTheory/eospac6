@@ -33,6 +33,9 @@ module ses_io
    SES_ERROR_FLAG, parameter :: SES_TEST_ERROR = 27
    SES_ERROR_FLAG, parameter :: SES_APPEND_ERROR = 28
    SES_ERROR_FLAG, parameter :: SES_NO_DATA_ERROR = 29
+   SES_ERROR_FLAG, parameter :: SES_INVALID_FILE_FORMAT_TYPE = 30
+   SES_ERROR_FLAG, parameter :: SES_INVALID_ASCII_WORD_TYPE = 31
+   SES_ERROR_FLAG, parameter :: SES_INVALID_NUM_PARAMETERS = 32
 
    SES_FILE_HANDLE, parameter ::  SES_NULL_HANDLE = 0;
 
@@ -94,6 +97,7 @@ CONTAINS
 #include "wrap_ses_read_pairs.f90"
 #include "wrap_ses_read_word.f90"
 #include "wrap_ses_set_array_order.f90"
+#include "wrap_ses_set_date.f90"
 #include "wrap_ses_set_format.f90"
 #include "wrap_ses_set_grid.f90"
 #include "wrap_ses_set_label.f90"

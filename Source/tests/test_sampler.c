@@ -8,8 +8,7 @@
  ********************************************************************/
 
 /*! \file
- *  \ingroup tests
- *  \ingroup tests quick unit
+ *  \ingroup C tests quick unit
  *  \brief This is a unit test of the eos_Utils::_eos_CompressArray
  *         function. Apparently actual data provides a better challenge
  *         for the algorithm's robustness, so selected pressure tables

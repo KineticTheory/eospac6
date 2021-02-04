@@ -8,7 +8,7 @@
  ********************************************************************/
 
 /*! \file
- *  \ingroup tests quick
+ *  \ingroup C tests quick
  *
  *  \brief Ensure the Index file parser succeeds when lines end with white space.
  *        See eos/eospac-dev/eospac6#583 for more details:

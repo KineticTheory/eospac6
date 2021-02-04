@@ -8,7 +8,7 @@
  ********************************************************************/
 
 /*! \file
- *  \ingroup tests quick
+ *  \ingroup C tests quick
  *  \brief Test improved errorCode checking in eos_ErrorHandler::eos_GetErrorMsg.
  *
  *  See SourceForge issue 

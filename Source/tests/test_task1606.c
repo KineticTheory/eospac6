@@ -8,7 +8,7 @@
  ********************************************************************/
 
 /*! \file
- *  \ingroup tests
+ *  \ingroup C tests
  *  \brief Test category 2 inverse birational interpolation.
  *
  * \note
@@ -20,10 +20,12 @@
 #include "TEST_FUNCTIONS.h"
 #include "eos_Interface.h"
 
+EOS_INTEGER eos_GetStandardErrorCodeFromCustomErrorCode (const EOS_INTEGER err);
+
 int main ()
 {
   enum
-  { nTablesE = 4 };
+  { nTablesE = 2 };
   enum
   { nXYPairsE = 8 };
 
@@ -44,18 +46,14 @@ int main ()
   j0 = 0;
   nAdd = 3; /* number of data to insert in between existing data */
 
-  nTables = 2; /* nTablesE; */
+  nTables = nTablesE;
   nXYPairs = nXYPairsE;
 
-  tableType[0] = EOS_Pt_DT;     /* record type 1, substable 1 , cat 0 */
-  tableType[1] = EOS_T_DPt;     /* record type 1, substable 1 , cat 2 */
-  tableType[2] = EOS_D_PtT;     /* record type 1, substable 1 , cat 1 */
-  tableType[3] = EOS_Pt_DUt;    /* record type 1, category 3: EOS_Pt_DT, EOS_T_DUt (where EOS_T_DUt is subtable 1, category 2) */
+  tableType[0] = EOS_Pt_DT;     /* record type 1, subtable 1 , cat 0 */
+  tableType[1] = EOS_T_DPt;     /* record type 1, subtable 1 , cat 2 */
 
   matID[0] = 2140;
   matID[1] = 2140;
-  matID[2] = 2140;
-  matID[3] = 2140;
 
   errorCode = EOS_OK;
   for (i = 0; i < nTables; i++) {
@@ -195,14 +193,14 @@ int main ()
     F2d = (EOS_REAL *) malloc (sizeof (EOS_REAL) * ((NX-2*i0) * (NY-2*j0)));
 
   if (i0 > 0 || j0 > 0) { /* remove i0 row(s) from each end of X0[] and
-			     remove j0 row(s) from each end of Y0[] and
-			     remove the corresponding rows and columns from F0[] */
+                             remove j0 row(s) from each end of Y0[] and
+                             remove the corresponding rows and columns from F0[] */
     for (j = 0; j < NY-2*j0; j++)
       Y0[j] = Y0[j+j0];
     for (i = 0; i < NX-2*i0; i++) {
       X0[i] = X0[i+i0];
       for (j = 0; j < NY-2*j0; j++)
-	F2d[i + j*(NX-2*i0)] = F0[(i+i0) + (j+j0)*NX];
+        F2d[i + j*(NX-2*i0)] = F0[(i+i0) + (j+j0)*NX];
     }
     NX -= 2*i0;
     NY -= 2*j0;
@@ -267,14 +265,13 @@ int main ()
   if (errorCode != EOS_OK) {
     eos_GetErrorMessage (&errorCode, errorMessage);
     printf ("%d: %s\n", errorCode, errorMessage);
-    if (errorCode != EOS_INTERP_EXTRAPOLATED)
+    if (eos_GetStandardErrorCodeFromCustomErrorCode(errorCode) != EOS_INTERP_EXTRAPOLATED)
       return errorCode;
   }
-/*   P0[0] = -P0[0]*1.0e-99; */
-/*   P0[nXYPairs-1] = P0[nXYPairs-1] + (P0[nXYPairs-1] - P0[nXYPairs-2]); */
+  /*   P0[0] = -P0[0]*1.0e-99; */
+  /*   P0[nXYPairs-1] = P0[nXYPairs-1] + (P0[nXYPairs-1] - P0[nXYPairs-2]); */
 
-  printf
-    ("\n--- TEST eos_Interpolate using category 2 tableType: EOS_T_DPt ---\n");
+  printf("\n--- TEST eos_Interpolate using category 2 tableType: EOS_T_DPt ---\n");
   printf("nAdd %d\n",nAdd);
   printf("nIgnoredRows %d\n",i0);
   printf("nIgnoredColumns %d\n",j0);
@@ -283,33 +280,11 @@ int main ()
     eos_GetErrorMessage (&errorCode, errorMessage);
     printf ("%d: %s\n", errorCode, errorMessage);
 
-    if (errorCode == EOS_INTERP_EXTRAPOLATED) {
+    if (eos_GetStandardErrorCodeFromCustomErrorCode(errorCode) == EOS_INTERP_EXTRAPOLATED) {
       eos_CheckExtrap (&tableHandle[1], &nXYPairs, X, P0, xyBounds, &errorCode);
       errorCode = EOS_INTERP_EXTRAPOLATED;
     }
-/*     else */
-/*       return errorCode; */
   }
-
-//#define  COMPARE_TO_BILINEAR
-#ifdef COMPARE_TO_BILINEAR
-  /* generate inverse bilinear interpolated results */
-  eos_SetOption (&tableHandle[1], &EOS_LINEAR, EOS_NullPtr, &errorCode);
-  if (errorCode != EOS_OK) {
-    eos_GetErrorMessage (&errorCode, errorMessage);
-    printf ("eos_SetOption ERROR %i: %s\n", errorCode, errorMessage);
-    return 0;
-  }
-
-  eos_Interpolate (&tableHandle[1], &nXYPairs, X, P0, F2d, dFx, dFy, &errorCode);        /* F(x,y) */
-
-  if (errorCode != EOS_OK && errorCode != EOS_INTERP_EXTRAPOLATED) {
-    eos_GetErrorMessage (&errorCode, errorMessage);
-    printf ("%d: %s\n", errorCode, errorMessage);
-    return errorCode;
-  }
-  printf ("Compare EOS_RATIONAL and EOS_LINEAR interpolation results\n");  
-#endif
 
   printf ("eos_Interpolate is complete\n");  
 
@@ -319,19 +294,13 @@ int main ()
   k = 0;
   for (i = 0; i < NX; i++) {
     for (j = 0; j < NY; j++) {
-      if (nAdd==0)
-	sprintf(Pminmax_str," ,min = %23.15e, max = %23.15e",F0[i],F0[i+(NY0-1)*NX0]);
-#ifdef COMPARE_TO_BILINEAR
-      printf
-	("i=%i\tD = %23.15e, Pt = %23.15e, T = %23.15e, T0 = %23.15e, err = %.0f%%%s %s\n",
-	 k, X[k], P0[k], F[k], F2d[k], ERR(F2d[k],F[k]), Pminmax_str,
-	 ((xyBounds[k]!=EOS_OK) ? ERROR_TO_TEXT(xyBounds[k]) : ""));
-#else
-      printf
-	("i=%i\tD = %23.15e, Pt = %23.15e, T = %23.15e, T0 = %23.15e, err = %.0f%%, dT/dr = %23.15e, dT/dPt = %23.15e%s %s\n",
- 	 k, X[k], P0[k], F[k], Y[j], ERR(Y[j],F[k]), dFx[k], dFy[k], Pminmax_str,
-	 ((xyBounds[k]!=EOS_OK) ? ERROR_TO_TEXT(xyBounds[k]) : ""));
-#endif
+      if (!(k%50)) printf ("\n%7s %23s %23s %23s %23s %6s %23s %23s\n",
+                           "i", "D", "Pt", "T", "T0", "err", "dT/dD", "dT/dPt");
+
+      if (nAdd==0) sprintf(Pminmax_str," ,min = %23.15e, max = %23.15e",F0[i],F0[i+(NY0-1)*NX0]);
+      printf ("%7i %23.15e %23.15e %23.15e %23.15e %6.0g%% %23.15e %23.15e%s %s\n",
+              k, X[k], P0[k], F[k], Y[j], ERR(Y[j],F[k]), dFx[k], dFy[k], Pminmax_str,
+              ((xyBounds[k]!=EOS_OK) ? ERROR_TO_TEXT(xyBounds[k]) : ""));
       k++;
     }
   }

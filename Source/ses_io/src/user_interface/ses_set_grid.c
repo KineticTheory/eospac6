@@ -4,6 +4,7 @@
 #include "ses_externs.h"
 #include "ses_internals.h"
 
+#undef DEBUG_PRINT
 
 ses_error_flag ses_set_grid(ses_file_handle the_handle, ses_number nr, ses_number nt, ses_number ntab) {
 
@@ -12,10 +13,17 @@ ses_error_flag ses_set_grid(ses_file_handle the_handle, ses_number nr, ses_numbe
 
   /*  when user passes in a straight -1, that does not cast correctly to a -1 long -- check for this and 
       correct */
+#ifdef DEBUG_PRINT
+  printf("ses_set_grid::  nr: %ld, nt: %ld, ntab: %ld\n",nr,nt,ntab);
+#endif
 
   if (ntab > 10000) {
     ntab = (long)(-1);
   }
+
+#ifdef DEBUG_PRINT
+  printf("ses_set_grid:: AFTER  ntab: %ld\n",ntab);
+#endif
 
   if (ses_is_valid(the_handle) == SES_FALSE) {
 #ifdef DEBUG_PRINT
@@ -64,6 +72,9 @@ ses_error_flag ses_set_grid(ses_file_handle the_handle, ses_number nr, ses_numbe
   	int index = _get_table_index(FILE_LIST[the_handle]->_current_index_record, tid);
   	FILE_LIST[the_handle]->_current_index_record->_nr[index] = nr;
   	FILE_LIST[the_handle]->_current_index_record->_nt[index] = nt;
+#ifdef DEBUG_PRINT
+        printf("ses_set_grid:: index: %d\n", index);
+#endif
   }
 
   FILE_LIST[the_handle]->_the_setup->_nr = nr;

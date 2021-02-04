@@ -8,7 +8,7 @@
  ********************************************************************/
 
 /*! \file
- *  \ingroup tests
+ *  \ingroup C tests
  *  \brief Verify results of EOS_EXPAND_DATA setup option.
  *
  *  See SourceForge issue 

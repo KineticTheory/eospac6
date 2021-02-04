@@ -8,7 +8,7 @@
  ********************************************************************/
 
 /*! \file
- *  \ingroup tests
+ *  \ingroup C tests
  *  \brief Using linear ideal gas data, verify results of all 5 interpolation
  *  categories for the EOS_LINEAR interpolation option.
  *
@@ -171,6 +171,10 @@ int main ()
   EOS_REAL e1 = 1.0e-10; /* relative difference tolerance */
   EOS_REAL e2 = 1.0e-20; /* absolute difference tolerance */
 
+  EOS_INTEGER fail_cnt = 0;
+  EOS_INTEGER pass_cnt = 0;
+  EOS_INTEGER total_cnt = 0;
+
   nTables = nTablesE;
   nXYPairs = nXYPairsE;
   nInfoItems = nInfoItemsE;
@@ -266,7 +270,7 @@ int main ()
   if (errorCode != EOS_OK) {
     eos_GetErrorMessage (&errorCode, errorMessage);
     printf ("%i: eos_GetTableInfo ERROR %i for %s: %s\n",
-	    tableHandle[i], errorCode, get_tableType_str(tableType[i]), errorMessage);
+            tableHandle[i], errorCode, get_tableType_str(tableType[i]), errorMessage);
     return errorCode;
   }
   Rmin = infoVals[0];
@@ -285,7 +289,7 @@ int main ()
   if (errorCode != EOS_OK) {
     eos_GetErrorMessage (&errorCode, errorMessage);
     printf ("%i: eos_GetTableInfo ERROR %i for %s: %s\n",
-	    tableHandle[i], errorCode, get_tableType_str(tableType[i]), errorMessage);
+            tableHandle[i], errorCode, get_tableType_str(tableType[i]), errorMessage);
     return errorCode;
   }
   atomicWeight = infoVals[0];
@@ -293,6 +297,9 @@ int main ()
   /*
    * interpolate
    */
+  fail_cnt = 0;
+  pass_cnt = 0;
+  total_cnt = 0;
   for (i = 0; i < nTables; i++) {
 
     for (j = 0; j < nXYPairs; j++)
@@ -305,37 +312,37 @@ int main ()
       dFy_ideal = (EOS_REAL*) malloc(nXYPairs * sizeof(EOS_REAL));
 
       for (j = 0; j < nXYPairs; j++) {
-	EOS_REAL Pc[3] = {zero, zero, zero};
-	EOS_REAL Uc[3] = {zero, zero, zero};
-	X0[j] = X[j];
-	Y0[j] = Y[j];
+        EOS_REAL Pc[3] = {zero, zero, zero};
+        EOS_REAL Uc[3] = {zero, zero, zero};
+        X0[j] = X[j];
+        Y0[j] = Y[j];
 	
-	idealP(1, X[j], Y[j], 'T', R, Pc, Uc, &atomicWeight, &one,
-	       &gamma, _F_, &gamma_bar, &Abar);
-	Fideal[j] = _F_[0];
-	dFx_ideal[j] = _F_[1];
-	dFy_ideal[j] = _F_[2];
+        idealP(1, X[j], Y[j], 'T', R, Pc, Uc, &atomicWeight, &one,
+               &gamma, _F_, &gamma_bar, &Abar);
+        Fideal[j] = _F_[0];
+        dFx_ideal[j] = _F_[1];
+        dFy_ideal[j] = _F_[2];
       }
     }
     else if (tableType[i] == EOS_T_DPt) {
       for (j = 0; j < nXYPairs; j++) {
-	X[j] = X0[j];
-	Y[j] = F0[j] = F[j];
+        X[j] = X0[j];
+        Y[j] = F0[j] = F[j];
 
-	Fideal[j] = Y0[j];
+        Fideal[j] = Y0[j];
       }
       EOS_FREE(dFx_ideal);
       EOS_FREE(dFy_ideal);
     }
     else if (tableType[i] == EOS_D_PtT) {
       for (j = 0; j < nXYPairs; j++) {
-	X[j] = F0[j];
-	Y[j] = Y0[j];
+        X[j] = F0[j];
+        Y[j] = Y0[j];
 
-	Fideal[j] = X0[j];
+        Fideal[j] = X0[j];
 
-	e1 = 1.0e-7; /* relative difference tolerance */
-	e2 = 1.0e-20; /* absolute difference tolerance */
+        e1 = 1.0e-7; /* relative difference tolerance */
+        e2 = 1.0e-20; /* absolute difference tolerance */
       }
       EOS_FREE(dFx_ideal);
       EOS_FREE(dFy_ideal);
@@ -356,9 +363,10 @@ int main ()
       printf ("# eos_Interpolate ERROR %i (TH=%i): %s\n", errorCode,
               tableHandle[i], errorMessage);
       if (errorCode != EOS_INTERP_EXTRAPOLATED)
-	continue;
+        continue;
       eos_CheckExtrap (&tableHandle[i], &nXYPairs, X, Y, xyBounds, &errorCode);
     }
+
     if (numIndVars[i] == 1)
       printf ("%16s %22s %22s %22s\n", "i","X","F","dFx");
     if (numIndVars[i] == 2) {
@@ -369,25 +377,37 @@ int main ()
     }
     for (j = 0; j < nXYPairs; j++) {
 
+      total_cnt++;
       if (fcmp(Fideal[j], F[j], e1, e2) ||
-	  (dFx_ideal && fcmp(dFx_ideal[j], dFx[j], e1, e2)) ||
-	  (dFy_ideal && fcmp(dFy_ideal[j], dFy[j], e1, e2))) {
-	printf ("%s", ((tableType[i] == EOS_D_PtT) ? "#" : " "));
-	printf(" FAILED ");
+          (dFx_ideal && fcmp(dFx_ideal[j], dFx[j], e1, e2)) ||
+          (dFy_ideal && fcmp(dFy_ideal[j], dFy[j], e1, e2))) {
+        printf ("%s", ((tableType[i] == EOS_D_PtT) ? "#" : " "));
+        printf(" FAILED ");
+        fail_cnt++;
       }
-      else
-	printf("# PASSED ");
+      else {
+        printf("# PASSED ");
+        pass_cnt++;
+      }
 
       printf ("%7i %22.15e", j, X[j]);
       if (numIndVars[i] == 2) printf (" %22.15e", Y[j]);
       printf (" %22.15e %22.15e", F[j], dFx[j]);
       if (numIndVars[i] == 2) {
-	printf (" %22.15e %22.15e", dFy[j], Fideal[j]);
-	if (dFx_ideal) printf (" %22.15e", dFx_ideal[j]);
-	if (dFy_ideal) printf (" %22.15e", dFy_ideal[j]);
+        printf (" %22.15e %22.15e", dFy[j], Fideal[j]);
+        if (dFx_ideal) printf (" %22.15e", dFx_ideal[j]);
+        if (dFy_ideal) printf (" %22.15e", dFy_ideal[j]);
       }
       printf (" %s\n", ((xyBounds[j]!=EOS_OK) ? ERROR_TO_TEXT(xyBounds[j]) : ""));
     }
+  }
+
+  printf("\n");
+  if (! fail_cnt) {
+    printf("# ALL %d TESTS PASSED\n", total_cnt);
+  }
+  else {
+    printf("%d of %d TESTS FAILED\n", fail_cnt, total_cnt);
   }
 
   /*

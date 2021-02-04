@@ -4,6 +4,7 @@
 #include "ses_externs.h"
 #include "ses_internals.h"
 
+#undef DEBUG_PRINT
 
 ses_boolean ses_set_table_index(ses_file_handle the_handle,        
 		 long date1, long date2, long version) {

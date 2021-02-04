@@ -217,10 +217,51 @@ integer(EOS_INTEGER), parameter :: EOS_B_DT       = 279_EOS_INTEGER
 integer(EOS_INTEGER), parameter :: EOS_Kc_DT      = 282_EOS_INTEGER
 integer(EOS_INTEGER), parameter :: EOS_V_PtT      = 285_EOS_INTEGER
 integer(EOS_INTEGER), parameter :: EOS_M_DT       = 305_EOS_INTEGER
+integer(EOS_INTEGER), parameter :: EOS_Gt_DT      = 310_EOS_INTEGER
+integer(EOS_INTEGER), parameter :: EOS_T_DGt      = 311_EOS_INTEGER
+integer(EOS_INTEGER), parameter :: EOS_Pt_DGt     = 312_EOS_INTEGER
+integer(EOS_INTEGER), parameter :: EOS_Ut_DGt     = 313_EOS_INTEGER
+integer(EOS_INTEGER), parameter :: EOS_At_DGt     = 314_EOS_INTEGER
+integer(EOS_INTEGER), parameter :: EOS_St_DGt     = 315_EOS_INTEGER
+integer(EOS_INTEGER), parameter :: EOS_Gt_DPt     = 316_EOS_INTEGER
+integer(EOS_INTEGER), parameter :: EOS_Gt_DUt     = 317_EOS_INTEGER
+integer(EOS_INTEGER), parameter :: EOS_Gt_DAt     = 318_EOS_INTEGER
+integer(EOS_INTEGER), parameter :: EOS_Gt_DSt     = 319_EOS_INTEGER
+integer(EOS_INTEGER), parameter :: EOS_Gic_DT     = 320_EOS_INTEGER
+integer(EOS_INTEGER), parameter :: EOS_T_DGic     = 321_EOS_INTEGER
+integer(EOS_INTEGER), parameter :: EOS_Pic_DGic   = 322_EOS_INTEGER
+integer(EOS_INTEGER), parameter :: EOS_Uic_DGic   = 323_EOS_INTEGER
+integer(EOS_INTEGER), parameter :: EOS_Aic_DGic   = 324_EOS_INTEGER
+integer(EOS_INTEGER), parameter :: EOS_Sic_DGic   = 325_EOS_INTEGER
+integer(EOS_INTEGER), parameter :: EOS_Gic_DPic   = 326_EOS_INTEGER
+integer(EOS_INTEGER), parameter :: EOS_Gic_DUic   = 327_EOS_INTEGER
+integer(EOS_INTEGER), parameter :: EOS_Gic_DAic   = 328_EOS_INTEGER
+integer(EOS_INTEGER), parameter :: EOS_Gic_DSic   = 329_EOS_INTEGER
+integer(EOS_INTEGER), parameter :: EOS_Ge_DT      = 330_EOS_INTEGER
+integer(EOS_INTEGER), parameter :: EOS_T_DGe      = 331_EOS_INTEGER
+integer(EOS_INTEGER), parameter :: EOS_Pe_DGe     = 332_EOS_INTEGER
+integer(EOS_INTEGER), parameter :: EOS_Ue_DGe     = 333_EOS_INTEGER
+integer(EOS_INTEGER), parameter :: EOS_Ae_DGe     = 334_EOS_INTEGER
+integer(EOS_INTEGER), parameter :: EOS_Se_DGe     = 335_EOS_INTEGER
+integer(EOS_INTEGER), parameter :: EOS_Ge_DPe     = 336_EOS_INTEGER
+integer(EOS_INTEGER), parameter :: EOS_Ge_DUe     = 337_EOS_INTEGER
+integer(EOS_INTEGER), parameter :: EOS_Ge_DAe     = 338_EOS_INTEGER
+integer(EOS_INTEGER), parameter :: EOS_Ge_DSe     = 339_EOS_INTEGER
+integer(EOS_INTEGER), parameter :: EOS_Giz_DT     = 340_EOS_INTEGER
+integer(EOS_INTEGER), parameter :: EOS_T_DGiz     = 341_EOS_INTEGER
+integer(EOS_INTEGER), parameter :: EOS_Piz_DGiz   = 342_EOS_INTEGER
+integer(EOS_INTEGER), parameter :: EOS_Uiz_DGiz   = 343_EOS_INTEGER
+integer(EOS_INTEGER), parameter :: EOS_Aiz_DGiz   = 344_EOS_INTEGER
+integer(EOS_INTEGER), parameter :: EOS_Siz_DGiz   = 345_EOS_INTEGER
+integer(EOS_INTEGER), parameter :: EOS_Giz_DPiz   = 346_EOS_INTEGER
+integer(EOS_INTEGER), parameter :: EOS_Giz_DUiz   = 347_EOS_INTEGER
+integer(EOS_INTEGER), parameter :: EOS_Giz_DAiz   = 348_EOS_INTEGER
+integer(EOS_INTEGER), parameter :: EOS_Giz_DSiz   = 349_EOS_INTEGER
+integer(EOS_INTEGER), parameter :: EOS_Gc_D       = 350_EOS_INTEGER
 
 ! Table setup and interpolation option constants
 
-integer(EOS_INTEGER), parameter :: EOS_NUM_TABLE_OPTIONS  = 28_EOS_INTEGER
+integer(EOS_INTEGER), parameter :: EOS_NUM_TABLE_OPTIONS  = 30_EOS_INTEGER
 integer(EOS_INTEGER), parameter :: EOS_MIN_OPTION_FLAG_VALUE  = 1000_EOS_INTEGER
 integer(EOS_INTEGER), parameter :: EOS_DUMP_DATA  = 1000_EOS_INTEGER
 integer(EOS_INTEGER), parameter :: EOS_APPEND_DATA = 1001_EOS_INTEGER
@@ -250,10 +291,13 @@ integer(EOS_INTEGER), parameter :: EOS_DISCONTINUOUS_DERIVATIVES = 1024
 integer(EOS_INTEGER), parameter :: EOS_XY_PASSTHRU = 1025
 integer(EOS_INTEGER), parameter :: EOS_XY_MODIFY = 1026
 integer(EOS_INTEGER), parameter :: EOS_INVERT_AT_SETUP = 1027
+integer(EOS_INTEGER), parameter :: EOS_USE_HOST_XY = 1028
+integer(EOS_INTEGER), parameter :: EOS_SKIP_EXTRAP_CHECK = 1029
+
 
 ! Data information constants
 
-integer(EOS_INTEGER), parameter :: EOS_NUM_INFO_CONSTANTS  = 40_EOS_INTEGER
+integer(EOS_INTEGER), parameter :: EOS_NUM_INFO_CONSTANTS  = 49_EOS_INTEGER
 integer(EOS_INTEGER), parameter :: EOS_Cmnt_Len            = 1_EOS_INTEGER
 integer(EOS_INTEGER), parameter :: EOS_Exchange_Coeff      = 2_EOS_INTEGER
 integer(EOS_INTEGER), parameter :: EOS_F_Convert_Factor    = EOS_F_CONVERT
@@ -294,6 +338,14 @@ integer(EOS_INTEGER), parameter :: EOS_F_Species_Data      = 34_EOS_INTEGER
 integer(EOS_INTEGER), parameter :: EOS_dFx_Species_Data    = 35_EOS_INTEGER
 integer(EOS_INTEGER), parameter :: EOS_dFy_Species_Data    = 36_EOS_INTEGER
 integer(EOS_INTEGER), parameter :: EOS_nXYPairs            = 37_EOS_INTEGER
+integer(EOS_INTEGER), parameter :: EOS_X_LOWER_BOUND       = 38_EOS_INTEGER
+integer(EOS_INTEGER), parameter :: EOS_X_UPPER_BOUND       = 39_EOS_INTEGER
+integer(EOS_INTEGER), parameter :: EOS_Y_LOWER_BOUND       = 40_EOS_INTEGER
+integer(EOS_INTEGER), parameter :: EOS_Y_UPPER_BOUND       = 41_EOS_INTEGER
+integer(EOS_INTEGER), parameter :: EOS_NX                  = 42_EOS_INTEGER
+integer(EOS_INTEGER), parameter :: EOS_NY                  = 43_EOS_INTEGER
+integer(EOS_INTEGER), parameter :: EOS_X_BOUND_GRID        = 44_EOS_INTEGER
+integer(EOS_INTEGER), parameter :: EOS_Y_BOUND_GRID        = 45_EOS_INTEGER
 
 ! Internal meta data information constants
 ! No additional constants are currently needed here, because only table type constants are currently valid

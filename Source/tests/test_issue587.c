@@ -8,7 +8,7 @@
  ********************************************************************/
 
 /*! @file
- *	@ingroup quick unit tests
+ *	@ingroup C quick unit tests
  *	@brief Perform the following tests:
  *	   -# Verify that the unexpected floating point exception errors are not returned for a
  *		  specific usage of eos_BiRationalInterpolate on KNL.
@@ -35,6 +35,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include "TEST_FUNCTIONS.h"
 #include "eos_Interface.h"
 
 void eos_BiRationalInterpolate (EOS_INTEGER numZones, EOS_INTEGER numXVals,
@@ -57,7 +58,7 @@ int main (int argc, char *argv[]) {
 
   EOS_INTEGER numZones; EOS_INTEGER numXVals;
   EOS_INTEGER numYVals; EOS_REAL *XValues;
-  EOS_REAL *YValues; EOS_REAL **FValues;
+  EOS_REAL *ptr, *YValues; EOS_REAL **FValues;
   EOS_INTEGER *ixv; EOS_INTEGER *iyv;
   EOS_REAL *searchXVals; EOS_REAL *searchYVals;
   EOS_REAL *searchFVals; EOS_REAL *searchDFx;
@@ -66,35 +67,49 @@ int main (int argc, char *argv[]) {
   int i, j;
 
   numZones = 5151; numXVals = 112; numYVals = 81;
+#if 0
   XValues = (EOS_REAL *) malloc (8*numXVals);
   YValues = (EOS_REAL *) malloc (8*numYVals);
   FValues = (EOS_REAL **) malloc (8*numYVals);
   for (i = 0; i < numYVals; i++) {
     FValues[i] = (EOS_REAL *) malloc (8*numXVals);
   }
-  ixv = (EOS_INTEGER *) malloc (4*numZones);
-  iyv = (EOS_INTEGER *) malloc (4*numZones);
+#else
+  /* memory is allocated continuously in one chunk for R, T and all tables */
+  ptr = (EOS_REAL *) malloc (sizeof (EOS_REAL) * (numYVals + numXVals + numYVals * numXVals));
+  XValues = ptr;
+  YValues = ptr + numXVals;
+  FValues = (EOS_REAL **) malloc (sizeof (EOS_REAL *) * numYVals);
+  for (i = 0; i < numYVals; i++) {
+    FValues[i] = ptr + numXVals + numYVals + i * numXVals;
+  }
+#endif
+
+  ixv         = (EOS_INTEGER *) malloc (4*numZones);
+  iyv         = (EOS_INTEGER *) malloc (4*numZones);
   searchXVals = (EOS_REAL *) malloc (8*numZones);
   searchYVals = (EOS_REAL *) malloc (8*numZones);
   searchFVals = (EOS_REAL *) malloc (8*numZones);
-  searchDFx = (EOS_REAL *) malloc (8*numZones);
-  searchDFy = (EOS_REAL *) malloc (8*numZones);
-  xyBounds = (EOS_INTEGER *) malloc (4*numZones);
+  searchDFx   = (EOS_REAL *) malloc (8*numZones);
+  searchDFy   = (EOS_REAL *) malloc (8*numZones);
+  xyBounds    = (EOS_INTEGER *) malloc (4*numZones);
 
+  mt_init();
+  
   for (i = 0; i < numXVals; i++) {
-    XValues[i] = drand48 ();
+    XValues[i] = mt_random();
   }
   for (i = 0; i < numYVals; i++) {
-    YValues[i] = drand48 ();
+    YValues[i] = mt_random();
     for (j = 0; j < numXVals; j++) {
-      FValues[i][j] = drand48();
+      FValues[i][j] = mt_random();
     }
   }
   for (i = 0; i < numZones; i++) {
     ixv[i] = 0;
     iyv[i] = 0;
-    searchXVals[i] = drand48 ();
-    searchYVals[i] = drand48 ();
+    searchXVals[i] = mt_random();
+    searchYVals[i] = mt_random();
     xyBounds[i] = 0;
   }
 
@@ -113,5 +128,15 @@ int main (int argc, char *argv[]) {
 
   printf("This test was successfully compiled and executed%s: 1\n", label);
 
+  free (ptr);
+  free (FValues);
+  free (ixv);
+  free (iyv);
+  free (searchXVals);
+  free (searchYVals);
+  free (searchFVals);
+  free (searchDFx);
+  free (searchDFy);
+  free (xyBounds);
   return 0;
 }

@@ -98,6 +98,9 @@ extern "C"
   void FUNC_INTER eos_Time (EOS_BOOLEAN *reset, EOS_REAL *wctime,
                             EOS_REAL *cputime, EOS_REAL *cpucycles,
                             EOS_INTEGER *err);
+#ifdef DO_OFFLOAD
+  void eos_GpuOffloadData (EOS_INTEGER * errorCode);
+#endif /* DO_OFFLOAD */
 
 #ifdef __cplusplus
 }

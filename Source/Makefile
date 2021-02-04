@@ -11,6 +11,15 @@
 ##################################################################
 SHELL = /bin/sh
 
+ifneq "$(MAKELEVEL)" "0"
+ifneq "$(IGNORE_MAKELEVEL_CHECK)" "1"
+$(warning *******************************************************************************************)
+$(warning * IT IS STRONGLY ADVISED THAT YOU DO NOT CALL THIS MAKEFILE FROM WITHIN ANOTHER MAKEFILE,  )
+$(warning * BECAUSE THE CONFIGUATION FILE(S) WILL NOT BE LOADED PROPERLY - UNSET MAKELEVEL FIRST!    )
+$(warning *******************************************************************************************)
+endif
+endif
+
 include Makefile.compile_opts
 
 # Define which variables need to be available to the general environment
@@ -51,12 +60,15 @@ Additionally, the following Makefile variables may be set on the command line:
 
   memcheck=1        Use either valgrind or purify to perform memory tests.
                     If both valgrind and purify are found, then valgrind is used.
+                    This option also sets NOVECT=1.
 
   NORUN             If this variable is set to any value other than "FALSE", then the tests
                     are not executed, merely compiled.
 
   NOVECT            Disable automatic vectorization. The CPUFLAGS will be defined as
                     -DDISABLE_OMP_SIMD_PRAGMA.
+
+  DO_OFFLOAD        Offload
 
   prefix            Define an alternative installation directory.
 
@@ -80,6 +92,9 @@ Additionally, the following Makefile variables may be set on the command line:
                           builds, runs and checks for PASS/FAIL all of the C++ codes
                           (likewise c, f and f90 for C, F77 and F90 respectively).
 
+  SHOW_SUPPRESSED=1 If this variable is true, then include suppressed messages provided by
+                    valgrind. (default is false)
+
   TESTTARGETS       Define a specific list of test case Make targets to operate upon.
                     For example:
                       make TESTTARGETS=test_task1606 check
@@ -90,33 +105,34 @@ Additionally, the following Makefile variables may be set on the command line:
                       make UTILTARGETS=get_sesame_data check
                           builds, runs and checks for PASS/FAIL the get_sesame_data code.
 
-  VALGRIND=valgrind Force the usage of valgrind for memory tests. If valgrind
-                    is named something else on your system, then define it with this variable.
+  VALGRIND=valgrind Force the usage of valgrind for memory tests. If valgrind is named something
+                    else on your system, then define it with this variable.
+                    This option also sets NOVECT=1.
 endef
 export HELP_ADDENDUM
 
 help: # Print this help
 	@(echo "$(BASEDIR)/Makefile contains the following valid targets:"; \
-          perl $(BASEDIR)/scripts/display_targets $(BASEDIR)/Makefile; \
-          echo 'Fortran compiler(s) supported on this architecture:'; \
-          echo $(if $(F90_List),$(F90_List),$(F90)) | fmt -w 80 | sed -e 's:^:   :g'; \
-          if [ "$(strip $(F90_Found_List))" != "" ]; then \
-            echo ' '; \
-            echo 'Supported Fortran compiler(s) found on this machine:'; \
-            echo $(notdir $(F90_Found_List)) | fmt -w 80 | sed -e 's:^:   :g'; \
-          fi; \
-          if [ "$(strip $(X_Compile_Module_List))" != "" ]; then \
-            echo ' '; \
-            echo 'If one of the following modules is loaded on this machine, then cross-compilation will' \
-                 'be performed, and the tests will be executed on the backend (assumed to be available)' \
-                 'for appropriate Make targets:' | fmt -w 90; \
-            echo $(X_Compile_Module_List) | awk '{for (i=1;i<=NF;i=i+3) {print $$(i),$$(i+1),$$(i+2)}}' | column -t -c 80 | sed -e 's:^:   :g'; \
-          fi; \
-          printf "\n%s\n\n" "$$HELP_ADDENDUM"; \
-          (printf "%-22s %-10s %-10s %-10s %s\n%-22s %-10s %-10s %-10s %s\n" " " F90 VERSION SHORTCUT "COMPILER OPTIONS" " " "----------" "----------" "----------" "----------------"); \
-          ($(foreach k,$(call keys,_F90-CPUINFO_COMP_FLAGS),printf "%-22s %-10s %-10s %-10s %s\n" " " $(call split,-,$(k)) "$(call get,_F90-CPUINFO_COMP_FLAGS,$(k))";)); \
-          echo; \
-         ) | more
+       perl $(BASEDIR)/scripts/display_targets $(BASEDIR)/Makefile; \
+       echo 'Fortran compiler(s) supported on this architecture:'; \
+       echo $(if $(F90_List),$(F90_List),$(F90)) | fmt -w 80 | sed -e 's:^:	  :g'; \
+       if [ "$(strip $(F90_Found_List))" != "" ]; then \
+         echo ' '; \
+         echo 'Supported Fortran compiler(s) found on this machine:'; \
+         echo $(notdir $(F90_Found_List)) | fmt -w 80 | sed -e 's:^:	  :g'; \
+       fi; \
+       if [ "$(strip $(X_Compile_Module_List))" != "" ]; then \
+         echo ' '; \
+         echo 'If one of the following modules is loaded on this machine, then cross-compilation will' \
+              'be performed, and the tests will be executed on the backend (assumed to be available)' \
+              'for appropriate Make targets:' | fmt -w 90; \
+         echo $(X_Compile_Module_List) | awk '{for (i=1;i<=NF;i=i+3) {print $$(i),$$(i+1),$$(i+2)}}' | column -t -c 80 | sed -e 's:^:	:g'; \
+       fi; \
+       printf "\n%s\n\n" "$$HELP_ADDENDUM"; \
+       (printf "%-22s %-10s %-10s %-10s %s\n%-22s %-10s %-10s %-10s %s\n" " " F90 VERSION SHORTCUT "COMPILER OPTIONS" " " "----------" "----------" "----------" "----------------"); \
+       ($(foreach k,$(call keys,_F90-CPUINFO_COMP_FLAGS),printf "%-22s %-10s %-10s %-10s %s\n" " " $(call split,-,$(k)) "$(call get,_F90-CPUINFO_COMP_FLAGS,$(k))";)); \
+       echo; \
+      ) | more
 
 EXAMPLEFILES := $(foreach ext,c f cpp f90, \
                   $(wildcard Examples/*.$(ext)))
@@ -133,68 +149,71 @@ ifneq ($(strip $(SERIES)),)
 endif
 
 check test: # Compile and execute the library, all examples, and all test codes
-	$(MAKE) -j1 NODEP=TRUE UTILTARGETS=get_sesame_data utils
+	$(MAKE) -j1 IGNORE_MAKELEVEL_CHECK=1 NODEP=TRUE UTILTARGETS=get_sesame_data utils
 	@echo '***********************************************************'
   ifneq ($(strip $(TESTTARGETS)),)
-	@$(MAKE) -C $(BASEDIR)/tests NODEP=TRUE EXE="$(TESTTARGETS)" $@
+	$(MAKE) -C $(BASEDIR)/tests NORUN=$(NORUN) NODEP=TRUE EXE="$(TESTTARGETS)" $@
   else
-	@$(MAKE) -C $(BASEDIR)/tests NODEP=TRUE $@
+	$(MAKE) -C $(BASEDIR)/tests NORUN=$(NORUN) NODEP=TRUE $@
   endif
 
 examples: # Execute all examples in the ./Examples subdirectory
-	@$(MAKE) -C $(BASEDIR)/Examples check
+	$(MAKE) -C $(BASEDIR)/Examples check
 
 Test%: # Compile the library, and the example named Test%, given %=C, CPP, F, or F77
-	@$(MAKE) -C $(BASEDIR)/Examples $@
+	$(MAKE) -C $(BASEDIR)/Examples $@
 
 test%: # Compile the library, and the test code named test%, given % is either a 3-digit number like 001 or a bug tracker ID like _artf1234
-	@$(MAKE) TESTTARGETS=$@ check
+	$(MAKE) TESTTARGETS=$@ NORUN=$(NORUN) check
 
 utils: # Compile the library, and all of the possible targets within the utils subdirectory
-	@$(MAKE) -C $(BASEDIR)/utils all
+	$(MAKE) -C $(BASEDIR)/utils all
 
 $(UTILTARGETS): # Compile the library, and the specified target within the utils subdirectory
-	@$(MAKE) -C $(BASEDIR)/utils $@
+	$(MAKE) -C $(BASEDIR)/utils $@
 
 checkutils: # Compile the library, and compile/check all of the possible targets within the utils subdirectory
-	@$(MAKE) -C $(BASEDIR)/utils check
+	$(MAKE) -C $(BASEDIR)/utils check
 
-check_on_compute_node: all # This is a specialized target that will cross-compile the tests if an appropriate module is loaded, and then execute the tests on the available compute node using MSUB
-	@$(MAKE) -C $(BASEDIR)/tests check_on_compute_node
+check_on_compute_node: all # This is a specialized target that will cross-compile the tests if an appropriate module is loaded, and then execute the tests on the available compute node using MSUB or SBATCH
+	$(MAKE) -C $(BASEDIR)/tests check_on_compute_node
+
+run_slurm_batch: # This is a specialized target that will execute the general SLURM script on the available compute node, and it requires the definition of the F90_OVERRIDE, MODULES2LOAD, and PARTITION environment variables -- see $(BASEDIR)/scripts/compile_and_run_tests_on_slurm_node.sbatch for details
+	$(MAKE) -C $(BASEDIR)/tests run_slurm_batch
 
 send_report: # Send and HTML status report to eospac_testing@lanl.gov
-	@$(MAKE) -C $(BASEDIR)/tests send_report
+	$(MAKE) -C $(BASEDIR)/tests send_report
 
 compare: # Compare existing test code output files to the baseline
-	@$(MAKE) -C $(BASEDIR)/tests compare
+	$(MAKE) -C $(BASEDIR)/tests compare
 
 $(LIBRARY_AR): # Compile the library
-	@$(MAKE) -C $(BASEDIR)/src
+	$(MAKE) -C $(BASEDIR)/src
 
-version: # Generate the src/eos_version.c file that contains the version information for the current source files (REQUIRES CVS repository access)
+version: # Generate the src/eos_version.c file that contains the version information for the current source files (REQUIRES Git repository access)
 ifeq (0,${MAKELEVEL})
-	@$(MAKE) -C $(BASEDIR)/src version
+	$(MAKE) -C $(BASEDIR)/src version
 endif
 
 install: # Install the library, examples and documentation for the current platform/compiler configuration
-	@$(MAKE) -C $(BASEDIR)/Examples install
+	$(MAKE) -C $(BASEDIR)/Examples install
 
 list_my_installed_files: # List the installed files for the current platform/compiler configuration
-	@$(MAKE) -C $(BASEDIR)/Examples list_my_installed_files
+	$(MAKE) -C $(BASEDIR)/Examples list_my_installed_files
 
 list_installed_files: # List all of the installed files for the current network
-	@$(MAKE) -C $(BASEDIR)/Examples list_installed_files
+	$(MAKE) -C $(BASEDIR)/Examples list_installed_files
 
 uninstall: # Uninstall the library, examples and documentation for the current platform/compiler configuration
-	@$(MAKE) -C $(BASEDIR)/Examples uninstall
+	$(MAKE) -C $(BASEDIR)/Examples uninstall
 
 TAGS:
-	@$(MAKE) -C $(BASEDIR)/Examples TAGS
-	@$(MAKE) -C $(BASEDIR)/src TAGS
-	@$(MAKE) -C $(BASEDIR)/tests TAGS
+	$(MAKE) -C $(BASEDIR)/Examples TAGS
+	$(MAKE) -C $(BASEDIR)/src TAGS
+	$(MAKE) -C $(BASEDIR)/tests TAGS
 
 clean: # Delete the files created for the current platform/compiler configuration
-	@$(MAKE) -C $(BASEDIR)/Examples clean
+	$(MAKE) -C $(BASEDIR)/Examples clean
 	-rm -fr $(BUILD_LOG)
 
 cleanarch: # Delete the files created for the current platform (includes all compiler configurations)
@@ -207,19 +226,19 @@ cleanarch: # Delete the files created for the current platform (includes all com
                 `find . -name 'core*'` `find . -name '*.stackdump'`
 
 distclean: # Delete files created for all platform/compiler configurations
-	@$(MAKE) -C $(BASEDIR)/Examples distclean
+	$(MAKE) -C $(BASEDIR)/Examples distclean
 	-rm -f $(BUILD_LOG)
 
 distcleanfast:
-	@$(MAKE) -C $(BASEDIR)/Examples distcleanfast
+	$(MAKE) -C $(BASEDIR)/Examples distcleanfast
 	-rm -f $(BUILD_LOG)
 
 mostlyclean: # Delete files created for all platform/compiler configurations except those used to build $(LIBRARY_AR)
-	@$(MAKE) -C $(BASEDIR)/Examples mostlyclean
+	$(MAKE) -C $(BASEDIR)/Examples mostlyclean
 	-rm -fr $(BUILD_LOG)
 
 partialclean: # Delete test object and executable files created for current platform/compiler configuration
-	@$(MAKE) -C $(BASEDIR)/tests partialclean
+	$(MAKE) -C $(BASEDIR)/tests partialclean
 	-rm -fr $(BUILD_LOG)
 
 doxygen: # Run Doxygen on the Source tree. Output is placed in ../Documentation/doxygen/html

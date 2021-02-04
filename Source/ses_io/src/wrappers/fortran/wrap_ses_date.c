@@ -15,7 +15,7 @@
 #undef DEBUG_WRAP
 
 #ifdef LC_UNDER
-int ses_date_(ses_file_handle* pt_handle, ses_string the_string, int* size) {
+    int ses_date_(ses_file_handle* pt_handle, ses_string the_string, int* size) {
 #else
 
 #ifdef UC_UNDER

@@ -8,7 +8,7 @@
  ********************************************************************/
 
 /*! \file
- *  \ingroup tests
+ *  \ingroup C tests
  *  \brief Perform the following tests:
  *    -# Ensure tables can be created, loaded, interpolated, and destroyed using both big and
  *       little endian data files. See SourceForge<A9> Issue #artf4640 for more details:
@@ -97,11 +97,11 @@ int main ()
 
     if (k == 0) {
       for (i = 0; i < nTables; i++)
-	matID[i] = 3720;
+        matID[i] = 3720;
     }
     else {
       for (i = 0; i < nTables; i++)
-	matID[i] = 93720;
+        matID[i] = 93720;
     }
 
     errorCode = EOS_OK;
@@ -110,49 +110,49 @@ int main ()
     for (i = 0; i < nTables; i++) {
       tableHandle[i] = 0;
       printf ("%2i. creating table %s (%i)\n", i, tableTypeStr[i],
-	      tableType[i]);
+              tableType[i]);
       eos_CreateTables (&one, &tableType[i], &matID[i], &tableHandle[i],
-			&errorCode);
+                        &errorCode);
       if (errorCode != EOS_OK) {
-	eos_GetErrorMessage (&errorCode, errorMessage);
-	printf ("    eos_CreateTables ERROR %i: %s\n", errorCode, errorMessage);
-	return -1;
+        eos_GetErrorMessage (&errorCode, errorMessage);
+        printf ("    eos_CreateTables ERROR %i: %s\n", errorCode, errorMessage);
+        return -1;
       }
     }
 
     /* Enable data dump to file */
     for (i = 0; i < nTables; i++) {
       if (i == 0 && k == 0)
-	eos_SetOption (&tableHandle[i], &EOS_DUMP_DATA, EOS_NullPtr,
-		       &errorCode);
+        eos_SetOption (&tableHandle[i], &EOS_DUMP_DATA, EOS_NullPtr,
+                       &errorCode);
       else
-	eos_SetOption (&tableHandle[i], &EOS_APPEND_DATA, EOS_NullPtr,
-		       &errorCode);
+        eos_SetOption (&tableHandle[i], &EOS_APPEND_DATA, EOS_NullPtr,
+                       &errorCode);
       if ((i == 6) || i > (N_TABLES - 1))
-	eos_SetOption (&tableHandle[i], &EOS_MONOTONIC_IN_X, EOS_NullPtr,
-		       &errorCode);
+        eos_SetOption (&tableHandle[i], &EOS_MONOTONIC_IN_X, EOS_NullPtr,
+                       &errorCode);
       if (errorCode != EOS_OK) {
-	eos_GetErrorMessage (&errorCode, errorMessage);
-	printf ("    eos_SetOption ERROR %i: %s\n", errorCode, errorMessage);
-	return -1;
+        eos_GetErrorMessage (&errorCode, errorMessage);
+        printf ("    eos_SetOption ERROR %i: %s\n", errorCode, errorMessage);
+        return -1;
       }
     }
 
     printf ("\nTH\n--\n");
     for (i = 0; i < nTables; i++) {
       printf ("%2i. loading table %s (%i)\n", tableHandle[i], tableTypeStr[i],
-	      tableType[i]);
+              tableType[i]);
       eos_LoadTables (&one, &tableHandle[i], &errorCode);
       if (errorCode != EOS_OK) {
-	eos_GetErrorMessage (&errorCode, errorMessage);
-	printf ("    eos_LoadTables ERROR %i: %s\n", errorCode, errorMessage);
-	tableHandleErrorCode = EOS_OK;
-	eos_GetErrorCode (&tableHandle[i], &tableHandleErrorCode);
-	if (tableHandleErrorCode != EOS_OK) {
-	  eos_GetErrorMessage (&tableHandleErrorCode, errorMessage);
-	  printf ("    eos_LoadTables ERROR %i: %s\n", tableHandleErrorCode,
-		  errorMessage);
-	}
+        eos_GetErrorMessage (&errorCode, errorMessage);
+        printf ("    eos_LoadTables ERROR %i: %s\n", errorCode, errorMessage);
+        tableHandleErrorCode = EOS_OK;
+        eos_GetErrorCode (&tableHandle[i], &tableHandleErrorCode);
+        if (tableHandleErrorCode != EOS_OK) {
+          eos_GetErrorMessage (&tableHandleErrorCode, errorMessage);
+          printf ("    eos_LoadTables ERROR %i: %s\n", tableHandleErrorCode,
+                  errorMessage);
+        }
       }
     }
 
@@ -173,30 +173,32 @@ int main ()
     for (i = 0; i < nTables; i++) {
       printf ("\nInterpolating %s data\n", tableTypeStr[i]);
       eos_Interpolate (&tableHandle[i], &nXYPairs, xVals, yVals, fVals, dFx, dFy,
-		       &errorCode);
+                       &errorCode);
 
       if (errorCode != EOS_OK) {
-	if (errorCode == EOS_INTERP_EXTRAPOLATED) {
-	  eos_CheckExtrap (&tableHandle[i], &nXYPairs, xVals, yVals, xyBounds,
-			   &errorCode);
-	  if (errorCode != EOS_OK) {
-	    eos_GetErrorMessage (&errorCode, errorMessage);
-	    printf ("eos_CheckExtrap ERROR: %s\n", errorMessage);
-	    return 1;
-	  }
-	  for (j = 0; j < nXYPairs; j++)
-	    printf ("\tX = %.15e, Y = %.15e, F = %.15e, extrapCode = %d\n",
-		    xVals[j], yVals[j], fVals[j], xyBounds[j]);
-	}
-	else {
-	  eos_GetErrorMessage (&errorCode, errorMessage);
-	  printf ("eos_Interpolate ERROR: %s\n", errorMessage);
-	}
+        EOS_BOOLEAN equal;
+        eos_ErrorCodesEqual((EOS_INTEGER*)&EOS_INTERP_EXTRAPOLATED, &errorCode, &equal);
+        if (equal) {
+          eos_CheckExtrap (&tableHandle[i], &nXYPairs, xVals, yVals, xyBounds,
+                           &errorCode);
+          if (errorCode != EOS_OK) {
+            eos_GetErrorMessage (&errorCode, errorMessage);
+            printf ("eos_CheckExtrap ERROR: %s\n", errorMessage);
+            return 1;
+          }
+          for (j = 0; j < nXYPairs; j++)
+            printf ("\tX = %.15e, Y = %.15e, F = %.15e, extrapCode = %d\n",
+                    xVals[j], yVals[j], fVals[j], xyBounds[j]);
+        }
+        else {
+          eos_GetErrorMessage (&errorCode, errorMessage);
+          printf ("eos_Interpolate ERROR: %s\n", errorMessage);
+        }
       }
       else {
-	for (j = 0; j < nXYPairs; j++)
-	  printf ("\tX = %.15e, Y = %.15e, F = %.15e\n", xVals[j], yVals[j],
-		  fVals[j]);
+        for (j = 0; j < nXYPairs; j++)
+          printf ("\tX = %.15e, Y = %.15e, F = %.15e\n", xVals[j], yVals[j],
+                  fVals[j]);
 
       }
     }

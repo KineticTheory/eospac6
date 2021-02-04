@@ -8,7 +8,7 @@
  ********************************************************************/
 
 /*! \file
- *  \ingroup tests quick unit
+ *  \ingroup C tests quick unit
  *  \brief This is a unit test of the eos_Utils::_eos_QuickSort
  *  to ensure the EOS_RECURSION_LIMIT is not exceeded. See
  *  SourceForge© Issue #artf10457 for more details:

@@ -6,7 +6,7 @@
 
 #include <string.h>
 
-//#define DEBUG_GET_GRID
+#undef DEBUG_GET_GRID
 
 #define check_errors_go_to_index_record HEADER(check_errors_go_to_index_record)
 #define check_errors_go_to_data_record HEADER(check_errors_go_to_data_record)
@@ -114,11 +114,15 @@ ses_boolean _get_grid(ses_file_handle the_handle, ses_material_id the_mid,
 
   ses_boolean return_value = SES_TRUE;
 #ifdef DEBUG_GET_GRID
-  printf("_get_grid:  entered\n");
+  printf("_get_grid:  entered, tid: %ld\n", the_tid);
 #endif
 
   ses_error_flag check = check_errors_get_grid(the_handle);
   if (check != SES_NO_ERROR) {
+#ifdef DEBUG_GET_GRID
+      printf("_get_grid:  check_errors_get_grid returned an error.\n");
+#endif
+    
 	return SES_FALSE;
   }
 
@@ -365,7 +369,7 @@ ses_error_flag check_errors_go_to_index_record(ses_file_handle the_handle) {
 
   if (!ses_is_valid(the_handle)) {
 #ifdef DEBUG_PRINT
-    printf("_go_to_index_record: Invalid handle passed to _go_to_index_record =  %d\n", the_handle);
+    printf("check_errors_go_to_index_record: Invalid handle passed to _go_to_index_record =  %d\n", the_handle);
 #endif
     _set_latest_error(SES_NULL_OBJECT_ERROR);
     return SES_NULL_OBJECT_ERROR;
@@ -373,7 +377,7 @@ ses_error_flag check_errors_go_to_index_record(ses_file_handle the_handle) {
 
   if (FILE_LIST[the_handle]->_the_handle == (struct _ses_file_handle*)NULL) {
 #ifdef DEBUG_PRINT
-    printf("_go_to_index_record: ses file handle null in _go_to_index_record \n");
+    printf("check_errors_go_to_index_record: ses file handle null in _go_to_index_record \n");
 #endif
     _set_latest_error(SES_NULL_OBJECT_ERROR);
     return SES_NULL_OBJECT_ERROR;
@@ -382,7 +386,7 @@ ses_error_flag check_errors_go_to_index_record(ses_file_handle the_handle) {
   FILE* pFILE = FILE_LIST[the_handle]->_the_handle->_c_file_handle;
   if (pFILE == NULL) {
 #ifdef DEBUG_PRINT
-    printf("_go_to_index_record: pFILE is null in _go_to_index record\n");
+    printf("check_errors_go_to_index_record: pFILE is null in _go_to_index record\n");
 #endif
     _set_latest_error(SES_NULL_OBJECT_ERROR);
     return SES_NULL_OBJECT_ERROR;
@@ -393,7 +397,7 @@ ses_error_flag check_errors_go_to_index_record(ses_file_handle the_handle) {
   if (pSFH->pt2_go_to_index_record == NULL) {
 
 #ifdef DEBUG_PRINT
-    printf("_go_to_index_record: Function pointer to _go_to_index_record function is null\n");
+    printf("check_errors_go_to_index_record: Function pointer to _go_to_index_record function is null\n");
 #endif
     _set_latest_error(SES_READ_ERROR);
     return SES_READ_ERROR;

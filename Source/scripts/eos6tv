@@ -6,18 +6,22 @@ me=`basename $0`
 _arch=`${loc}/config.guess.wrapper`
 
 # process command line options
-while getopts a:h option;
+while getopts a:hn option;
 do
 
   case "$option"
   in
 
-    a)  _arch=$OPTARG;;
-    h)  cat <<EOF >&2
+      a) _arch=$OPTARG;;
+      n) _arch=`${loc}/config.guess.wrapper -n`;;
+      h) cat <<EOF >&2
 
 Usage: ${me} [options] [DIR [, ...]]
    -a <ARCH> define an ARCH directory other than that of the current platform
    -h        display this help
+   -n        pass through the -n option to config.guess.wrapper, so its result
+             excludes the AVX string for the current platform
+             (ie., x86_64-rhel7-linux-gnu instead of x86_64-avx512f-rhel7-linux-gnu)
 
 EOF
         exit 2

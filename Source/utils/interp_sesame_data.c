@@ -50,6 +50,7 @@ char *revision = "$Revision: 1.38 $";
  * \arg <OPTIONS>
  * \arg -c <file>
  *              Specify the configuration <file>, which contains the desired options.
+ *              (default: config.interp_sesame_data)
  * \arg -D <file>
  *              Create data dump file (see EOSPAC 6's TablesLoaded.dat file) with specified name, <file>.
  *              If <file> is an empty string, then the default, TablesLoaded.dat, will be used.
@@ -235,21 +236,21 @@ EOS_INTEGER parseInput (EOS_CHAR *fName, EOS_INTEGER *N, EOS_REAL **x, EOS_REAL 
     }
 
     if (! strstr(fName, ","))
-      fp = fopen(fName, "rb");
+      fp = fopen(fName, "r");
     else
     { /* comma-delimited list */
       int i;
       *N = split (fName, comma, &split_result);
 
       if (x)
-	*x = (EOS_REAL*) safe_malloc(*N, sizeof(EOS_REAL));
+        *x = (EOS_REAL*) safe_malloc(*N, sizeof(EOS_REAL));
       else
-	return mallocError;
+        return mallocError;
 
       for(i=0;i<*N;i++) {
-	EOS_REAL v;
-	v = strtod(split_result[i], NULL);
-	(*x)[i] = v;
+        EOS_REAL v;
+        v = strtod(split_result[i], NULL);
+        (*x)[i] = v;
       }
 
       return OK;
@@ -298,8 +299,8 @@ EOS_INTEGER parseInput (EOS_CHAR *fName, EOS_INTEGER *N, EOS_REAL **x, EOS_REAL 
       /* remove note(s) from tmp */
       l = strcspn(tmp, "#");
       if (l <= 0) {
-	EOS_FREE (tmp);
-	continue;
+        EOS_FREE (tmp);
+        continue;
       }
       tmp0 = (EOS_CHAR*) safe_malloc(l+1, sizeof(EOS_CHAR));
       tmp0 = strncpy(tmp0, tmp, l);
@@ -310,8 +311,8 @@ EOS_INTEGER parseInput (EOS_CHAR *fName, EOS_INTEGER *N, EOS_REAL **x, EOS_REAL 
       ntokens = split (tmp, delim, &split_result);
 
       if (ntokens <= 0) {
-	EOS_FREE (tmp);
-	continue;
+        EOS_FREE (tmp);
+        continue;
       }
 
       errno = 0;
@@ -325,22 +326,22 @@ EOS_INTEGER parseInput (EOS_CHAR *fName, EOS_INTEGER *N, EOS_REAL **x, EOS_REAL 
       debug(3, (char*)__FILE__, (int)__LINE__, errorMessage);
 
       if (! strcmp(fName, "-")) {
-	if (x) *x = safe_realloc((void*) *x, line, sizeof(EOS_REAL));
-	if (y) *y = safe_realloc((void*) *y, line, sizeof(EOS_REAL));
+        if (x) *x = safe_realloc((void*) *x, line, sizeof(EOS_REAL));
+        if (y) *y = safe_realloc((void*) *y, line, sizeof(EOS_REAL));
       }
 
       if (x && ntokens > 0) {
-	(*x)[line-1] = strtod(split_result[0], &endp);
-	sprintf(errorMessage, "input line %d : *x[%d]=%g", line, line-1, (*x)[line-1]);
-	debug(4, (char*)__FILE__, (int)__LINE__, errorMessage);
+        (*x)[line-1] = strtod(split_result[0], &endp);
+        sprintf(errorMessage, "input line %d : *x[%d]=%g", line, line-1, (*x)[line-1]);
+        debug(4, (char*)__FILE__, (int)__LINE__, errorMessage);
       }
       if (y && ntokens > 1) {
-	(*y)[line-1] = strtod(split_result[1], &endp);
-	sprintf(errorMessage, "input line %d : *y[%d]=%g", line, line-1, (*y)[line-1]);
-	debug(4, (char*)__FILE__, (int)__LINE__, errorMessage);
+        (*y)[line-1] = strtod(split_result[1], &endp);
+        sprintf(errorMessage, "input line %d : *y[%d]=%g", line, line-1, (*y)[line-1]);
+        debug(4, (char*)__FILE__, (int)__LINE__, errorMessage);
       }
       else if (y)
-	(*y)[line-1] = 0;
+        (*y)[line-1] = 0;
 
       EOS_FREE (tmp);
 
@@ -358,20 +359,20 @@ EOS_INTEGER parseInput (EOS_CHAR *fName, EOS_INTEGER *N, EOS_REAL **x, EOS_REAL 
 
 void display_usage(char *argv[]) {
   fprintf(stderr,
-	  "\nUSAGE: %s [<OPTIONS>] <sesMaterialNum> <tableType> <x>[:<x1>] [ <y>[:<y1>] ]\n"
-	  "\n"
-	  "       <sesMaterialNum>  \t- Sesame material ID number\n"
-	  "       <tableType>       \t- EOSPAC 6 table type (case insensitive)\n"
-	  "       <x>               \t- First independent variable value of the table type (64-bit floating point)\n"
-	  "                         \t  The optional :<x1> defines an upper bound for a randomly-sampled range of\n"
-	  "                         \t  values between <x> and <x1>. This argument is required unles the '-x' option\n"
-	  "                         \t  is used.\n"
-	  "       <y>               \t- Second independent variable value of the table type (64-bit floating point)\n"
-	  "                         \t  The optional :<y1> defines an upper bound for a randomly-sampled range of\n"
-	  "                         \t  values between <y> and <y1>. This argument is required unles the '-y' option\n"
-	  "                         \t  is used.\n\n"
-	  "See %s.readme or use -h option for more details and a complete description of the <OPTIONS>.\n\n",
-	  argv[0],argv[0]);
+          "\nUSAGE: %s [<OPTIONS>] <sesMaterialNum> <tableType> <x>[:<x1>] [ <y>[:<y1>] ]\n"
+          "\n"
+          "       <sesMaterialNum>  \t- Sesame material ID number\n"
+          "       <tableType>       \t- EOSPAC 6 table type (case insensitive)\n"
+          "       <x>               \t- First independent variable value of the table type (64-bit floating point)\n"
+          "                         \t  The optional :<x1> defines an upper bound for a randomly-sampled range of\n"
+          "                         \t  values between <x> and <x1>. This argument is required unles the '-x' option\n"
+          "                         \t  is used.\n"
+          "       <y>               \t- Second independent variable value of the table type (64-bit floating point)\n"
+          "                         \t  The optional :<y1> defines an upper bound for a randomly-sampled range of\n"
+          "                         \t  values between <y> and <y1>. This argument is required unles the '-y' option\n"
+          "                         \t  is used.\n\n"
+          "See %s.readme or use -h option for more details and a complete description of the <OPTIONS>.\n\n",
+          argv[0],argv[0]);
 }
 
 /******************************************************************************/
@@ -517,7 +518,7 @@ int main (int argc, char *argv[])
   dFxStr = strcat(dFxStr, "/d");
   dFxStr = strcat(dFxStr, indepVar1Str);
   if (indepVarCnt > 1) {
-    dFyStr = (EOS_CHAR*) safe_malloc(4+strlen(depVarStr)+strlen(indepVar2Str), sizeof(EOS_CHAR));;
+    dFyStr = (EOS_CHAR*) safe_malloc(4+strlen(depVarStr)+strlen(indepVar2Str), sizeof(EOS_CHAR));
     dFyStr = strcpy(dFyStr, "d");
     dFyStr = strcat(dFyStr, depVarStr);
     dFyStr = strcat(dFyStr, "/d");

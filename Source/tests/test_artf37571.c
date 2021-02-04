@@ -8,7 +8,7 @@
  *********************************************************************/
 
 /*! \file
- *  \ingroup tests
+ *  \ingroup C tests
  *  \brief Verify the public function, eos_GetTableMetaData, returns meta data,
  *         per a user's specific request, functions as advertised within a C code,
  *         and handles errors properly.

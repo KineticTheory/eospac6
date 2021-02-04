@@ -8,7 +8,7 @@
  ********************************************************************/
 
 /*! \file
- *  \ingroup tests
+ *  \ingroup C tests
  *  \brief Test for EOS_XY_MODIFY and EOS_XY_PASSTHRU option.
  *         In addition to interpolation, ensure the following functions
  *         work as expected:
@@ -33,8 +33,11 @@
 #define MAX(x,y) (((x)>(y))? (x) : (y))
 #define MIN(x,y) (((x)<(y))? (x) : (y))
 
+//#define DEBUG
+
 /* Define the number of interpolated values to display for each table handle. */
 #define __SHORT__ 5
+//#define __USE_SHORT_ARRAYS__
 
 /* Define the number of intervals to interpolate between each tabulated data point. */
 #define _N_INTERVAL_ 50
@@ -140,9 +143,9 @@ int main (int argc, char **argv)
     if (argc == 1) { /* assume regression testing */
       eos_SetOption (&tableHandle[i], &EOS_DUMP_DATA, EOS_NullPtr, &errorCode);
       if (errorCode != EOS_OK) {
-	eos_GetErrorMessage (&errorCode, errorMessage);
-	printf ("eos_SetOption ERROR %i: %s\n", errorCode, errorMessage);
-	/* report errors, but do not exit */
+        eos_GetErrorMessage (&errorCode, errorMessage);
+        printf ("eos_SetOption ERROR %i: %s\n", errorCode, errorMessage);
+        /* report errors, but do not exit */
       }
     }
 
@@ -246,17 +249,17 @@ int main (int argc, char **argv)
     }
 
     printf ("#\n"
-	    "# AFTER UNPACKING\n"
-	    "#    The following is a subset of %d of the actual %d interpolated values for each table handle:\n"
-	    "#\n",
-	    __SHORT__*2, N);
+            "# AFTER UNPACKING\n"
+            "#    The following is a subset of %d of the actual %d interpolated values for each table handle:\n"
+            "#\n",
+            __SHORT__*2, N);
 
     for (i = 0; i < nTables; i++) {
       errorCode = _calculateDataForHandle (tableHandle[i], N, X, Y, &F[i], &dFx[i], &dFy[i]);
       if ( i < nTables-1) printf ("\n\n");
       if (errorCode != EOS_OK) {
-	eos_GetErrorMessage (&errorCode, errorMessage);
-	printf ("%d: %s\n", errorCode, errorMessage);
+        eos_GetErrorMessage (&errorCode, errorMessage);
+        printf ("%d: %s\n", errorCode, errorMessage);
       }
     }
 
@@ -275,18 +278,18 @@ int main (int argc, char **argv)
   /* print timer results */
   printf ( "\n\n#\n# TIMER_RESULTS\n" );
   printf ( "# %3s %10s %10s %10s %10s %10s %10s %10s %10s\n#\n",
-	   "TH", "WCTIME", "CPUTIME", "CPUCYCLES", "ERR", "nInterval", "num_X", "num_Y", "N" );
+           "TH", "WCTIME", "CPUTIME", "CPUCYCLES", "ERR", "nInterval", "num_X", "num_Y", "N" );
   for (i = 0; i < nTables; i++) {
     printf ( "# %3d %10g %10g %10g %10d %10d %10d %10d %10d\n",
-	     tableHandle[i],
-	     TIMER_RESULTS[tableHandle[i]].wctime,
-	     TIMER_RESULTS[tableHandle[i]].cputime,
-	     TIMER_RESULTS[tableHandle[i]].cpucycles,
-	     TIMER_RESULTS[tableHandle[i]].err,
-	     nInterval,
-	     TIMER_RESULTS[tableHandle[i]].num_X,
-	     TIMER_RESULTS[tableHandle[i]].num_Y,
-	     TIMER_RESULTS[tableHandle[i]].N);
+             tableHandle[i],
+             TIMER_RESULTS[tableHandle[i]].wctime,
+             TIMER_RESULTS[tableHandle[i]].cputime,
+             TIMER_RESULTS[tableHandle[i]].cpucycles,
+             TIMER_RESULTS[tableHandle[i]].err,
+             nInterval,
+             TIMER_RESULTS[tableHandle[i]].num_X,
+             TIMER_RESULTS[tableHandle[i]].num_Y,
+             TIMER_RESULTS[tableHandle[i]].N);
   }
   printf ( "\n\n" );
 
@@ -368,6 +371,14 @@ EOS_INTEGER __populateXYArrays__ (EOS_INTEGER th, EOS_INTEGER n_interval, EOS_IN
       (*Y)[i+j*num_X] = Y_tmp[j];
     }
   }
+
+#ifdef __USE_SHORT_ARRAYS__
+  for (j=__SHORT__; j<2*__SHORT__; j++) { /* collapse arrays */
+    (*X)[j] = (*X)[*N-2*__SHORT__+j];
+    (*Y)[j] = (*Y)[*N-2*__SHORT__+j];
+  }
+  *N = 2 * __SHORT__;
+#endif
 
   if (X_tmp) free(X_tmp);
   if (Y_tmp) free(Y_tmp);
@@ -458,7 +469,7 @@ EOS_INTEGER populateXYArrays (EOS_INTEGER th_in, EOS_INTEGER n_interval, EOS_INT
 
   default:
     fprintf(stderr, "table type, %s, is of an unacceptable category, %d\n",
-	    get_tableType_str(type), cat);
+            get_tableType_str(type), cat);
     assert(0);
     break;
   }
@@ -471,7 +482,7 @@ EOS_INTEGER populateXYArrays (EOS_INTEGER th_in, EOS_INTEGER n_interval, EOS_INT
 }
 
 EOS_INTEGER _calculateDataForHandle (EOS_INTEGER th, EOS_INTEGER N, EOS_REAL *X, EOS_REAL *Y,
-				     EOS_REAL **F, EOS_REAL **dFx, EOS_REAL **dFy)
+                                     EOS_REAL **F, EOS_REAL **dFx, EOS_REAL **dFy)
 {
   int j;
   EOS_INTEGER errorCode = EOS_OK;
@@ -484,15 +495,35 @@ EOS_INTEGER _calculateDataForHandle (EOS_INTEGER th, EOS_INTEGER N, EOS_REAL *X,
   *dFx = (EOS_REAL *) malloc (sizeof (EOS_REAL) * N);
   *dFy = (EOS_REAL *) malloc (sizeof (EOS_REAL) * N);
 
-  printf ("--------------------\nTH = %d\n--------------------\n\n", th);
+  printf ("--------------------\nTH = %d\n--------------------\n", th);
+  printf ("EOS_XY_MODIFY: %s\n", (isOptionFlagSet(th, EOS_XY_MODIFY) ? "true" : "false"));
+  printf ("EOS_XY_PASSTHRU: %s\n", (isOptionFlagSet(th, EOS_XY_PASSTHRU) ? "true" : "false"));
+  printf ("\n");
+
+#ifdef DEBUG
+  {
+    int j;
+    for (j = 0; j < N; j++) {
+#ifdef __SHORT__
+      if ( j <  __SHORT__ || j > N-1-__SHORT__) {
+#endif
+        printf ("# %s:%d:", __FILE__, __LINE__);
+        printf ("%23.15e ", X[j]);
+        printf ("%23.15e ", Y[j]);
+        printf ("%d\n", N);
+      }
+    }
+    printf ("\n");
+  }
+#endif
 
   eos_Time (&true, &TIMER_RESULTS[th].wctime, &TIMER_RESULTS[th].cputime,
-	    &TIMER_RESULTS[th].cpucycles, &TIMER_RESULTS[th].err);
+            &TIMER_RESULTS[th].cpucycles, &TIMER_RESULTS[th].err);
 
   eos_Interpolate (&th, &N, X, Y, *F, *dFx, *dFy, &errorCode);
 
   eos_Time (&false, &TIMER_RESULTS[th].wctime, &TIMER_RESULTS[th].cputime,
-	    &TIMER_RESULTS[th].cpucycles, &TIMER_RESULTS[th].err);
+            &TIMER_RESULTS[th].cpucycles, &TIMER_RESULTS[th].err);
 
   TIMER_RESULTS[th].num_X = TIMER_RESULTS[0].num_X;
   TIMER_RESULTS[th].num_Y = TIMER_RESULTS[0].num_Y;
@@ -510,7 +541,7 @@ EOS_INTEGER _calculateDataForHandle (EOS_INTEGER th, EOS_INTEGER N, EOS_REAL *X,
 #ifdef __SHORT__
     if ( j <  __SHORT__ || j > N-1-__SHORT__)
 #endif
-    printf ("%23.15e %23.15e %23.15e %23.15e %23.15e\n", X[j], Y[j], (*F)[j], (*dFx)[j], (*dFy)[j]);
+      printf ("%23.15e %23.15e %23.15e %23.15e %23.15e\n", X[j], Y[j], (*F)[j], (*dFx)[j], (*dFy)[j]);
 
   return errorCode;
 }

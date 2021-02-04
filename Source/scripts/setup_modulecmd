@@ -34,6 +34,9 @@ elif [ -x /usr/local/Modules/libexec/modulecmd.tcl ] ; then
 elif [ -x ${HOME}/libexec/modulecmd.tcl ] ; then
   MODULECMD=${HOME}/libexec/modulecmd.tcl
 
+elif [ -x ${LMOD_CMD} ] ; then
+  MODULECMD=${LMOD_CMD}
+
 else
   MODULECMD=modulecmd_does_not_exist
 
@@ -43,3 +46,8 @@ export MODULECMD
 if [ "$1" = "verbose" ]; then
   printf "%s" "${MODULECMD}"
 fi
+
+if [ -f ${MODULESHOME}/init/sh ]; then
+    . ${MODULESHOME}/init/sh
+fi
+

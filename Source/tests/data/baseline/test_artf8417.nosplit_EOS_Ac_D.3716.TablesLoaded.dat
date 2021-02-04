@@ -14,4 +14,4 @@ Ordered list of Sesame files searched:
     /opt/local/codes/data/eos/export-controlled/ieee64/sesou
 
 TableHandle=0 matid =  3716 Data Type = EOS_Ac_D	NOT LOADED
-Description = Specific-Free-Energy Cold Curve (MJ/kg) (Density (Mg/m^3)-dependent)
+Description = Specific-Helmholtz-Free-Energy Cold Curve (MJ/kg) (Density (Mg/m^3)-dependent)

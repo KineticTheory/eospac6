@@ -8,7 +8,7 @@
  ********************************************************************/
 
 /*! \file
- *  \ingroup tests quick
+ *  \ingroup C tests quick
  *  \brief Perform the following tests:
  *    -# Demonstrate that eos_GetVersionLength function works,
  *    -# and demonstrate expected error messages from various public

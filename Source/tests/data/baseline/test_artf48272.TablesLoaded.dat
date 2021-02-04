@@ -37,7 +37,7 @@ Description = Total Specific-Internal-Energy (MJ/kg) (Density (Mg/m^3)- and Temp
 
 TableHandle=2 matid = 99999 source = ./../../../../../tests/data/sesame_small.ascii page =  1
 Data Type = EOS_At_DT
-Description = Total Specific-Free-Energy (MJ/kg) (Density (Mg/m^3)- and Temperature (K)-dependent)
+Description = Total Specific-Helmholtz-Free-Energy (MJ/kg) (Density (Mg/m^3)- and Temperature (K)-dependent)
   fconv =   1.000000000000000E+00         xconv =   1.000000000000000E+00         yconv =   1.000000000000000E+00
 
                      y =  -1.318265800000000E-05   5.000000000000000E+00  -3.000000000000000E+00  -1.000000000000000E+01   2.000000000000000E+01  -3.000000000000000E+01   4.000000000000000E+01
@@ -67,19 +67,10 @@ Description = Total Specific-Internal-Energy (MJ/kg) (Density (Mg/m^3)- and Temp
 
 TableHandle=2 matid = 99999 source = ./../../../../../tests/data/sesame_medium.ascii page =  1
 Data Type = EOS_At_DT
-Description = Total Specific-Free-Energy (MJ/kg) (Density (Mg/m^3)- and Temperature (K)-dependent)
+Description = Total Specific-Helmholtz-Free-Energy (MJ/kg) (Density (Mg/m^3)- and Temperature (K)-dependent)
   fconv =   1.000000000000000E+00         xconv =   1.000000000000000E+00         yconv =   1.000000000000000E+00
 
                      y =  -1.318265800000011E-05   5.000000000000011E+00  -3.000000000000011E+00  -1.000000000000011E+01   2.000000000000011E+01  -3.000000000000011E+01   4.000000000000011E+01
  x =
    1.100000000000000E-14                     ---                     ---                     ---                     ---                     ---                     ---                     ---
   -6.591329000000011E-06                     ---                     ---                     ---                     ---                     ---                     ---                     ---
-
-TableHandle=0 matid = 99999 Data Type = EOS_Pt_DT	NOT LOADED
-Description = Total Pressure (GPa) (Density (Mg/m^3)- and Temperature (K)-dependent)
-
-TableHandle=1 matid = 99999 Data Type = EOS_Ut_DT	NOT LOADED
-Description = Total Specific-Internal-Energy (MJ/kg) (Density (Mg/m^3)- and Temperature (K)-dependent)
-
-TableHandle=2 matid = 99999 Data Type = EOS_At_DT	NOT LOADED
-Description = Total Specific-Free-Energy (MJ/kg) (Density (Mg/m^3)- and Temperature (K)-dependent)

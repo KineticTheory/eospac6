@@ -99,8 +99,15 @@ void eos_ConstructEosData (eos_Data *me, EOS_INTEGER th,
   me->InvertAtSetup = NULL;                      /* pure virtual function */
   me->AllocateColdCurve = NULL;                  /* pure virtual function */
   me->CleanUpColdCurve = NULL;                   /* pure virtual function */
-
+  me->eos_IsRequiredDataLoaded = NULL;           /* pure virtual function */
   me->IsaShareableObject = _eos_IsaShareableObjectEosData; /* pure virtual function */
+  me->DumpExpandedGrid = NULL;                   /* pure virtual function */
+  me->AreGhostDataRequired = NULL;               /* pure virtual function */
+  me->SetUseTmpGhostData = NULL;                 /* pure virtual function */
+  me->GenerateHashTables = NULL;                 /* pure virtual function */
+#ifdef DO_OFFLOAD
+  me->GpuOffloadData = NULL;                     /* pure virtual function */
+#endif /* DO_OFFLOAD */
 
   eos_ConstructEosErrorHandler ((eos_ErrorHandler *) me);
   me->eosErrorHandler.HandleError = eos_HandleErrorEosData;     /* derived virtual function */

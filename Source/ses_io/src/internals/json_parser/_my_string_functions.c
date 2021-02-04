@@ -77,7 +77,8 @@ char* get_interior(char* the_string, char LEFT, char RIGHT) {
 		}
 			
 	}
-
+ 
+    //printf ("GINGER:: get_interior, LEFT: %c, RIGHT: %c, returning: %s\n", LEFT, RIGHT, return_value);
 	return return_value;
 }
 
@@ -131,6 +132,9 @@ char* find_first_delimeter(char* the_string, char delimeter) {
 		}
 		i++;
 	}
+
+    
+    //printf ("GINGER:: find_first_delimeter, delimeter: %c, returning: %s\n", delimeter, return_value);
 
 	return return_value;
 
@@ -204,6 +208,9 @@ char* get_first_non_white(char* the_string) {
 	if (the_string != (char*)NULL) {
 		int length = strlen(the_string);
 		for (i = 0; i < length; i++) {    // valgrind squawks on strlen
+//            if (the_string[i] == '\t'){
+//                printf("GINGER get_first_non_white:: contains a tab as a firt character...\n");
+//            }
 			if (the_string[i] != ' ') {
 				return_value = &(the_string[i]);
 				break;

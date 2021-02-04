@@ -8,7 +8,7 @@
  ********************************************************************/
 
 /*! \file
- *  \ingroup tests quick
+ *  \ingroup C tests quick
  *  \brief Test the error handling options that are incompatible with EOS_INVERT_AT_SETUP:
  *         EOS_MONOTONIC_IN_X, EOS_MONOTONIC_IN_Y and EOS_USE_MAXWELL_TABLE
  *

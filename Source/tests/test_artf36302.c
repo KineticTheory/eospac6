@@ -8,7 +8,7 @@
  ********************************************************************/
 
 /*! \file
- *  \ingroup tests
+ *  \ingroup C tests
  *  \brief Verify the new public function, eos_GetMetaData, to return internal meta data
  *          per a user's specific request functions as advertised within a C code.
  *

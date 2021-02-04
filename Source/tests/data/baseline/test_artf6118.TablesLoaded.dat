@@ -257,7 +257,7 @@ Description = Melt Specific-Internal-Energy (MJ/kg) (Density (Mg/m^3)-dependent)
 
 TableHandle=3 matid = 33336 source = /usr/projects/data/eos/sesame page =  1
 Data Type = EOS_Am_D
-Description = Melt Specific-Free-Energy (MJ/kg) (Density (Mg/m^3)-dependent)
+Description = Melt Specific-Helmholtz-Free-Energy (MJ/kg) (Density (Mg/m^3)-dependent)
   fconv =   1.000000000000000E+00         xconv =   1.000000000000000E+00         yconv =   1.000000000000000E+00
 
                      y =   0.000000000000000E+00
@@ -578,7 +578,7 @@ Description = Freeze Specific-Internal-Energy (MJ/kg) (Density (Mg/m^3)-dependen
 
 TableHandle=7 matid = 33336 source = /usr/projects/data/eos/sesame page =  1
 Data Type = EOS_Af_D
-Description = Freeze Specific-Free-Energy (MJ/kg) (Density (Mg/m^3)-dependent)
+Description = Freeze Specific-Helmholtz-Free-Energy (MJ/kg) (Density (Mg/m^3)-dependent)
   fconv =   1.000000000000000E+00         xconv =   1.000000000000000E+00         yconv =   1.000000000000000E+00
 
                      y =   0.000000000000000E+00
@@ -820,7 +820,7 @@ TableHandle=10 matid = 33336 Data Type = EOS_D_Um	NOT LOADED
 Description = Density (Mg/m^3) (Melt Specific-Internal-Energy (MJ/kg)-dependent)
 
 TableHandle=11 matid = 33336 Data Type = EOS_D_Am	NOT LOADED
-Description = Density (Mg/m^3) (Melt Specific-Free-Energy (MJ/kg)-dependent)
+Description = Density (Mg/m^3) (Melt Specific-Helmholtz-Free-Energy (MJ/kg)-dependent)
 
 TableHandle=12 matid = 33336 source = /usr/projects/data/eos/sesame page =  1
 Data Type = EOS_D_Tf
@@ -986,20 +986,20 @@ TableHandle=14 matid = 33336 Data Type = EOS_D_Uf	NOT LOADED
 Description = Density (Mg/m^3) (Freeze Specific-Internal-Energy (MJ/kg)-dependent)
 
 TableHandle=15 matid = 33336 Data Type = EOS_D_Af	NOT LOADED
-Description = Density (Mg/m^3) (Freeze Specific-Free-Energy (MJ/kg)-dependent)
+Description = Density (Mg/m^3) (Freeze Specific-Helmholtz-Free-Energy (MJ/kg)-dependent)
 
 TableHandle=16 matid = 33336 Data Type = EOS_Tm_Am	NOT LOADED
-Description = Melt Temperature (K) (Melt Specific-Free-Energy (MJ/kg)-dependent)
+Description = Melt Temperature (K) (Melt Specific-Helmholtz-Free-Energy (MJ/kg)-dependent)
 
 TableHandle=17 matid = 33336 Data Type = EOS_Pm_Am	NOT LOADED
-Description = Melt Pressure (GPa) (Melt Specific-Free-Energy (MJ/kg)-dependent)
+Description = Melt Pressure (GPa) (Melt Specific-Helmholtz-Free-Energy (MJ/kg)-dependent)
 
 TableHandle=18 matid = 33336 Data Type = EOS_Um_Am	NOT LOADED
-Description = Melt Specific-Internal-Energy (MJ/kg) (Melt Specific-Free-Energy (MJ/kg)-dependent)
+Description = Melt Specific-Internal-Energy (MJ/kg) (Melt Specific-Helmholtz-Free-Energy (MJ/kg)-dependent)
 
 TableHandle=19 matid = 33336 source = /usr/projects/data/eos/sesame page =  1
 Data Type = EOS_Am_Tm
-Description = Melt Specific-Free-Energy (MJ/kg) (Melt Temperature (K)-dependent)
+Description = Melt Specific-Helmholtz-Free-Energy (MJ/kg) (Melt Temperature (K)-dependent)
   fconv =   1.000000000000000E+00         xconv =   1.000000000000000E+00         yconv =   1.000000000000000E+00
 
                      y =   0.000000000000000E+00
@@ -1079,7 +1079,7 @@ Description = Melt Specific-Free-Energy (MJ/kg) (Melt Temperature (K)-dependent)
 
 TableHandle=20 matid = 33336 source = /usr/projects/data/eos/sesame page =  1
 Data Type = EOS_Am_Pm
-Description = Melt Specific-Free-Energy (MJ/kg) (Melt Pressure (GPa)-dependent)
+Description = Melt Specific-Helmholtz-Free-Energy (MJ/kg) (Melt Pressure (GPa)-dependent)
   fconv =   1.000000000000000E+00         xconv =   1.000000000000000E+00         yconv =   1.000000000000000E+00
 
                      y =   0.000000000000000E+00
@@ -1158,20 +1158,20 @@ Description = Melt Specific-Free-Energy (MJ/kg) (Melt Pressure (GPa)-dependent)
    1.359581840186777E+11   9.830609351167170E+05
 
 TableHandle=21 matid = 33336 Data Type = EOS_Am_Um	NOT LOADED
-Description = Melt Specific-Free-Energy (MJ/kg) (Melt Specific-Internal-Energy (MJ/kg)-dependent)
+Description = Melt Specific-Helmholtz-Free-Energy (MJ/kg) (Melt Specific-Internal-Energy (MJ/kg)-dependent)
 
 TableHandle=22 matid = 33336 Data Type = EOS_Tf_Af	NOT LOADED
-Description = Freeze Temperature (K) (Freeze Specific-Free-Energy (MJ/kg)-dependent)
+Description = Freeze Temperature (K) (Freeze Specific-Helmholtz-Free-Energy (MJ/kg)-dependent)
 
 TableHandle=23 matid = 33336 Data Type = EOS_Pf_Af	NOT LOADED
-Description = Freeze Pressure (GPa) (Freeze Specific-Free-Energy (MJ/kg)-dependent)
+Description = Freeze Pressure (GPa) (Freeze Specific-Helmholtz-Free-Energy (MJ/kg)-dependent)
 
 TableHandle=24 matid = 33336 Data Type = EOS_Uf_Af	NOT LOADED
-Description = Freeze Specific-Internal-Energy (MJ/kg) (Freeze Specific-Free-Energy (MJ/kg)-dependent)
+Description = Freeze Specific-Internal-Energy (MJ/kg) (Freeze Specific-Helmholtz-Free-Energy (MJ/kg)-dependent)
 
 TableHandle=25 matid = 33336 source = /usr/projects/data/eos/sesame page =  1
 Data Type = EOS_Af_Tf
-Description = Freeze Specific-Free-Energy (MJ/kg) (Freeze Temperature (K)-dependent)
+Description = Freeze Specific-Helmholtz-Free-Energy (MJ/kg) (Freeze Temperature (K)-dependent)
   fconv =   1.000000000000000E+00         xconv =   1.000000000000000E+00         yconv =   1.000000000000000E+00
 
                      y =   0.000000000000000E+00
@@ -1251,7 +1251,7 @@ Description = Freeze Specific-Free-Energy (MJ/kg) (Freeze Temperature (K)-depend
 
 TableHandle=26 matid = 33336 source = /usr/projects/data/eos/sesame page =  1
 Data Type = EOS_Af_Pf
-Description = Freeze Specific-Free-Energy (MJ/kg) (Freeze Pressure (GPa)-dependent)
+Description = Freeze Specific-Helmholtz-Free-Energy (MJ/kg) (Freeze Pressure (GPa)-dependent)
   fconv =   1.000000000000000E+00         xconv =   1.000000000000000E+00         yconv =   1.000000000000000E+00
 
                      y =   0.000000000000000E+00
@@ -1330,4 +1330,4 @@ Description = Freeze Specific-Free-Energy (MJ/kg) (Freeze Pressure (GPa)-depende
    1.365405343103079E+11   9.770719113528507E+05
 
 TableHandle=27 matid = 33336 Data Type = EOS_Af_Uf	NOT LOADED
-Description = Freeze Specific-Free-Energy (MJ/kg) (Freeze Specific-Internal-Energy (MJ/kg)-dependent)
+Description = Freeze Specific-Helmholtz-Free-Energy (MJ/kg) (Freeze Specific-Internal-Energy (MJ/kg)-dependent)

@@ -8,7 +8,7 @@
  ********************************************************************/
 
 /*! \file
- *  \ingroup tests quick
+ *  \ingroup C tests quick
  *  \brief Ensure the inverse interpolation problem does not recur.
  *         See SourceForge© Issue #artf38112 for more details:
  *         https://tf.lanl.gov/sf/go/artf38112

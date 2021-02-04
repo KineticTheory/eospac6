@@ -8,7 +8,7 @@
  ********************************************************************/
 
 /*! \file
- *  \ingroup tests
+ *  \ingroup C tests
  *  \brief Test eos_GetTableInfo public function to ensure it returns
  *         the mean atomic number, the mean atomic mass, the normal
  *         solid density, the exchange coefficient, and the solid bulk

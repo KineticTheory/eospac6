@@ -8,7 +8,7 @@
  ********************************************************************/
 
 /*! \file
- *  \ingroup tests
+ *  \ingroup C tests
  *  \brief Determine the limited list of dat types allowed by eos_Mix.
  *
  * \note

@@ -8,7 +8,7 @@
  ********************************************************************/
 
 /*! \file
- *  \ingroup tests
+ *  \ingroup C tests
  *  \brief Ensure Comments and Info can be packed and unpacked.
  *
  *  See SourceForge issue

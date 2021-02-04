@@ -8,7 +8,7 @@
  ********************************************************************/
 
 /*! \file
- *  \ingroup tests
+ *  \ingroup C tests
  *  \brief Perform the following tests:
  *    -# Ensure tables can be created, loaded, packed, unpacked
  *       and destroyed.

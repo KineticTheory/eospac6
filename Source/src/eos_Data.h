@@ -7,6 +7,8 @@
  * 
  *********************************************************************/
 
+
+
 #ifndef  EOS_DATA_H
 #define  EOS_DATA_H
 #include "eos_types.h"
@@ -19,13 +21,13 @@
 
 typedef struct
 {
-  eos_ErrorHandler eosErrorHandler;     /* must be the FIRST, DO NOT MOVE! */
-  EOS_INTEGER tableHandle;      /* This is a unique handle associated with a specific data table object. */
-  EOS_INTEGER materialID;       /* This is the specific Sesame material ID associated with the data stored in an instantiation of this container. */
+  eos_ErrorHandler eosErrorHandler;     // must be the FIRST, DO NOT MOVE!
+  EOS_INTEGER tableHandle;      // This is a unique handle associated with a specific data table object.
+  EOS_INTEGER materialID;       // This is the specific Sesame material ID associated with the data stored in an instantiation of this container.
   EOS_INTEGER creationDate;
   EOS_INTEGER modificationDate;
   EOS_REAL latestVersion;
-  EOS_INTEGER recordType;       /* 1, 2, 3, 4, 5, 6 */
+  EOS_INTEGER recordType;       // 1, 2, 3, 4, 5, 6
   long dataFileOffset;          
   EOS_INTEGER dataFileIndex;    /* index of the sesame file for reading the data */
   EOS_BOOLEAN userDefinedDataFile;    /* is the associated sesame file specified by the user? */
@@ -93,16 +95,26 @@ typedef struct
   EOS_REAL** (*AllocateColdCurve) (void *ptr, EOS_INTEGER NR, EOS_INTEGER subTableNum);
   void (*CleanUpColdCurve) (void *ptr, EOS_INTEGER *err);
   void (*Interpolate) (void *ptr, EOS_INTEGER th, EOS_INTEGER dataType,
-		       EOS_INTEGER nXYPairs, EOS_REAL *srchX,
-		       EOS_REAL *srchY, EOS_REAL *fVals,
-		       EOS_REAL *dFx, EOS_REAL *dFy,
-		       EOS_INTEGER *xyBounds,
-		       EOS_INTEGER *errorCode);
+                       EOS_INTEGER nXYPairs, EOS_REAL *srchX,
+                       EOS_REAL *srchY, EOS_REAL *fVals,
+                       EOS_REAL *dFx, EOS_REAL *dFy,
+                       EOS_INTEGER *xyBounds,
+                       EOS_INTEGER *errorCode);
   void (*CheckExtrap) (void *ptr, EOS_INTEGER th, EOS_INTEGER dataType,
-		       EOS_INTEGER nXYPairs, EOS_REAL *srchX,
-		       EOS_REAL *srchY, EOS_INTEGER *xyBounds,
-		       EOS_INTEGER *errorCode);
+                       EOS_INTEGER nXYPairs, EOS_REAL *srchX,
+                       EOS_REAL *srchY, EOS_INTEGER *xyBounds,
+                       EOS_INTEGER *errorCode);
   EOS_BOOLEAN (*IsaShareableObject) (void *ptr);
+  EOS_BOOLEAN (*eos_IsRequiredDataLoaded) (void *ptr, EOS_INTEGER dateType);
+  void (*DumpExpandedGrid) (void *ptr, EOS_INTEGER th, EOS_CHAR *fn, EOS_INTEGER *err);
+  EOS_BOOLEAN (*AreGhostDataRequired) (void *ptr);
+  void (*AddGhostData) (void *ptr, EOS_INTEGER nGhostData, EOS_INTEGER *err);
+  void (*SetUseTmpGhostData) (void *ptr, EOS_BOOLEAN useTmpGhostData);
+  void (*GenerateHashTables) (void *ptr);
+
+#ifdef DO_OFFLOAD
+  EOS_INTEGER (*GpuOffloadData) (void *ptr, EOS_INTEGER th);
+#endif /* DO_OFFLOAD */
 } eos_Data;
 
 #include "eos_Data.proto.h"

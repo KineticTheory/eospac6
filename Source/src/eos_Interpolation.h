@@ -9,6 +9,8 @@
 #ifndef  EOS_INTERPOLATION_H
 #define  EOS_INTERPOLATION_H
 #include "eos_Access.h"
+#ifdef DO_OFFLOAD
+#endif /* DO_OFFLOAD */
 
 typedef struct
 {
@@ -20,6 +22,8 @@ typedef struct
   EOS_BOOLEAN enableDiscontinuousDerivatives; /* for linear and bilnear interpolation only */
   EOS_BOOLEAN enableXYpassthru; /* store status of EOS_XY_PASSTHRU option */
   EOS_BOOLEAN enableXYmodify; /* store status of EOS_XY_MODIFY option */
+  EOS_BOOLEAN useHostXY; /* store status of EOS_USE_HOST_XY option */
+  EOS_BOOLEAN skipExtrapCheck; /* store status of EOS_USE_HOST_XY option */
   EOS_INTEGER *xyBounds;        /* xyBounds array stores extrap error per point for each XY Pair */
   EOS_INTEGER nXYPairs;         /* number of XY pairs for which errors are stored in xyBounds */
   EOS_INTEGER nAlloc;           /* allocated size of xyBounds. */

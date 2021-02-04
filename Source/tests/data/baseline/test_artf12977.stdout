@@ -4,7 +4,7 @@
 *** main::AFTER PACKING: nTables0=3, nHandles0=4, nAlloc0=4
 *** main::DESTROY ALL
 *** main::BEFORE UNPACKING: nTables0=3, nHandles0=4, nAlloc0=4
-*** main::AFTER UNPACKING: nTables0=4, nHandles0=4, nAlloc0=4
+*** main::AFTER UNPACKING: nTables0=3, nHandles0=4, nAlloc0=4
 
 --- TEST eos_Interpolate using category 0 tableType: EOS_Pt_DT ---
 EOS_Pt_DT Interpolation Results:
@@ -65,21 +65,21 @@ EOS_Tf_D Interpolation Results:
 *** main::AFTER PACKING: i=1, nTables0=1, nHandles0=2, nAlloc0=2
 *** main::DESTROY ALL
 *** main::BEFORE UNPACKING: i=1, nTables0=0, nHandles0=0, nAlloc0=0
-*** main::AFTER UNPACKING: i=1, nTables0=2, nHandles0=2, nAlloc0=2
+*** main::AFTER UNPACKING: i=1, nTables0=1, nHandles0=2, nAlloc0=2
 
 --- i=2 ------------------------------------------
 *** main::BEFORE PACKING: i=2, nTables0=2, nHandles0=3, nAlloc0=3
 *** main::AFTER PACKING: i=2, nTables0=2, nHandles0=3, nAlloc0=3
 *** main::DESTROY ALL
 *** main::BEFORE UNPACKING: i=2, nTables0=0, nHandles0=0, nAlloc0=0
-*** main::AFTER UNPACKING: i=2, nTables0=3, nHandles0=3, nAlloc0=3
+*** main::AFTER UNPACKING: i=2, nTables0=2, nHandles0=3, nAlloc0=3
 
 --- i=3 ------------------------------------------
 *** main::BEFORE PACKING: i=3, nTables0=3, nHandles0=4, nAlloc0=4
 *** main::AFTER PACKING: i=3, nTables0=3, nHandles0=4, nAlloc0=4
 *** main::DESTROY ALL
 *** main::BEFORE UNPACKING: i=3, nTables0=0, nHandles0=0, nAlloc0=0
-*** main::AFTER UNPACKING: i=3, nTables0=4, nHandles0=4, nAlloc0=4
+*** main::AFTER UNPACKING: i=3, nTables0=3, nHandles0=4, nAlloc0=4
 
 --- TEST eos_Interpolate using category 0 tableType: EOS_Pt_DT ---
 EOS_Pt_DT Interpolation Results:
@@ -154,15 +154,15 @@ EOS_Tf_D Interpolation Results:
 
 --- i=1 ------------------------------------------
 *** main::BEFORE UNPACKING: i=1, nTables0=1, nHandles0=1, nAlloc0=1
-*** main::AFTER UNPACKING: i=1, nTables0=2, nHandles0=2, nAlloc0=2
+*** main::AFTER UNPACKING: i=1, nTables0=1, nHandles0=2, nAlloc0=2
 
 --- i=2 ------------------------------------------
-*** main::BEFORE UNPACKING: i=2, nTables0=2, nHandles0=2, nAlloc0=2
-*** main::AFTER UNPACKING: i=2, nTables0=3, nHandles0=3, nAlloc0=3
+*** main::BEFORE UNPACKING: i=2, nTables0=1, nHandles0=2, nAlloc0=2
+*** main::AFTER UNPACKING: i=2, nTables0=2, nHandles0=3, nAlloc0=3
 
 --- i=3 ------------------------------------------
-*** main::BEFORE UNPACKING: i=3, nTables0=3, nHandles0=3, nAlloc0=3
-*** main::AFTER UNPACKING: i=3, nTables0=4, nHandles0=4, nAlloc0=4
+*** main::BEFORE UNPACKING: i=3, nTables0=2, nHandles0=3, nAlloc0=3
+*** main::AFTER UNPACKING: i=3, nTables0=3, nHandles0=4, nAlloc0=4
 
 --- TEST eos_Interpolate using category 0 tableType: EOS_Pt_DT ---
 EOS_Pt_DT Interpolation Results:

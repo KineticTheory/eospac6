@@ -8,7 +8,7 @@
  ********************************************************************/
 
 /*! \file
- *  \ingroup tests unit
+ *  \ingroup C tests unit
  *  \brief Test code to exercise the Taylor Polynomial class methods and attributes
  *         with manufactured data.
  *

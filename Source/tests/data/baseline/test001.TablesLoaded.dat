@@ -16,7 +16,6 @@ Ordered list of Sesame files searched:
 
 TableHandle=0 matid =  2140 source = /opt/local/codes/data/eos/sesame page =  1
 Data Type = EOS_Pt_DT
-Loading Options: EOS_MONOTONIC_IN_Y
 Description = Total Pressure (GPa) (Density (Mg/m^3)- and Temperature (K)-dependent)
   fconv =   1.000000000000000E+00         xconv =   1.000000000000000E+00         yconv =   1.000000000000000E+00
 
@@ -126,7 +125,6 @@ Description = Total Pressure (GPa) (Density (Mg/m^3)- and Temperature (K)-depend
 
 TableHandle=0 matid =  2140 source = /opt/local/codes/data/eos/sesame page =  2
 Data Type = EOS_Pt_DT
-Loading Options: EOS_MONOTONIC_IN_Y
 Description = Total Pressure (GPa) (Density (Mg/m^3)- and Temperature (K)-dependent)
   fconv =   1.000000000000000E+00         xconv =   1.000000000000000E+00         yconv =   1.000000000000000E+00
 
@@ -236,7 +234,6 @@ Description = Total Pressure (GPa) (Density (Mg/m^3)- and Temperature (K)-depend
 
 TableHandle=0 matid =  2140 source = /opt/local/codes/data/eos/sesame page =  3
 Data Type = EOS_Pt_DT
-Loading Options: EOS_MONOTONIC_IN_Y
 Description = Total Pressure (GPa) (Density (Mg/m^3)- and Temperature (K)-dependent)
   fconv =   1.000000000000000E+00         xconv =   1.000000000000000E+00         yconv =   1.000000000000000E+00
 
@@ -346,7 +343,6 @@ Description = Total Pressure (GPa) (Density (Mg/m^3)- and Temperature (K)-depend
 
 TableHandle=1 matid =  2140 source = /opt/local/codes/data/eos/sesame page =  1
 Data Type = EOS_T_DPt
-Loading Options: EOS_MONOTONIC_IN_Y
 Description = Temperature (K) (Density (Mg/m^3)- and Total Pressure (GPa)-dependent)
   fconv =   1.000000000000000E+00         xconv =   1.000000000000000E+00         yconv =   1.000000000000000E+00
 
@@ -456,7 +452,6 @@ Description = Temperature (K) (Density (Mg/m^3)- and Total Pressure (GPa)-depend
 
 TableHandle=1 matid =  2140 source = /opt/local/codes/data/eos/sesame page =  2
 Data Type = EOS_T_DPt
-Loading Options: EOS_MONOTONIC_IN_Y
 Description = Temperature (K) (Density (Mg/m^3)- and Total Pressure (GPa)-dependent)
   fconv =   1.000000000000000E+00         xconv =   1.000000000000000E+00         yconv =   1.000000000000000E+00
 
@@ -566,7 +561,6 @@ Description = Temperature (K) (Density (Mg/m^3)- and Total Pressure (GPa)-depend
 
 TableHandle=1 matid =  2140 source = /opt/local/codes/data/eos/sesame page =  3
 Data Type = EOS_T_DPt
-Loading Options: EOS_MONOTONIC_IN_Y
 Description = Temperature (K) (Density (Mg/m^3)- and Total Pressure (GPa)-dependent)
   fconv =   1.000000000000000E+00         xconv =   1.000000000000000E+00         yconv =   1.000000000000000E+00
 
@@ -676,7 +670,6 @@ Description = Temperature (K) (Density (Mg/m^3)- and Total Pressure (GPa)-depend
 
 TableHandle=1 matid =  2140 source = /opt/local/codes/data/eos/sesame page =  4
 Data Type = EOS_T_DPt
-Loading Options: EOS_MONOTONIC_IN_Y
 Description = Temperature (K) (Density (Mg/m^3)- and Total Pressure (GPa)-dependent)
   fconv =   1.000000000000000E+00         xconv =   1.000000000000000E+00         yconv =   1.000000000000000E+00
 
@@ -786,7 +779,6 @@ Description = Temperature (K) (Density (Mg/m^3)- and Total Pressure (GPa)-depend
 
 TableHandle=1 matid =  2140 source = /opt/local/codes/data/eos/sesame page =  5
 Data Type = EOS_T_DPt
-Loading Options: EOS_MONOTONIC_IN_Y
 Description = Temperature (K) (Density (Mg/m^3)- and Total Pressure (GPa)-dependent)
   fconv =   1.000000000000000E+00         xconv =   1.000000000000000E+00         yconv =   1.000000000000000E+00
 
@@ -896,7 +888,6 @@ Description = Temperature (K) (Density (Mg/m^3)- and Total Pressure (GPa)-depend
 
 TableHandle=1 matid =  2140 source = /opt/local/codes/data/eos/sesame page =  6
 Data Type = EOS_T_DPt
-Loading Options: EOS_MONOTONIC_IN_Y
 Description = Temperature (K) (Density (Mg/m^3)- and Total Pressure (GPa)-dependent)
   fconv =   1.000000000000000E+00         xconv =   1.000000000000000E+00         yconv =   1.000000000000000E+00
 
@@ -1006,7 +997,6 @@ Description = Temperature (K) (Density (Mg/m^3)- and Total Pressure (GPa)-depend
 
 TableHandle=1 matid =  2140 source = /opt/local/codes/data/eos/sesame page =  7
 Data Type = EOS_T_DPt
-Loading Options: EOS_MONOTONIC_IN_Y
 Description = Temperature (K) (Density (Mg/m^3)- and Total Pressure (GPa)-dependent)
   fconv =   1.000000000000000E+00         xconv =   1.000000000000000E+00         yconv =   1.000000000000000E+00
 
@@ -1116,7 +1106,6 @@ Description = Temperature (K) (Density (Mg/m^3)- and Total Pressure (GPa)-depend
 
 TableHandle=1 matid =  2140 source = /opt/local/codes/data/eos/sesame page =  8
 Data Type = EOS_T_DPt
-Loading Options: EOS_MONOTONIC_IN_Y
 Description = Temperature (K) (Density (Mg/m^3)- and Total Pressure (GPa)-dependent)
   fconv =   1.000000000000000E+00         xconv =   1.000000000000000E+00         yconv =   1.000000000000000E+00
 
@@ -1226,7 +1215,6 @@ Description = Temperature (K) (Density (Mg/m^3)- and Total Pressure (GPa)-depend
 
 TableHandle=1 matid =  2140 source = /opt/local/codes/data/eos/sesame page =  9
 Data Type = EOS_T_DPt
-Loading Options: EOS_MONOTONIC_IN_Y
 Description = Temperature (K) (Density (Mg/m^3)- and Total Pressure (GPa)-dependent)
   fconv =   1.000000000000000E+00         xconv =   1.000000000000000E+00         yconv =   1.000000000000000E+00
 
@@ -1336,7 +1324,6 @@ Description = Temperature (K) (Density (Mg/m^3)- and Total Pressure (GPa)-depend
 
 TableHandle=1 matid =  2140 source = /opt/local/codes/data/eos/sesame page = 10
 Data Type = EOS_T_DPt
-Loading Options: EOS_MONOTONIC_IN_Y
 Description = Temperature (K) (Density (Mg/m^3)- and Total Pressure (GPa)-dependent)
   fconv =   1.000000000000000E+00         xconv =   1.000000000000000E+00         yconv =   1.000000000000000E+00
 
@@ -1446,7 +1433,6 @@ Description = Temperature (K) (Density (Mg/m^3)- and Total Pressure (GPa)-depend
 
 TableHandle=1 matid =  2140 source = /opt/local/codes/data/eos/sesame page = 11
 Data Type = EOS_T_DPt
-Loading Options: EOS_MONOTONIC_IN_Y
 Description = Temperature (K) (Density (Mg/m^3)- and Total Pressure (GPa)-dependent)
   fconv =   1.000000000000000E+00         xconv =   1.000000000000000E+00         yconv =   1.000000000000000E+00
 
@@ -1556,7 +1542,6 @@ Description = Temperature (K) (Density (Mg/m^3)- and Total Pressure (GPa)-depend
 
 TableHandle=1 matid =  2140 source = /opt/local/codes/data/eos/sesame page = 12
 Data Type = EOS_T_DPt
-Loading Options: EOS_MONOTONIC_IN_Y
 Description = Temperature (K) (Density (Mg/m^3)- and Total Pressure (GPa)-dependent)
   fconv =   1.000000000000000E+00         xconv =   1.000000000000000E+00         yconv =   1.000000000000000E+00
 
@@ -1666,7 +1651,6 @@ Description = Temperature (K) (Density (Mg/m^3)- and Total Pressure (GPa)-depend
 
 TableHandle=1 matid =  2140 source = /opt/local/codes/data/eos/sesame page = 13
 Data Type = EOS_T_DPt
-Loading Options: EOS_MONOTONIC_IN_Y
 Description = Temperature (K) (Density (Mg/m^3)- and Total Pressure (GPa)-dependent)
   fconv =   1.000000000000000E+00         xconv =   1.000000000000000E+00         yconv =   1.000000000000000E+00
 
@@ -1776,7 +1760,6 @@ Description = Temperature (K) (Density (Mg/m^3)- and Total Pressure (GPa)-depend
 
 TableHandle=1 matid =  2140 source = /opt/local/codes/data/eos/sesame page = 14
 Data Type = EOS_T_DPt
-Loading Options: EOS_MONOTONIC_IN_Y
 Description = Temperature (K) (Density (Mg/m^3)- and Total Pressure (GPa)-dependent)
   fconv =   1.000000000000000E+00         xconv =   1.000000000000000E+00         yconv =   1.000000000000000E+00
 
@@ -1864,8 +1847,8 @@ Description = Temperature (K) (Density (Mg/m^3)- and Total Pressure (GPa)-depend
    1.570000000000000E+02   8.361539355839305E+05   1.293841301348903E+06   1.515596027048375E+06   1.942818028492493E+06   2.536089761630565E+06   2.818563509809671E+06   3.888735608089304E+06   4.797152242499210E+06   5.173948880682784E+06   6.977301502789901E+06
    1.869047320000000E+02   2.161571756005288E-06   7.578016168045643E+05   1.007470617987559E+06   1.449257993731016E+06   1.994334773486451E+06   2.252791249076217E+06   3.244251538903036E+06   4.079137916684371E+06   4.411333681540878E+06   6.004433580768051E+06
    2.242857260000001E+02                     ---                     ---   0.000000000000000E+00   7.744750670011422E+05   1.385436731310243E+06   1.631695692036304E+06   2.549211581354196E+06   3.334788130583377E+06   3.647682262859704E+06   5.049118707971192E+06
-   2.803571759999995E+02                     ---                     ---                     ---                     ---   3.626515625000001E+01   5.622026248516109E+05   1.625488553651670E+06   2.358579866304446E+06   2.652822542593352E+06   3.956957751455678E+06
-   3.925000000000000E+02                     ---                     ---                     ---                     ---                     ---                     ---                     ---   1.450606250000000E+02   6.715212046724686E+05   2.124918818855259E+06
+   2.803571759999995E+02                     ---                     ---                     ---                     ---   0.000000000000000E+00   5.622026248516109E+05   1.625488553651670E+06   2.358579866304446E+06   2.652822542593352E+06   3.956957751455678E+06
+   3.925000000000000E+02                     ---                     ---                     ---                     ---                     ---                     ---                     ---   1.712033813288372E-02   6.715212046724686E+05   2.124918818855259E+06
    5.607142740000018E+02                     ---                     ---                     ---                     ---                     ---                     ---                     ---                     ---                     ---                     ---
    7.850000000000000E+02                     ---                     ---                     ---                     ---                     ---                     ---                     ---                     ---                     ---                     ---
    9.812500000000000E+02                     ---                     ---                     ---                     ---                     ---                     ---                     ---                     ---                     ---                     ---
@@ -1886,7 +1869,6 @@ Description = Temperature (K) (Density (Mg/m^3)- and Total Pressure (GPa)-depend
 
 TableHandle=1 matid =  2140 source = /opt/local/codes/data/eos/sesame page = 15
 Data Type = EOS_T_DPt
-Loading Options: EOS_MONOTONIC_IN_Y
 Description = Temperature (K) (Density (Mg/m^3)- and Total Pressure (GPa)-dependent)
   fconv =   1.000000000000000E+00         xconv =   1.000000000000000E+00         yconv =   1.000000000000000E+00
 
@@ -1976,10 +1958,10 @@ Description = Temperature (K) (Density (Mg/m^3)- and Total Pressure (GPa)-depend
    2.242857260000001E+02   6.474746788173935E+06   6.815106652837789E+06   9.126504915173147E+06   1.148534501869935E+07   1.232681406250846E+07   1.650667631954705E+07   1.661295718377072E+07   2.221988985631899E+07   2.696872158349282E+07   2.985157837193219E+07
    2.803571759999995E+02   5.171637669620771E+06   5.466884396729356E+06   7.454743920443823E+06   9.418837975194376E+06   1.012482378603015E+07   1.367198993019665E+07   1.375936924298560E+07   1.831980955687238E+07   2.226870577815531E+07   2.464013249967479E+07
    3.925000000000000E+02   3.278704121958905E+06   3.539663765107845E+06   5.152329935705539E+06   6.732337390858502E+06   7.281649223908393E+06   1.002695088246609E+07   1.009604300074445E+07   1.362540102464793E+07   1.652966475088742E+07   1.828588346410215E+07
-   5.607142740000018E+02   1.450606250000000E+02   6.876490107138010E+05   2.697700647324509E+06   4.127274522400705E+06   4.580676918276261E+06   6.810582433828116E+06   6.864711810929460E+06   9.603311744486125E+06   1.189336633737166E+07   1.322217492848161E+07
-   7.850000000000000E+02                     ---                     ---                     ---   5.802425165504450E+02   1.160485000000001E+06   3.742783419661273E+06   3.792085049532925E+06   6.145078929050266E+06   7.986281858452831E+06   9.055903224476863E+06
-   9.812500000000000E+02                     ---                     ---                     ---                     ---                     ---                     ---   1.160485005855709E+03   3.706103572195583E+06   5.494010396137077E+06   6.498563685634234E+06
-   1.308333599999998E+03                     ---                     ---                     ---                     ---                     ---                     ---                     ---                     ---   5.802425162603116E+02   2.213958556389856E+06
+   5.607142740000018E+02   0.000000000000000E+00   6.876490107138010E+05   2.697700647324509E+06   4.127274522400705E+06   4.580676918276261E+06   6.810582433828116E+06   6.864711810929460E+06   9.603311744486125E+06   1.189336633737166E+07   1.322217492848161E+07
+   7.850000000000000E+02                     ---                     ---                     ---   0.000000000000000E+00   1.160485000000001E+06   3.742783419661273E+06   3.792085049532925E+06   6.145078929050266E+06   7.986281858452831E+06   9.055903224476863E+06
+   9.812500000000000E+02                     ---                     ---                     ---                     ---                     ---                     ---   0.000000000000000E+00   3.706103572195583E+06   5.494010396137077E+06   6.498563685634234E+06
+   1.308333599999998E+03                     ---                     ---                     ---                     ---                     ---                     ---                     ---                     ---   1.770759582519532E-02   2.213958556389856E+06
    1.570000000000000E+03                     ---                     ---                     ---                     ---                     ---                     ---                     ---                     ---                     ---                     ---
    2.158750000000000E+03                     ---                     ---                     ---                     ---                     ---                     ---                     ---                     ---                     ---                     ---
    2.727875000000000E+03                     ---                     ---                     ---                     ---                     ---                     ---                     ---                     ---                     ---                     ---
@@ -1996,7 +1978,6 @@ Description = Temperature (K) (Density (Mg/m^3)- and Total Pressure (GPa)-depend
 
 TableHandle=1 matid =  2140 source = /opt/local/codes/data/eos/sesame page = 16
 Data Type = EOS_T_DPt
-Loading Options: EOS_MONOTONIC_IN_Y
 Description = Temperature (K) (Density (Mg/m^3)- and Total Pressure (GPa)-dependent)
   fconv =   1.000000000000000E+00         xconv =   1.000000000000000E+00         yconv =   1.000000000000000E+00
 
@@ -2090,11 +2071,11 @@ Description = Temperature (K) (Density (Mg/m^3)- and Total Pressure (GPa)-depend
    7.850000000000000E+02   1.156962846361791E+07   1.285787035175117E+07   1.818852277294002E+07   2.050228593931859E+07   2.540067544410456E+07   3.063164086519808E+07   3.583084021962156E+07   4.266890120169298E+07   4.952071100338108E+07   5.702423752736992E+07
    9.812500000000000E+02   8.701629757555045E+06   9.827594773526501E+06   1.447687071860121E+07   1.639551313340961E+07   2.045696309019433E+07   2.492618694845486E+07   2.920257073439145E+07   3.474769332233463E+07   4.027789601074430E+07   4.632277089867144E+07
    1.308333599999998E+03   4.767195016037934E+06   5.866677496927636E+06   9.932922978196366E+06   1.160214152376565E+07   1.491656751587189E+07   1.843272953174137E+07   2.191242760634647E+07   2.637009936260320E+07   3.064292306009210E+07   3.525726184589656E+07
-   1.570000000000000E+03   1.160485023927758E+03   2.427680218912568E+06   6.978442544251586E+06   8.509316346816516E+06   1.160485000000000E+07   1.475878516203630E+07   1.775550136557427E+07   2.163762117687655E+07   2.544268806877562E+07   2.940810728639171E+07
-   2.158750000000000E+03                     ---                     ---                     ---   1.160485111836650E+03   5.169204435621871E+06   8.241765227287920E+06   1.089939052386094E+07   1.412015334890656E+07   1.710210762678935E+07   2.029090617689059E+07
-   2.727875000000000E+03                     ---                     ---                     ---                     ---                     ---   1.160485193015272E+03   5.035906468466129E+06   8.401841159111502E+06   1.125443946848785E+07   1.410613205576334E+07
-   3.316625000000000E+03                     ---                     ---                     ---                     ---                     ---                     ---                     ---   2.320970020582996E+03   5.511031357169369E+06   8.558466581689881E+06
-   3.925000000000000E+03                     ---                     ---                     ---                     ---                     ---                     ---                     ---                     ---                     ---   2.320970040879256E+03
+   1.570000000000000E+03   0.000000000000000E+00   2.427680218912568E+06   6.978442544251586E+06   8.509316346816516E+06   1.160485000000000E+07   1.475878516203630E+07   1.775550136557427E+07   2.163762117687655E+07   2.544268806877562E+07   2.940810728639171E+07
+   2.158750000000000E+03                     ---                     ---                     ---   0.000000000000000E+00   5.169204435621871E+06   8.241765227287920E+06   1.089939052386094E+07   1.412015334890656E+07   1.710210762678935E+07   2.029090617689059E+07
+   2.727875000000000E+03                     ---                     ---                     ---                     ---                     ---   1.770759582519532E-02   5.035906468466129E+06   8.401841159111502E+06   1.125443946848785E+07   1.410613205576334E+07
+   3.316625000000000E+03                     ---                     ---                     ---                     ---                     ---                     ---                     ---   0.000000000000000E+00   5.511031357169369E+06   8.558466581689881E+06
+   3.925000000000000E+03                     ---                     ---                     ---                     ---                     ---                     ---                     ---                     ---                     ---   0.000000000000000E+00
    4.800274999999994E+03                     ---                     ---                     ---                     ---                     ---                     ---                     ---                     ---                     ---                     ---
    5.710875000000000E+03                     ---                     ---                     ---                     ---                     ---                     ---                     ---                     ---                     ---                     ---
    6.994350000000006E+03                     ---                     ---                     ---                     ---                     ---                     ---                     ---                     ---                     ---                     ---
@@ -2106,7 +2087,6 @@ Description = Temperature (K) (Density (Mg/m^3)- and Total Pressure (GPa)-depend
 
 TableHandle=1 matid =  2140 source = /opt/local/codes/data/eos/sesame page = 17
 Data Type = EOS_T_DPt
-Loading Options: EOS_MONOTONIC_IN_Y
 Description = Temperature (K) (Density (Mg/m^3)- and Total Pressure (GPa)-dependent)
   fconv =   1.000000000000000E+00         xconv =   1.000000000000000E+00         yconv =   1.000000000000000E+00
 
@@ -2205,10 +2185,10 @@ Description = Temperature (K) (Density (Mg/m^3)- and Total Pressure (GPa)-depend
    2.727875000000000E+03   1.839204886266297E+07   2.236589129358564E+07   3.014378882223020E+07   3.153213536557775E+07   4.531804031999925E+07   4.572790818255453E+07   5.629677077490345E+07   6.711623880399355E+07   9.468846085912485E+07   1.341069026226431E+08
    3.316625000000000E+03   1.276555641310639E+07   1.627459933812248E+07   2.320970000000000E+07   2.446249536095815E+07   3.621616865552462E+07   3.655910005111718E+07   4.536520701397991E+07   5.450609096406721E+07   7.749318540459231E+07   1.099959062665882E+08
    3.925000000000000E+03   7.245920619301386E+06   1.087929878017626E+07   1.730334279908535E+07   1.841830408493382E+07   2.911745063223894E+07   2.941764168820924E+07   3.703400070713450E+07   4.485569218144251E+07   6.476309746719011E+07   9.231783846834865E+07
-   4.800274999999994E+03                     ---   2.320970075597950E+03   9.929723645800898E+06   1.106541746915580E+07   2.083041540333800E+07   2.110645212482211E+07   2.793932360698068E+07   3.456606756240137E+07   5.120852185889691E+07   7.424729890576854E+07
-   5.710875000000000E+03                     ---                     ---                     ---   2.320970155633183E+03   1.359623238762741E+07   1.385279108844510E+07   2.012075817433601E+07   2.631243280796850E+07   4.074630556557579E+07   6.071265034615166E+07
-   6.994350000000006E+03                     ---                     ---                     ---                     ---                     ---   2.320970163517012E+03   1.043490408132531E+07   1.637996081442749E+07   2.955597717107312E+07   4.631305503113777E+07
-   7.850000000000000E+03                     ---                     ---                     ---                     ---                     ---                     ---   2.320970331615465E+03   1.014088745221169E+07   2.320970000000000E+07   3.878138475965109E+07
+   4.800274999999994E+03                     ---   8.853797912597659E-03   9.929723645800898E+06   1.106541746915580E+07   2.083041540333800E+07   2.110645212482211E+07   2.793932360698068E+07   3.456606756240137E+07   5.120852185889691E+07   7.424729890576854E+07
+   5.710875000000000E+03                     ---                     ---                     ---   0.000000000000000E+00   1.359623238762741E+07   1.385279108844510E+07   2.012075817433601E+07   2.631243280796850E+07   4.074630556557579E+07   6.071265034615166E+07
+   6.994350000000006E+03                     ---                     ---                     ---                     ---                     ---   0.000000000000000E+00   1.043490408132531E+07   1.637996081442749E+07   2.955597717107312E+07   4.631305503113777E+07
+   7.850000000000000E+03                     ---                     ---                     ---                     ---                     ---                     ---   1.770759582519532E-02   1.014088745221169E+07   2.320970000000000E+07   3.878138475965109E+07
    1.570000000000000E+04                     ---                     ---                     ---                     ---                     ---                     ---                     ---                     ---                     ---                     ---
    3.925000000000000E+04                     ---                     ---                     ---                     ---                     ---                     ---                     ---                     ---                     ---                     ---
    7.850000000000000E+04                     ---                     ---                     ---                     ---                     ---                     ---                     ---                     ---                     ---                     ---
@@ -2216,7 +2196,6 @@ Description = Temperature (K) (Density (Mg/m^3)- and Total Pressure (GPa)-depend
 
 TableHandle=1 matid =  2140 source = /opt/local/codes/data/eos/sesame page = 18
 Data Type = EOS_T_DPt
-Loading Options: EOS_MONOTONIC_IN_Y
 Description = Temperature (K) (Density (Mg/m^3)- and Total Pressure (GPa)-dependent)
   fconv =   1.000000000000000E+00         xconv =   1.000000000000000E+00         yconv =   1.000000000000000E+00
 
@@ -2319,14 +2298,13 @@ Description = Temperature (K) (Density (Mg/m^3)- and Total Pressure (GPa)-depend
    5.710875000000000E+03   9.040925969753635E+07   1.324422217275122E+08   1.936729715626946E+08   2.880190808206735E+08                     ---                     ---                     ---                     ---                     ---                     ---
    6.994350000000006E+03   7.136388654140115E+07   1.058373196605245E+08   1.562230394558127E+08   2.320970000000000E+08   3.713552000000000E+08                     ---                     ---                     ---                     ---                     ---
    7.850000000000000E+03   6.164091891117611E+07   9.252070953324685E+07   1.376566499625936E+08   2.050431081287135E+08   3.278868113509119E+08   3.464378453878362E+08                     ---                     ---                     ---                     ---
-   1.570000000000000E+04   5.802425035130220E+03   2.708310499186322E+07   5.233365319975971E+07   8.761917509387994E+07   1.483021576722325E+08   1.571378672076818E+08   2.320970000000000E+08   3.713552000000000E+08                     ---                     ---
-   3.925000000000000E+04                     ---                     ---                     ---                     ---                     ---   1.160485000125246E+04   4.644791354126512E+07   1.030876976518676E+08   1.884730813825363E+08   3.713552000000000E+08
-   7.850000000000000E+04                     ---                     ---                     ---                     ---                     ---                     ---                     ---                     ---   1.160485000163955E+04   1.101265897394257E+08
+   1.570000000000000E+04   8.101230034625928E-03   2.708310499186322E+07   5.233365319975971E+07   8.761917509387994E+07   1.483021576722325E+08   1.571378672076818E+08   2.320970000000000E+08   3.713552000000000E+08                     ---                     ---
+   3.925000000000000E+04                     ---                     ---                     ---                     ---                     ---   1.770759582519532E-02   4.644791354126512E+07   1.030876976518676E+08   1.884730813825363E+08   3.713552000000000E+08
+   7.850000000000000E+04                     ---                     ---                     ---                     ---                     ---                     ---                     ---                     ---   0.000000000000000E+00   1.101265897394257E+08
    1.570000000000000E+05                     ---                     ---                     ---                     ---                     ---                     ---                     ---                     ---                     ---                     ---
 
 TableHandle=1 matid =  2140 source = /opt/local/codes/data/eos/sesame page = 19
 Data Type = EOS_T_DPt
-Loading Options: EOS_MONOTONIC_IN_Y
 Description = Temperature (K) (Density (Mg/m^3)- and Total Pressure (GPa)-dependent)
   fconv =   1.000000000000000E+00         xconv =   1.000000000000000E+00         yconv =   1.000000000000000E+00
 
@@ -2432,11 +2410,10 @@ Description = Temperature (K) (Density (Mg/m^3)- and Total Pressure (GPa)-depend
    1.570000000000000E+04                     ---                     ---                     ---                     ---                     ---
    3.925000000000000E+04                     ---                     ---                     ---                     ---                     ---
    7.850000000000000E+04   2.320970000000000E+08   2.754228517514696E+08   3.713552000000000E+08                     ---                     ---
-   1.570000000000000E+05                     ---   1.160485000014576E+04   6.733322357136157E+07   2.320969999999999E+08   3.713552000000000E+08
+   1.570000000000000E+05                     ---   0.000000000000000E+00   6.733322357136157E+07   2.320969999999999E+08   3.713552000000000E+08
 
 TableHandle=2 matid =  2140 source = /opt/local/codes/data/eos/sesame page =  1
 Data Type = EOS_D_PtT
-Loading Options: EOS_MONOTONIC_IN_X, EOS_MONOTONIC_IN_Y
 Description = Density (Mg/m^3) (Total Pressure (GPa)- and Temperature (K)-dependent)
   fconv =   1.000000000000000E+00         xconv =   1.000000000000000E+00         yconv =   1.000000000000000E+00
 
@@ -2546,7 +2523,6 @@ Description = Density (Mg/m^3) (Total Pressure (GPa)- and Temperature (K)-depend
 
 TableHandle=2 matid =  2140 source = /opt/local/codes/data/eos/sesame page =  2
 Data Type = EOS_D_PtT
-Loading Options: EOS_MONOTONIC_IN_X, EOS_MONOTONIC_IN_Y
 Description = Density (Mg/m^3) (Total Pressure (GPa)- and Temperature (K)-dependent)
   fconv =   1.000000000000000E+00         xconv =   1.000000000000000E+00         yconv =   1.000000000000000E+00
 
@@ -2656,7 +2632,6 @@ Description = Density (Mg/m^3) (Total Pressure (GPa)- and Temperature (K)-depend
 
 TableHandle=2 matid =  2140 source = /opt/local/codes/data/eos/sesame page =  3
 Data Type = EOS_D_PtT
-Loading Options: EOS_MONOTONIC_IN_X, EOS_MONOTONIC_IN_Y
 Description = Density (Mg/m^3) (Total Pressure (GPa)- and Temperature (K)-dependent)
   fconv =   1.000000000000000E+00         xconv =   1.000000000000000E+00         yconv =   1.000000000000000E+00
 
@@ -2766,7 +2741,6 @@ Description = Density (Mg/m^3) (Total Pressure (GPa)- and Temperature (K)-depend
 
 TableHandle=3 matid =  2140 source = /opt/local/codes/data/eos/sesame page =  1
 Data Type = EOS_Pt_DUt
-Loading Options: EOS_MONOTONIC_IN_Y
 Description = Total Pressure (GPa) (Density (Mg/m^3)- and Total Specific-Internal-Energy (MJ/kg)-dependent)
   fconv =   1.000000000000000E+00         xconv =   1.000000000000000E+00         yconv =   1.000000000000000E+00
 
@@ -2876,7 +2850,6 @@ Description = Total Pressure (GPa) (Density (Mg/m^3)- and Total Specific-Interna
 
 TableHandle=3 matid =  2140 source = /opt/local/codes/data/eos/sesame page =  2
 Data Type = EOS_Pt_DUt
-Loading Options: EOS_MONOTONIC_IN_Y
 Description = Total Pressure (GPa) (Density (Mg/m^3)- and Total Specific-Internal-Energy (MJ/kg)-dependent)
   fconv =   1.000000000000000E+00         xconv =   1.000000000000000E+00         yconv =   1.000000000000000E+00
 
@@ -2986,7 +2959,6 @@ Description = Total Pressure (GPa) (Density (Mg/m^3)- and Total Specific-Interna
 
 TableHandle=3 matid =  2140 source = /opt/local/codes/data/eos/sesame page =  3
 Data Type = EOS_Pt_DUt
-Loading Options: EOS_MONOTONIC_IN_Y
 Description = Total Pressure (GPa) (Density (Mg/m^3)- and Total Specific-Internal-Energy (MJ/kg)-dependent)
   fconv =   1.000000000000000E+00         xconv =   1.000000000000000E+00         yconv =   1.000000000000000E+00
 
@@ -3096,7 +3068,6 @@ Description = Total Pressure (GPa) (Density (Mg/m^3)- and Total Specific-Interna
 
 TableHandle=3 matid =  2140 source = /opt/local/codes/data/eos/sesame page =  4
 Data Type = EOS_Pt_DUt
-Loading Options: EOS_MONOTONIC_IN_Y
 Description = Total Pressure (GPa) (Density (Mg/m^3)- and Total Specific-Internal-Energy (MJ/kg)-dependent)
   fconv =   1.000000000000000E+00         xconv =   1.000000000000000E+00         yconv =   1.000000000000000E+00
 
@@ -3206,7 +3177,6 @@ Description = Total Pressure (GPa) (Density (Mg/m^3)- and Total Specific-Interna
 
 TableHandle=3 matid =  2140 source = /opt/local/codes/data/eos/sesame page =  5
 Data Type = EOS_Pt_DUt
-Loading Options: EOS_MONOTONIC_IN_Y
 Description = Total Pressure (GPa) (Density (Mg/m^3)- and Total Specific-Internal-Energy (MJ/kg)-dependent)
   fconv =   1.000000000000000E+00         xconv =   1.000000000000000E+00         yconv =   1.000000000000000E+00
 
@@ -3316,7 +3286,6 @@ Description = Total Pressure (GPa) (Density (Mg/m^3)- and Total Specific-Interna
 
 TableHandle=3 matid =  2140 source = /opt/local/codes/data/eos/sesame page =  6
 Data Type = EOS_Pt_DUt
-Loading Options: EOS_MONOTONIC_IN_Y
 Description = Total Pressure (GPa) (Density (Mg/m^3)- and Total Specific-Internal-Energy (MJ/kg)-dependent)
   fconv =   1.000000000000000E+00         xconv =   1.000000000000000E+00         yconv =   1.000000000000000E+00
 
@@ -3426,7 +3395,6 @@ Description = Total Pressure (GPa) (Density (Mg/m^3)- and Total Specific-Interna
 
 TableHandle=3 matid =  2140 source = /opt/local/codes/data/eos/sesame page =  7
 Data Type = EOS_Pt_DUt
-Loading Options: EOS_MONOTONIC_IN_Y
 Description = Total Pressure (GPa) (Density (Mg/m^3)- and Total Specific-Internal-Energy (MJ/kg)-dependent)
   fconv =   1.000000000000000E+00         xconv =   1.000000000000000E+00         yconv =   1.000000000000000E+00
 
@@ -3536,7 +3504,6 @@ Description = Total Pressure (GPa) (Density (Mg/m^3)- and Total Specific-Interna
 
 TableHandle=3 matid =  2140 source = /opt/local/codes/data/eos/sesame page =  8
 Data Type = EOS_Pt_DUt
-Loading Options: EOS_MONOTONIC_IN_Y
 Description = Total Pressure (GPa) (Density (Mg/m^3)- and Total Specific-Internal-Energy (MJ/kg)-dependent)
   fconv =   1.000000000000000E+00         xconv =   1.000000000000000E+00         yconv =   1.000000000000000E+00
 
@@ -3646,7 +3613,6 @@ Description = Total Pressure (GPa) (Density (Mg/m^3)- and Total Specific-Interna
 
 TableHandle=3 matid =  2140 source = /opt/local/codes/data/eos/sesame page =  9
 Data Type = EOS_Pt_DUt
-Loading Options: EOS_MONOTONIC_IN_Y
 Description = Total Pressure (GPa) (Density (Mg/m^3)- and Total Specific-Internal-Energy (MJ/kg)-dependent)
   fconv =   1.000000000000000E+00         xconv =   1.000000000000000E+00         yconv =   1.000000000000000E+00
 
@@ -3756,7 +3722,6 @@ Description = Total Pressure (GPa) (Density (Mg/m^3)- and Total Specific-Interna
 
 TableHandle=3 matid =  2140 source = /opt/local/codes/data/eos/sesame page = 10
 Data Type = EOS_Pt_DUt
-Loading Options: EOS_MONOTONIC_IN_Y
 Description = Total Pressure (GPa) (Density (Mg/m^3)- and Total Specific-Internal-Energy (MJ/kg)-dependent)
   fconv =   1.000000000000000E+00         xconv =   1.000000000000000E+00         yconv =   1.000000000000000E+00
 

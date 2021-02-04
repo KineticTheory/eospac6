@@ -4724,7 +4724,7 @@ Description: Total Specific-Internal-Energy (MJ/kg) (Density (Mg/m^3)- and Tempe
 
 AFTER UNPACKING:
 
-tableHandle[0..5] = ( 0 1 2 3 4 5 )
+tableHandle[0..5] = ( 0 1 2 3 4 6 )
 
 TableHandle: 0	DataType: EOS_Comment	MaterialID: 2140
 Description: Descriptive Comments
@@ -9439,4 +9439,4 @@ Description: Total Specific-Internal-Energy (MJ/kg) (Density (Mg/m^3)- and Tempe
 
 52038: Invalid info flag. This info flag is only valid for simple, non-inverted data types.
 
-62038: Invalid info flag. This info flag is only valid for simple, non-inverted data types.
+72038: Invalid info flag. This info flag is only valid for simple, non-inverted data types.

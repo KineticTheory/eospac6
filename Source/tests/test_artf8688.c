@@ -8,7 +8,7 @@
  ********************************************************************/
 
 /*! \file
- *  \ingroup tests
+ *  \ingroup C tests
  *  \brief Perform the following tests:
  *    -# Ensure tables can be created, loaded and interpolated with the EOS_CALC_FREE_ENERGY
  *       option both disabled and enabled. See SourceForge<A9> Issue #artf8688 for more details:

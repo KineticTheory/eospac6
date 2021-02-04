@@ -8,7 +8,7 @@
  ********************************************************************/
 
 /*! \file
- *  \ingroup tests
+ *  \ingroup C tests
  *  \brief Ensure that eos_GetErrorCode returns the correct error code
  *  for an incorrect material number and the resulting incorrect
  *  table handle.

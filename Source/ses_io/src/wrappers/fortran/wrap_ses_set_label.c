@@ -10,7 +10,7 @@
 
 #include <stdio.h>
 
-#define DEBUG_WRAP
+#undef DEBUG_WRAP
 
 #ifdef LC_UNDER
 ses_error_flag ses_set_label_(ses_file_handle* pt_handle, ses_label the_label) {

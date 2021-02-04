@@ -23,6 +23,12 @@ eval '(exit $?0)' && eval 'exec perl -S "$0" ${1+"$@"}' #-*-perl-*-
 #                         multiple instances are allowed and
 #                         at least one file listed is required
 #
+# If an environment variable name is enclosed in braces like {VAR},
+# then the value of the environment variable is substituted within the
+# spefified REQUIRED FILE name. This allows a test to be executred within
+# dyamically-defined environments such as a GitLab runner. For example:
+#   REQUIRED FILE (OR): {CI_PROJECT_DIR}/eospac6-data/data/eos/export-controlled/ieee64/sesame
+#
 # If no file names are provided on the command line, then all
 # files matching glob("test*.[fc]*") are searched.
 #
@@ -70,7 +76,19 @@ foreach $f (@files) {
   print STDERR __LINE__,' :: @s = ', Dumper(\@s) if $options->{"verbose"} > 3;
   print STDERR __LINE__,":: $f: ", '\@s = ', Dumper(\@s) if $options->{"verbose"} == 3;
   foreach $s (@s) {
-    $s=~s/.*MATIDS TO TEST:\s*//;
+    $s=~s/.*MATIDS TO TEST:[\s\*\/]*//;
+    $s=~s/[\s,\};]+/ /g;
+    if ($s =~ /\{([^\}]+)\}/) { # replace environment variable keywords with actual values
+      print STDERR __LINE__,":: $f: replace environment variable keywords with actual values\n" if $options->{"verbose"};
+      my $n = $1;
+      print STDERR __LINE__,":: $f: ", '\$n = ', Dumper($n) if $options->{"verbose"};
+      if ($ENV{$n} and -r $ENV{$n}) {
+        my $v = $ENV{$n};
+        print STDERR __LINE__,":: $f: ", '\$v = ', Dumper($v) if $options->{"verbose"};
+        $s =~ s:\{$n\}:$v:g;
+        print STDERR __LINE__,":: $f: ", '\$s = ', Dumper($s) if $options->{"verbose"};
+      }
+    }
     if ($s =~ m|.*REQUIRED\s+FILE:\s*(.+)| or $s =~ m|.*REQUIRED\s+FILE\s+\(AND\):\s*(.+)|) {
       my $n = $1; $n =~ s/^\s+//; $n =~ s/\s+$//;
       $n = "$startdir/$n" if $n !~ m|^/|;

@@ -648,6 +648,17 @@ struct _ses_index_record* _read_index_record(struct _ses_file_handle* pSFH, long
 
 
   ses_error_flag read_errors = pSFH->pt2_read_index_record(the_index_record, pSFH, offset);
+  
+  // Ginger print all of the values read in:
+//  printf("_read_index_record:: offset: %ld, mid: %ld, date1: %ld, date2: %ld, version: %ld, nrec: %ld\n",
+//         offset, the_index_record->_mid, the_index_record->_date1, the_index_record->_date2, the_index_record->_vers,
+//         the_index_record->_nrec);
+//  int i = 0;
+//  for (i=0;i<the_index_record->_nrec;i++){
+//    printf("\ttid: %ld, nwds: %ld, Iadr: %ld\n",the_index_record->_tblid[i], the_index_record->_nwds[i], the_index_record->_iadr[i] );
+//  }
+  
+ 
   if (read_errors != SES_NO_ERROR) {
 #ifdef DEBUG_PRINT
     printf("_read_index_record: read_errors = %d \n", read_errors);

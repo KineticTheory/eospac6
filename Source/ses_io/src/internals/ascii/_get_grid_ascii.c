@@ -10,14 +10,19 @@
 #include "_file_list_ascii.h"
 
 #undef DEBUG_PRINT
+
 ses_boolean _get_grid_ascii(ses_file_handle the_handle, ses_material_id the_mid,
                             ses_table_id the_tid, long* nr, long* nt, long* ntab) {
     
     ses_boolean return_value = SES_TRUE;
+
     /* int i; */
     int word_size = 0;
     
-        
+#ifdef DEBUG_PRINT
+    printf("_get_grid_ascii:/n");
+#endif
+    
     /*  read nr and nt directly from the file */
     
     /******************************************************************/
@@ -72,9 +77,10 @@ ses_boolean _get_grid_ascii(ses_file_handle the_handle, ses_material_id the_mid,
         case 100:
             
             /* didit_go = */ _go_to_data_record_ascii(the_handle, the_mid, the_tid);
-            long number_tables = _read_long_pFILE_ascii(pFILE, needs_flip);
+            //long number_tables = _read_long_pFILE_ascii(pFILE, needs_flip);
             
-            my_nr = number_tables * (SES_MAX_STRING_SIZE) + 1;
+            //my_nr = number_tables * (SES_MAX_STRING_SIZE) + 1;
+            my_nr = _read_long_pFILE_ascii(pFILE, needs_flip) * (SES_MAX_STRING_SIZE) + 1;
             my_nt = 1;
 #ifdef DEBUG_PRINT
             printf("_get_grid_ascii: case 100. nr: %ld, nt = 1\n", my_nr);
@@ -267,10 +273,16 @@ ses_boolean _get_grid_ascii(ses_file_handle the_handle, ses_material_id the_mid,
             /* didit_go = */ _go_to_data_record_ascii(the_handle, the_mid, the_tid);
             my_nr = _read_long_pFILE_ascii(pFILE, needs_flip);
             my_nt = 1;
-            //  find ntab for the table
+#ifdef DEBUG_PRINT
+        printf("_get_grid_ascii: case 411/412/431/501 nr: %ld, nt = %ld\n", my_nr, my_nt);
+#endif
+           //  find ntab for the table
             if ((the_tid == 411) && (current_index_record != (struct _ses_index_record*)NULL)) {
                 long table_nwds = _get_table_nwds(current_index_record, the_tid);
                 long my_tables = (table_nwds - 2 - my_nt)/my_nr;
+#ifdef DEBUG_PRINT
+                printf("_get_grid_ascii: case 411/412/431/501 1 table_nwds: %ld, my_tables = %ld\n", table_nwds, my_tables);
+#endif
                 if (my_tables != 5) {
                     my_ntab = my_tables;
                 }
@@ -279,6 +291,9 @@ ses_boolean _get_grid_ascii(ses_file_handle the_handle, ses_material_id the_mid,
             if ((the_tid == 412) && (current_index_record != (struct _ses_index_record*)NULL)) {
                 long table_nwds = _get_table_nwds(current_index_record, the_tid);
                 long my_tables = (table_nwds - 2 - my_nt)/my_nr;
+#ifdef DEBUG_PRINT
+                printf("_get_grid_ascii: case 411/412/431/501 2 table_nwds: %ld, my_tables = %ld\n", table_nwds, my_tables);
+#endif
                 if (my_tables != 5) {
                     my_ntab = my_tables;
                 }
@@ -287,6 +302,9 @@ ses_boolean _get_grid_ascii(ses_file_handle the_handle, ses_material_id the_mid,
             if ((the_tid == 431) && (current_index_record != (struct _ses_index_record*)NULL)) {
                 long table_nwds = _get_table_nwds(current_index_record, the_tid);
                 long my_tables = (table_nwds - 3)/my_nr;
+#ifdef DEBUG_PRINT
+                printf("_get_grid_ascii: case 411/412/431/501 3 table_nwds: %ld, my_tables = %ld\n", table_nwds, my_tables);
+#endif
                 if (my_tables != 2) {
                     my_ntab = my_tables;
                 }

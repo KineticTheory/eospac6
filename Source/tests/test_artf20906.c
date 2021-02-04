@@ -8,7 +8,7 @@
  ********************************************************************/
 
 /*! \file
- *  \ingroup tests quick
+ *  \ingroup C tests quick
  *  \brief Test the EOS_USE_MAXWELL_TABLE option for applicable data types:
  *         EOS_At_DPt, EOS_At_DSt, EOS_At_DT, EOS_At_DUt, EOS_D_PtT
  *         EOS_Pt_DAt, EOS_Pt_DSt, EOS_Pt_DT, EOS_Pt_DUt, EOS_St_DAt

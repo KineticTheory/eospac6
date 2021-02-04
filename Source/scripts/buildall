@@ -60,14 +60,22 @@ list_modules=0
 OPTIMIZE=
 USE_SLURM=
 BUILD_LOOPS=`${loc}/config.guess.wrapper -a`
+DO_OFFLOAD=
+MORE_DEFINE_MODULE_SUBDIR_FLAGS=""
+RECIPIENT_EMAIL=
+if [ -z "${BUILD_LOOPS=}" ]; then
+    # at least one build loop is required below
+    BUILD_LOOPS=1
+fi
 test_summary_file="`pwd`/Makefile.GATHER_COMPARE_DATA.`uname -n`.`uname -s``uname -r`.txt"
 build_summary_file="`pwd`/Makefile.buildall.`uname -n`.`uname -s``uname -r`.txt"
 
 # define default PATT
-PATT='-e ^intel -e ^pgi -e ^pathscale -e ^absoft -e ^fortran -e ^gcc -e ^cce -e ^flang -e ^ibm'
+PATT='-e ^intel -e ^pgi -e ^pathscale -e ^absoft -e ^fortran -e ^gcc -e ^cce -e ^flang -e ^ibm -e ^xl/'
+EXCLUDE_PATT=
 
 # process command line options
-while getopts 1Ccde:F:I:hikLlMm:NOSt: option ; do
+while getopts 1Ccde:F:GhI:ikLlMm:NOr:St:x: option ; do
   case "$option"
   in
     1)  onecolumn=1
@@ -85,6 +93,8 @@ while getopts 1Ccde:F:I:hikLlMm:NOSt: option ; do
         ;;
     F)  COMPILERS=`echo $OPTARG | tr ',' ' '`
         use_modules=0
+        ;;
+    G)  DO_OFFLOAD='DO_OFFLOAD=1'
         ;;
     I)  if [ $check -eq 0 ]; then
           TARGET=install
@@ -116,21 +126,28 @@ while getopts 1Ccde:F:I:hikLlMm:NOSt: option ; do
         ;;
     O)  OPTIMIZE='DEBUG=-O'
         ;;
+    r)  RECIPIENT_EMAIL="RECIPIENT_EMAIL='$OPTARG'"
+        ;;
     S)  USE_SLURM='USE_SLURM=slurm'
         ;;
     t)  TARGET=$OPTARG
         ;;
+    x)  EXCLUDE_PATT=$OPTARG
+        ;;
     h)  cat <<EOF >&2
 
 Usage: ${me} [-c -h -i -l] [-e <MAIL>] [-I <DIR>] [-m <MAKE>] [-t <TARGET>] [PATTERN [, ...]]
+   -1        list fortran modules in a single column
    -C        do not execute clean target
    -c        shortcut option to run 'make check send_report' (overrides -I and -i)
+   -d        enable debug output
    -e <MAIL> specify email address to receive list of installed files
              (ignored unless -i is used)
    -F <LIST> white space or comma-delimited list of F90 compiler executable names to use;
              currently, the EOSPAC6 Makefiles use F90 to predefine compiler suites.
              If <LIST> contains the string "ALL", then the Makefile is queried for all
              available support compilers.
+   -G        enable DO_OFFLOAD makefile option for GPU ported code
    -h        display this help
    -I <DIR>  shortcut option to run 'make prefix=<DIR> install'
    -i        shortcut option to run 'make install'
@@ -141,7 +158,11 @@ Usage: ${me} [-c -h -i -l] [-e <MAIL>] [-I <DIR>] [-m <MAKE>] [-t <TARGET>] [PAT
    -m <MAKE> specify name of make command
    -N        enable secondary build using NOVECT=1 option
    -O        enable optimized compilation
+   -r <MAIL> specify email address to receive send_report
+             (overrides default in send_report script)
+   -S        pass 'USE_SLURM=slurm' option to make command(s)
    -t <TARGET> run 'make <TARGET>'
+   -x <PATT> define pattern to exclude from compiler module list
   PATTERN is used to identify which compiler modules to use.
           Defaults: ${PATT}
 
@@ -154,33 +175,20 @@ done
 #shift $(($OPTIND - 1))  # this does not work for sh on sparc-sun-solaris
 shift `expr $OPTIND - 1`
 
+# define known possible locations for modulecmd and initialize module command(s) 
+. ${loc}/setup_modulecmd
+
 # define PATT
 if [ "x${MODULESHOME}" != "x" -a $use_modules -ne 0 ] ; then
 
-    # define known possible locations for modulecmd
-    . ${loc}/setup_modulecmd
-
-    # define a module function to evaluate the MODULECMD
-    module () {
-        eval `${MODULECMD} sh $*`
-    }
-
-    # initialize module command(s)
-
-    if [ -f ${MODULESHOME}/init/sh ]; then
-        . ${MODULESHOME}/init/sh
-    fi
-
-    #echo ${MODULECMD}
-
     # define PATT
     # ALTPATT and MOREPATT are specific to Cray clusters
-    PATT='-e ^intel/ -e ^pgi/ -e ^pathscale/ -e ^absoft/ -e ^fortran -e ^gcc/ -e ^cce/ -e ^flang -e ^ibm'
-    ALTPATT='-e ^PrgEnv-intel -e ^PrgEnv-pgi -e ^PrgEnv-gnu -e ^PrgEnv-cray'
-    MOREPATT='-e craype-haswell -e craype-mic-knl'
+    PATT='-e ^intel/ -e ^pgi/ -e ^pathscale/ -e ^absoft/ -e ^fortran -e ^gcc/ -e ^cce/ -e ^flang -e ^ibm/ -e ^xl/ -e ^Thunder -e ^allinea'
+    ALTPATT='-e ^PrgEnv-intel -e ^PrgEnv-pgi -e ^PrgEnv-gnu -e ^PrgEnv-cray -e PrgEnv-allinea'
+    MOREPATT='-e craype-haswell -e craype-mic-knl -e ^allinea'
     ARGS=
 
-    allfortranmodules=`( module avail -t 2>&1 ) | egrep ${PATT} | egrep -v '(/$)' | egrep -v '(pich|mpi|32|_default|mpt|intel-c|intel-daal|-xe/)' | sed -e 's/(default)//g' | sort -u | tr "\n" " "`
+    allfortranmodules=`( module -t avail 2>&1 ) | egrep ${PATT} | egrep -v '(/$)' | egrep -v '(pich|\<mpi\>|\<openmpi\>|32|_default|mpt|intel-c|intel-daal|-xe/)' | sed -e 's/(default)//g' | sort -u | tr "\n" " "`
     module unload ${allfortranmodules}
 
     if [ "$#" -gt 0 ]; then
@@ -197,23 +205,42 @@ if [ "x${MODULESHOME}" != "x" -a $use_modules -ne 0 ] ; then
     fi
 
     if [ "x${ALTPATT}" != "x" ]; then
-        _f_modules_=`( module avail -t 2>&1 ) | egrep ${ALTPATT} | egrep -v '(/$)' | egrep default | sed -e 's/(default)//g'`
+        _f_modules_=`( module -t avail 2>&1 ) | egrep ${ALTPATT} | egrep -v '(/$)' | egrep default | sed -e 's/(default)//g'`
     fi
     if [ "x${MOREPATT}" != "x" ]; then
-        _arch_modules_=`( module avail -t 2>&1 ) | egrep ${MOREPATT}`
+        _arch_modules_=`( module -t avail 2>&1 ) | egrep ${MOREPATT} | sort -u`
     fi
     if [ "x${_f_modules_}" == "x" ] ; then
         _arch_modules_="_GENERIC_"
     fi
 
     if [ "x${_f_modules_}" == "x" ] ; then
-        _f_modules_=`( module avail -t 2>&1 ) | egrep ${PATT} | egrep -v '(/$)' | egrep -v '(pich|mpi|32|_default|mpt|intel-c|intel-daal|-xe/)' | sed -e 's/(default)//g' | sort -u`
+        _f_modules_=`( module -t avail 2>&1 ) | egrep ${PATT} | egrep -v '(/$)' | egrep -v '(pich|\<mpi\>|\<openmpi\>|32|_default|mpt|intel-c|intel-daal|-xe/)' | sed -e 's/(default)//g' | sort -u`
     else
         if [ "x${ARGS}" != "x" ]; then
             _f_modules_=`printf "%s\n" ${ARGS} | egrep ${ALTPATT}`
         fi
         usePrgEnv=1
     fi
+
+    # filter out all ${_f_modules_} that do not contain definitions for all of CC, CXX, and F90 or FC and F77 or FC
+    tmp_list=
+    #set -x
+    : ${_f_modules_} | tr " " "\n" | cat -n
+    grepargs='-e '`echo ${_f_modules_} | sed 's/  */ -e /g'`
+    : -----
+    tmp_list=`module show ${_f_modules_} 2>&1 | grep -ow ${grepargs} -e CC -e CXX -e F77 -e F90 -e FC | perl -MData::Dumper -ne '$debug=0;print STDERR "$.:$_" if $debug;chomp;if(/^(CC|CXX|F77|F90|FC)/){$h{$m}++}else{$m=$_;$m=~s/:+$//;$h{$m}=0 if not $h{$m}}END{print STDERR Dumper(\%h) if $debug;for $m (sort keys %h){print "$m " if $h{$m}>=4}}'`
+    if [ -z "${tmp_list}" ]; then
+        # inquire for compiler family
+        tmp_list=`module show ${_f_modules_} 2>&1 | grep -ow ${grepargs} -e family | grep -ow ${grepargs} -e compiler | perl -MData::Dumper -ne '$debug=0;print STDERR "$.:$_" if $debug;chomp;if(/^(CC|CXX|F77|F90|FC)/){$h{$m}++}else{$m=$_;$m=~s/:+$//;$h{$m}=0 if not $h{$m}}END{print STDERR Dumper(\%h) if $debug;for $m (sort keys %h){print "$m " if $h{$m}>=0}}'`
+    fi
+    if [ -n "${EXCLUDE_PATT}" ]; then
+        tmp_list=`echo ${tmp_list} | tr " " "\n" | grep -v "${EXCLUDE_PATT}"`
+    fi
+    #echo tmp_list = ; echo ${tmp_list} | tr " " "\n" | cat -n
+    : -----
+    _f_modules_="${tmp_list}"
+    tmp_list=
 
     fortranmodules=""
 
@@ -246,17 +273,9 @@ rm -f ${test_summary_file} ${build_summary_file}
 if [ "x${_f_modules_}" != "x" -a $use_modules -ne 0 ] ; then
 
     # use all available fortran modules matching PATT
-  : _f_modules_ = ${_f_modules_}
-    for mod in ${_f_modules_}; do
-        module load $mod > /dev/null 2>&1;
-        if [ $? -ne 0 ]; then
-            module unload $mod > /dev/null 2>&1;
-            continue
-        fi
-        module unload $mod > /dev/null 2>&1;
+    : _f_modules_ = ${_f_modules_}
+    fortranmodules="${_f_modules_}"
 
-        fortranmodules="${fortranmodules} ${mod} "
-    done
     echo
 
     if [ "x${_arch_modules_}" != "x_GENERIC_" ] ; then
@@ -287,7 +306,7 @@ if [ "x${_f_modules_}" != "x" -a $use_modules -ne 0 ] ; then
     for arch_mod in ${_arch_modules_}; do
 
         if [ "x${arch_mod}" != "x" -a "x${arch_mod}" != "x_GENERIC_" ]; then
-            old_arch=`( module list -t 2>&1 ) | egrep ${MOREPATT}`
+            old_arch=`( module -t list 2>&1 ) | egrep ${MOREPATT}`
             if [ "x${old_arch}" != "x" ]; then
                 echo "module swap ${old_arch} ${arch_mod}"
                 module swap ${old_arch} ${arch_mod} > /dev/null 2>&1;
@@ -299,9 +318,10 @@ if [ "x${_f_modules_}" != "x" -a $use_modules -ne 0 ] ; then
 
         for mod in ${fortranmodules}; do
 
+            echo
             # exclusively load desired modules without gcc conflicts
             if [ ${usePrgEnv} -ne 0 ]; then
-                old_PrgEnv=`( module list -t 2>&1 ) | egrep '^PrgEnv'`
+                old_PrgEnv=`( module -t list 2>&1 ) | egrep '^PrgEnv'`
                 if [ "x${old_PrgEnv}" != "x" ]; then
                     echo "module swap ${old_PrgEnv} ${mod}"
                     module swap ${old_PrgEnv} ${mod} > /dev/null 2>&1;
@@ -319,19 +339,37 @@ if [ "x${_f_modules_}" != "x" -a $use_modules -ne 0 ] ; then
                 module load $mod > /dev/null 2>&1;
             fi
 
+            if [ -z "${FC}" -o -z "${F90}" ];then
+                MORE_DEFINE_MODULE_SUBDIR_FLAGS="MORE_DEFINE_MODULE_SUBDIR_FLAGS=-i"
+            fi
+
             # define F90 executable based upon module name
             case $mod in
-                gcc*)          COMPILER_SUITE='F90=gfortran';  vopt=--version;;
-                intel*)        COMPILER_SUITE='F90=ifort';     vopt=-V;;
-                path*)         COMPILER_SUITE='F90=pathf90';   vopt=-V;;
-                pgi*)          COMPILER_SUITE='F90=pgfortran'; vopt=-V;;
-                flang*)        COMPILER_SUITE='F90=flang';     vopt=--version;;
-                ibm*)          COMPILER_SUITE='F90=xlf90';     vopt=-qversion;;
-                PrgEnv-gnu*)   COMPILER_SUITE='F90=gfortran';  vopt=--version;;
-                PrgEnv-intel*) COMPILER_SUITE='F90=ifort';     vopt=-V;;
-                PrgEnv-cray*)  COMPILER_SUITE='F90=ftn';       vopt=-V;;
-                PrgEnv-pgi*)   COMPILER_SUITE='F90=pgfortran'; vopt=-V;;
-                *)             unset COMPILER_SUITE;;
+                gcc*)              ${FC=:gfortran};  export COMPILER_SUITE="F90=gfortran";  vopt=--version;;
+                intel*)            ${FC=:ifort};     export COMPILER_SUITE="F90=ifort";     vopt=-V;;
+                path*)             ${FC=:pathf90};   export COMPILER_SUITE="F90=pathf90";   vopt=-V;;
+                pgi*)              ${FC=:pgfortran}; export COMPILER_SUITE="F90=pgfortran"; vopt=-V;;
+                flang*)            ${FC=:flang};     export COMPILER_SUITE="F90=flang";     vopt=--version;;
+                ibm*)
+                    if [ -z "${DO_OFFLOAD}" ]; then
+                        ${FC=:xlf90};     export COMPILER_SUITE="F90=xlf90";     vopt=-qversion;
+                    else
+                        ${FC=:xlf90_r};   export COMPILER_SUITE="F90=xlf90_r";   vopt=-qversion;
+                    fi;;
+                xl*)
+                    if [ -z "${DO_OFFLOAD}" ]; then
+                        ${FC=:xlf90};     export COMPILER_SUITE="F90=xlf90";     vopt=-qversion;
+                    else
+                        ${FC=:xlf90_r};   export COMPILER_SUITE="F90=xlf90_r";   vopt=-qversion;
+                    fi;;
+                PrgEnv-gnu*)       ${FC=:gfortran};  export COMPILER_SUITE="F90=gfortran";  vopt=--version;;
+                PrgEnv-intel*)     ${FC=:ifort};     export COMPILER_SUITE="F90=ifort";     vopt=-V;;
+                PrgEnv-cray*)      ${FC=:ftn};       export COMPILER_SUITE="F90=ftn";       vopt=-V;;
+                PrgEnv-pgi*)       ${FC=:pgfortran}; export COMPILER_SUITE="F90=pgfortran"; vopt=-V;;
+                PrgEnv-allinea*)   ${FC=:armflang};  export COMPILER_SUITE="F90=armflang";  vopt=--version;;                                                     
+                armflang*)         ${FC=:armflang};  export COMPILER_SUITE="F90=armflang";  vopt=--version;;                                              
+                Thunder*)          ${FC=:armflang};  export COMPILER_SUITE="F90=${FC}";     vopt=--version;;
+                *)                 unset COMPILER_SUITE;;
             esac
 
             module list
@@ -344,13 +382,15 @@ if [ "x${_f_modules_}" != "x" -a $use_modules -ne 0 ] ; then
                 else
                     echo '*** No Fortran compiler defined.'
                 fi
+                echo
+                unset FC
                 continue
             fi
 
             touch ${build_summary_file}
 
             if [ $install -ne 0 ]; then
-                dirs=`( ${MAKE} list_installdirs ${COMPILER_SUITE} 2>&1 ) | grep '^ *\/' 2>&1`
+                dirs=`( ${MAKE} list_installdirs ${COMPILER_SUITE} 2>&1 ) 2>&1 | awk '/^ *\// && /\<(docs|lib|bin|include|example)\>/ {print}'`
                 founddirs=1
                 for dir in ${dirs}; do
                     if [ ! -d ${dir} ]; then
@@ -378,8 +418,8 @@ if [ "x${_f_modules_}" != "x" -a $use_modules -ne 0 ] ; then
                 NOVECTORIZE=
                 for i in ${BUILD_LOOPS}; do
 
-                    echo '***' ${MAKE} -j${corecount} ${prefix} ${TARGET} ${OPTIMIZE} ${COMPILER_SUITE} ${USE_SLURM} ${NOVECTORIZE}
-                    ${MAKE} -j${corecount} ${prefix} ${TARGET} ${OPTIMIZE} ${COMPILER_SUITE} ${USE_SLURM} ${NOVECTORIZE}
+                    echo '***' ${MAKE} -j${corecount} ${prefix} ${TARGET} ${OPTIMIZE} ${COMPILER_SUITE} ${USE_SLURM} ${NOVECTORIZE} ${DO_OFFLOAD} ${MORE_DEFINE_MODULE_SUBDIR_FLAGS} ${RECIPIENT_EMAIL}
+                    ${MAKE} -j${corecount} ${prefix} ${TARGET} ${OPTIMIZE} ${COMPILER_SUITE} ${USE_SLURM} ${NOVECTORIZE} ${DO_OFFLOAD} ${MORE_DEFINE_MODULE_SUBDIR_FLAGS} ${RECIPIENT_EMAIL}
                     if [ $install -ne 0 ]; then
                         ( ${MAKE} list_my_installed_files ${COMPILER_SUITE} 2>&1 ) | tee -a ${build_summary_file}
                     else
@@ -397,8 +437,8 @@ if [ "x${_f_modules_}" != "x" -a $use_modules -ne 0 ] ; then
 
                 done
             else
-                echo '***' ${MAKE} -j${corecount} ${prefix} ${TARGET} ${OPTIMIZE} ${COMPILER_SUITE} ${USE_SLURM}
-                ${MAKE} list_compilers
+                echo '***' ${MAKE} -j${corecount} ${prefix} ${TARGET} ${OPTIMIZE} ${COMPILER_SUITE} ${USE_SLURM} ${DO_OFFLOAD} ${MORE_DEFINE_MODULE_SUBDIR_FLAGS} ${RECIPIENT_EMAIL}
+                # ${MAKE} list_compilers
             fi
 
         done
@@ -446,8 +486,8 @@ else
             NOVECTORIZE=
             for i in ${BUILD_LOOPS}; do
 
-                echo '***' ${MAKE} -j${corecount} ${prefix} ${TARGET} ${OPTIMIZE} $c ${USE_SLURM} ${NOVECTORIZE}
-                ${MAKE} -j${corecount} ${prefix} ${TARGET} ${OPTIMIZE} $c ${USE_SLURM} ${NOVECTORIZE}
+                echo '***' ${MAKE} -j${corecount} ${prefix} ${TARGET} ${OPTIMIZE} $c ${USE_SLURM} ${NOVECTORIZE} ${DO_OFFLOAD} ${MORE_DEFINE_MODULE_SUBDIR_FLAGS} ${RECIPIENT_EMAIL}
+                ${MAKE} -j${corecount} ${prefix} ${TARGET} ${OPTIMIZE} $c ${USE_SLURM} ${NOVECTORIZE} ${DO_OFFLOAD} ${MORE_DEFINE_MODULE_SUBDIR_FLAGS} ${RECIPIENT_EMAIL}
                 touch ${test_summary_file}
                 echo "*** ${TARGET}$s ***" >> ${test_summary_file} 2>&1
                 ${MAKE} -C tests GATHER_COMPARE_DATA $c >> ${test_summary_file} 2>&1

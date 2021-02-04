@@ -8,7 +8,7 @@
  ********************************************************************/
 
 /*! \file
- *  \ingroup tests quick
+ *  \ingroup C tests quick
  *  \brief Ensure incorrect error codes not returnd.
  *
  *  See SourceForge issue

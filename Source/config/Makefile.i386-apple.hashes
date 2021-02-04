@@ -64,8 +64,14 @@ include $(BASEDIR)/config/Makefile.check_compilers
 ### VERSION_FLAG{$F90_Key} = $flag
 #
 ### _COMP_FLAGS{$CC} = $flag
-$(call set,_COMP_FLAGS,gcc,-m64)
-$(call set,_COMP_FLAGS,icc,-m64 -fp-model precise)
+$(call set,_COMP_FLAGS,gcc,-m64         )
+$(call set,_COMP_FLAGS,icc,-m64 -fp-model precise         )
+$(call set,_COMP_FLAGS,cc,        )      # Cray Computing Environment (cce)
+$(call set,_COMP_FLAGS,clang,        )   # Clang
+$(call set,_COMP_FLAGS,xlc,        )     # IBM XL C
+$(call set,_COMP_FLAGS,xlc_r,        )   # IBM XL C (thread safe)
+$(call set,_COMP_FLAGS,mpixlc,        )  # IBM Backend cross-compiler XL C
+$(call set,_COMP_FLAGS,pgcc,)    # PGI
 #
 ### _COMP_FLAGS{$CXX} = $flag
 $(call set,_COMP_FLAGS,g++,-m64)

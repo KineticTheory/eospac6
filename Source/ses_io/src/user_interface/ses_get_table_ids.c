@@ -28,8 +28,14 @@ ses_table_id_reference ses_get_table_ids(ses_file_handle the_handle, ses_materia
   if ((FILE_LIST[the_handle]->_the_setup)->_setup_complete == SES_FALSE) {
   /*   changed to setup to the 201 table if false */
 
+#ifdef DEBUG_PRINT
+      printf("ses_get_table_ids: call ses_Setup 201 table for mid %ld\n", (long)mid);
+#endif
 	ses_error_flag didit_setup = ses_setup(the_handle, mid, 201);
 	if (didit_setup != SES_NO_ERROR) {
+#ifdef DEBUG_PRINT
+        printf("ses_get_table_ids:  call ses_Setup 101 table for mid %ld\n", (long)mid);
+#endif
 
 	   didit_setup = ses_setup(the_handle, mid, 101);
 	   if (didit_setup != SES_NO_ERROR) {
@@ -86,6 +92,9 @@ ses_table_id_reference ses_get_table_ids(ses_file_handle the_handle, ses_materia
 
   long current_position = ftell(pFILE);
   ses_boolean didit_go = pSFH->pt2_go_to_index_record(the_handle, mid, 0);
+#ifdef DEBUG_PRINT
+    printf("ses_get_table_ids: call pt2_go_to_index_record, mid: %ld\n", mid);
+#endif
   if (didit_go == SES_FALSE) {
 #ifdef DEBUG_PRINT
     printf("ses_get_table_ids: could not find index record in ses_get_table_ids\n");
@@ -109,6 +118,9 @@ ses_table_id_reference ses_get_table_ids(ses_file_handle the_handle, ses_materia
   int i = 0;
   for (i = 0; i < pIR->_nrec; i++) {
      return_value[i] = almost_return_value[i];
+#ifdef DEBUG_PRINT
+      printf("ses_get_table_ids: return_value[%d]: %d\n", i, return_value[i]);
+#endif
   }
   
   *size = pIR->_nrec;

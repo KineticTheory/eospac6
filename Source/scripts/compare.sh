@@ -1,4 +1,36 @@
 #! /bin/sh
+(shopt -s igncr) 2>/dev/null && eval 'shopt -s igncr';#
+
+# Some useful color codes, see end of file for more.
+#
+# NO_COLOR        \033[0m
+# WHITE           \033[137m
+# BLACK           \033[030m
+# BLUE            \033[034m
+# LIGHT_BLUE      \033[1;34m
+# GREEN           \033[032m
+# LIGHT_GREEN     \033[1;32m
+# CYAN            \033[036m
+# LIGHT_CYAN      \033[136m
+# RED             \033[031m
+# LIGHT_RED       \033[1;31m
+# PURPLE          \033[035m
+# LIGHT_PURPLE    \033[1;35m
+# BROWN           \033[033m
+# YELLOW          \033[1;33m
+# GRAY            \033[030m
+# LIGHT_GRAY      \033[037m
+#
+# NORM            \033[00m
+# BACKGROUND      \033[07m
+# BRIGHTEN        \033[01m
+# UNDERLINE       \033[04m
+# BLINK           \033[05m
+
+# The following PS4 definition will be used when the '-x' sh option is used (i.e., set -x).
+# The '+' count will increase with each nested sub shell. (colorization is optional)
+# PS4='+(${BASH_SOURCE}:${LINENO}):${FUNCNAME[0]:+${FUNCNAME[0]}()}: }'
+PS4='+\033[035m${BASH_SOURCE}\033[0m:\033[032m${LINENO}\033[0m:\033[1;31m${FUNCNAME[0]:+${FUNCNAME[0]}()}\033[00m:'
 
 loc=`dirname $0`
 me=`basename $0`

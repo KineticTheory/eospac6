@@ -8,7 +8,7 @@
  ********************************************************************/
 
 /*! \file
- * \ingroup tests
+ * \ingroup C tests
  *  \brief Verify eos_Interpolate and eos_CheckExtrap discrepencies were fixed.
  *
  *  See SourceForge issue

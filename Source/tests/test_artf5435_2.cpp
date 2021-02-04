@@ -8,7 +8,7 @@
  ********************************************************************/
 
 /*! \file
- *  \ingroup tests
+ *  \ingroup CPP tests
  *  \brief Perform the following tests:
  *    -# Ensure extrapolation is allowed down to rho=0,
  *    -# ensure eos_LoadTables does not return EOS_INTERP_EXTRAPOLATED
@@ -93,7 +93,7 @@ int main ()
   version = (EOS_CHAR*) malloc(vlen * sizeof(EOS_CHAR));
   eos_GetVersion(version);
 
-  cout << endl << "fcmp_ignore: EOSPAC version " << version << endl;;
+  cout << endl << "fcmp_ignore: EOSPAC version " << version << endl;
 
   free(version);
 

@@ -8,7 +8,7 @@
  ********************************************************************/
 
 /*! \file
- *  \ingroup tests quick
+ *  \ingroup C tests quick
  *  \brief Ensure that the data passed in to eos_CreateTables does not
  *  become corrupted in eos_CreateTables.
  *

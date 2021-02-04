@@ -1,6 +1,11 @@
 #! /bin/sh
 (shopt -s igncr) 2>/dev/null && eval 'shopt -s igncr';#
 
+# The following PS4 definition will be used when the '-x' sh option is used (i.e., set -x).
+# The '+' count will increase with each nested sub shell. (colorization is optional)
+# PS4='+(${BASH_SOURCE}:${LINENO}):${FUNCNAME[0]:+${FUNCNAME[0]}()}: }'
+PS4='+\033[035m${BASH_SOURCE}\033[0m:\033[032m${LINENO}\033[0m:\033[1;31m${FUNCNAME[0]:+${FUNCNAME[0]}()}\033[00m:'
+
 # $Date: 2018/01/02 14:46:02 MST $
 #
 # This script is used to define a subdirectory name specific
@@ -43,10 +48,12 @@ fi
 #    * furthermore -d takes an additional parameter
 #          o obtained via: $OPTARG 
 # h means -h is legal
-while getopts "d:hl:" opt; do
+IGNORE_MODULE_ENV_VARS=0
+while getopts "d:hil:" opt; do
     case $opt in
         d )  default=$OPTARG ;;
         h )  usage; exit 0;;
+        i )  IGNORE_MODULE_ENV_VARS=1;;
         l )  _LOC=$OPTARG ;;
         \?)  usage; exit 0;;
     esac
@@ -60,14 +67,20 @@ else
   loc=${_LOC}
 fi
 
+if [ $# -eq 0 ]; then
+  if [ "${default:+true}" = "true" ]; then
+      printf "%s" "/${default}"
+  fi
+fi
+
+# define known possible locations for modulecmd initialize module command(s)
+. ${loc}/setup_modulecmd
+
 while [ $# -ge 1 ]; do
 
   # define PATT using first supplied argument
   PATT=$1
   shift
-
-  # define known possible locations for modulecmd
-  . ${loc}/setup_modulecmd
 
   # return name of the loaded fortran module matching PATT
   if [ -x ${MODULECMD} ]; then
@@ -76,13 +89,20 @@ while [ $# -ge 1 ]; do
      if [ "x${MODULESHOME}" != "x" -a -f ${MODULESHOME}/init/sh ]; then
        . ${MODULESHOME}/init/sh
      fi
-     fortranmodules=`( ${MODULECMD} sh avail 2>&1 ) | ${loc}/filter_module_names ${PATT} -f '(mpi|32|_default|PrgEnv)'`
-     loadedfortranmodules=`( ${MODULECMD} sh list 2>&1 ) | ${loc}/filter_module_names ${PATT} -f '(mpi|32|_default|PrgEnv)'`
-     #echo "Available Fortran modules: " ${fortranmodules}
-     #echo "Loaded Fortran module(s): " ${loadedfortranmodules}
-     #echo "Modules to keep loaded: " ${modulestokeeploaded}
+     fortranmodules=`module -t avail 2>&1 | ${loc}/filter_module_names ${PATT} -f '(/$|\<mpi\>|\<openmpi\>|32|_default|PrgEnv)'`
+     loadedfortranmodules=`module -t list 2>&1 | ${loc}/filter_module_names ${PATT} -f '(/$|\<mpi\>|\<openmpi\>|32|_default|PrgEnv)'`
+     loadedPrgEnvmodule=`module -t list 2>&1 | grep PrgEnv | wc -w`
+     : "Available Fortran modules: " ${fortranmodules}
+     : "Loaded Fortran module(s): " ${loadedfortranmodules}
      if [ "x${loadedfortranmodules}" != "x" ]; then
-        printf "%s" "/${loadedfortranmodules}"
+       for m in ${loadedfortranmodules}; do
+          c=`module -t show ${m} 2>&1 | grep -owe CC -e CXX -e F90 -e F77 -e FC | wc -w`
+          if [ $c -ge 4 -o ${loadedPrgEnvmodule=} -ge 1 -o ${IGNORE_MODULE_ENV_VARS} -ne 0 ]; then
+            d=`dirname $m | tr "/" "_"`
+            n=`basename $m`
+            printf "%s" "/${d}/${n}"
+          fi
+       done
      else
        if [ "${default:+true}" = "true" ]; then
           printf "%s" "/${default}"

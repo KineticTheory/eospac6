@@ -24,6 +24,3 @@
 
 # Sesame test data file containing little endian version of material 3720
 ../tests/data/93270littlebin
-
-# ses003720 test data file list
-../tests/data/ses003720

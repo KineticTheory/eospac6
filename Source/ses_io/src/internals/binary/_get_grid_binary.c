@@ -7,7 +7,8 @@
 #include <stdio.h>
 #include <string.h>
 
-
+#undef DEBUG_PRINT
+#undef DEBUG_GET_GRID_BINARY
 
 #include "_file_list_binary.h"
 
@@ -23,6 +24,7 @@ ses_boolean _get_grid_binary(ses_file_handle the_handle, ses_material_id the_mid
 #endif
 
   ses_boolean return_value = SES_TRUE;
+
   /* int i; */
  
   /*  read nr and nt directly from the file */
@@ -51,6 +53,9 @@ ses_boolean _get_grid_binary(ses_file_handle the_handle, ses_material_id the_mid
     return SES_FALSE;
   }
 
+#ifdef DEBUG_PRINT
+  printf("_get_grid_binary: filetype: %c, filename: %s\n", FILE_LIST[the_handle]->_the_handle->_filetype, FILE_LIST[the_handle]->_the_handle->_filename);
+#endif
 
   /*  get the grid */
 

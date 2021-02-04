@@ -8,7 +8,7 @@
  ********************************************************************/
 
 /*! \file
- *  \ingroup tests
+ *  \ingroup C tests
  *  \brief Ensure tables can be created, loaded and destroyed.
  *
  * Test the loading and interpolation of cold curve data for several SESAME materials.

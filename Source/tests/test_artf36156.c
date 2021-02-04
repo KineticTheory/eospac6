@@ -8,7 +8,7 @@
  ********************************************************************/
 
 /*! \file
- *  \ingroup tests
+ *  \ingroup C tests
  *  \brief Verify EOS_Fmax option functions as advertised for eos_RecordType2
  *         objects.
  *

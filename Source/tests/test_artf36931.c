@@ -8,7 +8,7 @@
  *********************************************************************/
 
 /*! \file
- *  \ingroup tests
+ *  \ingroup C tests
  *  \brief Verify the user-define file name(s) are not lost in successive
  *         calles to eos_CreateTables when mixed with eos_SetDataFileName.
  *

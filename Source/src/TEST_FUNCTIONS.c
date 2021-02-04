@@ -18,7 +18,11 @@
 #include "eos_types_internal.h"
 #include "eos_DataMap.h"
 #include "eos_RecordType1.h"
+#include "eos_RecordType2.h"
+#include "eos_RecordType3.h"
 #include "eos_RecordType4.h"
+#include "eos_RecordType5.h"
+#include "eos_RecordType6.h"
 #include "eos_Interface.proto.h"
 
 #include <limits.h>
@@ -31,6 +35,30 @@
 #include "ses_globals.h"
 
 _EXTERN_C_HEAD_
+
+#ifndef EOSPAC6_TEST_FUNCTIONS_MANGLED
+
+/*!This function allocates and populates a list of all publicly-available tableTypes as defined by EOSPAC's
+  internal structure. The return value is the extent ot the returned list. */
+EOS_INTEGER get_allPublicTableTypes (EOS_INTEGER **tableTypes) {
+  EOS_INTEGER i, j=0;
+  EOS_INTEGER upper = 0;
+
+  for (i=0; i<MAX_TYPES; i++) {
+    if (eos_TableList[i].subCategory != EOS_INTERNAL)
+      upper++;
+  }
+
+  *tableTypes = (EOS_INTEGER*)malloc(upper * sizeof(EOS_INTEGER));
+
+  for (i=0; i<upper; i++) {
+    if (eos_TableList[i].subCategory != EOS_INTERNAL) {
+      (*tableTypes)[j] = eos_TableList[i].eosTableType;
+      j++;
+    }
+  }
+  return (j);
+}
 
 /*!This function returns a list of all tableTypes associated with the specified tableNum */
 EOS_INTEGER get_tableTypesFromSesameTableNumber (EOS_INTEGER tableNum, EOS_INTEGER *tableTypes) {
@@ -291,7 +319,7 @@ void write_defaultOptionFlags_KeyValue(FILE *fp, EOS_CHAR *caller)
       case EOS_X_CONVERT:
       case EOS_Y_CONVERT:
       case EOS_F_CONVERT:
-        fprintf(fp, "%-30s = %-15.6f %s (default=%f)\n", _flags_str[i], _flags_val[i], "# floating point number", _flags_val[i]);
+        /* fprintf(fp, "%-30s = %-15.6f %s (default=%f)\n", _flags_str[i], _flags_val[i], "# floating point number", _flags_val[i]); */
         break;
       default:
         fprintf(fp, "%-30s = %-15d %s (default=%d)\n", _flags_str[i], (EOS_BOOLEAN)_flags_val[i], "# 0 or 1", (EOS_BOOLEAN)_flags_val[i]);
@@ -327,7 +355,19 @@ void write_defaultOptionFlags_KeyValue(FILE *fp, EOS_CHAR *caller)
 
     if (EOS_IS_HIDDEN_OPTION(o)) continue;
 
-    if (EOS_IS_INTERPOLATION_OPTION(o)) {
+    if (EOS_IS_GENERAL_OPTION(o)) {
+      switch(o) {
+      case EOS_X_CONVERT:
+      case EOS_Y_CONVERT:
+      case EOS_F_CONVERT:
+        fprintf(fp, "%-30s = %-15.6f %s (default=%f)\n", _flags_str[i], _flags_val[i], "# floating point number", _flags_val[i]);
+        break;
+      default:
+        /* fprintf(fp, "%-30s = %-15d %s (default=%d)\n", _flags_str[i], (EOS_BOOLEAN)_flags_val[i], "# 0 or 1", (EOS_BOOLEAN)_flags_val[i]); */
+        break;
+      }
+    }
+    else if (EOS_IS_INTERPOLATION_OPTION(o)) {
       fprintf(fp, "%-30s = %-15d %s (default=%d)\n", _flags_str[i], (EOS_BOOLEAN)_flags_val[i], "# 0 or 1", (EOS_BOOLEAN)_flags_val[i]);
     }
   }
@@ -337,7 +377,7 @@ void write_defaultOptionFlags_KeyValue(FILE *fp, EOS_CHAR *caller)
 EOS_INTEGER get_optionFlags_size()
 {
   return(EOS_TOTAL_TABLE_OPTIONS);
-}
+} 
 
 /*!This function parses the file named fn for the user-defined option flag key/value pairs.
  * Then it conditionally-sets all of the dicovered options to the supplied table handles(s). */
@@ -403,9 +443,9 @@ EOS_INTEGER parse_optionFlags_KeyValue(EOS_CHAR *fn, EOS_INTEGER *flags, EOS_REA
   }
 
   if (flags)
-    memcpy (flags, _flags, sizeof (EOS_INTEGER));;
+    memcpy (flags, _flags, sizeof (EOS_INTEGER));
   if (flags_val)
-    memcpy (flags_val, _flags_val, sizeof (EOS_REAL));;
+    memcpy (flags_val, _flags_val, sizeof (EOS_REAL));
 
   if (th_sz > 0 && th) {
     int cnt = 0;
@@ -648,7 +688,10 @@ int eos_getFieldValue(EOS_CHAR *str, EOS_CHAR *keyword, EOS_CHAR *oStr)
   return _eos_get_field_value(str, keyword, oStr);
 }
 
-/*! This function returns the comment string for a specific material id number. */
+/*! This function returns the comment string for a specific material id number.
+ *  WARNING: Do not use this function if other tables are previously loaded, because it may corrupt
+ *           the memory in the gEosDataMap and/or gEosInterpolation singletons -- specifically if one
+ *           uses the eos_GetPackedTables and eos_SetPackedTables after its usage (DAP 2015-05-07). */
 EOS_CHAR* get_commentStr(EOS_INTEGER matid)
 {
   EOS_INTEGER err = EOS_OK;
@@ -807,12 +850,12 @@ EOS_INTEGER get_matIdList(EOS_INTEGER** list)
     if (i == 0) {
       *list = (EOS_INTEGER*) malloc((nmats + 1) * sizeof (EOS_INTEGER));
       if (! *list)
-	return -7; /* exit if malloc fails */
+        return -7; /* exit if malloc fails */
     }
     else {
       *list = (EOS_INTEGER*) realloc(*list, (i0 + nmats + 1) * sizeof (EOS_INTEGER));
       if (! *list)
-	return -7; /* exit if realloc fails */
+        return -7; /* exit if realloc fails */
     }
     for (j = 0; j < nmats; j++)
       (*list)[i0 + j] = indexdata[j];
@@ -872,20 +915,26 @@ EOS_INTEGER get_matidFileName (EOS_INTEGER mat, EOS_CHAR **fn)
   /* find mat in list of data files */
   for (i = 0; i < sesameFilesL; i++) {
     ierr = get_matIdListFromFile(&indexdata, sesameFiles[i]);
-    if (eos_GetStandardErrorCodeFromCustomErrorCode(ierr) != EOS_OK)
+    if (eos_GetStandardErrorCodeFromCustomErrorCode(ierr) != EOS_OK) {
+      EOS_FREE(indexdata);
       return ierr;
+    }
 
     for (j=0;1;j++) { /* find material id's */
       if (indexdata[j] < 0) break;
       if (indexdata[j] == mat) {
-	len = strlen(sesameFiles[i]);
-	*fn = (EOS_CHAR*) malloc((len+1) * sizeof(EOS_CHAR));
-	if (! *fn)
-	  return -7; /* exit if malloc fails */
-	strcpy(*fn, sesameFiles[i]);
-	return EOS_OK;
+        len = strlen(sesameFiles[i]);
+        *fn = (EOS_CHAR*) malloc((len+1) * sizeof(EOS_CHAR));
+        if (! *fn)
+        {
+          EOS_FREE(indexdata);
+          return -7; /* exit if malloc fails */
+        }
+        strcpy(*fn, sesameFiles[i]);
+        return EOS_OK;
       }
     }
+    EOS_FREE(indexdata);
   }
   return EOS_MATERIAL_NOT_FOUND;
 }
@@ -1005,7 +1054,10 @@ EOS_INTEGER get_matidTableInfo (EOS_INTEGER mat, EOS_INTEGER **tableList, EOS_IN
 
   /* setup SES_IO data using an expected 201 table */
   if (ses_setup(sesFile, mat, 201) != SES_NO_ERROR)
-    return SES_SETUP_ERROR;
+  {
+    err = (EOS_INTEGER)SES_SETUP_ERROR;
+    goto CLEANUP;
+  }
   
   /* get table numbers for mat */
   ses_table_id_reference tableIds;
@@ -1021,11 +1073,17 @@ EOS_INTEGER get_matidTableInfo (EOS_INTEGER mat, EOS_INTEGER **tableList, EOS_IN
   *tableList = NULL;
   *tableList = (EOS_INTEGER*) malloc ((tableIdsL + 1) * sizeof (EOS_INTEGER));
   if (! *tableList)
-    return -7;
+  {
+    err = -7;
+    goto CLEANUP;
+  }
   *tableSize = NULL;
   *tableSize = (EOS_INTEGER*) malloc ((tableIdsL + 1) * sizeof (EOS_INTEGER));
   if (! *tableSize)
-    return -7;
+  {
+    err = -7;
+    goto CLEANUP;
+  }
 
   for (i = 0; i < tableIdsL; i++) {
     (*tableList)[i] = (EOS_INTEGER)tableIds[i];
@@ -1034,7 +1092,9 @@ EOS_INTEGER get_matidTableInfo (EOS_INTEGER mat, EOS_INTEGER **tableList, EOS_IN
   (*tableList)[i] = -9999999; /* array bound marker */
   (*tableSize)[i] = -9999999; /* array bound marker */
 
-  return (EOS_OK);
+ CLEANUP:
+  ses_close(sesFile);
+  return (err);
 }
 
 /*!This function gets the void* pointer value of gEosDataMap.dataObjects. */
@@ -1085,9 +1145,15 @@ void* get_isHandlePublic_ptr(void)
   return (void*) gEosDataMap.isHandlePublic;
 }
 
-/*! Get the list of X, Y and F values for Record type 1 */
 
-void get_RecordType1_XYF(EOS_INTEGER tableHandle, EOS_REAL **X, EOS_REAL **Y, EOS_REAL ***F, EOS_INTEGER *nX, EOS_INTEGER *nY)
+/*! Get the record type from the data type */
+EOS_INTEGER get_RecordTypeFromDataType(EOS_INTEGER dataType)
+{
+  return(EOS_TYPE_TO_RECORD_TYPE(dataType));
+}
+
+/*! Get the list of X, Y and F values for Record type 1 */
+void get_RecordType1_XYF(EOS_INTEGER tableHandle, EOS_REAL **X, EOS_REAL **Y, EOS_REAL ***F, EOS_INTEGER *nX, EOS_INTEGER *nY, EOS_INTEGER *nGhostData)
 {
   eos_Data *eosData;
   EOS_REAL *coldCurve;
@@ -1109,21 +1175,74 @@ void get_RecordType1_XYF(EOS_INTEGER tableHandle, EOS_REAL **X, EOS_REAL **Y, EO
     return;
   }
 
-  if (me->eosData.numSubtablesLoaded < subTableNum) {
+  if (me->eosData.eos_IsRequiredDataLoaded && ! me->eosData.eos_IsRequiredDataLoaded(me, dataType)) {
     errorCode = EOS_DATA_TYPE_NOT_FOUND;
     ((eos_ErrorHandler *) me)->HandleError (me, tableHandle, errorCode);
     return;
   }
-  _eos_GetDataRecordType1 (me, X, Y, F, &coldCurve, subTableNum);
+  _eos_GetDataRecordType1 (me, X, Y, F, &coldCurve, NULL, subTableNum);
+  *nGhostData = me->nGhostData;
 }
 
+/*! Get the list of X and F values for Record type 2 */
+void get_RecordType2_XF (EOS_INTEGER tableHandle, EOS_REAL ** X, EOS_REAL ** F, EOS_INTEGER * n)
+{
+  eos_Data *eosData;
+  EOS_INTEGER dataType, err = EOS_OK, subTableNum, errorCode;
+  eos_RecordType2 *me;
+
+  if (! eos_TableListReverseMap) _eos_SetTableListReverseMap(); /* build reverse lookup for eos_TableList[] */
+  
+  eosData =
+    eos_GetEosDataEosDataMap (&gEosDataMap, tableHandle, &dataType, &err);
+  me = (eos_RecordType2 *) eosData;
+  subTableNum = EOS_TYPE_TO_SUB_TAB_NUM (dataType);
+  /* get the size of the data */
+  eos_GetSizeRecordType2 (me, n);
+  /* make sure the data is record type 2 */
+  if (EOS_TYPE_TO_RECORD_TYPE (dataType) != EOS_RECORD_TYPE2) {
+    errorCode = EOS_INVALID_TABLE_HANDLE;
+    ((eos_ErrorHandler *) me)->HandleError (me, tableHandle, errorCode);
+    return;
+  }
+
+  if (me->eosData.eos_IsRequiredDataLoaded && ! me->eosData.eos_IsRequiredDataLoaded(me, dataType)) {
+    errorCode = EOS_DATA_TYPE_NOT_FOUND;
+    ((eos_ErrorHandler *) me)->HandleError (me, tableHandle, errorCode);
+    return;
+  }
+  _eos_GetDataRecordType2 (me, X, F, NULL, subTableNum);
+}
+
+/*! Get the list of X and Y values for Record type 3 */
+void get_RecordType3_XY (EOS_INTEGER tableHandle, EOS_REAL ** X, EOS_REAL ** Y, EOS_INTEGER * n)
+{
+  eos_Data *eosData;
+  EOS_INTEGER dataType, err = EOS_OK, errorCode;
+  eos_RecordType3 *me;
+
+  if (! eos_TableListReverseMap) _eos_SetTableListReverseMap(); /* build reverse lookup for eos_TableList[] */
+  
+  eosData =
+    eos_GetEosDataEosDataMap (&gEosDataMap, tableHandle, &dataType, &err);
+  me = (eos_RecordType3 *) eosData;
+  /* get the size of the data */
+  eos_GetSizeRecordType3 (me, n);
+  /* make sure the data is record type 3 */
+  if (EOS_TYPE_TO_RECORD_TYPE (dataType) != EOS_RECORD_TYPE3) {
+    errorCode = EOS_INVALID_TABLE_HANDLE;
+    ((eos_ErrorHandler *) me)->HandleError (me, tableHandle, errorCode);
+    return;
+  }
+  _eos_GetDataRecordType3 (me, X, Y);
+}
 
 /*! get the upper and lower bound on X, Y for a table of RecordType1, Cat 0 */
 void get_UpperLowerBndsRecordType1_XY(EOS_INTEGER tableHandle, EOS_REAL *xMin, EOS_REAL *xMax, EOS_REAL *yMin, EOS_REAL *yMax )
 {
   EOS_REAL *X, *Y, **F;
-  EOS_INTEGER nX, nY;
-  get_RecordType1_XYF(tableHandle, &X, &Y, &F, &nX, &nY);
+  EOS_INTEGER nX, nY, nGhostData;
+  get_RecordType1_XYF(tableHandle, &X, &Y, &F, &nX, &nY, &nGhostData);
 
   *xMin = X[0];
   *yMin = Y[0];
@@ -1168,25 +1287,127 @@ void generate_RandomPoints(EOS_REAL *xList, EOS_REAL *yList, EOS_INTEGER numPts,
   }
 }
 
+/*! round a double, r, to the specified decimal precision, p
+ */
+EOS_REAL _eos_round(EOS_REAL r, EOS_INTEGER p)
+{
+  EOS_REAL f = pow(10.0, (EOS_REAL)p);
+  EOS_REAL num = r * f;
+  num = r < 0.0 ? num - 0.5 : num + 0.5;
+  return num / f;
+}
+
+/*! The following three functions () implement a fast computation using Halley's method to converge on solution
+ *
+ * @MISC {3383716,
+ *     TITLE = {What is the fastest algorithm for finding the natural logarithm of a big number?},
+ *     AUTHOR = {Simply Beautiful Art (https://math.stackexchange.com/users/272831/simply-beautiful-art)},
+ *     HOWPUBLISHED = {Mathematics Stack Exchange},
+ *     NOTE = {URL:https://math.stackexchange.com/q/3383716 (version: 2019-10-08)},
+ *     EPRINT = {https://math.stackexchange.com/q/3383716},
+ *     URL = {https://math.stackexchange.com/q/3383716}
+ * }
+ */
+#define LN10     2.30258509299404590109361379290930926799774169921875e+00 /* precomputed ln(10): */
+#define INV_LN10 4.34294481903251761156781185491126962006092071533203e-01 /* precomputed 1.0/ln(10): */
+#define LN2      6.93147180559945286226763982995180413126945495605469e-01 /* precomputed ln(2): */
+/*! predefined expm1(y) = exp(y)-1 for small values of y
+ */
+EOS_REAL _eos_expm1(EOS_REAL y)
+{
+  if (fabs(y) < 1.0E-5)
+    return y + y*y/2.0;
+ else
+   return exp(y) - 1; /* predefined exponential function */
+}
+
+/*! natural log function using Halley's method to converge on solution
+ */
+EOS_REAL _eos_log(EOS_REAL x)
+{
+  EOS_REAL result = 0;
+
+  while (x > 4.0/3) /* Now using decimals */
+  {
+    result += 1;
+    x /= 2;
+  }
+
+  result *= LN2; /* n*ln(2) */
+
+  /* We now compute the remaining logarithm to add onto the above result */
+  EOS_REAL y = 0; /* initial guess since e^0 = 1 ≈ x */
+  EOS_REAL expy = 1.0;
+  EOS_REAL ydiff = 2.0 * (x - 1.0) / (x + 1.0);
+  while (fabs(ydiff) > 1e-20) /* <replace with desired accuracy> */
+  {
+    //printf("intermediate result + y = %.50e\n", result + y); /* display intermediate result */
+    expy += expy * expm1(ydiff); /* iteratively compute exponential term */
+    y += ydiff;
+    ydiff = 2.0 * (x - expy) / (x + expy);
+  }
+
+  result += y;
+
+  return result;
+}
+
+/*! convert natural log to base 10 log
+ */
+EOS_REAL _eos_log10(EOS_REAL x)
+{
+  return INV_LN10*_eos_log(x);
+}
+
+/*! generate a list of points linearly-distributed on [log10(xMin), log10(xMax)], [log10(yMin), log10(yMax)]
+ * xList and yList are expected to be allocated already; however, yList will be ignored if it is NULL
+ * If b is EOS_TRUE, then use the locally-defined _log10() function instead of the log10() function defined in math.h.
+ * If *p is not NULL, then use the referenced integer value for the precision passed to the _eos_round() function.
+ */
+void _generate_Log10DistributedPoints(EOS_REAL *xList, EOS_REAL *yList, EOS_INTEGER numPts,
+                                      EOS_REAL xMin, EOS_REAL xMax, EOS_REAL yMin, EOS_REAL yMax, EOS_BOOLEAN b, EOS_INTEGER *p)
+{
+  int i;
+  EOS_REAL minX = MAX(0.0000001,xMin);
+  EOS_REAL maxX = MAX(0.0000001,xMax);
+  EOS_REAL minY = MAX(0.0000001,yMin);
+  EOS_REAL maxY = MAX(0.0000001,yMax);
+  if (b == EOS_TRUE) {
+    minX = _eos_log10(minX);
+    maxX = _eos_log10(maxX);
+    minY = _eos_log10(minY);
+    maxY = _eos_log10(maxY);
+  }
+  else {
+    minX = log10(minX);
+    maxX = log10(maxX);
+    minY = log10(minY);
+    maxY = log10(maxY);
+  }
+  for(i=0;i<numPts;i++)
+  {
+    EOS_REAL val = pow(10.0,(maxX-minX) * (EOS_REAL)i / (EOS_REAL)(numPts-1) + minX);
+    if (p) val = _eos_round(val, *p);
+    xList[i] = MAX(xMin, MIN(xMax, val));
+  }
+
+  if (yList) {
+    for(i=0;i<numPts;i++)
+    {
+      EOS_REAL val = pow(10.0,(maxY-minY) * (EOS_REAL)i / (EOS_REAL)(numPts-1) + minY);
+      if (p) val = _eos_round(val, *p);
+      yList[i] = MAX(yMin, MIN(yMax, val));
+    }
+  }
+}
+
 /*! generate a list of points linearly-distributed on [log10(xMin), log10(xMax)], [log10(yMin), log10(yMax)]
  * xList and yList are expected to be allocated already; however, yList will be ignored if it is NULL
 */
 void generate_Log10DistributedPoints(EOS_REAL *xList, EOS_REAL *yList, EOS_INTEGER numPts,
-				     EOS_REAL xMin, EOS_REAL xMax, EOS_REAL yMin, EOS_REAL yMax)
+                                     EOS_REAL xMin, EOS_REAL xMax, EOS_REAL yMin, EOS_REAL yMax)
 {
-  int i;
-  EOS_REAL minX = log10(MAX(0.0000001,xMin));
-  EOS_REAL maxX = log10(MAX(0.0000001,xMax));
-  EOS_REAL minY = log10(MAX(0.0000001,yMin));
-  EOS_REAL maxY = log10(MAX(0.0000001,yMax));
-
-  for(i=0;i<numPts;i++)
-    xList[i] = MAX(xMin, MIN(xMax, pow(10.0,(maxX-minX) * (EOS_REAL)i / (EOS_REAL)(numPts-1) + minX)));
-
-  if (yList) {
-    for(i=0;i<numPts;i++)
-      yList[i] = MAX(yMin, MIN(yMax, pow(10.0,(maxY-minY) * (EOS_REAL)i / (EOS_REAL)(numPts-1) + minY)));
-  }
+  _generate_Log10DistributedPoints(xList, yList, numPts, xMin, xMax, yMin, yMax, EOS_FALSE, NULL);
 }
 
 /*! generate a list of random points on [v_lower, v_upper]
@@ -1388,12 +1609,11 @@ int fcmp(EOS_REAL u, EOS_REAL v, EOS_REAL rel_diff, EOS_REAL abs_diff) {
   }
 }
 
-/*!This function prints the values of me->NR and me->NT to stdout where me is
+/*!This function fetches the values of me->NR and me->NT where me is
    defined as an eos_RecordType1 object and th is the associated table handle. */
-void print_nr_and_nt(EOS_INTEGER th)
+void get_nr_and_nt(EOS_INTEGER th, EOS_INTEGER *nr, EOS_INTEGER *nt)
 {
-  static EOS_INTEGER nr0=0, nt0=0;
-  EOS_INTEGER nr=0, nt=0, item, errorCode=EOS_OK;
+  EOS_INTEGER  item, errorCode=EOS_OK;
   EOS_REAL val=0.0;
 
   item = EOS_NR;
@@ -1401,14 +1621,24 @@ void print_nr_and_nt(EOS_INTEGER th)
                               &item, &val, &errorCode);
   if (eos_GetStandardErrorCodeFromCustomErrorCode(errorCode) != EOS_OK)
     printf ("%d: %s\n", errorCode, eos_GetErrorMsg (errorCode));
-  nr = (EOS_INTEGER)val;
+  *nr = (EOS_INTEGER)val;
 
   item = EOS_NT;
   eos_GetTableInfoEosDataMap (&gEosDataMap, th, 1,
                               &item, &val, &errorCode);
   if (eos_GetStandardErrorCodeFromCustomErrorCode(errorCode) != EOS_OK)
     printf ("%d: %s\n", errorCode, eos_GetErrorMsg (errorCode));
-  nt = (EOS_INTEGER)val;
+  *nt = (EOS_INTEGER)val;
+}
+
+/*!This function prints the values of me->NR and me->NT to stdout where me is
+   defined as an eos_RecordType1 object and th is the associated table handle. */
+void print_nr_and_nt(EOS_INTEGER th)
+{
+  static EOS_INTEGER nr0=0, nt0=0;
+  EOS_INTEGER nr=0, nt=0;
+
+  get_nr_and_nt(th, &nr, &nt);
 
   printf("th %i: NR = %i and NT = %i", th, nr, nt);
   if (nr0 != nr)
@@ -1420,7 +1650,6 @@ void print_nr_and_nt(EOS_INTEGER th)
   nr0 = nr;
   nt0 = nt;
 }
-
 
 /***********************************************************************/
 /*!
@@ -1792,5 +2021,93 @@ void test_if_globals_are_free(void)
   if (sesameFilesL               ) printf ("sesameFilesL                is still defined\n");
   if (sesameFileCache            ) printf ("sesameFileCache             is still defined\n");
 }
+
+#else /* EOSPAC6_TEST_FUNCTIONS_MANGLED */
+
+#if defined(HAVE_CONFIG_H)
+#include <config.h>
+#endif /* defined(HAVE_CONFIG_H) */
+
+#if defined(HAVE_CONFIG_H)
+
+/* Use the fortran name mangling macro defined in config.h */
+#define eos_getenv_wrapper FC_FUNC(eos_getenv_wrapper,EOS_GETENV_WRAPPER)
+
+#else /* !defined(HAVE_CONFIG_H) */
+
+/*
+ * This section is used by the build scripts distributed with EOSPAC6 to allow proper object name mangling.
+ */
+
+#if defined PC
+
+#define FUNC_INTER __stdcall
+
+#else
+
+#define FUNC_INTER
+
+#endif
+
+#if !defined MixedCase
+
+/* disable compilation of the following if MixedCase is not defined */
+#define NO_EOS_SETDATAFILENAME_CWRAPPER
+
+#endif
+
+/* define macros for all public functions */
+#if defined MixedCase
+
+/* NO NAME MANGLING DONE FOR THIS CASE */
+
+#elif defined UPPERCASE
+
+#define eos_getenv_wrapper EOS_GETENV_WRAPPER
+
+#elif defined lowercase
+
+#define eos_getenv_wrapper eos_getenv_wrapper
+
+#elif defined lowercase_
+
+#define eos_getenv_wrapper eos_getenv_wrapper_
+
+#elif defined lowercase__
+
+#define eos_getenv_wrapper eos_getenv_wrapper__
+
+#elif defined _lowercase
+
+#define eos_getenv_wrapper _eos_getenv_wrapper
+
+#elif defined __lowercase
+
+#define eos_getenv_wrapper __eos_getenv_wrapper
+
+#else /* use lowercase_ as default */
+
+#define eos_getenv_wrapper eos_getenv_wrapper_
+
+#endif
+
+#endif /* defined(HAVE_CONFIG_H) */
+
+/*
+ * The following function(s) are to be mangled for use in all tests including Fortran:
+ */
+
+/*! This function is executes the POSIX getenv function and returns its value. */
+void eos_getenv_wrapper (EOS_CHAR *var, EOS_CHAR *name, long int var_len, long int name_len)
+{
+  EOS_CHAR *my_name = NULL, *my_var = NULL;
+  my_name = (EOS_CHAR*) malloc((name_len+1)*sizeof(EOS_CHAR));
+  strncpy(my_name, name, name_len);
+  my_var = getenv(my_name);
+  if (my_var) strncpy(var, getenv(my_name), (size_t)var_len);
+  EOS_FREE(my_name);
+}
+
+#endif /* EOSPAC6_TEST_FUNCTIONS_MANGLED */
 
 _EXTERN_C_TAIL_

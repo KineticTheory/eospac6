@@ -8,7 +8,7 @@
  ********************************************************************/
 
 /*! \file
- *  \ingroup tests
+ *  \ingroup C tests
  *  \brief Ensure that the mass fraction data associated with EOS_M_DT
  *    -# loads properly,
  *    -# can be correctly fetched using the public interface,

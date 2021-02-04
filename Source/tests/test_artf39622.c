@@ -8,7 +8,7 @@
  ********************************************************************/
 
 /*! \file
- *  \ingroup tests quick
+ *  \ingroup C tests quick
  *  \brief Verify results of features associated with the following options:
  *    -# EOS_MONOTONIC_IN_X,
  *    -# EOS_MONOTONIC_IN_Y

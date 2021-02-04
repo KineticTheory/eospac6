@@ -8,7 +8,7 @@
  ********************************************************************/
 
 /*! \file
- * \ingroup tests quick
+ * \ingroup C tests quick
  * \brief Ensure graceful handling of negative table handles.
  *        See eos/eospac-dev/eospac6#170 for more details:
  *        https://git.lanl.gov/eos/eospac-dev/eospac6/issues/170

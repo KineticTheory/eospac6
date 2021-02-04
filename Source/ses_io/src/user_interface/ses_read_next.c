@@ -7,6 +7,7 @@
 
 #define check_errors_SES_READ_NEXT HEADER(check_errors_SES_READ_NEXT)
 
+#undef DEBUG_PRINT
 
 ses_word_reference ses_read_next(ses_file_handle the_handle) {
 
@@ -65,7 +66,7 @@ ses_word_reference ses_read_next(ses_file_handle the_handle) {
        //  set the file and address information for multiple files onto the current index record
 
        pSFH->_array_address = FILE_LIST[the_handle]->_current_index_record->_array_iadr[table_index][pSFH->_iteration_index];
-        pSFH->_array_filename = FILE_LIST[the_handle]->_current_index_record->_array_filename[table_index][pSFH->_iteration_index];
+       pSFH->_array_filename = FILE_LIST[the_handle]->_current_index_record->_array_filename[table_index][pSFH->_iteration_index];
 
        /* didit_go = */ _go_to_next_array_location(pSFH, pSFH->_array_address);
 
@@ -76,6 +77,9 @@ ses_word_reference ses_read_next(ses_file_handle the_handle) {
 
   }
 
+#ifdef DEBUG_PRINT
+    printf("ses_read_next: tid: %d\n", the_tid);
+#endif
   /*  create the output buffer */
 
   long the_size = pIT->_size_arrays[current];
@@ -87,6 +91,10 @@ ses_word_reference ses_read_next(ses_file_handle the_handle) {
     _set_latest_error(SES_READ_ERROR);
     return (ses_word_reference)NULL;
   }
+    
+#ifdef DEBUG_PRINT
+    printf("ses_read_next: the size to read: %ld\n", the_size);
+#endif
 
   the_buffer = malloc(sizeof(ses_word)*the_size);
   int i = 0;

@@ -8,6 +8,8 @@
 #define check_errors_construct_ses_iterator HEADER(check_errors_construct_ses_iterator)
 #define check_errors_copy_ses_iterator HEADER(check_errors_copy_ses_iterator)
 
+#undef DEBUG_PRINT
+
 struct _ses_iterator* _construct_ses_iterator(long maddress, long nr, long nt, long ntab, ses_table_id the_tid) {
 
   /*  this function instantiates the iterator and passes it back */
@@ -18,9 +20,15 @@ struct _ses_iterator* _construct_ses_iterator(long maddress, long nr, long nt, l
   long my_adjust_num_arrays(ses_table_id tid, long ntab);
 
   /*  end function prototypes */
+#ifdef DEBUG_PRINT
+    printf("_construct_ses_iterator: nr: %ld, nt: %ld, the_tid: %ld\n", nr, nt, the_tid);
+#endif
 
   ses_error_flag check = check_errors_construct_ses_iterator(maddress, nr, nt, ntab, the_tid);
   if (check != SES_NO_ERROR) {
+#ifdef DEBUG_PRINT
+      printf("_construct_ses_iterator: check: %d\n",check);
+#endif
 	return (struct _ses_iterator*)NULL;
   }
 

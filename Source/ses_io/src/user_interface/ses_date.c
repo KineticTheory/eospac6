@@ -8,11 +8,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-// forward declaration
-#ifndef _MSC_VER
- void itoa(long n, char s[]);
-#endif
-
 
 ses_string ses_date(ses_file_handle the_handle) {
 
@@ -78,18 +73,17 @@ ses_string ses_date(ses_file_handle the_handle) {
 
 ses_string _make_date_into_string(long the_long) {
 
+  /*  make  a long into a string */
+  void itoa(long n, char s[]);
+
   ses_string return_value = malloc(sizeof(char)*8);
-#ifndef _MSC_VER
   itoa(the_long, return_value);
-#else
-  int radix = 10;
-  itoa(the_long, return_value, radix);
-#endif
+
 
   return return_value;
+
 }
 
-#ifndef _MSC_VER
 void itoa(long n, char s[])
  {
 
@@ -110,7 +104,6 @@ void itoa(long n, char s[])
      s[i] = '\0';
      reverse(s);
  }
-#endif
 void reverse(char s[])
  {
      int i, j;
@@ -124,6 +117,5 @@ void reverse(char s[])
          s[j] = c;
      }
  }
-
 
 

@@ -318,7 +318,9 @@ else {
   $environment = "";
   foreach my $var (sort keys %ENV) {
     next if $var eq "EXE" || $var eq "MAKEFLAGS" || $var eq "HELP_ADDENDUM";
-    $environment .= "${var}=" . $ENV{$var} . "\n";
+    my $s = $ENV{$var};
+    $s =~ s/[^[:print:]]+//g; # remove non-printing characters to prevent corrupted XML
+    $environment .= "${var}=$s\n";
   }
 
   $environment .= "EXE=" . $ENV{'EXE'} . "\n";

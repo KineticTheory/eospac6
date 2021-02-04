@@ -16,7 +16,7 @@ ARFLAGS = r
 ### HMA -- added ses_io defines directory
 ##################################################################
 ifeq ($(USE_C),TRUE)
-  INTERFACE_SRCS = eos_FC_Interface.c
+  INTERFACE_SRCS = eos_FC_Interface.c TEST_FUNCTIONS.c
 
   ifeq ($(SESIO_DEF),)
     # Compile a subset of the ses_io source files
@@ -46,6 +46,7 @@ ifeq ($(USE_C),TRUE)
          eos_RecordType6.c \
          eos_RecordType6Interp.c \
          eos_Data.c \
+         eos_HashTable.c \
          eos_DataMap.c \
          eos_ErrorHandler.c \
          eos_Utils.c \
@@ -54,6 +55,7 @@ ifeq ($(USE_C),TRUE)
          eos_Interpolation.c \
          eos_Taylor.c \
          eos_SaferMemoryAllocation.c \
+         eos_Splunk.c \
          $(notdir $(SESIO_SRCS))
 
   INCS = eos_Interface.f90 eos_Interface2003.f90 eos_InterfaceFortranCommon.f90 \
@@ -167,14 +169,23 @@ LIST_MANGLED_DEPS:
 $(MANGLED_OBJS): $(MANGLED_SRCS)
 
 $(MANGLED_SRCS): %.c : $(INTERFACE_SRCS)
+	@echo '----- Creating' $@
 	@echo '#define' $(subst .,,$(suffix $*)) > $@
+	@(if echo $@ | grep TEST_FUNCTIONS > /dev/null; then \
+        (echo '#define EOSPAC6_TEST_FUNCTIONS_MANGLED' >> $@; ) \
+      fi;)
    ifneq ($(EOS_VERSION_SRC),)
 	@echo '#define EOSPAC6_VERSION_FUNCTIONS_REDEFINED' >> $@
 	@(if [ "$(strip $(firstword $(MANGLE_DEF_LIST)))" = "$(strip $(subst .,,$(suffix $*)))" ]; then \
-            echo '#define _EOS_INCLUDE_SPECIAL_FUNCTION' >> $@; \
-          fi;)
+         echo '#define _EOS_INCLUDE_SPECIAL_FUNCTION' >> $@; \
+      fi;)
    endif
-	@cat $(INTERFACE_SRCS) $(EOS_VERSION_SRC) >> $@
+	@(f=`basename $@ | sed -e 's/\\([^\\.]*\\)\\.[a-zA-Z0-9_][a-zA-Z0-9_]*\\(\\..*\\)$$/\\1\\2/'`; \
+      if echo $@ | grep eos_FC_Interface > /dev/null; then \
+        sed 's/__STATIC_MANGLE_NAME__/$(subst .,,$(suffix $*))/' $$f $(EOS_VERSION_SRC) >> $@; \
+      else \
+        sed 's/__STATIC_MANGLE_NAME__/$(subst .,,$(suffix $*))/' $$f >> $@; \
+      fi;)
 
 SESIO_OBJ_TMP_DIR = .sesio.tmp.dir
 $(LIBRARY_AR): MAKEDIRS check_lib LIST_MANGLED_DEPS $(OBJS) #$(if $(SESIO_DEF),libsesio,)
@@ -274,7 +285,7 @@ ifeq (0,${MAKELEVEL})
 	@$(MAKE) -C $(BASEDIR)/Examples clean
 else
 	-rm -fr $(INCDIR) $(DEPDIR) $(OBJDIR) $(LIBDIR) \
-                $(MANGLED_SRCS) core* *.stackdump *.lst $(JUNKFILE) $(BUILD_LOG)
+                $(MANGLED_SRCS) core* *.stackdump *.lst *.gcov $(JUNKFILE) $(BUILD_LOG) eos_version.c
 endif
 	-$(MAKE) -C $(BASEDIR)/ses_io/src clean
 
@@ -295,7 +306,7 @@ DISTCLEAN_DIRS = $(patsubst %/.distclean,%,$(wildcard $(BASEDIR)/src/*/.distclea
 DISTCLEAN_SUBDIRS = $(notdir $(DISTCLEAN_DIRS))
 
 distclean: $(addprefix distclean_,$(DISTCLEAN_SUBDIRS))
-	-rm -fr $(DEPDIR) $(JUNKFILE) $(BUILD_LOG) core* *.stackdump *.lst
+	-rm -fr $(DEPDIR) $(JUNKFILE) $(BUILD_LOG) core* *.stackdump *.lst eos_version.c
 
 distclean_%:
 	@(loc=`pwd`; \

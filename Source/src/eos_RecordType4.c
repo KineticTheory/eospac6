@@ -21,30 +21,37 @@
 
 #define ALLOC_INCR 50
 
-/************************************************************************
- * 
- * RecordType4 class constructor
- * 
- * Returned Values: none
+/************************************************************************/
+/*!
+ * \brief RecordType4 class constructor
  *
- * Input Value:
- * eos_RecordType4 *me         - this pointer (pointer to the instance of type eos_RecordType4
- * EOS_INTEGER      materialID - id of material to load.
- * EOS_INTEGER      th         - table handle
- * 
+ * \param[in,out] *me        - eos_RecordType4 : data object pointer;
+ *                                               contents of object are initialized
+ * \param[in]     materialID - EOS_INTEGER     : id of material to load
+ * \param[in]     th         - EOS_INTEGER     : table handle
+ *
+ * \return none
+ *
  ************************************************************************/
-
 void eos_ConstructRecordType4 (eos_RecordType4 *me, EOS_INTEGER th,
                                EOS_INTEGER materialID)
 {
+  /* SESAME table data */
   me->comment = NULL;
   me->numChars = NULL;
   me->tableNum = NULL;
-  me->dataFileOffsets = NULL;
-
   me->numberTables = 0;
   me->numberAllocatedTables = 0;
+
+  /* Miscellaneous metadata */
+  me->dataFileOffsets = NULL;
+  me->eosData.varOrder = -1;
+  me->eosData.tmpVarOrder = -1;
+
+  /* Create eos_DataMap */
   eos_ConstructEosData ((eos_Data *) me, th, materialID);
+
+  /* Define class-specific virtual functions */
   me->eosData.Create = eos_CreateRecordType4;
   me->eosData.Destroy = eos_DestroyRecordType4;
   me->eosData.SetFileIndexes = eos_SetFileIndexesRecordType4;
@@ -66,17 +73,15 @@ void eos_ConstructRecordType4 (eos_RecordType4 *me, EOS_INTEGER th,
   me->eosData.SetMonotonicity = eos_SetMonotonicityRecordType4;
   me->eosData.GetMonotonicity = eos_GetMonotonicityRecordType4;
   me->eosData.GetSmoothing = eos_GetSmoothingRecordType4;
-  me->eosData.AreMonotonicRequirementsCompatible =
-    eos_AreMonotonicRequirementsCompatibleRecordType4;
+  me->eosData.AreMonotonicRequirementsCompatible = eos_AreMonotonicRequirementsCompatibleRecordType4;
   me->eosData.SetSmoothing = eos_SetSmoothingRecordType4;
-  me->eosData.AreSmoothingRequirementsCompatible =
-    eos_AreSmoothingRequirementsCompatibleRecordType4;
-  me->eosData.Interpolate = NULL;
-  me->eosData.CheckExtrap = NULL;
+  me->eosData.AreSmoothingRequirementsCompatible = eos_AreSmoothingRequirementsCompatibleRecordType4;
+  me->eosData.Interpolate = NULL; /* no interpolation allowed */
+  me->eosData.CheckExtrap = NULL; /* no interpolation allowed */
   me->eosData.InvertAtSetup = NULL; /* no inversion at setup allowed */
   me->eosData.SetExtrapolationBounds = NULL; /* no extrapolation bounds stored */
-  me->eosData.varOrder = -1;
-  me->eosData.tmpVarOrder = -1;
+  me->eosData.AreGhostDataRequired = NULL; /* no ghost node data required*/
+  me->eosData.AddGhostData = NULL; /* no ghost node data required*/
 }
 
 /************************************************************************
@@ -641,7 +646,7 @@ void eos_GetTableInfoRecordType4 (void *ptr, EOS_INTEGER th,
       break;
 
     case EOS_Table_Type:
-      infoVals[i] = eos_GetDataTypeFromTableHandle (th, err);;
+      infoVals[i] = eos_GetDataTypeFromTableHandle (th, err);
       break;
 
     case EOS_Cmnt_Len:

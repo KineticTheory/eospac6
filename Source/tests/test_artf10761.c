@@ -8,7 +8,7 @@
  ********************************************************************/
 
 /*! \file
- *  \ingroup tests
+ *  \ingroup C tests
  *  \brief Verify that eos_Mix stores the expected data associated with the
  *         EOS_SAVE_SPECIES_DATA option (see issue #artf10761, https://tf.lanl.gov/sf/go/artf10761).
  *

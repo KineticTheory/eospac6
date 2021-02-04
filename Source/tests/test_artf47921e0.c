@@ -8,7 +8,7 @@
  ********************************************************************/
 
 /*! \file
- *  \ingroup tests
+ *  \ingroup C tests
  *  \brief Investigate inverse interpolation results without EOS_INVERT_AT_SETUP;
  *         See SourceForge Issue #artf47921 for more details.
  *

@@ -17,7 +17,7 @@ Ordered list of Sesame files searched:
 TableHandle=0 matid =  5250 source = /opt/local/codes/data/eos/sesame page =  1
 Data Type = EOS_At_DT
 Loading Options: EOS_MONOTONIC_IN_Y, EOS_SPLIT_FORCED, EOS_SPLIT_NUM_PROP
-Description = Total Specific-Free-Energy (MJ/kg) (Density (Mg/m^3)- and Temperature (K)-dependent)
+Description = Total Specific-Helmholtz-Free-Energy (MJ/kg) (Density (Mg/m^3)- and Temperature (K)-dependent)
   fconv =   1.000000000000000E+00         xconv =   1.000000000000000E+00         yconv =   1.000000000000000E+00
 
                      y =   1.380000000000001E+01   1.698966670000004E+01   2.017933330000005E+01   2.336900000000003E+01   2.655866670000000E+01   2.974833330000001E+01   3.293800000000010E+01   3.600000000000000E+01   3.936875749999990E+01   4.705504489999998E+01
@@ -76,7 +76,7 @@ Description = Total Specific-Free-Energy (MJ/kg) (Density (Mg/m^3)- and Temperat
 TableHandle=0 matid =  5250 source = /opt/local/codes/data/eos/sesame page =  2
 Data Type = EOS_At_DT
 Loading Options: EOS_MONOTONIC_IN_Y, EOS_SPLIT_FORCED, EOS_SPLIT_NUM_PROP
-Description = Total Specific-Free-Energy (MJ/kg) (Density (Mg/m^3)- and Temperature (K)-dependent)
+Description = Total Specific-Helmholtz-Free-Energy (MJ/kg) (Density (Mg/m^3)- and Temperature (K)-dependent)
   fconv =   1.000000000000000E+00         xconv =   1.000000000000000E+00         yconv =   1.000000000000000E+00
 
                      y =   5.624198950000005E+01   6.722257720000016E+01   8.034699559999990E+01   9.603380239999979E+01   1.147832739999999E+02   1.371933600000002E+02   1.639787509999996E+02   1.959936760000001E+02   2.342591380000003E+02   2.799954830000006E+02
@@ -135,7 +135,7 @@ Description = Total Specific-Free-Energy (MJ/kg) (Density (Mg/m^3)- and Temperat
 TableHandle=0 matid =  5250 source = /opt/local/codes/data/eos/sesame page =  3
 Data Type = EOS_At_DT
 Loading Options: EOS_MONOTONIC_IN_Y, EOS_SPLIT_FORCED, EOS_SPLIT_NUM_PROP
-Description = Total Specific-Free-Energy (MJ/kg) (Density (Mg/m^3)- and Temperature (K)-dependent)
+Description = Total Specific-Helmholtz-Free-Energy (MJ/kg) (Density (Mg/m^3)- and Temperature (K)-dependent)
   fconv =   1.000000000000000E+00         xconv =   1.000000000000000E+00         yconv =   1.000000000000000E+00
 
                      y =   3.346613109999998E+02   4.000000000000000E+02

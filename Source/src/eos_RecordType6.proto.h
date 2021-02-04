@@ -13,16 +13,20 @@
 
 /*
  * ---------------------------------------------------
- * 1 PUBLIC FUNCTION PROTOTYPES FOR eos_RecordType6.c
+ * 2 PUBLIC FUNCTION PROTOTYPES FOR eos_RecordType6.c
  * ---------------------------------------------------
  */
 void eos_ConstructRecordType6 (eos_RecordType6 * me, EOS_INTEGER th, EOS_INTEGER materialID);
+
+#ifdef DO_OFFLOAD
+EOS_INTEGER eos_GpuOffloadDataRecordType6(void *ptr, EOS_INTEGER th);
+#endif /* DO_OFFLOAD */
 
 #ifdef _EOS_RECORDTYPE6_INTERNAL_PROTOTYPES
 
 /*
  * -----------------------------------------------------
- * 28 PRIVATE FUNCTION PROTOTYPES FOR eos_RecordType6.c
+ * 29 PRIVATE FUNCTION PROTOTYPES FOR eos_RecordType6.c
  * -----------------------------------------------------
  */
 void _eos_GetDataRecordType6 (eos_RecordType6 * me, EOS_REAL ** R, EOS_REAL ** T, EOS_REAL *** F,
@@ -74,6 +78,8 @@ void eos_SetSizeRecordType6 (eos_RecordType6 * me, EOS_INTEGER NR, EOS_INTEGER N
 			     EOS_INTEGER tableNum);
 void eos_SetSmoothingRecordType6 (void *me, EOS_INTEGER dataType, EOS_INTEGER makeSmooth,
 				  EOS_INTEGER makePtSmooth);
+EOS_BOOLEAN eos_isRequiredDataLoadedRecordType6 (void *ptr, EOS_INTEGER dataType);
+void eos_GenerateHashTablesRecordType6 (void *ptr);
 
 #endif /* _EOS_RECORDTYPE6_INTERNAL_PROTOTYPES */
 

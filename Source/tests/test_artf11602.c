@@ -8,7 +8,7 @@
  ********************************************************************/
 
 /*! \file
- * \ingroup tests
+ * \ingroup C tests
  * \brief Verify elimination of _eos_CompressArray platform-dependency
  *        problems. See SourceForge© Issue #artf10445 for more details:
  *        https://tf.lanl.gov/sf/go/artf10445
@@ -47,6 +47,11 @@ int main ()
     "EOS_T_DPic",
     "EOS_T_DPic",
     "EOS_T_DPic"
+  };
+  EOS_CHAR *altTableTypeLabel[nTablesE] = {
+    "EOS_Pic_DT",
+    "EOS_Pic_DT",
+    "EOS_Pic_DT"
   };
   EOS_CHAR errorMessage[EOS_MaxErrMsgLen];
 
@@ -184,7 +189,7 @@ int main ()
     EOS_REAL infoVal;
     NR = NT = 0;
     printf ("\n\"--- Table information for tableType %s , tableHandle=%i, material=%i ---\"\n",
-            tableTypeLabel[i], tableHandle[i], matID[i]);
+            altTableTypeLabel[i], tableHandle[i], matID[i]);
     for (j = 0; j < nInfoItems; j++) {
       if (infoItems[j] == EOS_NR) {
 	eos_GetTableInfo (&(tableHandle[i]), &one, &(infoItems[j]), &infoVal, &errorCode);

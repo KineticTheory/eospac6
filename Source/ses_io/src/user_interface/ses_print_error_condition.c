@@ -119,11 +119,17 @@ ses_string _get_error(ses_error_flag the_error) {
   case(SES_TEST_ERROR):
     return_value = "Test error";
     break;
-   case(SES_APPEND_ERROR):
+  case(SES_APPEND_ERROR):
     return_value = "Ses Append Error";
     break;
-   case(SES_NO_DATA_ERROR):
-    return_value = "Ses No Data Error";
+  case(SES_INVALID_FILE_FORMAT_TYPE):
+    return_value = "Ses Incorrect File Format Type";
+    break;
+  case(SES_INVALID_ASCII_WORD_TYPE):
+    return_value = "Ses Invalid ASCII Word Type (valid types: M or S";
+    break;
+  case(SES_INVALID_NUM_PARAMETERS):
+    return_value = "Ses Invalid number of parameter for call";
     break;
    
 

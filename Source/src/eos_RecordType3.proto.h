@@ -13,10 +13,12 @@
 
 /*
  * ---------------------------------------------------
- * 1 PUBLIC FUNCTION PROTOTYPES FOR eos_RecordType3.c
+ * 3 PUBLIC FUNCTION PROTOTYPES FOR eos_RecordType3.c
  * ---------------------------------------------------
  */
 void eos_ConstructRecordType3 (eos_RecordType3 * me, EOS_INTEGER th, EOS_INTEGER materialID);
+void eos_GetSizeRecordType3 (eos_RecordType3 *me, EOS_INTEGER *N);
+void _eos_GetDataRecordType3 (eos_RecordType3 *me, EOS_REAL **R, EOS_REAL **T);
 
 #ifdef _EOS_RECORDTYPE3_INTERNAL_PROTOTYPES
 

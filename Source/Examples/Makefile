@@ -229,11 +229,17 @@ install: clean MAKEDIRS
 ifneq ($(strip $(INSTALLEDFILESGROUP)),)
 	@chgrp $(INSTALLEDFILESGROUP) ${INSTALLED_EXAMPLE_DIR}/$(BUILD_LOG)
 endif
-	@mkdir -p $(prefix0)/bin
-	@cp $(BASEDIR)/scripts/config.guess $(BASEDIR)/scripts/config.guess.wrapper $(prefix0)/bin
-	@chmod a+u,a+x,o-w $(prefix0)/bin/config.guess $(prefix0)/bin/config.guess.wrapper
+	@(if [ -d $(prefix0) -a -w $(prefix0) ]; then \
+        mkdir -p $(prefix0)/bin > /dev/null 2>&1; \
+        cp $(BASEDIR)/scripts/config.guess $(BASEDIR)/scripts/config.guess.wrapper $(prefix0)/bin; \
+        chmod a+u,a+x,o-w $(prefix0)/bin/config.guess $(prefix0)/bin/config.guess.wrapper; \
+      fi; \
+     )
 ifneq ($(strip $(INSTALLEDFILESGROUP)),)
-	@chgrp $(INSTALLEDFILESGROUP) $(prefix0)/bin/config.guess $(prefix0)/bin/config.guess.wrapper
+	@(if [ -d $(prefix0) -a -w $(prefix0) ]; then \
+        chgrp $(INSTALLEDFILESGROUP) $(prefix0)/bin/config.guess $(prefix0)/bin/config.guess.wrapper; \
+      fi; \
+     )
 endif
 
 install_child: all_child check_child installdirs
@@ -328,7 +334,7 @@ clean:
 	@echo '***' Delete local build $(ARCH) directories.
 	@echo '***********************************************************'
 	-rm -fr $(EXEDIR) $(DEPDIR) \
-                `find . -name 'core*' -o -name '*.stackdump' -o -name '*.lst'` $(BUILD_LOG)
+                `find . -name 'core*' -o -name '*.stackdump' -o -name '*.lst' -o -name '*.gcov'` $(BUILD_LOG)
 	@(if [ -d $(BASEDIR)/src ]; then $(MAKE) -C $(BASEDIR)/src clean; fi)
 	@(if [ -d $(BASEDIR)/tests ]; then $(MAKE) -C $(BASEDIR)/tests clean; fi)
 	@(if [ -d $(BASEDIR)/utils ]; then $(MAKE) -C $(BASEDIR)/utils clean; fi)
@@ -340,6 +346,7 @@ endif
 
 distclean:     distclean_msg rm_include rm_lib rm__OBJ rm_bin rm_example rm_MSVS distclean_src distclean_tests     distclean_utils
 	-rm -f $(BUILD_LOG)
+	-rm -f `find . -name 'core*' -o -name '*.stackdump' -o -name '*.lst' -o -name '*.gcov'`
 	-rm -rf $(DEPDIR)
 
 distcleanfast: distclean_msg rm_include rm_lib rm__OBJ rm_bin rm_example rm_MSVS distclean_src distcleanfast_tests distclean_utils

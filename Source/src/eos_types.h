@@ -2,15 +2,15 @@
  * Header for C code to set the types used by EOSPAC
  * ---------------------------------------------------------
  * Filetype: (HEADER)
- * 
+ *
  * Copyright -- see file named COPYRIGHTNOTICE
- * 
+ *
  * NOTE: THIS HEADER FILE MUST BE KEPT IN SYNC WITH THE FOLLOWING
  *       PUBLIC INTERFACE FILES:
  *       eos_Interface.h
  *       eos_Interface.fi
  *       eos_Interface.f90
- * 
+ *
  ********************************************************************/
 
 
@@ -70,183 +70,183 @@ typedef enum EOS_RECORD_TYPE_enum EOS_RECORD_TYPE;
 #define EOS_D_PtT      4        /* Density (Mg/m^3) (Total Pressure (GPa)- and Temperature (K)-dependent) */
 #define EOS_T_DPt      5        /* Temperature (K) (Density (Mg/m^3)- and Total Pressure (GPa)-dependent) */
 #define EOS_Pt_DUt     6        /* Total Pressure (GPa) (Density (Mg/m^3)- and Total Specific-Internal-Energy (MJ/kg)-dependent) */
-#define EOS_Pt_DAt     7        /* Total Pressure (GPa) (Density (Mg/m^3)- and Total Specific-Free-Energy (MJ/kg)-dependent) */
+#define EOS_Pt_DAt     7        /* Total Pressure (GPa) (Density (Mg/m^3)- and Total Specific-Helmholtz-Free-Energy (MJ/kg)-dependent) */
 #define EOS_Pt_DSt     8        /* Total Pressure (GPa) (Density (Mg/m^3)- and Total Specific-Entropy (MJ/kg/K)-dependent) */
 #define EOS_Ut_DT      12       /* Total Specific-Internal-Energy (MJ/kg) (Density (Mg/m^3)- and Temperature (K)-dependent) */
 #define EOS_T_DUt      14       /* Temperature (K) (Density (Mg/m^3)- and Total Specific-Internal-Energy (MJ/kg)-dependent) */
 #define EOS_Ut_DPt     15       /* Total Specific-Internal-Energy (MJ/kg) (Density (Mg/m^3)- and Total Pressure (GPa)-dependent) */
-#define EOS_Ut_DAt     16       /* Total Specific-Internal-Energy (MJ/kg) (Density (Mg/m^3)- and Total Specific-Free-Energy (MJ/kg)-dependent) */
+#define EOS_Ut_DAt     16       /* Total Specific-Internal-Energy (MJ/kg) (Density (Mg/m^3)- and Total Specific-Helmholtz-Free-Energy (MJ/kg)-dependent) */
 #define EOS_Ut_DSt     17       /* Total Specific-Internal-Energy (MJ/kg) (Density (Mg/m^3)- and Total Specific-Entropy (MJ/kg/K)-dependent) */
 #define EOS_Ut_PtT     18       /* Total Specific-Internal-Energy (MJ/kg) (Total Pressure (GPa)- and Temperature (K)-dependent) */
-#define EOS_At_DT      21       /* Total Specific-Free-Energy (MJ/kg) (Density (Mg/m^3)- and Temperature (K)-dependent) */
-#define EOS_T_DAt      23       /* Temperature (K) (Density (Mg/m^3)- and Total Specific-Free-Energy (MJ/kg)-dependent) */
-#define EOS_At_DPt     24       /* Total Specific-Free-Energy (MJ/kg) (Density (Mg/m^3)- and Total Pressure (GPa)-dependent) */
-#define EOS_At_DUt     25       /* Total Specific-Free-Energy (MJ/kg) (Density (Mg/m^3)- and Total Specific-Internal-Energy (MJ/kg)-dependent) */
-#define EOS_At_DSt     26       /* Total Specific-Free-Energy (MJ/kg) (Density (Mg/m^3)- and Total Specific-Entropy (MJ/kg/K)-dependent) */
+#define EOS_At_DT      21       /* Total Specific-Helmholtz-Free-Energy (MJ/kg) (Density (Mg/m^3)- and Temperature (K)-dependent) */
+#define EOS_T_DAt      23       /* Temperature (K) (Density (Mg/m^3)- and Total Specific-Helmholtz-Free-Energy (MJ/kg)-dependent) */
+#define EOS_At_DPt     24       /* Total Specific-Helmholtz-Free-Energy (MJ/kg) (Density (Mg/m^3)- and Total Pressure (GPa)-dependent) */
+#define EOS_At_DUt     25       /* Total Specific-Helmholtz-Free-Energy (MJ/kg) (Density (Mg/m^3)- and Total Specific-Internal-Energy (MJ/kg)-dependent) */
+#define EOS_At_DSt     26       /* Total Specific-Helmholtz-Free-Energy (MJ/kg) (Density (Mg/m^3)- and Total Specific-Entropy (MJ/kg/K)-dependent) */
 #define EOS_St_DT      30       /* Total Specific-Entropy (MJ/kg/K) (Density (Mg/m^3)- and Temperature (K)-dependent) */
 #define EOS_T_DSt      32       /* Temperature (K) (Density (Mg/m^3)- and Total Specific-Entropy (MJ/kg/K)-dependent) */
 #define EOS_St_DPt     33       /* Total Specific-Entropy (MJ/kg/K) (Density (Mg/m^3)- and Total Pressure (GPa)-dependent) */
 #define EOS_St_DUt     34       /* Total Specific-Entropy (MJ/kg/K) (Density (Mg/m^3)- and Total Specific-Internal-Energy (MJ/kg)-dependent) */
-#define EOS_St_DAt     35       /* Total Specific-Entropy (MJ/kg/K) (Density (Mg/m^3)- and Total Specific-Free-Energy (MJ/kg)-dependent) */
+#define EOS_St_DAt     35       /* Total Specific-Entropy (MJ/kg/K) (Density (Mg/m^3)- and Total Specific-Helmholtz-Free-Energy (MJ/kg)-dependent) */
 #define EOS_Pic_DT     39       /* Ion Pressure plus Cold Curve Pressure (GPa) (Density (Mg/m^3)- and Temperature (K)-dependent) */
 #define EOS_T_DPic     41       /* Temperature (K) (Density (Mg/m^3)- and Ion Pressure plus Cold Curve Pressure (GPa)-dependent) */
 #define EOS_Pic_DUic   42       /* Ion Pressure plus Cold Curve Pressure (GPa) (Density (Mg/m^3)- and Ion Specific-Internal-Energy plus Cold Curve Specific-Internal-Energy (MJ/kg)-dependent) */
-#define EOS_Pic_DAic   43       /* Ion Pressure plus Cold Curve Pressure (GPa) (Density (Mg/m^3)- and Ion Specific-Free-Energy plus Cold Curve Specific-Free-Energy (MJ/kg)-dependent) */
+#define EOS_Pic_DAic   43       /* Ion Pressure plus Cold Curve Pressure (GPa) (Density (Mg/m^3)- and Ion Specific-Helmholtz-Free-Energy plus Cold Curve Specific-Helmholtz-Free-Energy (MJ/kg)-dependent) */
 #define EOS_Pic_DSic   44       /* Ion Pressure plus Cold Curve Pressure (GPa) (Density (Mg/m^3)- and Ion Pressure plus Cold Curve Specific-Entropy (MJ/kg/K)-dependent) */
 #define EOS_Uic_DT     48       /* Ion Specific-Internal-Energy plus Cold Curve Specific-Internal-Energy (MJ/kg) (Density (Mg/m^3)- and Temperature (K)-dependent) */
 #define EOS_T_DUic     50       /* Temperature (K) (Density (Mg/m^3)- and Ion Specific-Internal-Energy plus Cold Curve Specific-Internal-Energy (MJ/kg)-dependent) */
 #define EOS_Uic_DPic   51       /* Ion Specific-Internal-Energy plus Cold Curve Specific-Internal-Energy (MJ/kg) (Density (Mg/m^3)- and Ion Pressure plus Cold Curve Pressure (GPa)-dependent) */
-#define EOS_Uic_DAic   52       /* Ion Specific-Internal-Energy plus Cold Curve Specific-Internal-Energy (MJ/kg) (Density (Mg/m^3)- and Ion Specific-Free-Energy plus Cold Curve Specific-Free-Energy (MJ/kg)-dependent) */
+#define EOS_Uic_DAic   52       /* Ion Specific-Internal-Energy plus Cold Curve Specific-Internal-Energy (MJ/kg) (Density (Mg/m^3)- and Ion Specific-Helmholtz-Free-Energy plus Cold Curve Specific-Helmholtz-Free-Energy (MJ/kg)-dependent) */
 #define EOS_Uic_DSic   53       /* Ion Specific-Internal-Energy plus Cold Curve Specific-Internal-Energy (MJ/kg) (Density (Mg/m^3)- and Ion Pressure plus Cold Curve Specific-Entropy (MJ/kg/K)-dependent) */
-#define EOS_Aic_DT     57       /* Ion Specific-Free-Energy plus Cold Curve Specific-Free-Energy (MJ/kg) (Density (Mg/m^3)- and Temperature (K)-dependent) */
-#define EOS_T_DAic     59       /* Temperature (K) (Density (Mg/m^3)- and Ion Specific-Free-Energy plus Cold Curve Specific-Free-Energy (MJ/kg)-dependent) */
-#define EOS_Aic_DPic   60       /* Ion Specific-Free-Energy plus Cold Curve Specific-Free-Energy (MJ/kg) (Density (Mg/m^3)- and Ion Pressure plus Cold Curve Pressure (GPa)-dependent) */
-#define EOS_Aic_DUic   61       /* Ion Specific-Free-Energy plus Cold Curve Specific-Free-Energy (MJ/kg) (Density (Mg/m^3)- and Ion Specific-Internal-Energy plus Cold Curve Specific-Internal-Energy (MJ/kg)-dependent) */
-#define EOS_Aic_DSic   62       /* Ion Specific-Free-Energy plus Cold Curve Specific-Free-Energy (MJ/kg) (Density (Mg/m^3)- and Ion Pressure plus Cold Curve Specific-Entropy (MJ/kg/K)-dependent) */
+#define EOS_Aic_DT     57       /* Ion Specific-Helmholtz-Free-Energy plus Cold Curve Specific-Helmholtz-Free-Energy (MJ/kg) (Density (Mg/m^3)- and Temperature (K)-dependent) */
+#define EOS_T_DAic     59       /* Temperature (K) (Density (Mg/m^3)- and Ion Specific-Helmholtz-Free-Energy plus Cold Curve Specific-Helmholtz-Free-Energy (MJ/kg)-dependent) */
+#define EOS_Aic_DPic   60       /* Ion Specific-Helmholtz-Free-Energy plus Cold Curve Specific-Helmholtz-Free-Energy (MJ/kg) (Density (Mg/m^3)- and Ion Pressure plus Cold Curve Pressure (GPa)-dependent) */
+#define EOS_Aic_DUic   61       /* Ion Specific-Helmholtz-Free-Energy plus Cold Curve Specific-Helmholtz-Free-Energy (MJ/kg) (Density (Mg/m^3)- and Ion Specific-Internal-Energy plus Cold Curve Specific-Internal-Energy (MJ/kg)-dependent) */
+#define EOS_Aic_DSic   62       /* Ion Specific-Helmholtz-Free-Energy plus Cold Curve Specific-Helmholtz-Free-Energy (MJ/kg) (Density (Mg/m^3)- and Ion Pressure plus Cold Curve Specific-Entropy (MJ/kg/K)-dependent) */
 #define EOS_Sic_DT     66       /* Ion Pressure plus Cold Curve Specific-Entropy (MJ/kg/K) (Density (Mg/m^3)- and Temperature (K)-dependent) */
 #define EOS_T_DSic     68       /* Temperature (K) (Density (Mg/m^3)- and Ion Pressure plus Cold Curve Specific-Entropy (MJ/kg/K)-dependent) */
 #define EOS_Sic_DPic   69       /* Ion Pressure plus Cold Curve Specific-Entropy (MJ/kg/K) (Density (Mg/m^3)- and Ion Pressure plus Cold Curve Pressure (GPa)-dependent) */
 #define EOS_Sic_DUic   70       /* Ion Pressure plus Cold Curve Specific-Entropy (MJ/kg/K) (Density (Mg/m^3)- and Ion Specific-Internal-Energy plus Cold Curve Specific-Internal-Energy (MJ/kg)-dependent) */
-#define EOS_Sic_DAic   71       /* Ion Pressure plus Cold Curve Specific-Entropy (MJ/kg/K) (Density (Mg/m^3)- and Ion Specific-Free-Energy plus Cold Curve Specific-Free-Energy (MJ/kg)-dependent) */
+#define EOS_Sic_DAic   71       /* Ion Pressure plus Cold Curve Specific-Entropy (MJ/kg/K) (Density (Mg/m^3)- and Ion Specific-Helmholtz-Free-Energy plus Cold Curve Specific-Helmholtz-Free-Energy (MJ/kg)-dependent) */
 #define EOS_Pe_DT      75       /* Electron Pressure (GPa) (Density (Mg/m^3)- and Temperature (K)-dependent) */
 #define EOS_T_DPe      77       /* Temperature (K) (Density (Mg/m^3)- and Electron Pressure (GPa)-dependent) */
 #define EOS_Pe_DUe     78       /* Electron Pressure (GPa) (Density (Mg/m^3)- and Electron Specific-Internal-Energy (MJ/kg)-dependent) */
-#define EOS_Pe_DAe     79       /* Electron Pressure (GPa) (Density (Mg/m^3)- and Electron Specific-Free-Energy (MJ/kg)-dependent) */
+#define EOS_Pe_DAe     79       /* Electron Pressure (GPa) (Density (Mg/m^3)- and Electron Specific-Helmholtz-Free-Energy (MJ/kg)-dependent) */
 #define EOS_Pe_DSe     80       /* Electron Pressure (GPa) (Density (Mg/m^3)- and Electron Specific-Entropy (MJ/kg/K)-dependent) */
 #define EOS_Ue_DT      84       /* Electron Specific-Internal-Energy (MJ/kg) (Density (Mg/m^3)- and Temperature (K)-dependent) */
 #define EOS_T_DUe      86       /* Temperature (K) (Density (Mg/m^3)- and Electron Specific-Internal-Energy (MJ/kg)-dependent) */
 #define EOS_Ue_DPe     87       /* Electron Specific-Internal-Energy (MJ/kg) (Density (Mg/m^3)- and Electron Pressure (GPa)-dependent) */
-#define EOS_Ue_DAe     88       /* Electron Specific-Internal-Energy (MJ/kg) (Density (Mg/m^3)- and Electron Specific-Free-Energy (MJ/kg)-dependent) */
+#define EOS_Ue_DAe     88       /* Electron Specific-Internal-Energy (MJ/kg) (Density (Mg/m^3)- and Electron Specific-Helmholtz-Free-Energy (MJ/kg)-dependent) */
 #define EOS_Ue_DSe     89       /* Electron Specific-Internal-Energy (MJ/kg) (Density (Mg/m^3)- and Electron Specific-Entropy (MJ/kg/K)-dependent) */
-#define EOS_Ae_DT      93       /* Electron Specific-Free-Energy (MJ/kg) (Density (Mg/m^3)- and Temperature (K)-dependent) */
-#define EOS_T_DAe      95       /* Temperature (K) (Density (Mg/m^3)- and Electron Specific-Free-Energy (MJ/kg)-dependent) */
-#define EOS_Ae_DPe     96       /* Electron Specific-Free-Energy (MJ/kg) (Density (Mg/m^3)- and Electron Pressure (GPa)-dependent) */
-#define EOS_Ae_DUe     97       /* Electron Specific-Free-Energy (MJ/kg) (Density (Mg/m^3)- and Electron Specific-Internal-Energy (MJ/kg)-dependent) */
-#define EOS_Ae_DSe     98       /* Electron Specific-Free-Energy (MJ/kg) (Density (Mg/m^3)- and Electron Specific-Entropy (MJ/kg/K)-dependent) */
+#define EOS_Ae_DT      93       /* Electron Specific-Helmholtz-Free-Energy (MJ/kg) (Density (Mg/m^3)- and Temperature (K)-dependent) */
+#define EOS_T_DAe      95       /* Temperature (K) (Density (Mg/m^3)- and Electron Specific-Helmholtz-Free-Energy (MJ/kg)-dependent) */
+#define EOS_Ae_DPe     96       /* Electron Specific-Helmholtz-Free-Energy (MJ/kg) (Density (Mg/m^3)- and Electron Pressure (GPa)-dependent) */
+#define EOS_Ae_DUe     97       /* Electron Specific-Helmholtz-Free-Energy (MJ/kg) (Density (Mg/m^3)- and Electron Specific-Internal-Energy (MJ/kg)-dependent) */
+#define EOS_Ae_DSe     98       /* Electron Specific-Helmholtz-Free-Energy (MJ/kg) (Density (Mg/m^3)- and Electron Specific-Entropy (MJ/kg/K)-dependent) */
 #define EOS_Se_DT      102      /* Electron Specific-Entropy (MJ/kg/K) (Density (Mg/m^3)- and Temperature (K)-dependent) */
 #define EOS_T_DSe      104      /* Temperature (K) (Density (Mg/m^3)- and Electron Specific-Entropy (MJ/kg/K)-dependent) */
 #define EOS_Se_DPe     105      /* Electron Specific-Entropy (MJ/kg/K) (Density (Mg/m^3)- and Electron Pressure (GPa)-dependent) */
 #define EOS_Se_DUe     106      /* Electron Specific-Entropy (MJ/kg/K) (Density (Mg/m^3)- and Electron Specific-Internal-Energy (MJ/kg)-dependent) */
-#define EOS_Se_DAe     107      /* Electron Specific-Entropy (MJ/kg/K) (Density (Mg/m^3)- and Electron Specific-Free-Energy (MJ/kg)-dependent) */
+#define EOS_Se_DAe     107      /* Electron Specific-Entropy (MJ/kg/K) (Density (Mg/m^3)- and Electron Specific-Helmholtz-Free-Energy (MJ/kg)-dependent) */
 #define EOS_Piz_DT     111      /* Ion Pressure Including Zero Point (GPa) (Density (Mg/m^3)- and Temperature (K)-dependent) */
 #define EOS_T_DPiz     113      /* Temperature (K) (Density (Mg/m^3)- and Ion Pressure Including Zero Point (GPa)-dependent) */
 #define EOS_Piz_DUiz   114      /* Ion Pressure Including Zero Point (GPa) (Density (Mg/m^3)- and Ion Specific-Internal-Energy Including Zero Point (MJ/kg)-dependent) */
-#define EOS_Piz_DAiz   115      /* Ion Pressure Including Zero Point (GPa) (Density (Mg/m^3)- and Ion Specific-Free-Energy Including Zero Point (MJ/kg)-dependent) */
+#define EOS_Piz_DAiz   115      /* Ion Pressure Including Zero Point (GPa) (Density (Mg/m^3)- and Ion Specific-Helmholtz-Free-Energy Including Zero Point (MJ/kg)-dependent) */
 #define EOS_Piz_DSiz   116      /* Ion Pressure Including Zero Point (GPa) (Density (Mg/m^3)- and Ion Pressure Including Zero Specific-Entropy (MJ/kg/K)-dependent) */
 #define EOS_Uiz_DT     120      /* Ion Specific-Internal-Energy Including Zero Point (MJ/kg) (Density (Mg/m^3)- and Temperature (K)-dependent) */
 #define EOS_T_DUiz     122      /* Temperature (K) (Density (Mg/m^3)- and Ion Specific-Internal-Energy Including Zero Point (MJ/kg)-dependent) */
 #define EOS_Uiz_DPiz   123      /* Ion Specific-Internal-Energy Including Zero Point (MJ/kg) (Density (Mg/m^3)- and Ion Pressure Including Zero Point (GPa)-dependent) */
-#define EOS_Uiz_DAiz   124      /* Ion Specific-Internal-Energy Including Zero Point (MJ/kg) (Density (Mg/m^3)- and Ion Specific-Free-Energy Including Zero Point (MJ/kg)-dependent) */
+#define EOS_Uiz_DAiz   124      /* Ion Specific-Internal-Energy Including Zero Point (MJ/kg) (Density (Mg/m^3)- and Ion Specific-Helmholtz-Free-Energy Including Zero Point (MJ/kg)-dependent) */
 #define EOS_Uiz_DSiz   125      /* Ion Specific-Internal-Energy Including Zero Point (MJ/kg) (Density (Mg/m^3)- and Ion Pressure Including Zero Specific-Entropy (MJ/kg/K)-dependent) */
-#define EOS_Aiz_DT     129      /* Ion Specific-Free-Energy Including Zero Point (MJ/kg) (Density (Mg/m^3)- and Temperature (K)-dependent) */
-#define EOS_T_DAiz     131      /* Temperature (K) (Density (Mg/m^3)- and Ion Specific-Free-Energy Including Zero Point (MJ/kg)-dependent) */
-#define EOS_Aiz_DPiz   132      /* Ion Specific-Free-Energy Including Zero Point (MJ/kg) (Density (Mg/m^3)- and Ion Pressure Including Zero Point (GPa)-dependent) */
-#define EOS_Aiz_DUiz   133      /* Ion Specific-Free-Energy Including Zero Point (MJ/kg) (Density (Mg/m^3)- and Ion Specific-Internal-Energy Including Zero Point (MJ/kg)-dependent) */
-#define EOS_Aiz_DSiz   134      /* Ion Specific-Free-Energy Including Zero Point (MJ/kg) (Density (Mg/m^3)- and Ion Pressure Including Zero Specific-Entropy (MJ/kg/K)-dependent) */
+#define EOS_Aiz_DT     129      /* Ion Specific-Helmholtz-Free-Energy Including Zero Point (MJ/kg) (Density (Mg/m^3)- and Temperature (K)-dependent) */
+#define EOS_T_DAiz     131      /* Temperature (K) (Density (Mg/m^3)- and Ion Specific-Helmholtz-Free-Energy Including Zero Point (MJ/kg)-dependent) */
+#define EOS_Aiz_DPiz   132      /* Ion Specific-Helmholtz-Free-Energy Including Zero Point (MJ/kg) (Density (Mg/m^3)- and Ion Pressure Including Zero Point (GPa)-dependent) */
+#define EOS_Aiz_DUiz   133      /* Ion Specific-Helmholtz-Free-Energy Including Zero Point (MJ/kg) (Density (Mg/m^3)- and Ion Specific-Internal-Energy Including Zero Point (MJ/kg)-dependent) */
+#define EOS_Aiz_DSiz   134      /* Ion Specific-Helmholtz-Free-Energy Including Zero Point (MJ/kg) (Density (Mg/m^3)- and Ion Pressure Including Zero Specific-Entropy (MJ/kg/K)-dependent) */
 #define EOS_Siz_DT     138      /* Ion Pressure Including Zero Specific-Entropy (MJ/kg/K) (Density (Mg/m^3)- and Temperature (K)-dependent) */
 #define EOS_T_DSiz     140      /* Temperature (K) (Density (Mg/m^3)- and Ion Pressure Including Zero Specific-Entropy (MJ/kg/K)-dependent) */
 #define EOS_Siz_DPiz   141      /* Ion Pressure Including Zero Specific-Entropy (MJ/kg/K) (Density (Mg/m^3)- and Ion Pressure Including Zero Point (GPa)-dependent) */
 #define EOS_Siz_DUiz   142      /* Ion Pressure Including Zero Specific-Entropy (MJ/kg/K) (Density (Mg/m^3)- and Ion Specific-Internal-Energy Including Zero Point (MJ/kg)-dependent) */
-#define EOS_Siz_DAiz   143      /* Ion Pressure Including Zero Specific-Entropy (MJ/kg/K) (Density (Mg/m^3)- and Ion Specific-Free-Energy Including Zero Point (MJ/kg)-dependent) */
+#define EOS_Siz_DAiz   143      /* Ion Pressure Including Zero Specific-Entropy (MJ/kg/K) (Density (Mg/m^3)- and Ion Specific-Helmholtz-Free-Energy Including Zero Point (MJ/kg)-dependent) */
 #define EOS_Pc_D       147      /* Pressure Cold Curve (GPa) (Density (Mg/m^3)-dependent) */
 #define EOS_Uc_D       151      /* Specific-Internal-Energy Cold Curve (MJ/kg) (Density (Mg/m^3)-dependent) */
-#define EOS_Ac_D       155      /* Specific-Free-Energy Cold Curve (MJ/kg) (Density (Mg/m^3)-dependent) */
+#define EOS_Ac_D       155      /* Specific-Helmholtz-Free-Energy Cold Curve (MJ/kg) (Density (Mg/m^3)-dependent) */
 #define EOS_Pv_T       159      /* Vapor Pressure (GPa) (Temperature (K)-dependent) */
 #define EOS_T_Pv       160      /* Temperature (K) (Vapor Pressure (GPa)-dependent) */
 #define EOS_Pv_Dv      161      /* Vapor Pressure (GPa) (Vapor Density on coexistence line (Mg/m^3)-dependent) */
 #define EOS_Pv_Dls     162      /* Vapor Pressure (GPa) (Liquid or Solid Density on coexistence line (Mg/m^3)-dependent) */
 #define EOS_Pv_Uv      163      /* Vapor Pressure (GPa) (Vapor Specific-Internal-Energy (MJ/kg)-dependent) */
 #define EOS_Pv_Uls     164      /* Vapor Pressure (GPa) (Liquid or Solid Specific-Internal-Energy (MJ/kg)-dependent) */
-#define EOS_Pv_Av      165      /* Vapor Pressure (GPa) (Vapor Specific-Free-Energy (MJ/kg)-dependent) */
-#define EOS_Pv_Als     166      /* Vapor Pressure (GPa) (Liquid or Solid Specific-Free-Energy (MJ/kg)-dependent) */
+#define EOS_Pv_Av      165      /* Vapor Pressure (GPa) (Vapor Specific-Helmholtz-Free-Energy (MJ/kg)-dependent) */
+#define EOS_Pv_Als     166      /* Vapor Pressure (GPa) (Liquid or Solid Specific-Helmholtz-Free-Energy (MJ/kg)-dependent) */
 #define EOS_Dv_T       167      /* Vapor Density on coexistence line (Mg/m^3) (Temperature (K)-dependent) */
 #define EOS_T_Dv       168      /* Temperature (K) (Vapor Density on coexistence line (Mg/m^3)-dependent) */
 #define EOS_Dv_Pv      169      /* Vapor Density on coexistence line (Mg/m^3) (Vapor Pressure (GPa)-dependent) */
 #define EOS_Dv_Dls     170      /* Vapor Density on coexistence line (Mg/m^3) (Liquid or Solid Density on coexistence line (Mg/m^3)-dependent) */
 #define EOS_Dv_Uv      171      /* Vapor Density on coexistence line (Mg/m^3) (Vapor Specific-Internal-Energy (MJ/kg)-dependent) */
 #define EOS_Dv_Uls     172      /* Vapor Density on coexistence line (Mg/m^3) (Liquid or Solid Specific-Internal-Energy (MJ/kg)-dependent) */
-#define EOS_Dv_Av      173      /* Vapor Density on coexistence line (Mg/m^3) (Vapor Specific-Free-Energy (MJ/kg)-dependent) */
-#define EOS_Dv_Als     174      /* Vapor Density on coexistence line (Mg/m^3) (Liquid or Solid Specific-Free-Energy (MJ/kg)-dependent) */
+#define EOS_Dv_Av      173      /* Vapor Density on coexistence line (Mg/m^3) (Vapor Specific-Helmholtz-Free-Energy (MJ/kg)-dependent) */
+#define EOS_Dv_Als     174      /* Vapor Density on coexistence line (Mg/m^3) (Liquid or Solid Specific-Helmholtz-Free-Energy (MJ/kg)-dependent) */
 #define EOS_Dls_T      175      /* Liquid or Solid Density on coexistence line (Mg/m^3) (Temperature (K)-dependent) */
 #define EOS_T_Dls      176      /* Temperature (K) (Liquid or Solid Density on coexistence line (Mg/m^3)-dependent) */
 #define EOS_Dls_Pv     177      /* Liquid or Solid Density on coexistence line (Mg/m^3) (Vapor Pressure (GPa)-dependent) */
 #define EOS_Dls_Dv     178      /* Liquid or Solid Density on coexistence line (Mg/m^3) (Vapor Density on coexistence line (Mg/m^3)-dependent) */
 #define EOS_Dls_Uv     179      /* Liquid or Solid Density on coexistence line (Mg/m^3) (Vapor Specific-Internal-Energy (MJ/kg)-dependent) */
 #define EOS_Dls_Uls    180      /* Liquid or Solid Density on coexistence line (Mg/m^3) (Liquid or Solid Specific-Internal-Energy (MJ/kg)-dependent) */
-#define EOS_Dls_Av     181      /* Liquid or Solid Density on coexistence line (Mg/m^3) (Vapor Specific-Free-Energy (MJ/kg)-dependent) */
-#define EOS_Dls_Als    182      /* Liquid or Solid Density on coexistence line (Mg/m^3) (Liquid or Solid Specific-Free-Energy (MJ/kg)-dependent) */
+#define EOS_Dls_Av     181      /* Liquid or Solid Density on coexistence line (Mg/m^3) (Vapor Specific-Helmholtz-Free-Energy (MJ/kg)-dependent) */
+#define EOS_Dls_Als    182      /* Liquid or Solid Density on coexistence line (Mg/m^3) (Liquid or Solid Specific-Helmholtz-Free-Energy (MJ/kg)-dependent) */
 #define EOS_Uv_T       183      /* Vapor Specific-Internal-Energy (MJ/kg) (Temperature (K)-dependent) */
 #define EOS_T_Uv       184      /* Temperature (K) (Vapor Specific-Internal-Energy (MJ/kg)-dependent) */
 #define EOS_Uv_Pv      185      /* Vapor Specific-Internal-Energy (MJ/kg) (Vapor Pressure (GPa)-dependent) */
 #define EOS_Uv_Dv      186      /* Vapor Specific-Internal-Energy (MJ/kg) (Vapor Density on coexistence line (Mg/m^3)-dependent) */
 #define EOS_Uv_Dls     187      /* Vapor Specific-Internal-Energy (MJ/kg) (Liquid or Solid Density on coexistence line (Mg/m^3)-dependent) */
 #define EOS_Uv_Uls     188      /* Vapor Specific-Internal-Energy (MJ/kg) (Liquid or Solid Specific-Internal-Energy (MJ/kg)-dependent) */
-#define EOS_Uv_Av      189      /* Vapor Specific-Internal-Energy (MJ/kg) (Vapor Specific-Free-Energy (MJ/kg)-dependent) */
-#define EOS_Uv_Als     190      /* Vapor Specific-Internal-Energy (MJ/kg) (Liquid or Solid Specific-Free-Energy (MJ/kg)-dependent) */
+#define EOS_Uv_Av      189      /* Vapor Specific-Internal-Energy (MJ/kg) (Vapor Specific-Helmholtz-Free-Energy (MJ/kg)-dependent) */
+#define EOS_Uv_Als     190      /* Vapor Specific-Internal-Energy (MJ/kg) (Liquid or Solid Specific-Helmholtz-Free-Energy (MJ/kg)-dependent) */
 #define EOS_Uls_T      191      /* Liquid or Solid Specific-Internal-Energy (MJ/kg) (Temperature (K)-dependent) */
 #define EOS_T_Uls      192      /* Temperature (K) (Liquid or Solid Specific-Internal-Energy (MJ/kg)-dependent) */
 #define EOS_Uls_Pv     193      /* Liquid or Solid Specific-Internal-Energy (MJ/kg) (Vapor Pressure (GPa)-dependent) */
 #define EOS_Uls_Dv     194      /* Liquid or Solid Specific-Internal-Energy (MJ/kg) (Vapor Density on coexistence line (Mg/m^3)-dependent) */
 #define EOS_Uls_Dls    195      /* Liquid or Solid Specific-Internal-Energy (MJ/kg) (Liquid or Solid Density on coexistence line (Mg/m^3)-dependent) */
 #define EOS_Uls_Uv     196      /* Liquid or Solid Specific-Internal-Energy (MJ/kg) (Vapor Specific-Internal-Energy (MJ/kg)-dependent) */
-#define EOS_Uls_Av     197      /* Liquid or Solid Specific-Internal-Energy (MJ/kg) (Vapor Specific-Free-Energy (MJ/kg)-dependent) */
-#define EOS_Uls_Als    198      /* Liquid or Solid Specific-Internal-Energy (MJ/kg) (Liquid or Solid Specific-Free-Energy (MJ/kg)-dependent) */
-#define EOS_Av_T       199      /* Vapor Specific-Free-Energy (MJ/kg) (Temperature (K)-dependent) */
-#define EOS_T_Av       200      /* Temperature (K) (Vapor Specific-Free-Energy (MJ/kg)-dependent) */
-#define EOS_Av_Pv      201      /* Vapor Specific-Free-Energy (MJ/kg) (Vapor Pressure (GPa)-dependent) */
-#define EOS_Av_Dv      202      /* Vapor Specific-Free-Energy (MJ/kg) (Vapor Density on coexistence line (Mg/m^3)-dependent) */
-#define EOS_Av_Dls     203      /* Vapor Specific-Free-Energy (MJ/kg) (Liquid or Solid Density on coexistence line (Mg/m^3)-dependent) */
-#define EOS_Av_Uv      204      /* Vapor Specific-Free-Energy (MJ/kg) (Vapor Specific-Internal-Energy (MJ/kg)-dependent) */
-#define EOS_Av_Uls     205      /* Vapor Specific-Free-Energy (MJ/kg) (Liquid or Solid Specific-Internal-Energy (MJ/kg)-dependent) */
-#define EOS_Av_Als     206      /* Vapor Specific-Free-Energy (MJ/kg) (Liquid or Solid Specific-Free-Energy (MJ/kg)-dependent) */
-#define EOS_Als_T      207      /* Liquid or Solid Specific-Free-Energy (MJ/kg) (Temperature (K)-dependent) */
-#define EOS_T_Als      208      /* Temperature (K) (Liquid or Solid Specific-Free-Energy (MJ/kg)-dependent) */
-#define EOS_Als_Pv     209      /* Liquid or Solid Specific-Free-Energy (MJ/kg) (Vapor Pressure (GPa)-dependent) */
-#define EOS_Als_Dv     210      /* Liquid or Solid Specific-Free-Energy (MJ/kg) (Vapor Density on coexistence line (Mg/m^3)-dependent) */
-#define EOS_Als_Dls    211      /* Liquid or Solid Specific-Free-Energy (MJ/kg) (Liquid or Solid Density on coexistence line (Mg/m^3)-dependent) */
-#define EOS_Als_Uv     212      /* Liquid or Solid Specific-Free-Energy (MJ/kg) (Vapor Specific-Internal-Energy (MJ/kg)-dependent) */
-#define EOS_Als_Uls    213      /* Liquid or Solid Specific-Free-Energy (MJ/kg) (Liquid or Solid Specific-Internal-Energy (MJ/kg)-dependent) */
-#define EOS_Als_Av     214      /* Liquid or Solid Specific-Free-Energy (MJ/kg) (Vapor Specific-Free-Energy (MJ/kg)-dependent) */
+#define EOS_Uls_Av     197      /* Liquid or Solid Specific-Internal-Energy (MJ/kg) (Vapor Specific-Helmholtz-Free-Energy (MJ/kg)-dependent) */
+#define EOS_Uls_Als    198      /* Liquid or Solid Specific-Internal-Energy (MJ/kg) (Liquid or Solid Specific-Helmholtz-Free-Energy (MJ/kg)-dependent) */
+#define EOS_Av_T       199      /* Vapor Specific-Helmholtz-Free-Energy (MJ/kg) (Temperature (K)-dependent) */
+#define EOS_T_Av       200      /* Temperature (K) (Vapor Specific-Helmholtz-Free-Energy (MJ/kg)-dependent) */
+#define EOS_Av_Pv      201      /* Vapor Specific-Helmholtz-Free-Energy (MJ/kg) (Vapor Pressure (GPa)-dependent) */
+#define EOS_Av_Dv      202      /* Vapor Specific-Helmholtz-Free-Energy (MJ/kg) (Vapor Density on coexistence line (Mg/m^3)-dependent) */
+#define EOS_Av_Dls     203      /* Vapor Specific-Helmholtz-Free-Energy (MJ/kg) (Liquid or Solid Density on coexistence line (Mg/m^3)-dependent) */
+#define EOS_Av_Uv      204      /* Vapor Specific-Helmholtz-Free-Energy (MJ/kg) (Vapor Specific-Internal-Energy (MJ/kg)-dependent) */
+#define EOS_Av_Uls     205      /* Vapor Specific-Helmholtz-Free-Energy (MJ/kg) (Liquid or Solid Specific-Internal-Energy (MJ/kg)-dependent) */
+#define EOS_Av_Als     206      /* Vapor Specific-Helmholtz-Free-Energy (MJ/kg) (Liquid or Solid Specific-Helmholtz-Free-Energy (MJ/kg)-dependent) */
+#define EOS_Als_T      207      /* Liquid or Solid Specific-Helmholtz-Free-Energy (MJ/kg) (Temperature (K)-dependent) */
+#define EOS_T_Als      208      /* Temperature (K) (Liquid or Solid Specific-Helmholtz-Free-Energy (MJ/kg)-dependent) */
+#define EOS_Als_Pv     209      /* Liquid or Solid Specific-Helmholtz-Free-Energy (MJ/kg) (Vapor Pressure (GPa)-dependent) */
+#define EOS_Als_Dv     210      /* Liquid or Solid Specific-Helmholtz-Free-Energy (MJ/kg) (Vapor Density on coexistence line (Mg/m^3)-dependent) */
+#define EOS_Als_Dls    211      /* Liquid or Solid Specific-Helmholtz-Free-Energy (MJ/kg) (Liquid or Solid Density on coexistence line (Mg/m^3)-dependent) */
+#define EOS_Als_Uv     212      /* Liquid or Solid Specific-Helmholtz-Free-Energy (MJ/kg) (Vapor Specific-Internal-Energy (MJ/kg)-dependent) */
+#define EOS_Als_Uls    213      /* Liquid or Solid Specific-Helmholtz-Free-Energy (MJ/kg) (Liquid or Solid Specific-Internal-Energy (MJ/kg)-dependent) */
+#define EOS_Als_Av     214      /* Liquid or Solid Specific-Helmholtz-Free-Energy (MJ/kg) (Vapor Specific-Helmholtz-Free-Energy (MJ/kg)-dependent) */
 #define EOS_Tm_D       215      /* Melt Temperature (K) (Density (Mg/m^3)-dependent) */
 #define EOS_D_Tm       216      /* Density (Mg/m^3) (Melt Temperature (K)-dependent) */
 #define EOS_Tm_Pm      217      /* Melt Temperature (K) (Melt Pressure (GPa)-dependent) */
 #define EOS_Tm_Um      218      /* Melt Temperature (K) (Melt Specific-Internal-Energy (MJ/kg)-dependent) */
-#define EOS_Tm_Am      219      /* Melt Temperature (K) (Melt Specific-Free-Energy (MJ/kg)-dependent) */
+#define EOS_Tm_Am      219      /* Melt Temperature (K) (Melt Specific-Helmholtz-Free-Energy (MJ/kg)-dependent) */
 #define EOS_Pm_D       220      /* Melt Pressure (GPa) (Density (Mg/m^3)-dependent) */
 #define EOS_D_Pm       221      /* Density (Mg/m^3) (Melt Pressure (GPa)-dependent) */
 #define EOS_Pm_Tm      222      /* Melt Pressure (GPa) (Melt Temperature (K)-dependent) */
 #define EOS_Pm_Um      223      /* Melt Pressure (GPa) (Melt Specific-Internal-Energy (MJ/kg)-dependent) */
-#define EOS_Pm_Am      224      /* Melt Pressure (GPa) (Melt Specific-Free-Energy (MJ/kg)-dependent) */
+#define EOS_Pm_Am      224      /* Melt Pressure (GPa) (Melt Specific-Helmholtz-Free-Energy (MJ/kg)-dependent) */
 #define EOS_Um_D       225      /* Melt Specific-Internal-Energy (MJ/kg) (Density (Mg/m^3)-dependent) */
 #define EOS_D_Um       226      /* Density (Mg/m^3) (Melt Specific-Internal-Energy (MJ/kg)-dependent) */
 #define EOS_Um_Tm      227      /* Melt Specific-Internal-Energy (MJ/kg) (Melt Temperature (K)-dependent) */
 #define EOS_Um_Pm      228      /* Melt Specific-Internal-Energy (MJ/kg) (Melt Pressure (GPa)-dependent) */
-#define EOS_Um_Am      229      /* Melt Specific-Internal-Energy (MJ/kg) (Melt Specific-Free-Energy (MJ/kg)-dependent) */
-#define EOS_Am_D       230      /* Melt Specific-Free-Energy (MJ/kg) (Density (Mg/m^3)-dependent) */
-#define EOS_D_Am       231      /* Density (Mg/m^3) (Melt Specific-Free-Energy (MJ/kg)-dependent) */
-#define EOS_Am_Tm      232      /* Melt Specific-Free-Energy (MJ/kg) (Melt Temperature (K)-dependent) */
-#define EOS_Am_Pm      233      /* Melt Specific-Free-Energy (MJ/kg) (Melt Pressure (GPa)-dependent) */
-#define EOS_Am_Um      234      /* Melt Specific-Free-Energy (MJ/kg) (Melt Specific-Internal-Energy (MJ/kg)-dependent) */
+#define EOS_Um_Am      229      /* Melt Specific-Internal-Energy (MJ/kg) (Melt Specific-Helmholtz-Free-Energy (MJ/kg)-dependent) */
+#define EOS_Am_D       230      /* Melt Specific-Helmholtz-Free-Energy (MJ/kg) (Density (Mg/m^3)-dependent) */
+#define EOS_D_Am       231      /* Density (Mg/m^3) (Melt Specific-Helmholtz-Free-Energy (MJ/kg)-dependent) */
+#define EOS_Am_Tm      232      /* Melt Specific-Helmholtz-Free-Energy (MJ/kg) (Melt Temperature (K)-dependent) */
+#define EOS_Am_Pm      233      /* Melt Specific-Helmholtz-Free-Energy (MJ/kg) (Melt Pressure (GPa)-dependent) */
+#define EOS_Am_Um      234      /* Melt Specific-Helmholtz-Free-Energy (MJ/kg) (Melt Specific-Internal-Energy (MJ/kg)-dependent) */
 #define EOS_Tf_D       235      /* Freeze Temperature (K) (Density (Mg/m^3)-dependent) */
 #define EOS_D_Tf       236      /* Density (Mg/m^3) (Freeze Temperature (K)-dependent) */
 #define EOS_Tf_Pf      237      /* Freeze Temperature (K) (Freeze Pressure (GPa)-dependent) */
 #define EOS_Tf_Uf      238      /* Freeze Temperature (K) (Freeze Specific-Internal-Energy (MJ/kg)-dependent) */
-#define EOS_Tf_Af      239      /* Freeze Temperature (K) (Freeze Specific-Free-Energy (MJ/kg)-dependent) */
+#define EOS_Tf_Af      239      /* Freeze Temperature (K) (Freeze Specific-Helmholtz-Free-Energy (MJ/kg)-dependent) */
 #define EOS_Pf_D       240      /* Freeze Pressure (GPa) (Density (Mg/m^3)-dependent) */
 #define EOS_D_Pf       241      /* Density (Mg/m^3) (Freeze Pressure (GPa)-dependent) */
 #define EOS_Pf_Tf      242      /* Freeze Pressure (GPa) (Freeze Temperature (K)-dependent) */
 #define EOS_Pf_Uf      243      /* Freeze Pressure (GPa) (Freeze Specific-Internal-Energy (MJ/kg)-dependent) */
-#define EOS_Pf_Af      244      /* Freeze Pressure (GPa) (Freeze Specific-Free-Energy (MJ/kg)-dependent) */
+#define EOS_Pf_Af      244      /* Freeze Pressure (GPa) (Freeze Specific-Helmholtz-Free-Energy (MJ/kg)-dependent) */
 #define EOS_Uf_D       245      /* Freeze Specific-Internal-Energy (MJ/kg) (Density (Mg/m^3)-dependent) */
 #define EOS_D_Uf       246      /* Density (Mg/m^3) (Freeze Specific-Internal-Energy (MJ/kg)-dependent) */
 #define EOS_Uf_Tf      247      /* Freeze Specific-Internal-Energy (MJ/kg) (Freeze Temperature (K)-dependent) */
 #define EOS_Uf_Pf      248      /* Freeze Specific-Internal-Energy (MJ/kg) (Freeze Pressure (GPa)-dependent) */
-#define EOS_Uf_Af      249      /* Freeze Specific-Internal-Energy (MJ/kg) (Freeze Specific-Free-Energy (MJ/kg)-dependent) */
-#define EOS_Af_D       250      /* Freeze Specific-Free-Energy (MJ/kg) (Density (Mg/m^3)-dependent) */
-#define EOS_D_Af       251      /* Density (Mg/m^3) (Freeze Specific-Free-Energy (MJ/kg)-dependent) */
-#define EOS_Af_Tf      252      /* Freeze Specific-Free-Energy (MJ/kg) (Freeze Temperature (K)-dependent) */
-#define EOS_Af_Pf      253      /* Freeze Specific-Free-Energy (MJ/kg) (Freeze Pressure (GPa)-dependent) */
-#define EOS_Af_Uf      254      /* Freeze Specific-Free-Energy (MJ/kg) (Freeze Specific-Internal-Energy (MJ/kg)-dependent) */
+#define EOS_Uf_Af      249      /* Freeze Specific-Internal-Energy (MJ/kg) (Freeze Specific-Helmholtz-Free-Energy (MJ/kg)-dependent) */
+#define EOS_Af_D       250      /* Freeze Specific-Helmholtz-Free-Energy (MJ/kg) (Density (Mg/m^3)-dependent) */
+#define EOS_D_Af       251      /* Density (Mg/m^3) (Freeze Specific-Helmholtz-Free-Energy (MJ/kg)-dependent) */
+#define EOS_Af_Tf      252      /* Freeze Specific-Helmholtz-Free-Energy (MJ/kg) (Freeze Temperature (K)-dependent) */
+#define EOS_Af_Pf      253      /* Freeze Specific-Helmholtz-Free-Energy (MJ/kg) (Freeze Pressure (GPa)-dependent) */
+#define EOS_Af_Uf      254      /* Freeze Specific-Helmholtz-Free-Energy (MJ/kg) (Freeze Specific-Internal-Energy (MJ/kg)-dependent) */
 #define EOS_Gs_D       255      /* Shear Modulus (Gpa) (Density (Mg/m^3)-dependent) */
 #define EOS_D_Gs       256      /* Density (Mg/m^3) (Shear Modulus (Gpa)-dependent) */
 #define EOS_Ogb        257      /* Calculated versus Interpolated Opacity Grid Boundary */
@@ -259,21 +259,62 @@ typedef enum EOS_RECORD_TYPE_enum EOS_RECORD_TYPE;
 #define EOS_Ktc_DT     276      /* Thermal Conductivity (1/cm/s) (Density (Mg/m^3)- and Temperature (K)-dependent) */
 #define EOS_B_DT       279      /* Thermoelectric Coefficient (1/cm^2/s) (Density (Mg/m^3)- and Temperature (K)-dependent) */
 #define EOS_Kc_DT      282      /* Electron Conductive Opacity (Conductivity Model) (cm^2/g) (Density (Mg/m^3)- and Temperature (K)-dependent) */
-#define EOS_V_PtT      285      /* Volume (m^3)- (Total Specific-Free-Energy (MJ/kg)- and Temperature (K)-dependent)  */
+#define EOS_V_PtT      285      /* Volume (m^3)- (Total Specific-Helmholtz-Free-Energy (MJ/kg)- and Temperature (K)-dependent)  */
 #define EOS_M_DT       305      /* Mass Fraction (Density- and Temperature-dependent) */
+#define EOS_Gt_DT      310      /* Total Specific-Gibbs-Free-Energy (MJ/kg) (Density (Mg/m^3)- and Temperature (K)-dependent) */
+#define EOS_T_DGt      311      /* Temperature (K) (Density (Mg/m^3)- and Total Specific-Gibbs-Free-Energy (MJ/kg)-dependent) */
+#define EOS_Pt_DGt     312      /* Total Pressure (GPa) (Density (Mg/m^3)- and Total Specific-Gibbs-Free-Energy (MJ/kg)-dependent) */
+#define EOS_Ut_DGt     313      /* Total Specific-Internal-Energy (MJ/kg) (Density (Mg/m^3)- and Total Specific-Gibbs-Free-Energy (MJ/kg)-dependent) */
+#define EOS_At_DGt     314      /* Total Specific-Helmholtz-Free-Energy (MJ/kg) (Density (Mg/m^3)- and Total Specific-Gibbs-Free-Energy (MJ/kg)-dependent) */
+#define EOS_St_DGt     315      /* Total Specific-Entropy (MJ/kg/K) (Density (Mg/m^3)- and Total Specific-Gibbs-Free-Energy (MJ/kg)-dependent) */
+#define EOS_Gt_DPt     316      /* Total Specific-Gibbs-Free-Energy (MJ/kg) (Density (Mg/m^3)- and Total Pressure (GPa)-dependent) */
+#define EOS_Gt_DUt     317      /* Total Specific-Gibbs-Free-Energy (MJ/kg) (Density (Mg/m^3)- and Total Specific-Internal-Energy (MJ/kg)-dependent) */
+#define EOS_Gt_DAt     318      /* Total Specific-Gibbs-Free-Energy (MJ/kg) (Density (Mg/m^3)- and Total Specific-Helmholtz-Free-Energy (MJ/kg)-dependent) */
+#define EOS_Gt_DSt     319      /* Total Specific-Gibbs-Free-Energy (MJ/kg) (Density (Mg/m^3)- and Total Specific-Entropy (MJ/kg/K)-dependent) */
+#define EOS_Gic_DT     320      /* Ion Specific-Gibbs-Free-Energy plus Cold Curve Specific-Gibbs-Free-Energy (MJ/kg) (Density (Mg/m^3)- and Temperature (K)-dependent) */
+#define EOS_T_DGic     321      /* Temperature (K) (Density (Mg/m^3)- and Ion Specific-Gibbs-Free-Energy plus Cold Curve Specific-Gibbs-Free-Energy (MJ/kg)-dependent) */
+#define EOS_Pic_DGic   322      /* Ion Pressure plus Cold Curve Pressure (GPa) (Density (Mg/m^3)- and Ion Specific-Gibbs-Free-Energy plus Cold Curve Specific-Gibbs-Free-Energy (MJ/kg)-dependent) */
+#define EOS_Uic_DGic   323      /* Ion Specific-Internal-Energy plus Cold Curve Specific-Internal-Energy (MJ/kg) (Density (Mg/m^3)- and Ion Specific-Gibbs-Free-Energy plus Cold Curve Specific-Gibbs-Free-Energy (MJ/kg)-dependent) */
+#define EOS_Aic_DGic   324      /* Ion Specific-Helmholtz-Free-Energy plus Cold Curve Specific-Helmholtz-Free-Energy (MJ/kg) (Density (Mg/m^3)- and Ion Specific-Gibbs-Free-Energy plus Cold Curve Specific-Gibbs-Free-Energy (MJ/kg)-dependent) */
+#define EOS_Sic_DGic   325      /* Ion Specific-Entropy (MJ/kg/K) (Density (Mg/m^3)- and Ion Specific-Gibbs-Free-Energy (MJ/kg)-dependent) */
+#define EOS_Gic_DPic   326      /* Ion Specific-Gibbs-Free-Energy plus Cold Curve Specific-Gibbs-Free-Energy (MJ/kg) (Density (Mg/m^3)- and Ion Pressure plus Cold Curve Pressure (GPa)-dependent) */
+#define EOS_Gic_DUic   327      /* Ion Specific-Gibbs-Free-Energy plus Cold Curve Specific-Gibbs-Free-Energy (MJ/kg) (Density (Mg/m^3)- and Ion Specific-Internal-Energy plus Cold Curve Specific-Internal-Energy (MJ/kg)-dependent) */
+#define EOS_Gic_DAic   328      /* Ion Specific-Gibbs-Free-Energy plus Cold Curve Specific-Gibbs-Free-Energy (MJ/kg) (Density (Mg/m^3)- and Ion Specific-Helmholtz-Free-Energy plus Cold Curve Specific-Helmholtz-Free-Energy (MJ/kg)-dependent) */
+#define EOS_Gic_DSic   329      /* Ion Specific-Gibbs-Free-Energy plus Cold Curve Specific-Gibbs-Free-Energy (MJ/kg) (Density (Mg/m^3)- and Ion Specific-Entropy plus Cold Curve Specific-Entropy (MJ/kg/K)-dependent) */
+#define EOS_Ge_DT      330      /* Electron Specific-Gibbs-Free-Energy (MJ/kg) (Density (Mg/m^3)- and Temperature (K)-dependent) */
+#define EOS_T_DGe      331      /* Temperature (K) (Density (Mg/m^3)- and Electron Specific-Gibbs-Free-Energy (MJ/kg)-dependent) */
+#define EOS_Pe_DGe     332      /* Electron Pressure (GPa) (Density (Mg/m^3)- and Electron Specific-Gibbs-Free-Energy (MJ/kg)-dependent) */
+#define EOS_Ue_DGe     333      /* Electron Specific-Internal-Energy (MJ/kg) (Density (Mg/m^3)- and Electron Specific-Gibbs-Free-Energy (MJ/kg)-dependent) */
+#define EOS_Ae_DGe     334      /* Electron Specific-Helmholtz-Free-Energy (MJ/kg) (Density (Mg/m^3)- and Electron Specific-Gibbs-Free-Energy (MJ/kg)-dependent) */
+#define EOS_Se_DGe     335      /* Electron Specific-Entropy (MJ/kg/K) (Density (Mg/m^3)- and Electron Specific-Gibbs-Free-Energy (MJ/kg)-dependent) */
+#define EOS_Ge_DPe     336      /* Electron Specific-Gibbs-Free-Energy (MJ/kg) (Density (Mg/m^3)- and Electron Pressure (GPa)-dependent) */
+#define EOS_Ge_DUe     337      /* Electron Specific-Gibbs-Free-Energy (MJ/kg) (Density (Mg/m^3)- and Electron Specific-Internal-Energy (MJ/kg)-dependent) */
+#define EOS_Ge_DAe     338      /* Electron Specific-Gibbs-Free-Energy (MJ/kg) (Density (Mg/m^3)- and Electron Specific-Helmholtz-Free-Energy (MJ/kg)-dependent) */
+#define EOS_Ge_DSe     339      /* Electron Specific-Gibbs-Free-Energy (MJ/kg) (Density (Mg/m^3)- and Electron Specific-Entropy (MJ/kg/K)-dependent) */
+#define EOS_Giz_DT     340      /* Ion Specific-Gibbs-Free-Energy Including Zero Point (MJ/kg) (Density (Mg/m^3)- and Temperature (K)-dependent) */
+#define EOS_T_DGiz     341      /* Temperature (K) (Density (Mg/m^3)- and Ion Specific-Gibbs-Free-Energy Including Zero Point (MJ/kg)-dependent) */
+#define EOS_Piz_DGiz   342      /* Ion Pressure Including Zero Point (GPa) (Density (Mg/m^3)- and Ion Specific-Gibbs-Free-Energy Including Zero Point (MJ/kg)-dependent) */
+#define EOS_Uiz_DGiz   343      /* Ion Specific-Internal-Energy Including Zero Point (MJ/kg) (Density (Mg/m^3)- and Ion Specific-Gibbs-Free-Energy Including Zero Point (MJ/kg)-dependent) */
+#define EOS_Aiz_DGiz   344      /* Ion Specific-Helmholtz-Free-Energy Including Zero Point (MJ/kg) (Density (Mg/m^3)- and Ion Specific-Gibbs-Free-Energy Including Zero Point (MJ/kg)-dependent) */
+#define EOS_Siz_DGiz   345      /* Ion Specific-Entropy (MJ/kg/K) (Density (Mg/m^3)- and Ion Specific-Gibbs-Free-Energy (MJ/kg)-dependent) */
+#define EOS_Giz_DPiz   346      /* Ion Specific-Gibbs-Free-Energy Including Zero Point (MJ/kg) (Density (Mg/m^3)- and Ion Pressure Including Zero Point (GPa)-dependent) */
+#define EOS_Giz_DUiz   347      /* Ion Specific-Gibbs-Free-Energy Including Zero Point (MJ/kg) (Density (Mg/m^3)- and Ion Specific-Internal-Energy Including Zero Point (MJ/kg)-dependent) */
+#define EOS_Giz_DAiz   348      /* Ion Specific-Gibbs-Free-Energy Including Zero Point (MJ/kg) (Density (Mg/m^3)- and Ion Specific-Helmholtz-Free-Energy Including Zero Point (MJ/kg)-dependent) */
+#define EOS_Giz_DSiz   349      /* Ion Specific-Gibbs-Free-Energy Including Zero Point (MJ/kg) (Density (Mg/m^3)- and Ion Specific-Entropy Including Zero Point (MJ/kg/K)-dependent) */
+#define EOS_Gc_D       350      /* Specific-Gibbs-Free-Energy Cold Curve (MJ/kg) (Density (Mg/m^3)-dependent) */
 
 /* Variable definition constants */
 #define EOS_B        10000      /* Thermoelectric Coefficient (1/cm^2/s) */
-#define EOS_Ac       10001      /* Specific-Free-Energy Cold Curve (MJ/kg) */
-#define EOS_Ae       10002      /* Electron Specific-Free-Energy (MJ/kg) */
-#define EOS_Af       10003      /* Freeze Specific-Free-Energy (MJ/kg) */
-#define EOS_Aiz      10004      /* Ion Specific-Free-Energy Including Zero Point (MJ/kg) */
-#define EOS_Aic      10005      /* Ion Specific-Free-Energy plus Cold Curve Specific-Free-Energy (MJ/kg) */
-#define EOS_Als      10006      /* Liquid or Solid Specific-Free-Energy (MJ/kg) */
-#define EOS_Am       10007      /* Melt Specific-Free-Energy (MJ/kg) */
+#define EOS_Ac       10001      /* Specific-Helmholtz-Free-Energy Cold Curve (MJ/kg) */
+#define EOS_Ae       10002      /* Electron Specific-Helmholtz-Free-Energy (MJ/kg) */
+#define EOS_Af       10003      /* Freeze Specific-Helmholtz-Free-Energy (MJ/kg) */
+#define EOS_Aiz      10004      /* Ion Specific-Helmholtz-Free-Energy Including Zero Point (MJ/kg) */
+#define EOS_Aic      10005      /* Ion Specific-Helmholtz-Free-Energy plus Cold Curve Specific-Helmholtz-Free-Energy (MJ/kg) */
+#define EOS_Als      10006      /* Liquid or Solid Specific-Helmholtz-Free-Energy (MJ/kg) */
+#define EOS_Am       10007      /* Melt Specific-Helmholtz-Free-Energy (MJ/kg) */
 #define EOS_Gs       10008      /* Shear Modulus (Gpa) */
-#define EOS_At       10009      /* Total Specific-Free-Energy (MJ/kg) */
-#define EOS_Av       10010      /* Vapor Specific-Free-Energy (MJ/kg) */
+#define EOS_At       10009      /* Total Specific-Helmholtz-Free-Energy (MJ/kg) */
+#define EOS_Av       10010      /* Vapor Specific-Helmholtz-Free-Energy (MJ/kg) */
 #define EOS_Kc       10011      /* Electron Conductive Opacity (Conductivity Model) (cm^2/g) */
 #define EOS_Keo      10012      /* Electron Conductive Opacity (Opacity Model) (cm^2/g) */
 #define EOS_Kec      10013      /* Electrical Conductivity (1/s) */
@@ -311,9 +352,14 @@ typedef enum EOS_RECORD_TYPE_enum EOS_RECORD_TYPE;
 #define EOS_Zfo      10045      /* Mean Ion Charge (Opacity Model) (free electrons per atom) */
 #define EOS_V        10046      /* Volume (m^3) */
 #define EOS_M        10047      /* Mass Fraction */
+#define EOS_Gt       10048      /* Total Specific-Gibbs-Free-Energy (MJ/kg) */
+#define EOS_Gic      10049      /* Ion Specific-Gibbs-Free-Energy Including Zero Point (MJ/kg) */
+#define EOS_Ge       10050      /* Electron Specific-Gibbs-Free-Energy (MJ/kg) */
+#define EOS_Giz      10051      /* Ion Specific-Gibbs-Free-Energy Including Zero Point (MJ/kg) */
+#define EOS_Gc       10052      /* Specific-Gibbs-Free-Energy Cold Curve (MJ/kg) */
 
 /* Data information constants */
-#define EOS_NUM_INFO_CONSTANTS  40
+#define EOS_NUM_INFO_CONSTANTS  49
 #define EOS_Cmnt_Len             1      /* The length in characters of the comments available for the specified data table */
 #define EOS_Exchange_Coeff       2      /* The exchange coefficient */
 #define EOS_F_Convert_Factor   EOS_F_CONVERT    /* The conversion factor corresponding to the dependent variable, F(x,y) */
@@ -354,6 +400,14 @@ typedef enum EOS_RECORD_TYPE_enum EOS_RECORD_TYPE;
 #define EOS_dFx_Species_Data    35      /* The species-specific dF/dX values calculated by the mixing algorithm */
 #define EOS_dFy_Species_Data    36      /* The species-specific dF/dY values calculated by the mixing algorithm */
 #define EOS_nXYPairs            37      /* The number of (X,Y) values last passed into the the interpolator */
+#define EOS_X_LOWER_BOUND       38      /* The extrapolation lower bound(s) array, of extent EOS_NX, for the xVals */
+#define EOS_X_UPPER_BOUND       39      /* The extrapolation upper bound(s) array, of extent EOS_NX, for the xVals */
+#define EOS_Y_LOWER_BOUND       40      /* The extrapolation lower bound(s) array, of extent EOS_NY, for the yVals */
+#define EOS_Y_UPPER_BOUND       41      /* The extrapolation upper bound(s) array, of extent EOS_NY, for the yVals */
+#define EOS_NX                  42      /* The extent of the xVals extrapolation lower/upper bound(s) arrays */
+#define EOS_NY                  43      /* The extent of the yVals extrapolation lower/upper bound(s) arrays */
+#define EOS_X_BOUND_GRID        44      /* The extrapolation bound(s) grid array, of extent EOS_NX, for the xVals */
+#define EOS_Y_BOUND_GRID        45      /* The extrapolation bound(s) grid array, of extent EOS_NY, for the yVals */
 
 /* Define hidden option flags that are currently not defined in the public interface.
  *  NOTE: If you want to use these in a test code, copy these defines into your code. */
@@ -366,8 +420,8 @@ typedef enum EOS_RECORD_TYPE_enum EOS_RECORD_TYPE;
 
 /* Table setup and interpolation option constants */
 #define EOS_NUM_LOADING_OPTIONS 15
-#define EOS_NUM_INTERPOLATION_OPTIONS 9
-#define EOS_NUM_TABLE_OPTIONS   29      /* Total number of option flags, not including EOS_NUM_PRIVATE_OPTIONS */
+#define EOS_NUM_INTERPOLATION_OPTIONS 11
+#define EOS_NUM_TABLE_OPTIONS   31      /* Total number of option flags, not including EOS_NUM_PRIVATE_OPTIONS */
 #define EOS_TOTAL_TABLE_OPTIONS (EOS_NUM_TABLE_OPTIONS + EOS_NUM_PRIVATE_OPTIONS)
 #define EOS_NUM_GENERAL_OPTIONS (EOS_TOTAL_TABLE_OPTIONS - EOS_NUM_LOADING_OPTIONS - EOS_NUM_INTERPOLATION_OPTIONS)
 #define EOS_MIN_OPTION_FLAG_VALUE   1000        /* Minimum option flag value */
@@ -399,7 +453,9 @@ typedef enum EOS_RECORD_TYPE_enum EOS_RECORD_TYPE;
 #define EOS_XY_PASSTHRU  1025 /* Neither create an internal copy nor modify the xVals and yVals inputs for eos_Interpolate, eos_Mix and eos_CheckExtrap. Use host code's arrays directly -- unmodified. Overrides previously-set EOS_XY_MODIFY option. */
 #define EOS_XY_MODIFY  1026 /* Do not create an internal copy of the xVals and yVals inputs for eos_Interpolate, eos_Mix and eos_CheckExtrap. Modify the xVals and yVals inputs in situ -- use host code's arrays directly. Overrides previously-set EOS_XY_PASSTHRU option. */
 #define EOS_INVERT_AT_SETUP  1027 /* Table(s) are inverted at setup, which means inverse interpolation is avoided later */
-#define EOS_NORMAL_DERIVATIVES  1028  /* Return EOS partial derivatives of F with respect to both x and y.
+#define EOS_USE_HOST_XY 1028 /* Enable EOS_XY_MODIFY, and enable logic to revert the modified xVals and yVals inputs after interpolation is completed */
+#define EOS_SKIP_EXTRAP_CHECK   1029 /* All extrapolation checks are skipped unless host calls eos_CheckExtrap */
+#define EOS_NORMAL_DERIVATIVES  1030  /* Return EOS partial derivatives of F with respect to both x and y.
 					 This is not in the public interface anymore since it is implemented by default,
 				         and it is still defined in case other similar options are implemented in the future. */
 

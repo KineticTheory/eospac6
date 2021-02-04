@@ -8,7 +8,7 @@
  ********************************************************************/
 
 /*! \file
- *  \ingroup tests
+ *  \ingroup CPP tests
  *  \brief Ensure data is correctly monotonic per data type requirements.
  *
  *  See SourceForge issue

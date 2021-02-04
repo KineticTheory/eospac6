@@ -8,7 +8,7 @@
  ********************************************************************/
 
 /*! \file
- *  \ingroup tests quick
+ *  \ingroup C tests quick
  *  \brief This is a unit test of the eos_GetVersionLength and
  *  eos_GetVersion public functions.
  *

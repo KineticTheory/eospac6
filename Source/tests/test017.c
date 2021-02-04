@@ -8,7 +8,7 @@
  ********************************************************************/
 
 /*! \file
- *  \ingroup tests
+ *  \ingroup C tests
  *  \brief Demonstrate category 0 and 3 interpolation for EOS and
  *  opacity data.
  *

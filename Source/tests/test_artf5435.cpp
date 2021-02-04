@@ -8,7 +8,7 @@
  ********************************************************************/
 
 /*! \file
- *  \ingroup tests
+ *  \ingroup CPP tests
  *  \brief Perform the following tests:
  *    -# Ensure extrapolation is allowed down to T=0,
  *    -# and test self-consistency of various interpolated data.
@@ -97,7 +97,7 @@ int main ()
   version = (EOS_CHAR*) malloc(vlen * sizeof(EOS_CHAR));
   eos_GetVersion(version);
 
-  cout << endl << "fcmp_ignore: EOSPAC version " << version << endl;;
+  cout << endl << "fcmp_ignore: EOSPAC version " << version << endl;
 
   free(version);
 

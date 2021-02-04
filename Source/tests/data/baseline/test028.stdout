@@ -5,4 +5,4 @@ eos_SetOption error EOS_OK
 eos_Interpolate error EOS_OK
 input density value is 9.000000
 input pressure value is 27.000000
-interpolated value is 866.860721
+interpolated value is 872.883643

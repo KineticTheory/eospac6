@@ -5,6 +5,7 @@
 
 #include <string.h>
 
+#undef DEBUG_PRINT
 
 ses_error_flag ses_define_table(ses_table_id tid, ses_label description, long nr, long nt, long num_independent, long num_arrays, char** size_arrays, ses_label* labels) {
  
@@ -23,7 +24,6 @@ ses_error_flag ses_define_table(ses_table_id tid, ses_label description, long nr
    printf("ses_define_table:  num_arrays is %d\n", num_arrays);
    printf("ses_define_table:  size_arrays[0] is %s\n", size_arrays[0]);
    printf("ses_define_table:  labels[0] is %s\n", labels[0]);
-
 #endif
 
    ses_error_flag return_value = SES_NO_ERROR;
@@ -47,6 +47,14 @@ ses_error_flag ses_define_table(ses_table_id tid, ses_label description, long nr
     return SES_OBJECT_OUT_OF_RANGE;
   }
 
+  if (description == NULL) {
+#ifdef DEBUG_PRINT
+    printf("ses_define_table:  description is not set.\n");
+#endif
+    _set_latest_error(SES_OBJECT_OUT_OF_RANGE);
+    return SES_OBJECT_OUT_OF_RANGE;
+  }
+
 
   _the_tables[new_table_index]->_num_arrays = num_arrays;
 
@@ -56,6 +64,8 @@ ses_error_flag ses_define_table(ses_table_id tid, ses_label description, long nr
 
   int j = 0;
   int length = 0;
+  int desc_length = 0;
+
   for (j=0; j<num_arrays; j++) {
 
     length = strlen(labels[j]) + 3; /* add 3 to length allow wrapped in quotes, ", and \0 */
@@ -65,7 +75,8 @@ ses_error_flag ses_define_table(ses_table_id tid, ses_label description, long nr
     strcat(_the_tables[new_table_index]->_label[j], labels[j]);
     strcat(_the_tables[new_table_index]->_label[j], "\"");
   }
-  _the_tables[new_table_index]->_description = malloc(sizeof(char)*(strlen(description)+3));
+  desc_length = strlen(description) + 3;
+  _the_tables[new_table_index]->_description = malloc(sizeof(char)*desc_length);
   strcpy(_the_tables[new_table_index]->_description, "\"");
   strcat(_the_tables[new_table_index]->_description, description);
   strcat(_the_tables[new_table_index]->_description, "\"");
@@ -77,6 +88,9 @@ ses_error_flag ses_define_table(ses_table_id tid, ses_label description, long nr
 
   int i = 0;
   for (i = 0; i < num_arrays; i++) {
+#ifdef DEBUG_PRINT
+    printf("ses_define_table: size_arrays[%d] =  %s\n", i, size_arrays[i]);
+#endif
       _the_tables[new_table_index]->_size_arrays[i] = malloc(sizeof(char) * strlen(size_arrays[i]) + 1);
       strcpy(_the_tables[new_table_index]->_size_arrays[i], size_arrays[i]);
   }

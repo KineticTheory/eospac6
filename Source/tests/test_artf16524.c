@@ -8,7 +8,7 @@
  ********************************************************************/
 
 /*! \file
- * \ingroup tests
+ * \ingroup C tests
  *  \brief Ensure eos_Interpolate and eos_CheckExtrap generate and report expected extrapolation
  *         error codes.
  *

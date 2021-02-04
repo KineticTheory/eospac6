@@ -1,5 +1,5 @@
 
-#define DEBUG_WRAP
+#undef DEBUG_WRAP
 
 function ses_get_table_sizes_f90(the_handle, mid, the_buffer, the_size)
 

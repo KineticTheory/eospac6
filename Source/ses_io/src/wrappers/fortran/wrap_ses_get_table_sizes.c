@@ -9,7 +9,7 @@
 #include <stdio.h>
 
 
-#define DEBUG_WRAP
+#undef DEBUG_WRAP
 
 #ifdef LC_UNDER
 ses_boolean ses_get_table_sizes_(ses_file_handle* pt_handle, ses_material_id* mid, ses_table_id_reference the_buffer, long* size) {

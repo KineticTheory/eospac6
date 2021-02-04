@@ -7,6 +7,8 @@
 #define _read_double_tomax_ascii HEADER(_read_double_tomax)
 #define _write_double_ascii HEADER(_write_double_ascii)
 #define _write_double_tomax_ascii HEADER(_write_double_tomax_ascii)
+#define _read_long_tomax_ascii HEADER(_read_long_tomax_ascii)
+#define _read_long_tomax_pFILE_ascii HEADER(_read_long_tomax_pFILE_ascii)
 #define _read_long_ascii HEADER(_read_long_ascii)
 #define _write_long_ascii HEADER(_write_long_ascii)
 #define _read_long_pFILE_ascii HEADER(_read_long_pFILE_ascii)

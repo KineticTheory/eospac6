@@ -17,7 +17,6 @@
 program test018
 
   use eos_Interface2003
-!!$  use dataInterface
   implicit none
 
   integer(EOS_INTEGER),parameter :: nTableTypes = 1

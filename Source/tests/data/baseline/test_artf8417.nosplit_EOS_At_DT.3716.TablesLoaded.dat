@@ -14,4 +14,4 @@ Ordered list of Sesame files searched:
     /opt/local/codes/data/eos/export-controlled/ieee64/sesou
 
 TableHandle=0 matid =  3716 Data Type = EOS_At_DT	NOT LOADED
-Description = Total Specific-Free-Energy (MJ/kg) (Density (Mg/m^3)- and Temperature (K)-dependent)
+Description = Total Specific-Helmholtz-Free-Energy (MJ/kg) (Density (Mg/m^3)- and Temperature (K)-dependent)

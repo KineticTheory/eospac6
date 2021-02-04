@@ -8,7 +8,7 @@
  ********************************************************************/
 
 /*! \file
- *  \ingroup tests
+ *  \ingroup C tests
  *  \brief Check that the correct tables are being loaded for EOS_Ktc_DT
  *         and material 25252 with a forced EOS_SPLIT_COWAN option.
  *

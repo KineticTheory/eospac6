@@ -13,12 +13,15 @@ function ses_date_f90(the_handle)
    integer :: return_value
    integer :: size, i
 
- 
+
 #ifdef DEBUG_WRAP
    print *, "ses_date_f90:  the_handle is ", the_handle
 #endif
    return_value =  ses_date(the_handle, ses_date_f90, size)
-   do i = size, SES_LEN_LARGE
+#ifdef DEBUG_WRAP
+    print *, "ses_date_f90:  size:  ", size
+#endif
+   do i = size+1, SES_LEN_LARGE
      ses_date_f90(i:i) = ' '
    enddo
    

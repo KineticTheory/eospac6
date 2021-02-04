@@ -3146,7 +3146,7 @@ Description = Density (Mg/m^3) (Total Pressure (GPa)- and Temperature (K)-depend
 TableHandle=3 matid =  9981 source = ./../../../../../tests/data/sesame1 page =  1
 Data Type = EOS_At_DPt
 Loading Options: EOS_MONOTONIC_IN_Y
-Description = Total Specific-Free-Energy (MJ/kg) (Density (Mg/m^3)- and Total Pressure (GPa)-dependent)
+Description = Total Specific-Helmholtz-Free-Energy (MJ/kg) (Density (Mg/m^3)- and Total Pressure (GPa)-dependent)
   fconv =   1.000000000000000E+00         xconv =   1.000000000000000E+00         yconv =   1.000000000000000E+00
 
                      y =   0.000000000000000E+00   5.287881277518729E-09   1.057576255503746E-08   1.586364383255619E-08   2.643940638759365E-08   4.230305022014984E-08   6.345457533022476E-08   9.518186299533714E-08   1.427727944930057E-07   2.168031323782679E-07
@@ -3266,7 +3266,7 @@ Description = Total Specific-Free-Energy (MJ/kg) (Density (Mg/m^3)- and Total Pr
 TableHandle=3 matid =  9981 source = ./../../../../../tests/data/sesame1 page =  2
 Data Type = EOS_At_DPt
 Loading Options: EOS_MONOTONIC_IN_Y
-Description = Total Specific-Free-Energy (MJ/kg) (Density (Mg/m^3)- and Total Pressure (GPa)-dependent)
+Description = Total Specific-Helmholtz-Free-Energy (MJ/kg) (Density (Mg/m^3)- and Total Pressure (GPa)-dependent)
   fconv =   1.000000000000000E+00         xconv =   1.000000000000000E+00         yconv =   1.000000000000000E+00
 
                      y =   3.278486392061608E-07   5.076366026417980E-07   7.614549039626968E-07   1.142182355944045E-06   1.861334209686592E-06   2.792001314529889E-06   4.230305022014983E-06   6.345457533022474E-06   9.518186299533713E-06   1.438303707485094E-05
@@ -3386,7 +3386,7 @@ Description = Total Specific-Free-Energy (MJ/kg) (Density (Mg/m^3)- and Total Pr
 TableHandle=3 matid =  9981 source = ./../../../../../tests/data/sesame1 page =  3
 Data Type = EOS_At_DPt
 Loading Options: EOS_MONOTONIC_IN_Y
-Description = Total Specific-Free-Energy (MJ/kg) (Density (Mg/m^3)- and Total Pressure (GPa)-dependent)
+Description = Total Specific-Helmholtz-Free-Energy (MJ/kg) (Density (Mg/m^3)- and Total Pressure (GPa)-dependent)
   fconv =   1.000000000000000E+00         xconv =   1.000000000000000E+00         yconv =   1.000000000000000E+00
 
                      y =   2.173699932512179E-05   3.384244017611986E-05   5.076366026417979E-05   7.614549039626972E-05   1.142182355944046E-04   1.861334209686593E-04   2.792001314529889E-04   4.230305022014983E-04   6.345457533022473E-04   9.518186299533714E-04
@@ -3506,7 +3506,7 @@ Description = Total Specific-Free-Energy (MJ/kg) (Density (Mg/m^3)- and Total Pr
 TableHandle=3 matid =  9981 source = ./../../../../../tests/data/sesame1 page =  4
 Data Type = EOS_At_DPt
 Loading Options: EOS_MONOTONIC_IN_Y
-Description = Total Specific-Free-Energy (MJ/kg) (Density (Mg/m^3)- and Total Pressure (GPa)-dependent)
+Description = Total Specific-Helmholtz-Free-Energy (MJ/kg) (Density (Mg/m^3)- and Total Pressure (GPa)-dependent)
   fconv =   1.000000000000000E+00         xconv =   1.000000000000000E+00         yconv =   1.000000000000000E+00
 
                      y =   1.480606757705244E-03   2.284364711888091E-03   3.490001643162361E-03   5.287881277518729E-03   7.931821916278094E-03   1.184485406164195E-02   1.776728109246293E-02   2.707395214089590E-02   4.061092821134384E-02   6.081063469146539E-02
@@ -3626,7 +3626,7 @@ Description = Total Specific-Free-Energy (MJ/kg) (Density (Mg/m^3)- and Total Pr
 TableHandle=3 matid =  9981 source = ./../../../../../tests/data/sesame1 page =  5
 Data Type = EOS_At_DPt
 Loading Options: EOS_MONOTONIC_IN_Y
-Description = Total Specific-Free-Energy (MJ/kg) (Density (Mg/m^3)- and Total Pressure (GPa)-dependent)
+Description = Total Specific-Helmholtz-Free-Energy (MJ/kg) (Density (Mg/m^3)- and Total Pressure (GPa)-dependent)
   fconv =   1.000000000000000E+00         xconv =   1.000000000000000E+00         yconv =   1.000000000000000E+00
 
                      y =   9.137458847552361E-02   1.374849132154869E-01   2.062273698232304E-01   3.109274191181013E-01   4.653335524216481E-01   6.971542676280693E-01   1.044885340437701E+00   1.565212858145544E+00   2.337243524663278E+00   3.485771338140346E+00
@@ -3746,7 +3746,7 @@ Description = Total Specific-Free-Energy (MJ/kg) (Density (Mg/m^3)- and Total Pr
 TableHandle=3 matid =  9981 source = ./../../../../../tests/data/sesame1 page =  6
 Data Type = EOS_At_DPt
 Loading Options: EOS_MONOTONIC_IN_Y
-Description = Total Specific-Free-Energy (MJ/kg) (Density (Mg/m^3)- and Total Pressure (GPa)-dependent)
+Description = Total Specific-Helmholtz-Free-Energy (MJ/kg) (Density (Mg/m^3)- and Total Pressure (GPa)-dependent)
   fconv =   1.000000000000000E+00         xconv =   1.000000000000000E+00         yconv =   1.000000000000000E+00
 
                      y =   5.224426702188505E+00   7.826064290727719E+00   1.167564186076135E+01   1.742885669070173E+01   2.614328503605259E+01   3.913032145363860E+01   5.911851268265937E+01   8.841337496011315E+01   1.319855166868675E+02   1.977667597792005E+02
@@ -3866,7 +3866,7 @@ Description = Total Specific-Free-Energy (MJ/kg) (Density (Mg/m^3)- and Total Pr
 TableHandle=3 matid =  9981 source = ./../../../../../tests/data/sesame1 page =  7
 Data Type = EOS_At_DPt
 Loading Options: EOS_MONOTONIC_IN_Y
-Description = Total Specific-Free-Energy (MJ/kg) (Density (Mg/m^3)- and Total Pressure (GPa)-dependent)
+Description = Total Specific-Helmholtz-Free-Energy (MJ/kg) (Density (Mg/m^3)- and Total Pressure (GPa)-dependent)
   fconv =   1.000000000000000E+00         xconv =   1.000000000000000E+00         yconv =   1.000000000000000E+00
 
                      y =   2.961213515410488E+02   4.441820273115733E+02   6.662730409673599E+02   1.004697442728558E+03   1.522909807925394E+03   2.273788949333053E+03   3.418086457788106E+03   5.127129686682159E+03   7.783761240507569E+03   1.163333881054120E+04
@@ -3986,7 +3986,7 @@ Description = Total Specific-Free-Energy (MJ/kg) (Density (Mg/m^3)- and Total Pr
 TableHandle=3 matid =  9981 source = ./../../../../../tests/data/sesame1 page =  8
 Data Type = EOS_At_DPt
 Loading Options: EOS_MONOTONIC_IN_Y
-Description = Total Specific-Free-Energy (MJ/kg) (Density (Mg/m^3)- and Total Pressure (GPa)-dependent)
+Description = Total Specific-Helmholtz-Free-Energy (MJ/kg) (Density (Mg/m^3)- and Total Pressure (GPa)-dependent)
   fconv =   1.000000000000000E+00         xconv =   1.000000000000000E+00         yconv =   1.000000000000000E+00
 
                      y =   1.745000821581180E+04   2.643940638759365E+04   4.018789770914234E+04   6.091639231701576E+04   9.095155797332211E+04   1.374849132154869E+05   2.115152511007491E+05   3.172728766511237E+05   4.737941624656782E+05   7.191518537425471E+05
@@ -4106,7 +4106,7 @@ Description = Total Specific-Free-Energy (MJ/kg) (Density (Mg/m^3)- and Total Pr
 TableHandle=3 matid =  9981 source = ./../../../../../tests/data/sesame1 page =  9
 Data Type = EOS_At_DPt
 Loading Options: EOS_MONOTONIC_IN_Y
-Description = Total Specific-Free-Energy (MJ/kg) (Density (Mg/m^3)- and Total Pressure (GPa)-dependent)
+Description = Total Specific-Helmholtz-Free-Energy (MJ/kg) (Density (Mg/m^3)- and Total Pressure (GPa)-dependent)
   fconv =   1.000000000000000E+00         xconv =   1.000000000000000E+00         yconv =   1.000000000000000E+00
 
                      y =   1.099879305723896E+06   1.692122008805993E+06   2.538183013208990E+06   3.807274519813485E+06   5.922427030820977E+06   9.306671048432963E+06   1.480606757705244E+07   2.538183013208989E+07   3.807274519813485E+07   5.922427030820977E+07
@@ -4226,7 +4226,7 @@ Description = Total Specific-Free-Energy (MJ/kg) (Density (Mg/m^3)- and Total Pr
 TableHandle=3 matid =  9981 source = ./../../../../../tests/data/sesame1 page = 10
 Data Type = EOS_At_DPt
 Loading Options: EOS_MONOTONIC_IN_Y
-Description = Total Specific-Free-Energy (MJ/kg) (Density (Mg/m^3)- and Total Pressure (GPa)-dependent)
+Description = Total Specific-Helmholtz-Free-Energy (MJ/kg) (Density (Mg/m^3)- and Total Pressure (GPa)-dependent)
   fconv =   1.000000000000000E+00         xconv =   1.000000000000000E+00         yconv =   1.000000000000000E+00
 
                      y =   1.015273205283596E+08   1.692122008805993E+08   2.538183013208990E+08   4.230305022014983E+08   6.768488035223972E+08   1.015273205283596E+09   1.692122008805993E+09   3.384244017611986E+09   8.460610044029966E+09   1.692122008805993E+10

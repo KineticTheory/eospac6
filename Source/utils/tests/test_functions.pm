@@ -36,25 +36,37 @@ sub run {
 }
 
 sub run_get_sesame_data {
-  my ($exe, $matid, $tables, $subtables) = @_;
+  my ($exe, $matid, $tables, $subtables, $options) = @_;
   exit -1 if ! -e $exe;
-  exit -2 if $matid !~ /^\d+$/;
-  exit -3 if ! scalar(@$tables);
+  # exit -2 if $matid !~ /^\d+$/;
+  # exit -3 if ! scalar(@$tables);
+  my $opt_str = ($options and scalar(@$options)) ? join(" ", @$options) : "";
   my $out = "";
   my $err = "";
+  # print "debug: \$opt_str = $opt_str\n" if $options->{verbose};
   if (! $subtables or ! scalar(@$subtables)) {
-    foreach my $tab (@$tables) {
-      my $cmd = "\"$exe\" $matid $tab";
+    # print __FILE__,"(",__LINE__,")::HERE!\n";
+    if ($matid and ($tables or scalar(@$tables))) {
+      foreach my $tab (@$tables) {
+        my $cmd = "\"$exe\" $opt_str $matid $tab";
+        print "debug: \$cmd = $cmd\n" if $options->{verbose};
+        $out .= "\n*** $cmd\n";
+        $out .= run($cmd);
+      }
+    }
+    else {
+      my $cmd = "\"$exe\" $opt_str";
       $out .= "\n*** $cmd\n";
       $out .= run($cmd);
     }
   }
   else {
+    # print __FILE__,"(",__LINE__,")::HERE!\n";
     foreach my $tab (@$tables) {
       foreach my $subtab (@$subtables) {
-	my $cmd = "\"$exe\" $matid $tab $subtab";
-	$out .= "\n*** $cmd\n";
-	$out .= run($cmd);
+        my $cmd = "\"$exe\" $opt_str $matid $tab $subtab";
+        $out .= "\n*** $cmd\n";
+        $out .= run($cmd);
       }
     }
   }

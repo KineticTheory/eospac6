@@ -10,6 +10,8 @@
 
 #define my_read_grid HEADER(my_read_grid)
 
+#undef DEBUG_PRINT
+#undef DEBUG_READ_INDEX_RECORD_BINARY
 
 
 ses_error_flag _read_index_record_binary(struct _ses_index_record* the_index_record, struct _ses_file_handle* pSFH, long offset) {
@@ -51,7 +53,8 @@ ses_error_flag _read_index_record_binary(struct _ses_index_record* the_index_rec
   the_index_record->_vers = _read_long(pSFH);
   the_index_record->_nrec = _read_long(pSFH);
 #ifdef DEBUG_READ_INDEX_RECORD_BINARY
-  printf("_read_index_record_binary:  date1 %d date2 %d vers %d\n", the_index_record->_date1, the_index_record->_date2, the_index_record->_vers);
+  printf("_read_index_record_binary:  date1 %ld date2 %ld vers %ld\n", the_index_record->_date1, the_index_record->_date2, the_index_record->_vers);
+  printf("_read_index_record_binary:  mid %ld nrec %ld\n", the_index_record->_mid, the_index_record->_nrec);
 #endif
 
   if (_is_valid_mid(the_index_record->_mid) == SES_FALSE) {

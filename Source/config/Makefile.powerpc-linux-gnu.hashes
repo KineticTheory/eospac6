@@ -1,7 +1,7 @@
 #-*-makefile-*-###################################################
-#  
+#
 #  Copyright -- see file named COPYRIGHTNOTICE
-#  
+#
 ##################################################################
 ### This file contains the following:                          ###
 ### Platform-dependent system configuration for a BASE_ARCH    ###
@@ -23,23 +23,32 @@
 ### F77 compiler names in preferential order according to      ###
 ### the possible values of $(F90).                             ###
 ##################################################################
+$(call set,_CC,xlf90_r,      xlc_r       )   # IBM XL (thread safe)
 $(call set,_CC,xlf90,        xlc         )   # IBM XL
 $(call set,_CC,mpixlf90,     mpixlc      )   # MPI IBM XL
 $(call set,_CC,mpif90,       mpicc       )   # MPI gfortran
 $(call set,_CC,ppu-gfortran, ppu-gcc     )   # PPU gfortran
 $(call set,_CC,gfortran,     gcc         )   # gfortran
+$(call set,_CC,pgfortran,    pgcc         gcc             )   # PGI
+$(call set,_CC,pgf90,        pgcc         gcc             )   # PGI
 
+$(call set,_CXX,xlf90_r,     xlC_r       )   # IBM XL (thread safe)
 $(call set,_CXX,xlf90,       xlC         )   # IBM XL
 $(call set,_CXX,mpixlf90,    mpixlcxx    )   # MPI IBM XL
 $(call set,_CXX,mpif90,      mpicxx      )   # MPI gfortran
 $(call set,_CXX,ppu-gfortran,ppu-g++     )   # PPU gfortran
 $(call set,_CXX,gfortran,    g++         )   # gfortran
+$(call set,_CXX,pgfortran,   pgCC         pgc++     g++   )   # PGI
+$(call set,_CXX,pgf90,       pgCC         pgc++     g++   )   # PGI
 
+$(call set,_F77,xlf90_r,     xlf_r       )   # IBM XL (thread safe)  was f77_r
 $(call set,_F77,xlf90,       f77         )   # IBM XL
 $(call set,_F77,mpixlf90,    mpixlf77    )   # MPI IBM XL
 $(call set,_F77,mpif90,      mpif77      )   # MPI gfortran
 $(call set,_F77,ppu-gfortran,$(F90)      )   # PPU gfortran
 $(call set,_F77,gfortran,    $(F90)      )   # gfortran
+$(call set,_F77,pgfortran,   pgfortran    pgf77     pgf90 )   # PGI
+$(call set,_F77,pgf90,       pgfortran    pgf77     pgf90 )   # PGI
 
 ##################################################################
 ### Define CC, CXX and  F77 according to $(F90).               ###
@@ -58,49 +67,106 @@ include $(BASEDIR)/config/Makefile.check_compilers
 #
 ### VERSION_FLAG{$CC} = $flag
 $(call set,VERSION_FLAG,xlc,        -qversion)   # XL C
+$(call set,VERSION_FLAG,xlc_r,      -qversion)   # XL C (thread safe)
 $(call set,VERSION_FLAG,mpixlc,     -qversion)   # Backend cross-compiler XL C
 $(call set,VERSION_FLAG,mpicc,      --version)   # Backend cross-compiler GNU C
+$(call set,VERSION_FLAG,gcc,        --version)   # GNU C
+$(call set,VERSION_FLAG,pgcc,       --version)   # PGI C
 #
 ### VERSION_FLAG{$CXX} = $flag
 $(call set,VERSION_FLAG,xlC,        -qversion)   # XL C++
+$(call set,VERSION_FLAG,xlC_r,      -qversion)   # XL C++ (thread safe)
 $(call set,VERSION_FLAG,mpixlC,     -qversion)   # Backend cross-compiler XL C++
 $(call set,VERSION_FLAG,mpicxx,     --version)   # Backend cross-compiler GNU C++
+$(call set,VERSION_FLAG,g++,        --version)   # GNU C++
+$(call set,VERSION_FLAG,pgc++,      --version)   # GNU C++
 #
 ### VERSION_FLAG{$F77} = $flag
 $(call set,VERSION_FLAG,f77,        -qversion)   # XLF F77
+$(call set,VERSION_FLAG,xlf_r,      -qversion)   # XLF F77 (thread safe)
 $(call set,VERSION_FLAG,mpixlf77,   -qversion)   # Backend cross-compiler XLF F77
 #
 ### VERSION_FLAG{$F90} = $flag
 $(call set,VERSION_FLAG,xlf90,      -qversion)   # XLF F90
+$(call set,VERSION_FLAG,xlf90_r,    -qversion)   # XLF F90 (thread safe)
 $(call set,VERSION_FLAG,mpixlf90,   -qversion)   # Backend cross-compiler XLF F90
 $(call set,VERSION_FLAG,mpif90,     --version)   # Backend cross-compiler GNU F77 and/or F90
+$(call set,VERSION_FLAG,gfortran,   --version)   # GNU F90
+$(call set,VERSION_FLAG,pgfortran,  --version)   # PGI F90
 #
 ### _COMP_FLAGS{$CC} = $flag
-$(call set,_COMP_FLAGS,xlc,        -qfloat=nomaf -qstrict=precision)   # XL C
-$(call set,_COMP_FLAGS,mpixlc,     -qfloat=nomaf -qstrict=precision)   # Backend cross-compiler XL C
+$(call set,_COMP_FLAGS,xlc,         -qfloat=nomaf -qstrict=precision)   # XL C
+$(call set,_COMP_FLAGS,xlc_r,       -qfloat=nomaf -qstrict=precision)   # IBM XL C (thread safe)
+$(call set,_COMP_FLAGS,mpixlc,      -qfloat=nomaf -qstrict=precision)   # Backend cross-compiler XL C
+$(call set,_COMP_FLAGS,icc,                                         )   # Intel C
+$(call set,_COMP_FLAGS,cc,                                          )   # Cray Computing Environment (cce)
+$(call set,_COMP_FLAGS,gcc,                                         )   # GCC
+$(call set,_COMP_FLAGS,clang,                                       )   # Clang
+$(call set,_COMP_FLAGS,pgcc,                                        )   # PGI
 #
 ### _COMP_FLAGS{$CXX} = $flag
-$(call set,_COMP_FLAGS,xlC,        -qfloat=nomaf -qstrict=precision)   # XL C++
-$(call set,_COMP_FLAGS,mpixlC,     -qfloat=nomaf -qstrict=precision)   # Backend cross-compiler XL C++
+$(call set,_COMP_FLAGS,xlC,         -qfloat=nomaf -qstrict=precision)   # XL C++
+$(call set,_COMP_FLAGS,xlC_r,       -qfloat=nomaf -qstrict=precision)   # IBM XL C++ (thread safe)
+$(call set,_COMP_FLAGS,mpixlC,      -qfloat=nomaf -qstrict=precision)   # Backend cross-compiler XL C++
 #
 ### _COMP_FLAGS{$F77} = $flag
-$(call set,_COMP_FLAGS,f77,        -qfloat=nomaf -qstrict=precision)   # XLF F77
-$(call set,_COMP_FLAGS,mpixlf77,   -qfloat=nomaf -qstrict=precision)   # Backend cross-compiler XLF F77
+$(call set,_COMP_FLAGS,f77,         -qfloat=nomaf -qstrict=precision)   # XLF F77
+$(call set,_COMP_FLAGS,xlf_r,       -qfloat=nomaf -qstrict=precision)   # IBM XL F77 (thread safe)
+$(call set,_COMP_FLAGS,mpixlf77,    -qfloat=nomaf -qstrict=precision)   # Backend cross-compiler XLF F77
 #
 ### _COMP_FLAGS{$F90} = $flag
 $(call set,_COMP_FLAGS,xlf90,       -qfloat=nomaf -qstrict=precision -qsuffix=f=f90)   # XLF F90
+$(call set,_COMP_FLAGS,xlf90_r,     -qfloat=nomaf -qstrict=precision -qsuffix=f=f90)   # XLF F90 (thread safe)
 $(call set,_COMP_FLAGS,mpixlf90,    -qfloat=nomaf -qstrict=precision -qsuffix=f=f90)   # Backend cross-compiler XLF F90
+$(call set,_COMP_FLAGS,pgfortran,   -I"$(INCDIR)"                                  )   # PGI Fortran
+$(call set,_COMP_FLAGS,gfortran,    -I"$(INCDIR)" -Wno-c-binding-type -std=legacy  )   # gfortran
+#
+### The following additions are required for GPU compilation
+ifneq ($(strip $(DO_OFFLOAD)),)
+
+# If DEBUG contains -O, use -qsmp=omp else use -qsmp=noopt
+ifneq ($(filter -O%,$(DEBUG)),)
+  SMPOPT=-qsmp=omp
+else
+  SMPOPT=-qsmp=noopt
+  DEBUG += -qlinedebug
+endif
+
+#
+### _COMP_FLAGS{$CC} = $flag
+$(call append,_COMP_FLAGS,xlc_r,    -lineinfo $(SMPOPT) -qoffload)   # XL C (thread safe)
+#
+### _COMP_FLAGS{$CXX} = $flag
+$(call append,_COMP_FLAGS,xlC_r,    -lineinfo $(SMPOPT) -qoffload)   # XL C++ (thread safe)
+#
+### _COMP_FLAGS{$F77} = $flag
+$(call append,_COMP_FLAGS,xlf_r,    -lineinfo $(SMPOPT) -qoffload)   # XLF F77 (thread safe)
+#
+### _COMP_FLAGS{$F90} = $flag
+$(call append,_COMP_FLAGS,xlf90_r,  -lineinfo $(SMPOPT) -qoffload -qsuffix=f=f90)   # XLF F90 (thread safe)
+#
+### _LD_FLAGS{$F90} = $flag
+$(call set,_LD_FLAGS,xlf90_r,       $(SMPOPT) -qoffload)
+
+endif
 
 # define define_module_subdir script options
+$(call set,_DEFINE_MODULE_SUBDIR_FLAGS,xlf90_r,-d $(F90_Key))        # XLF F90 (thread safe)
 $(call set,_DEFINE_MODULE_SUBDIR_FLAGS,xlf90,-d $(F90_Key))          # XLF F90
 $(call set,_DEFINE_MODULE_SUBDIR_FLAGS,mpixlf90,-d $(F90_Key))       # Backend cross-compiler XLF F90
 $(call set,_DEFINE_MODULE_SUBDIR_FLAGS,mpif90,-d $(F90_Key))         # Backend cross-compiler GNU F77 and/or F90
 $(call set,_DEFINE_MODULE_SUBDIR_FLAGS,ppu-gfortran,-d $(F90_Key))   # PPU GNU F90
 $(call set,_DEFINE_MODULE_SUBDIR_FLAGS,gfortran,-d $(F90_Key))       # GNU F90
+$(call set,_DEFINE_MODULE_SUBDIR_FLAGS,pgf90,-d $(F90_Key))          # PGI F90
+$(call set,_DEFINE_MODULE_SUBDIR_FLAGS,pgfortran,-d $(F90_Key))      # PGI F90
 
 # define define_module_subdir script patterns
-$(call set,_DEFINE_MODULE_SUBDIR_PATTS,xlf90,'^ibm/')                # XLF F90
-$(call set,_DEFINE_MODULE_SUBDIR_PATTS,gfortran,'^gcc/')             # XLF F90
+$(call set,_DEFINE_MODULE_SUBDIR_PATTS,xlf90_r,'^(ibm|xl)/')         # XLF F90 (thread safe)
+$(call set,_DEFINE_MODULE_SUBDIR_PATTS,xlf90,'^(ibm|xl)/')           # XLF F90
+$(call set,_DEFINE_MODULE_SUBDIR_PATTS,xlf90,'^(ibm|xl)/')           # XLF F90
+$(call set,_DEFINE_MODULE_SUBDIR_PATTS,gfortran,'^gcc/')             # GNU F90
+$(call set,_DEFINE_MODULE_SUBDIR_PATTS,pgf90,'^pgi/')                # PGI F90
+$(call set,_DEFINE_MODULE_SUBDIR_PATTS,pgfortran,'^pgi/')            # PGI F90
 
 # define optional modules for cross-compiling
 X_Compile_Module_List =
@@ -110,12 +176,12 @@ X_Compile_Module_List =
 ALT_SUBDIR_Key1 := $(firstword $(shell . $(BASEDIR)/scripts/setup_modulecmd;( $${MODULECMD} sh list -t 2>&1 ) | $(BASEDIR)/scripts/filter_module_names $(X_Compile_Module_List) ))
 ALT_SUBDIR_Key2 := $(call get,_DEFINE_MODULE_SUBDIR_PATTS,$(F90_Key))
 ALT_SUBDIR_Opts := $(call get,_DEFINE_MODULE_SUBDIR_FLAGS,$(F90_Key))
-ALT_SUBDIR := $(shell $(BASEDIR)/scripts/define_module_subdir $(ALT_SUBDIR_Opts) $(ALT_SUBDIR_Key1) $(ALT_SUBDIR_Key2))
+ALT_SUBDIR := $(shell $(BASEDIR)/scripts/define_module_subdir $(MORE_DEFINE_MODULE_SUBDIR_FLAGS) $(ALT_SUBDIR_Opts) $(ALT_SUBDIR_Key1) $(ALT_SUBDIR_Key2))
 # $(warning ----------------------------------------------------)
 # $(warning ALT_SUBDIR_Key1 = firstword (shell . $(BASEDIR)/scripts/setup_modulecmd;( $${MODULECMD} sh list -t 2>&1 ) | $(BASEDIR)/scripts/filter_module_names $(X_Compile_Module_List) ) = $(firstword $(shell . $(BASEDIR)/scripts/setup_modulecmd;( $${MODULECMD} sh list -t 2>&1 ) | $(BASEDIR)/scripts/filter_module_names $(X_Compile_Module_List) )))
 # $(warning ALT_SUBDIR_Key2 = (call get,_DEFINE_MODULE_SUBDIR_PATTS,$(F90_Key)) = $(call get,_DEFINE_MODULE_SUBDIR_PATTS,$(F90_Key)))
 # $(warning ALT_SUBDIR_Opts= (call get,_DEFINE_MODULE_SUBDIR_FLAGS,$(F90_Key)) = $(call get,_DEFINE_MODULE_SUBDIR_FLAGS,$(F90_Key)))
-# $(warning $(shell set -x; $(BASEDIR)/scripts/define_module_subdir $(ALT_SUBDIR_Opts) $(ALT_SUBDIR_Key1) $(ALT_SUBDIR_Key2)))
+# $(warning $(shell set -x; $(BASEDIR)/scripts/define_module_subdir $(MORE_DEFINE_MODULE_SUBDIR_FLAGS) $(ALT_SUBDIR_Opts) $(ALT_SUBDIR_Key1) $(ALT_SUBDIR_Key2)))
 # $(info ALT_SUBDIR_Key1 = $(ALT_SUBDIR_Key1))
 # $(info ALT_SUBDIR_Key2 = $(ALT_SUBDIR_Key2))
 # $(info ALT_SUBDIR_Opts = $(ALT_SUBDIR_Opts))
@@ -168,8 +234,17 @@ $(call set,_F90-CPUINFO_COMP_FLAGS,gfortran-8-power7, -ftree-vectorize -maltivec
 $(call set,_F90-CPUINFO_COMP_FLAGS,gfortran-8-power8, -ftree-vectorize -maltivec -mcpu=power8 -fopenmp-simd $(GNU_DIAG_OPTIONS))
 $(call set,_F90-CPUINFO_COMP_FLAGS,gfortran-8-power9, -ftree-vectorize -maltivec -mcpu=power9 -fopenmp-simd $(GNU_DIAG_OPTIONS))
 
+$(call set,_F90-CPUINFO_COMP_FLAGS,gfortran-9-power7, -ftree-vectorize -maltivec -mcpu=power7 -fopenmp-simd $(GNU_DIAG_OPTIONS))
+$(call set,_F90-CPUINFO_COMP_FLAGS,gfortran-9-power8, -ftree-vectorize -maltivec -mcpu=power8 -fopenmp-simd $(GNU_DIAG_OPTIONS))
+$(call set,_F90-CPUINFO_COMP_FLAGS,gfortran-9-power9, -ftree-vectorize -maltivec -mcpu=power9 -fopenmp-simd $(GNU_DIAG_OPTIONS))
+
 # Initialize _CPUINFO_FLAGS based upon $(F90) and its major version number
-ifeq ($(and $(filter $(strip $(notdir $(F90))),xlf90),$(call gte,$(_F90_MAJOR_VERSION),13)),$(true))
+ifeq ($(and $(filter $(strip $(notdir $(F90))),xlf90_r),$(call gte,$(_F90_MAJOR_VERSION),13)),$(true))
+
+  # using xlf90 version 13 or later
+  _CPUINFO_FLAGS +=
+
+else ifeq ($(and $(filter $(strip $(notdir $(F90))),xlf90),$(call gte,$(_F90_MAJOR_VERSION),13)),$(true))
 
   # using xlf90 version 13 or later
   _CPUINFO_FLAGS +=
@@ -223,6 +298,12 @@ ifeq ($(strip $(_CPUINFO_FLAGS)),)
 
 endif
 
+ifneq ($(strip $(DO_OFFLOAD)),)
+
+  _CPUINFO_FLAGS += -DDO_OFFLOAD
+
+endif
+
 # Define option(s) special condition(s)
 _DEBUG := $(DEBUG)
 
@@ -231,3 +312,4 @@ _CFLAGS += $(call get,_COMP_FLAGS,$(notdir $(CC)))
 _CXXFLAGS += $(call get,_COMP_FLAGS,$(notdir $(CXX)))
 _FFLAGS += $(call get,_COMP_FLAGS,$(notdir $(F77)))
 _F90FLAGS += $(call get,_COMP_FLAGS,$(F90_Key))
+_LDFLAGS += $(call get,_LD_FLAGS,$(F90_Key))

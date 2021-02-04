@@ -18,7 +18,7 @@
 ##################################################################
 # Compiler suite configurations based upon F90                 ###
 ##################################################################
-F90_List = gfortran pgfortran pgf90 lf95 f90 ifort g95 ftn pathf90 flang
+F90_List = gfortran pgfortran pgf90 lf95 f90 ifort g95 ftn pathf90 flang armflang
 
 # Default: use the first F90 compiler found from F90_List
 F90_Found_List = $(call memoize,create_F90_Found_List_once,$(F90_List))

@@ -159,7 +159,8 @@ enum {
     SES_NO_DATA_ERROR,
     SES_INVALID_FILE_FORMAT_TYPE,  // 30
     SES_INVALID_ASCII_WORD_TYPE,
-    SES_INVALID_NUM_PARAMETERS
+    SES_INVALID_NUM_PARAMETERS,
+    SES_INVALID_SESAME_ASCII
     
 };
 
@@ -198,7 +199,7 @@ static const ses_ascii_word_type ASCII_UNKNOWN_WORD_TYPE  = 'U';
 
 static const ses_ascii_word_size ASCII_MEDIUM_WORD_SIZE   = 22;
 static const ses_ascii_word_size ASCII_SMALL_WORD_SIZE    = 15;
-static const ses_ascii_word_size ASCII_UNKNOWN_WORD_SIZE  = 0;
+static const ses_ascii_word_size ASCII_UNSUPPORTED_WORD_SIZE  = 0;
 
 
 

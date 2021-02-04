@@ -8,7 +8,7 @@
  ********************************************************************/
 
 /*! \file
- *  \ingroup tests quick
+ *  \ingroup C tests quick
  *  \brief Check that the correct tables are being loaded for EOS_Zfo_DT
  *         and material 15251 with a forced EOS_SPLIT_IDEAL_GAS option.
  *

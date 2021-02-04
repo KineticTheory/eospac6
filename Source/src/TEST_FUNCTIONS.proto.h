@@ -15,7 +15,7 @@
 
 /*
  * ---------------------------------------------------
- * 82 PUBLIC FUNCTION PROTOTYPES FOR TEST_FUNCTIONS.c
+ * 84 PUBLIC FUNCTION PROTOTYPES FOR TEST_FUNCTIONS.c
  * ---------------------------------------------------
  */
 EOS_INTEGER __eos_GetExpandedGrid (EOS_INTEGER nAdd, EOS_INTEGER * nX, EOS_REAL ** X);
@@ -23,18 +23,24 @@ void eos_DestroyTableListReverseMap(void);
 void eos_SetTableListReverseMap(void);
 void display_gEosDataMap_tableHandlesMap_details (void);
 int fcmp (EOS_REAL u, EOS_REAL v, EOS_REAL rel_diff, EOS_REAL abs_diff);
+EOS_REAL _eos_round(EOS_REAL r, EOS_INTEGER p);
+void _generate_Log10DistributedPoints(EOS_REAL *xList, EOS_REAL *yList, EOS_INTEGER numPts,
+                                      EOS_REAL xMin, EOS_REAL xMax, EOS_REAL yMin, EOS_REAL yMax, EOS_BOOLEAN b, EOS_INTEGER *p);
 void generate_Log10DistributedPoints (EOS_REAL * xList, EOS_REAL * yList, EOS_INTEGER numPts, EOS_REAL xMin,
-				      EOS_REAL xMax, EOS_REAL yMin, EOS_REAL yMax);
+                                      EOS_REAL xMax, EOS_REAL yMin, EOS_REAL yMax);
 void generate_RandomPoints (EOS_REAL * xList, EOS_REAL * yList, EOS_INTEGER numPts, EOS_REAL xMin, EOS_REAL xMax,
-			    EOS_REAL yMin, EOS_REAL yMax, EOS_BOOLEAN dosort);
+                            EOS_REAL yMin, EOS_REAL yMax, EOS_BOOLEAN dosort);
 int getSamplesLatinHyperCube (int N, EOS_REAL v_lower, EOS_REAL v_upper, EOS_REAL * v);
 EOS_INTEGER get_DataType (EOS_INTEGER table, EOS_INTEGER subtable, EOS_INTEGER * type);
 EOS_CHAR *get_DataTypeDescription (EOS_INTEGER t);
-EOS_CHAR *get_DataTypeDescriptionFromTableHandle (EOS_INTEGER th);
+EOS_CHAR *get_DataTypeDescriptionFromTableHandle (EOS_INTEGER t);
+EOS_INTEGER get_RecordTypeFromDataType(EOS_INTEGER dataType);
 void get_RecordType1_XYF (EOS_INTEGER tableHandle, EOS_REAL ** X, EOS_REAL ** Y, EOS_REAL *** F, EOS_INTEGER * nX,
-			  EOS_INTEGER * nY);
+                          EOS_INTEGER * nY, EOS_INTEGER *nGhostData);
+void get_RecordType2_XF (EOS_INTEGER tableHandle, EOS_REAL ** X, EOS_REAL ** F, EOS_INTEGER * nX);
+void get_RecordType3_XY (EOS_INTEGER tableHandle, EOS_REAL ** X, EOS_REAL ** Y, EOS_INTEGER * n);
 void get_UpperLowerBndsRecordType1_XY (EOS_INTEGER tableHandle, EOS_REAL * xMin, EOS_REAL * xMax, EOS_REAL * yMin,
-				       EOS_REAL * yMax);
+                                       EOS_REAL * yMax);
 int eos_getFieldValue(EOS_CHAR *str, EOS_CHAR *keyword, EOS_CHAR *oStr);
 EOS_CHAR* get_commentStr(EOS_INTEGER matid);
 EOS_INTEGER get_creationDate (EOS_INTEGER th);
@@ -102,12 +108,14 @@ EOS_CHAR *get_tableType_str (EOS_INTEGER t);
 void *get_tableTypes_ptr (void);
 EOS_INTEGER get_tableTypes_val (EOS_INTEGER i);
 EOS_INTEGER get_table_type (EOS_INTEGER th);
+EOS_INTEGER get_allPublicTableTypes (EOS_INTEGER **tableTypes);
 EOS_INTEGER get_tableTypesFromSesameTableNumber (EOS_INTEGER tableNum, EOS_INTEGER *tableTypes);
 int insensitive_strcmp (const char *cs, const char *ct);
 void latinCube (double *vdata, const double *a, const double *b, int nparam, int nlev);
 void mt_init (void);
 double mt_random (void);
 EOS_INTEGER print_FileList (EOS_INTEGER limit, EOS_CHAR * filter);
+void get_nr_and_nt(EOS_INTEGER th, EOS_INTEGER *nr, EOS_INTEGER *nt);
 void print_nr_and_nt (EOS_INTEGER th);
 void test_if_globals_are_free (void);
 

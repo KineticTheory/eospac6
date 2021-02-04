@@ -8,7 +8,7 @@
  ********************************************************************/
 
 /*! \file
- *  \ingroup tests
+ *  \ingroup C tests
  *  \brief Compare inverse interpolation results both with and without EOS_INVERT_AT_SETUP;
  *         artf47921 test 1 of 32. See SourceForge Issue #artf47921 for more details.
  *
@@ -102,7 +102,7 @@ int main ()
         i = (EOS_INTEGER)atol(token);
         nModelTests++;
         modelTests = (modelTest_s**) safe_realloc(modelTests, nModelTests, sizeof(modelTest_s*));
-        modelTests[nModelTests-1] = make_test_entry(3720, 33720, EOS_T_DUt, EOS_Pt_DT, EOS_INVERT_AT_SETUP+EOS_INSERT_DATA+i );;
+        modelTests[nModelTests-1] = make_test_entry(3720, 33720, EOS_T_DUt, EOS_Pt_DT, EOS_INVERT_AT_SETUP+EOS_INSERT_DATA+i );
       }
     }
     else {

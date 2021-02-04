@@ -8,7 +8,7 @@
  ********************************************************************/
 
 /*! \file
- *  \ingroup tests quick
+ *  \ingroup C tests quick
  *  \brief Test the following function with a custom generated sesame material
  *         containing random comment tables:
  *         ses_write_comments, ses_get_comments, ses_comments, ses_read_next,

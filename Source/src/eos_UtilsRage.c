@@ -234,26 +234,6 @@ void _eos_RageBiRationalInterp (EOS_INTEGER numZones, EOS_INTEGER numXVals,
                                 EOS_REAL *searchDFy, EOS_INTEGER *xyBounds,
                                 EOS_INTEGER *err)
 {
-//#define USE_EOSPAC_INTERPOLATORS
-#ifdef USE_EOSPAC_INTERPOLATORS
-  /* this function is a wrapper around the EOSPAC interpolators, in lieu of implementing RAGE's
-     original rational interpolation routine.
-   */
-  EOS_INTEGER i;
-  eos_BiRationalInterpolate (numZones, numXVals, numYVals,
-                             XValues, YValues, FValues, searchXVals,
-                             searchYVals, searchFVals, searchDFx, searchDFy,
-                             xyBounds, err);
-  if (eos_GetStandardErrorCodeFromCustomErrorCode(*err) == EOS_OK)
-    return;
-  for (i = 0; i < numZones; i++) {
-    if (xyBounds[i] != EOS_OK)
-      eos_BiLineInterpolate (1, numXVals, numYVals,
-                             XValues, YValues, FValues, &searchXVals[i],
-                             &searchYVals[i], &searchFVals[i], &searchDFx[i],
-                             &searchDFy[i], &xyBounds[i], err);
-  }
-#else
   EOS_REAL x, y, *tbls, *z, *dzdx, *dzdy;
   EOS_INTEGER ifn, locx, ix, nx, locy, iy, ny, locz, nz;
 
@@ -272,14 +252,12 @@ void _eos_RageBiRationalInterp (EOS_INTEGER numZones, EOS_INTEGER numXVals,
   tbls = XValues - 1;
 
   // get ix
-  _eos_srchdf (1, &x, 1, nx, XValues, 1, &ix, xyBounds, err);
+  _eos_srchdf (1, &x, 1, nx, XValues, 1, &ix, NULL, xyBounds, err);
   // get iy
-  _eos_srchdf (1, &y, 1, ny, YValues, 1, &iy, xyBounds, err);
+  _eos_srchdf (1, &y, 1, ny, YValues, 1, &iy, NULL, xyBounds, err);
 
   rational_func_int (x, y, tbls, ifn, z, dzdx, dzdy, locx + 1, ix + 1, nx,
                      locy + 1, iy + 1, ny, locz + 1, nz);
-
-#endif
 }
 
 void _eos_RageRationalInterp (EOS_INTEGER nsrch, EOS_INTEGER nData,
@@ -295,7 +273,7 @@ void _eos_RageRationalInterp (EOS_INTEGER nsrch, EOS_INTEGER nData,
 
   for (i = 0; i < nsrch; i++) {
     eos_LineInterpolate (EOS_FALSE, nsrch, nData, 1, 0, xData, &fData,
-                         yvalv, fvalv, dfvalv, 'y', xyBounds, err);
+                         yvalv, fvalv, dfvalv, 'y', NULL, xyBounds, err);
   }
 }
 
@@ -616,7 +594,7 @@ void _eos_build_dome (EOS_REAL **p301, EOS_REAL **e301, EOS_REAL *r301,
                              &dpdr, &dpdt, &xyBounds, err);
 
   /* find index of t in t301 array */
-  _eos_srchdf (1, &t, 1, nt301, t301, 1, &j, &xyBounds, err);
+  _eos_srchdf (1, &t, 1, nt301, t301, 1, &j, NULL, &xyBounds, err);
   iy = j;
 
   ifound = 0;
@@ -629,7 +607,7 @@ void _eos_build_dome (EOS_REAL **p301, EOS_REAL **e301, EOS_REAL *r301,
   pfind = pcrit;
 
   /* find index of rho in r301 array */
-  _eos_srchdf (1, &rho, 1, nr301, r301, 1, &icrit, &xyBounds, err);
+  _eos_srchdf (1, &rho, 1, nr301, r301, 1, &icrit, NULL, &xyBounds, err);
   i = icrit;
 
   rhoc = rcrit;
@@ -638,7 +616,7 @@ void _eos_build_dome (EOS_REAL **p301, EOS_REAL **e301, EOS_REAL *r301,
   tc = tcrit;
 
   /* find index of tc in t301 array */
-  _eos_srchdf (1, &tc, 1, nt301, t301, 1, &k, &xyBounds, err);
+  _eos_srchdf (1, &tc, 1, nt301, t301, 1, &k, NULL, &xyBounds, err);
 
   // ..... is critical temperature exactly on temperature grid point
   // ..... if so, have already defined dome for this temperature
@@ -655,8 +633,8 @@ void _eos_build_dome (EOS_REAL **p301, EOS_REAL **e301, EOS_REAL *r301,
     t = t301[kcurrent];
     iy = kcurrent;
     /* find index of rho1, rho2 in r301 array */
-    _eos_srchdf (1, &rho2, 1, nr301, r301, 1, &ix2, &xyBounds, err);
-    _eos_srchdf (1, &rho1, 1, nr301, r301, 1, &ix1, &xyBounds, err);
+    _eos_srchdf (1, &rho2, 1, nr301, r301, 1, &ix2, NULL, &xyBounds, err);
+    _eos_srchdf (1, &rho1, 1, nr301, r301, 1, &ix1, NULL, &xyBounds, err);
 
     /*
        ! .....   check to see if this isotherm has loops or already has
@@ -1037,11 +1015,11 @@ void _eos_build_dome (EOS_REAL **p301, EOS_REAL **e301, EOS_REAL *r301,
                 ((EOS_REAL) 0.95E06 -
                  (*p401)[i - 1] * ((EOS_REAL) 1.0 - x)) / x;
               t = (*t401)[i];
-              _eos_srchdf (1, &t, 1, nt301, t301, 1, &iy, &xyBounds, err);
+              _eos_srchdf (1, &t, 1, nt301, t301, 1, &iy, NULL, &xyBounds, err);
               _eos_find_hi_side ((*p401)[i], &rho1, p301, r301, t301, nr301,
                                  nt301, iy, t);
               (*rl401)[i] = rho1;
-              _eos_srchdf (1, &rho1, 1, nr301, r301, 1, &ix, &xyBounds, err);
+              _eos_srchdf (1, &rho1, 1, nr301, r301, 1, &ix, NULL, &xyBounds, err);
               if (ix != 0) {
                 /* .....                                          do not redefine vapor density unless the pressure exists */
                 if (p301[iy][1] > p301[iy][0]) {
@@ -1067,7 +1045,7 @@ void _eos_build_dome (EOS_REAL **p301, EOS_REAL **e301, EOS_REAL *r301,
               _eos_find_hi_side ((*p401)[i - 1], &rho1, p301, r301, t301,
                                  nr301, nt301, iy, t);
               (*rl401)[i - 1] = rho1;
-              _eos_srchdf (1, &rho1, 1, nr301, r301, 1, &ix, &xyBounds, err);
+              _eos_srchdf (1, &rho1, 1, nr301, r301, 1, &ix, NULL, &xyBounds, err);
 
               if (ix != 0) {
                 /* .....                                  do not redefine vapor density unless the pressure exists */
@@ -1144,7 +1122,7 @@ void _eos_build_dome (EOS_REAL **p301, EOS_REAL **e301, EOS_REAL *r301,
                     (*rl401)[i] = (*rl401)[i + 1];
                     t = (*t401)[i];
                     rho = (*rl401)[i];
-                    // not needed                                                       _eos_srchdf (1, &rho, 1, nr301, r301, 1, &ix, &xyBounds, err);
+                    // not needed                                                       _eos_srchdf (1, &rho, 1, nr301, r301, 1, &ix, NULL, &xyBounds, err);
                     _eos_RageBiRationalInterp (1, nr301, nt301, r301, t301,
                                                e301, &rho, &t, &e, &dedr,
                                                &dedt, &xyBounds, err);
@@ -1169,7 +1147,7 @@ void _eos_build_dome (EOS_REAL **p301, EOS_REAL **e301, EOS_REAL *r301,
                     (*rl401)[i] = (*rl401)[i - 1];
                     t = (*t401)[i];
                     rho = (*rl401)[i];
-                    // not needed                                                       _eos_srchdf (1, &rho, 1, nr301, r301, 1, &ix, &xyBounds, err);
+                    // not needed                                                       _eos_srchdf (1, &rho, 1, nr301, r301, 1, &ix, NULL, &xyBounds, err);
                     _eos_RageBiRationalInterp (1, nr301, nt301, r301, t301,
                                                e301, &rho, &t, &e, &dedr,
                                                &dedt, &xyBounds, err);
@@ -1412,7 +1390,7 @@ void _eos_find_critical_pt (EOS_REAL **P, EOS_REAL **E, EOS_INTEGER nR,
     _eos_DEBUG_PRINT ("start binary search for critical point\n");
 
     rho = MIN (faktor * (*rhoc), R[nR - 2]);
-    _eos_srchdf (1, &rho, 1, nR, R, 1, &ix, &xyBounds, err);
+    _eos_srchdf (1, &rho, 1, nR, R, 1, &ix, NULL, &xyBounds, err);
     ix2 = ix;
     rholim = *rhoc / ((EOS_REAL) 4.0 * faktor);
     delrho = (EOS_REAL) -0.01 * rho;
@@ -1433,7 +1411,7 @@ void _eos_find_critical_pt (EOS_REAL **P, EOS_REAL **E, EOS_INTEGER nR,
       if (k > 20 && tc == (EOS_REAL) 0.0)
         break;
       t = (EOS_REAL) .5 *(tc + tmax);
-      _eos_srchdf (1, &t, 1, nT, T, 1, &iy, &xyBounds, err);
+      _eos_srchdf (1, &t, 1, nT, T, 1, &iy, NULL, &xyBounds, err);
       p = (EOS_REAL) 1.0E30;
       exit_loop = EOS_FALSE;
 
@@ -1447,7 +1425,7 @@ void _eos_find_critical_pt (EOS_REAL **P, EOS_REAL **E, EOS_INTEGER nR,
         /* .....    step through each cell along this isotherm */
 
         rho = rho + delrho;
-        _eos_srchdf (1, &rho, 1, nR, R, 1, &ix, &xyBounds, err);
+        _eos_srchdf (1, &rho, 1, nR, R, 1, &ix, NULL, &xyBounds, err);
         //_eos_DEBUG_PRINT("  outer loop(%8i), inner loop(%8i): ix=%i, iy=%i\n",outer_cntr,inner_cntr,ix+1,iy+1);
 
         if (ix != ix2) {

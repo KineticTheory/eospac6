@@ -9,6 +9,7 @@
 #include "string.h"
 
 #undef DEBUG_PRINT
+#undef DEBUG_SETUP_WRITE
 
 #define _get_my_open_flags HEADER(_get_my_open_flags)
 #define _do_setup_for_read HEADER(_do_setup_for_read)
@@ -46,7 +47,7 @@ ses_error_flag ses_setup(ses_file_handle the_handle, ses_material_id the_mid, se
     
     if (_is_valid_mid(the_mid) == SES_FALSE) {
 #ifdef DEBUG_PRINT
-        //printf("ses_setup:  invalid material id = %ld\n", the_mid);
+        printf("ses_setup:  invalid material id = %ld\n", the_mid);
 #endif
         _set_latest_error(SES_INVALID_MID);
         return SES_INVALID_MID;
@@ -54,7 +55,7 @@ ses_error_flag ses_setup(ses_file_handle the_handle, ses_material_id the_mid, se
     
     if (_is_valid_tid(the_tid) == SES_FALSE) {
 #ifdef DEBUG_PRINT
-        /*  NEED TO FULLY IMPLMENT THIS FURTHER DOWN */
+        /*  NEED TO FULLY IMPLEMENT THIS FURTHER DOWN */
         printf("ses_setup:  invalid standard table id -- attempting to create user defined table with tid = %ld\n", the_tid);
 #endif
         
@@ -84,7 +85,7 @@ ses_error_flag ses_setup(ses_file_handle the_handle, ses_material_id the_mid, se
     }
 
 #ifdef DEBUG_PRINT
-    printf("ses_setup:  open_flags is %c\n", open_flags);
+    printf("ses_setup:  open_flags is %c, tid: %ld, mid: %d\n", open_flags, the_tid, the_mid);
 #endif
     
     switch(open_flags) {
@@ -115,11 +116,16 @@ ses_error_flag ses_setup(ses_file_handle the_handle, ses_material_id the_mid, se
             break;
             
         case 'R':
-            
+#ifdef DEBUG_PRINT
+        printf("ses_setup:  before set_up_for_read tid: %ld, mid: %d\n", the_tid, the_mid);
+#endif
             didit_setup = _do_setup_for_read(the_handle, the_mid, the_tid);
             if (didit_setup == SES_FALSE) {
                 if (the_tid != 100) {
                 }
+#ifdef DEBUG_PRINT
+                    printf("ses_setup (for read):  _do_setup_for_read returned: %d, MID: %d\n", didit_setup, the_mid);
+#endif
                 _set_latest_error(SES_SETUP_ERROR);
                 return SES_SETUP_ERROR;
             }
@@ -172,6 +178,7 @@ ses_error_flag ses_setup(ses_file_handle the_handle, ses_material_id the_mid, se
     FILE_LIST[the_handle]->_the_setup->_setup_complete = SES_TRUE;
     _releasePFILE(FILE_LIST[the_handle]->_the_handle);
     
+
     return SES_NO_ERROR;
 }
 
@@ -278,6 +285,9 @@ ses_boolean    _do_setup_for_change(ses_file_handle the_handle, ses_material_id 
     if (return_value == SES_FALSE) {
         return SES_SETUP_ERROR;
     }
+#ifdef DEBUG_PRINT
+    printf("_do_setup_for_change: _do_setup_for_read, returned: %d\n", return_value);
+#endif
     
     long number_arrays = FILE_LIST[the_handle]->_current_data_record->_the_iterator->_number_arrays;
     if (number_arrays <= 0) {
@@ -330,7 +340,7 @@ ses_boolean    _do_setup_for_read(ses_file_handle the_handle, ses_material_id th
     /*  function prototypes */
     
 #ifdef DEBUG_PRINT
-    printf("_do_setup_for_read: _go_to_data_record\n");
+    printf("_do_setup_for_read: _go_to_data_record, mid: %d, tid: %d\n", the_mid, the_tid);
 #endif
     ses_boolean _go_to_data_record(ses_file_handle the_handle, ses_material_id the_mid, ses_table_id the_tid);
 #ifdef DEBUG_PRINT
@@ -338,7 +348,7 @@ ses_boolean    _do_setup_for_read(ses_file_handle the_handle, ses_material_id th
 #endif
     ses_boolean    _read_my_directory(ses_file_handle the_handle);
 #ifdef DEBUG_PRINT
-    printf("_do_setup_for_read: _check_my_directory_for_material\n");
+    printf("_do_setup_for_read: _check_my_directory_for_material, the_mid: %d\n", the_mid);
 #endif
    ses_boolean    _check_my_directory_for_material(ses_file_handle the_handle, ses_material_id the_mid);
 #ifdef DEBUG_PRINT
@@ -347,14 +357,18 @@ ses_boolean    _do_setup_for_read(ses_file_handle the_handle, ses_material_id th
    ses_boolean    _read_current_index_record(ses_file_handle the_handle,
                                               ses_material_id the_mid, ses_table_id the_tid);
 #ifdef DEBUG_PRINT
-    printf("_do_setup_for_read: _construct_current_data_record\n");
+    printf("_do_setup_for_read: _construct_current_data_record mid: %d\n", the_mid);
 #endif
    ses_error_flag _construct_current_data_record(ses_file_handle the_handle,
                                                   ses_material_id the_mid, ses_table_id the_tid);
     
-    /*  end function prototypes */
+   /*  end function prototypes */
     
     ses_boolean return_value = SES_TRUE;
+
+#ifdef DEBUG_PRINT
+    printf("_do_setup_for_read: 10\n");
+#endif
     
     
     if (!ses_is_valid(the_handle)) {
@@ -363,9 +377,11 @@ ses_boolean    _do_setup_for_read(ses_file_handle the_handle, ses_material_id th
 #endif
         return SES_FALSE;
     }
+#ifdef DEBUG_PRINT
+    printf("_do_setup_for_read: 20\n");
+#endif
     
     /*  read the directory into the ses file handle */
-    
     
     if (FILE_LIST[the_handle]->_directory == (struct _ses_directory*)NULL) {
         ses_boolean read_dir = _read_my_directory(the_handle);
@@ -378,13 +394,23 @@ ses_boolean    _do_setup_for_read(ses_file_handle the_handle, ses_material_id th
                 free(FILE_LIST[the_handle]->_directory);
                 FILE_LIST[the_handle]->_directory = (struct _ses_directory*)NULL;
             }
+#ifdef DEBUG_PRINT
+            printf("_do_setup_for_read: 30\n");
+#endif
             return SES_FALSE;
         }
     }
     
     /*  make sure the material exists on the library */
+#ifdef DEBUG_PRINT
+    printf("_do_setup_for_read: 40, the_handle: %d\n", the_handle);
+#endif
     
     ses_boolean does_material_exist = _check_my_directory_for_material(the_handle, the_mid);
+#ifdef DEBUG_PRINT
+    printf("_do_setup_for_read: does_material_exist: %d \n",does_material_exist);
+#endif
+    
     if (does_material_exist == SES_FALSE) {
 #ifdef DEBUG_PRINT
         printf("_do_setup_for_read: Material %ld does not exist -- exiting \n",the_mid);
@@ -394,16 +420,23 @@ ses_boolean    _do_setup_for_read(ses_file_handle the_handle, ses_material_id th
     
     FILE_LIST[the_handle]->_the_setup->_mid = the_mid;
     FILE_LIST[the_handle]->_the_setup->_tid = the_tid;
+#ifdef DEBUG_PRINT
+    printf("_do_setup_for_read: 50, mid: %ld tid: %ld\n", the_mid, the_tid);
+#endif
     
     /*  read the current index record for the (material, table) into the ses file handle  */
     
     ses_boolean does_table_exist = _read_current_index_record(the_handle, the_mid, the_tid);
     
     if (does_table_exist == SES_FALSE) {
+        // 8-21-2018 It appears that _read_current_index_record always returns: SES_NO_ERROR (0),
+        // which happens to equal SES_FALSE. This means that the code after this has never been executed.
+        // Fixing this if statement to be skipped & executing the code below causes everything to break...
+        // I have no idea the real intentions of this code.
 #ifdef DEBUG_PRINT
-#ifdef PRINT_INDEX_ERROR
-        printf("_do_setup_for_read:  read current idnex record error -- exiting\n");
-#endif
+//#ifdef PRINT_INDEX_ERROR
+        printf("_do_setup_for_read:  read current index record error -- exiting\n");
+//#endif
 #endif
         return SES_FALSE;
     }
@@ -411,6 +444,9 @@ ses_boolean    _do_setup_for_read(ses_file_handle the_handle, ses_material_id th
     FILE_LIST[the_handle]->_the_setup->_date1 = FILE_LIST[the_handle]->_current_index_record->_date1;
     FILE_LIST[the_handle]->_the_setup->_date2 = FILE_LIST[the_handle]->_current_index_record->_date2;
     FILE_LIST[the_handle]->_the_setup->_vers = FILE_LIST[the_handle]->_current_index_record->_vers;
+#ifdef DEBUG_PRINT
+    printf("_do_setup_for_read: 60\n");
+#endif
    
     /*  read the current data record for the (material, table) into the ses file handle    */
     
@@ -423,7 +459,9 @@ ses_boolean    _do_setup_for_read(ses_file_handle the_handle, ses_material_id th
     }
     
     /*  put the c file handle at the correct location for data read */
-    
+#ifdef DEBUG_PRINT
+    printf("_do_setup_for_read: 70\n");
+#endif
     
     ses_boolean didit_go = _go_to_data_record(the_handle, the_mid, the_tid);
     if (didit_go == SES_FALSE) {
@@ -432,7 +470,10 @@ ses_boolean    _do_setup_for_read(ses_file_handle the_handle, ses_material_id th
 #endif
         return SES_FALSE;
     }
-    
+#ifdef DEBUG_PRINT
+    printf("_do_setup_for_read: 80\n");
+#endif
+
     return return_value;
     
 }
@@ -448,6 +489,9 @@ ses_boolean    _do_setup_for_write(ses_file_handle the_handle, ses_material_id t
     /*  end function prototypes */
     
     /*  do setup for writing */
+#ifdef DEBUG_PRINT
+    printf("_do_setup_for_write: mid: %ld, tid: %ld, nr: %ld, nt: %ld, ntab: %ld\n", the_mid, the_tid, nr, nt, ntab);
+#endif
     
     ses_boolean return_value = SES_TRUE;
     int i=0;
@@ -464,6 +508,10 @@ ses_boolean    _do_setup_for_write(ses_file_handle the_handle, ses_material_id t
     if (FILE_LIST[the_handle]->_current_data_record == (struct _ses_data_record*)NULL) {
         
         /*  no stuff in the current data record, nothing to do */
+#ifdef DEBUG_PRINT
+        printf("_do_setup_for_write: current data record is empty\n");
+#endif
+
         
     }
     else {
@@ -472,6 +520,10 @@ ses_boolean    _do_setup_for_write(ses_file_handle the_handle, ses_material_id t
          setup for this mid, table pair */
         
         ses_material_id last_mid = FILE_LIST[the_handle]->_current_data_record->_mid;
+#ifdef DEBUG_PRINT
+        printf("_do_setup_for_write: last_mid: %ld\n", last_mid);
+#endif
+        
         struct _ses_material_file* pMF = _construct_ses_material_file(last_mid);
         if (pMF == (struct _ses_material_file*)NULL) {
 #ifdef DEBUG_PRINT
@@ -507,13 +559,21 @@ ses_boolean    _do_setup_for_write(ses_file_handle the_handle, ses_material_id t
         
         /*  all data that remained copied out, set ready to write */
         
-        /* ses_boolean didit_set = SES_FALSE; */
-        /* didit_set = */ _set_ready_to_write(FILE_LIST[the_handle]->FILE_TO_WRITE);
+        //ses_boolean didit_set = SES_FALSE;
+        //didit_set =  _set_ready_to_write(FILE_LIST[the_handle]->FILE_TO_WRITE);
+	_set_ready_to_write(FILE_LIST[the_handle]->FILE_TO_WRITE);
+#ifdef DEBUG_PRINT
+        //printf("_do_setup_for_write: _set_ready_to_write: %d\n", didit_set);
+#endif
+
     }
     
     /*  construct the setup object if necessary */
     
     if (FILE_LIST[the_handle]->_the_setup == (struct _ses_setup*)NULL) {
+#ifdef DEBUG_PRINT
+        printf("_do_setup_for_write: calling: _construct_my_setup\n");
+#endif
         
         ses_error_flag construct_errors = _construct_my_setup(the_handle, the_mid, the_tid);
         if (!(construct_errors == SES_NO_ERROR)) {
@@ -539,11 +599,14 @@ ses_boolean    _do_setup_for_write(ses_file_handle the_handle, ses_material_id t
             current_ntab = _the_tables[i]->_num_arrays-2*_the_tables[i]->_num_independent;
             long ntab = 0;
             ntab = FILE_LIST[the_handle]->_the_setup->_ntab - 2*_the_tables[i]->_num_independent;
-            
+#ifdef DEBUG_PRINT
+            printf("_do_setup_for_write: the_tid: %ld, _is_User_defined==FALSE\n", the_tid);
+#endif
+          
             if ((ntab > 0) && (ntab > current_ntab)) {
                 /* redefine the number of tables */
                 long NP = _the_tables[i]->_num_arrays; /* save old value */
-                int j;
+               int j;
                 _the_tables[i]->_num_arrays = ntab + 2*_the_tables[i]->_num_independent;
                 for (j=_the_tables[i]->_num_arrays; j < NP; j++) {
                     free(_the_tables[j]->_label[j]);
@@ -585,8 +648,6 @@ ses_boolean    _do_setup_for_write(ses_file_handle the_handle, ses_material_id t
     }
     
     
-    
-    
     /*  create the current data record */
     
     long maddress = 0;
@@ -601,6 +662,7 @@ ses_boolean    _do_setup_for_write(ses_file_handle the_handle, ses_material_id t
     
 #ifdef DEBUG_SETUP_WRITE
     printf("_do_setup_for_write: date1 is %ld date2 is %ld vers is %ld\n", date1, date2, vers);
+    printf("_do_setup_for_write: maddress: %ld, the_mid: %ld, the_tid: %ld\n", maddress, the_mid, the_tid);
 #endif
     
     FILE_LIST[the_handle]->_current_data_record = _construct_ses_data_record(maddress, nr, nt, ntab, the_mid, the_tid, date1, date2, vers);
@@ -715,15 +777,27 @@ ses_boolean _check_my_directory_for_material(ses_file_handle the_handle, ses_mat
      is in the index */
     
     ses_boolean return_value = SES_TRUE;
+#ifdef DEBUG_PRINT
+    printf("_check_my_directory_for_material *0*: return_value: %d, the_handle: %d, the_mid: %ld, \n", return_value, the_handle, the_mid);
+#endif
     
     if (!ses_is_valid(the_handle)) {
 #ifdef DEBUG_PRINT
-        printf("_check_my_directory_for_material: invalid ses file handle\n");
+        printf("_check_my_directory_for_material: invalid ses file handle, the_handle: %d\n", the_handle);
+#endif
+#ifdef DEBUG_PRINT
+        printf("_check_my_directory_for_material &1/2&: return_value: %d, the_handle: %d, the_mid: %ld, \n", SES_FALSE, the_handle, the_mid);
 #endif
         return SES_FALSE;
     }
     
+#ifdef DEBUG_PRINT
+    printf("_check_my_directory_for_material *1*: return_value: %d, the_handle: %d, the_mid: %ld, \n", return_value, the_handle, the_mid);
+#endif
     return_value =  _check_directory_for_material(FILE_LIST[the_handle]->_directory, the_mid);
+#ifdef DEBUG_PRINT
+    printf("_check_my_directory_for_material #2#: return_value: %d, the_handle: %d, the_mid: %ld\n", return_value, FILE_LIST[the_handle]->_directory, the_mid);
+#endif
     return return_value;
 }
 
@@ -734,7 +808,10 @@ ses_boolean _read_current_index_record(ses_file_handle the_handle, ses_material_
     ses_boolean _go_to_index_record(ses_file_handle the_handle, ses_material_id the_mid, ses_table_id the_tid);
     
     /*  end function prototype */
-    
+#ifdef DEBUG_PRINT
+    printf("_read_current_index_record: mid: %ld, tid: %ld\n", the_mid, the_tid);
+#endif
+   
     ses_boolean return_value = SES_TRUE;
     if (!ses_is_valid(the_handle)) {
 #ifdef DEBUG_PRINT
@@ -779,9 +856,15 @@ ses_boolean _read_current_index_record(ses_file_handle the_handle, ses_material_
     }
     
     
+#ifdef DEBUG_PRINT
+    printf("_read_current_index_record: _get_address_for_material getting offset.\n");
+#endif
     
     struct _ses_directory* ptDIR = FILE_LIST[the_handle]->_directory;
     long offset = _get_address_for_material(ptDIR, the_mid, pSFH);
+#ifdef DEBUG_PRINT
+    printf("_read_current_index_record: _get_address_for_material offset: %ld, tid: %d\n", offset, the_tid);
+#endif
     
     FILE_LIST[the_handle]->_current_index_record = _read_index_record(pSFH, offset);
     if (FILE_LIST[the_handle]->_current_index_record == (struct _ses_index_record*)NULL) {
@@ -857,13 +940,12 @@ ses_error_flag _construct_current_data_record(ses_file_handle the_handle, ses_ma
     
     /*  function prototypes */
 #ifdef DEBUG_PRINT
-    printf("_construct_current_data_record: 1\n");
+    printf("_construct_current_data_record: 1, mid: %d, tid: %ld\n", the_mid, the_tid);
 #endif
     
     ses_boolean _go_to_data_record(ses_file_handle the_handle, ses_material_id the_mid, ses_table_id the_tid);
     
     /*  end function prototypes */
-    
     
     if (!ses_is_valid(the_handle)) {
 #ifdef DEBUG_PRINT
@@ -885,10 +967,6 @@ ses_error_flag _construct_current_data_record(ses_file_handle the_handle, ses_ma
         return SES_SETUP_ERROR;
     }
     
-#ifdef DEBUG_PRINT
-    printf("_construct_current_data_record: 10\n");
-#endif
-    
     /*  get the grid */
     
     long maddress = _get_address_for_material(pDR, the_mid, pSFH);
@@ -899,12 +977,12 @@ ses_error_flag _construct_current_data_record(ses_file_handle the_handle, ses_ma
     ses_open_type the_flag = FILE_LIST[the_handle]->_the_handle->_the_open_mode;
     ses_boolean didit_getit;
 #ifdef DEBUG_PRINT
-    printf("_construct_current_data_record: Before get_grid. nr = %ld, nt = %ld\n",nr, nt );
+    printf("_construct_current_data_record: Before get_grid. nr = %ld, nt = %ld, mid: %d\n",nr, nt, the_mid );
 #endif
    if (the_flag == 'R' || the_flag == 'C') {
         didit_getit =   _get_grid(the_handle, the_mid, the_tid, &nr, &nt, &ntab);
 #ifdef DEBUG_PRINT
-       printf("_construct_current_data_record: 14\n");
+       printf("_construct_current_data_record: called _get_grid\n");
 #endif
        if ((didit_getit == SES_FALSE) && (the_tid != 401)) {
 #ifdef DEBUG_PRINT
@@ -915,9 +993,6 @@ ses_error_flag _construct_current_data_record(ses_file_handle the_handle, ses_ma
         
     }
     else {
-#ifdef DEBUG_PRINT
-        printf("_construct_current_data_record: 15\n");
-#endif
         int index = _get_table_index(FILE_LIST[the_handle]->_current_index_record, the_tid);
         nr = FILE_LIST[the_handle]->_current_index_record->_nr[index];
         nt = FILE_LIST[the_handle]->_current_index_record->_nt[index];
@@ -926,9 +1001,6 @@ ses_error_flag _construct_current_data_record(ses_file_handle the_handle, ses_ma
 #endif
    }
     
-#ifdef DEBUG_PRINT
-    printf("_construct_current_data_record:20\n");
-#endif
    
     if (FILE_LIST[the_handle]->_current_data_record != (struct _ses_data_record*)NULL) {
         _destruct_ses_data_record(FILE_LIST[the_handle]->_current_data_record);
@@ -941,9 +1013,6 @@ ses_error_flag _construct_current_data_record(ses_file_handle the_handle, ses_ma
     long date2 = pSET->_date2;
     long vers = pSET->_version;
     FILE_LIST[the_handle]->_current_data_record = _construct_ses_data_record(maddress, nr, nt, ntab, the_mid, the_tid, date1, date2, vers);
-#ifdef DEBUG_PRINT
-    printf("_construct_current_data_record: 30\n");
-#endif
     
     if (FILE_LIST[the_handle]->_current_data_record == (struct _ses_data_record*)NULL) {
 #ifdef DEBUG_PRINT
@@ -951,10 +1020,6 @@ ses_error_flag _construct_current_data_record(ses_file_handle the_handle, ses_ma
 #endif
         return SES_SETUP_ERROR;
     }
-    
-#ifdef DEBUG_PRINT
-    printf("_construct_current_data_record: 40\n");
-#endif
     
     ses_boolean didit_init = _initialize_ses_iterator(FILE_LIST[the_handle]->_current_data_record->_the_iterator, the_handle,
                                                       the_tid);

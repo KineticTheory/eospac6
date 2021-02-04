@@ -17,7 +17,7 @@ Ordered list of Sesame files searched:
 TableHandle=0 matid =  3717 source = Analytical Ideal Gas Model page =  1
 Data Type = EOS_Aic_DT
 Loading Options: EOS_SPLIT_FORCED
-Description = Ion Specific-Free-Energy plus Cold Curve Specific-Free-Energy (MJ/kg) (Density (Mg/m^3)- and Temperature (K)-dependent)
+Description = Ion Specific-Helmholtz-Free-Energy plus Cold Curve Specific-Helmholtz-Free-Energy (MJ/kg) (Density (Mg/m^3)- and Temperature (K)-dependent)
   fconv =   1.000000000000000E+00         xconv =   1.000000000000000E+00         yconv =   1.000000000000000E+00
 
                      y =   0.000000000000000E+00   1.450606250000001E+02   2.981518061999996E+02   5.802425000000003E+02   1.160485000000001E+03   1.972824499999988E+03   2.131015802049544E+03   2.301891703283720E+03   2.486469320664022E+03   2.685847328866032E+03
@@ -109,7 +109,7 @@ Description = Ion Specific-Free-Energy plus Cold Curve Specific-Free-Energy (MJ/
 TableHandle=0 matid =  3717 source = Analytical Ideal Gas Model page =  2
 Data Type = EOS_Aic_DT
 Loading Options: EOS_SPLIT_FORCED
-Description = Ion Specific-Free-Energy plus Cold Curve Specific-Free-Energy (MJ/kg) (Density (Mg/m^3)- and Temperature (K)-dependent)
+Description = Ion Specific-Helmholtz-Free-Energy plus Cold Curve Specific-Helmholtz-Free-Energy (MJ/kg) (Density (Mg/m^3)- and Temperature (K)-dependent)
   fconv =   1.000000000000000E+00         xconv =   1.000000000000000E+00         yconv =   1.000000000000000E+00
 
                      y =   2.901212499999994E+03   3.133482815221054E+03   3.384348631231172E+03   3.655298698968094E+03   3.947940958380816E+03   4.264012080671004E+03   4.605387774483184E+03   4.974093917206133E+03   5.372318577443424E+03   5.802424999999988E+03
@@ -201,7 +201,7 @@ Description = Ion Specific-Free-Energy plus Cold Curve Specific-Free-Energy (MJ/
 TableHandle=0 matid =  3717 source = Analytical Ideal Gas Model page =  3
 Data Type = EOS_Aic_DT
 Loading Options: EOS_SPLIT_FORCED
-Description = Ion Specific-Free-Energy plus Cold Curve Specific-Free-Energy (MJ/kg) (Density (Mg/m^3)- and Temperature (K)-dependent)
+Description = Ion Specific-Helmholtz-Free-Energy plus Cold Curve Specific-Helmholtz-Free-Energy (MJ/kg) (Density (Mg/m^3)- and Temperature (K)-dependent)
   fconv =   1.000000000000000E+00         xconv =   1.000000000000000E+00         yconv =   1.000000000000000E+00
 
                      y =   8.703637499999953E+03   1.160484999999998E+04   1.740727499999991E+04   2.320969999999995E+04   2.901212500000000E+04   3.481454999999981E+04   4.641939999999991E+04   5.802425000000000E+04   9.283879999999981E+04   1.160485000000000E+05
@@ -293,7 +293,7 @@ Description = Ion Specific-Free-Energy plus Cold Curve Specific-Free-Energy (MJ/
 TableHandle=0 matid =  3717 source = Analytical Ideal Gas Model page =  4
 Data Type = EOS_Aic_DT
 Loading Options: EOS_SPLIT_FORCED
-Description = Ion Specific-Free-Energy plus Cold Curve Specific-Free-Energy (MJ/kg) (Density (Mg/m^3)- and Temperature (K)-dependent)
+Description = Ion Specific-Helmholtz-Free-Energy plus Cold Curve Specific-Helmholtz-Free-Energy (MJ/kg) (Density (Mg/m^3)- and Temperature (K)-dependent)
   fconv =   1.000000000000000E+00         xconv =   1.000000000000000E+00         yconv =   1.000000000000000E+00
 
                      y =   1.740727500000000E+05   2.320970000000000E+05   2.901212500000000E+05   3.481455000000000E+05   4.641940000000000E+05   5.802425000000000E+05   9.283880000000000E+05   1.160485000000000E+06   1.740727500000000E+06   2.901212500000000E+06
@@ -385,7 +385,7 @@ Description = Ion Specific-Free-Energy plus Cold Curve Specific-Free-Energy (MJ/
 TableHandle=0 matid =  3717 source = Analytical Ideal Gas Model page =  5
 Data Type = EOS_Aic_DT
 Loading Options: EOS_SPLIT_FORCED
-Description = Ion Specific-Free-Energy plus Cold Curve Specific-Free-Energy (MJ/kg) (Density (Mg/m^3)- and Temperature (K)-dependent)
+Description = Ion Specific-Helmholtz-Free-Energy plus Cold Curve Specific-Helmholtz-Free-Energy (MJ/kg) (Density (Mg/m^3)- and Temperature (K)-dependent)
   fconv =   1.000000000000000E+00         xconv =   1.000000000000000E+00         yconv =   1.000000000000000E+00
 
                      y =   4.641940000000000E+06   6.962910000000000E+06   1.160485000000000E+07   1.740727500000000E+07   2.901212500000000E+07   6.962910000000000E+07   1.160485000000000E+08   2.320970000000000E+08   5.802425000000000E+08   1.160485000000000E+09

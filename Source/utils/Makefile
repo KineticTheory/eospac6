@@ -66,33 +66,32 @@ $(BASEDIR)/utils/%.readme : %.c
             rm $$hnew; \
           fi; \
          )
-
 $(OBJDIR)/%.o : %.c
 	$(MAKEDEPEND)
-	${CC} $(C_ADDRESS_FLAG) ${CPPFLAGS} ${CFLAGS} -I$(SRCDIR) -c $< -o $@
-	$(PURIFY) $(CC) $(C_ADDRESS_FLAG) $(LDFLAGS) -o $(EXEDIR)/$* $@ $(LIBS)  
+	${CC} $(C_ADDRESS_FLAG) ${CPPFLAGS} ${CFLAGS} $(MORE_COMPILE_OPTS) -I$(SRCDIR) -c $< -o $@
+	$(PURIFY) $(CC) $(C_ADDRESS_FLAG) $(LDFLAGS) $(MORE_LD_OPTS) -o $(EXEDIR)/$* $@ $(LIBS)  
 	@-rm $@
 
 $(OBJDIR)/%.o : %.cpp
 	$(MAKEDEPEND)
-	${CXX} $(C_ADDRESS_FLAG) ${CPPFLAGS} ${CXXFLAGS} -I$(SRCDIR) -c $< -o $@
-	$(PURIFY) $(CXX) $(C_ADDRESS_FLAG) $(LDFLAGS) -o $(EXEDIR)/$* $(OBJDIR)/$(TEST_FUNCTIONS_OBJ) $@ $(LIBS) 
+	${CXX} $(C_ADDRESS_FLAG) ${CPPFLAGS} ${CXXFLAGS} $(MORE_COMPILE_OPTS) -I$(SRCDIR) -c $< -o $@
+	$(PURIFY) $(CXX) $(C_ADDRESS_FLAG) $(LDFLAGS) $(MORE_LD_OPTS) -o $(EXEDIR)/$* $(OBJDIR)/$(TEST_FUNCTIONS_OBJ) $@ $(LIBS) 
 	@-rm $@
 
 $(OBJDIR)/%.o : %.f
 	$(MAKEDEPEND)
-	${F77} $(F_ADDRESS_FLAG) ${FFLAGS} -I$(SRCDIR) -c $< -o $@
-	$(PURIFY) $(F77) $(F_ADDRESS_FLAG) $(LDFLAGS) -o $(EXEDIR)/$* $@ $(OBJDIR)/$(TEST_FUNCTIONS_OBJ)  $(LIBS) 
+	${F77} $(F_ADDRESS_FLAG) ${FFLAGS} $(MORE_COMPILE_OPTS) -I$(SRCDIR) -c $< -o $@
+	$(PURIFY) $(F77) $(F_ADDRESS_FLAG) $(LDFLAGS) $(MORE_LD_OPTS) -o $(EXEDIR)/$* $@ $(OBJDIR)/$(TEST_FUNCTIONS_OBJ)  $(LIBS) 
 	@-rm $@
 
 $(OBJDIR)/%.o : %.f90
 	$(MAKEDEPEND)
 	@(d=`pwd`; \
          cd $(OBJDIR); \
-         echo $(F90) $(F_ADDRESS_FLAG) ${F90FLAGS} -I$(SRCDIR) -c $$d/$< -o $@; \
-         $(F90) $(F_ADDRESS_FLAG) ${F90FLAGS} -c $$d/$< -o $@; \
+         echo $(F90) $(F_ADDRESS_FLAG) ${F90FLAGS} $(MORE_COMPILE_OPTS) -I$(SRCDIR) -c $$d/$< -o $@; \
+         $(F90) $(F_ADDRESS_FLAG) ${F90FLAGS} $(MORE_COMPILE_OPTS) -c $$d/$< -o $@; \
         )
-	$(PURIFY) $(F90) $(F_ADDRESS_FLAG) $(LDFLAGS) -o $(EXEDIR)/$* $@ $(PROFILE) $(OBJDIR)/$(TEST_FUNCTIONS_OBJ) $(LIBS) $(F90_LIBS) 
+	$(PURIFY) $(F90) $(F_ADDRESS_FLAG) $(LDFLAGS) $(MORE_LD_OPTS) -o $(EXEDIR)/$* $@ $(PROFILE) $(OBJDIR)/$(TEST_FUNCTIONS_OBJ) $(LIBS) $(F90_LIBS) 
 	@-rm $@
 
 JUNKFILE = junk.stdout
@@ -138,7 +137,7 @@ $(addprefix $(EXEDIR)/,$(EXE)):
                 sed -e 's:<BASEDIR_PATTERN>:$(BASEDIR):' $(BASEDIR)/tests/sesameFilesDir.txt.template > "$(TESTEXEDIR)/$${t_base}.workdir/sesameFilesDir.txt" ; \
                 cd "$(TESTEXEDIR)/$${t_base}.workdir"; \
                 printf "*** Execute %s\n" $${t_base}; \
-                perl "$${popdir}/$${t}" -e "$${dir}/$${exe}" > ../$${t_base}.stdout 2>&1; \
+                perl "$${popdir}/$${t}" -e "$${dir}/$${exe}" $(BASEDIR)/tests/data > ../$${t_base}.stdout 2>&1; \
                 cd "$${popdir}"; \
                 rm -f -r "$(TESTEXEDIR)/$${t_base}.workdir"; \
               done; \
@@ -162,7 +161,7 @@ check test: all
             echo Perl unavailable ... run no tests; \
           fi; \
         )
-	$(MAKE) -j1 MAKE_HTML_OPT=$(MAKE_HTML_OPT) compare make_html make_xml;
+	$(MAKE) -j1 MAKE_HTML_OPT=$(MAKE_HTML_OPT) compare;
 #	@(echo '--- BEGIN XML ($(MAKEFILE_LIST)) ---'; cat $(PASSFAILOUTPUTXML); echo '---- END XML ($(MAKEFILE_LIST)) ----';)
 
 compare:

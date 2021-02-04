@@ -8,7 +8,7 @@
  ********************************************************************/
 
 /*! \file
- *  \ingroup tests quick
+ *  \ingroup CPP tests quick
  *  \brief Ensure resolution of unexpected extrapolation output and
  *  core dump on qsc.lanl.gov.
  *

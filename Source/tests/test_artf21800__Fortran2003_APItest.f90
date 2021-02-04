@@ -25,10 +25,12 @@
 !! MATIDS TO TEST: 7411 7432 7440 7450 7460 7470 7510 7520 7521 7530 7541 7542 7550 7560 7561 7570 7580 7590
 !! MATIDS TO TEST: 7591 7592 7593 7601 7602 7603 7660 7740 7741 7750 7760 7761 7770 7771 7830 7831 7832 7833
 !! MATIDS TO TEST: 7834 7930 7931 7940 7941 7970 7971 7980 7981 8020
+!! REQUIRED FILE (OR): {CI_PROJECT_DIR}/eospac6-data/data/eos/export-controlled/ieee64/sesame
 !! REQUIRED FILE (OR): /usr/projects/data/eos/export-controlled/ieee64/sesame
 !! REQUIRED FILE (OR): /opt/local/codes/data/eos/export-controlled/ieee64/sesame
 !! REQUIRED FILE (OR): /usr/gapps/lanl-data/eos/export-controlled/ieee64/sesame
 !! REQUIRED FILE (OR): /projects/lanl-data/eos/export-controlled/ieee64/sesame
+!! REQUIRED FILE (OR): /local/data/eos/export-controlled/ieee64/sesame
 
 program testsetfile
   use eos_Interface2003
@@ -41,7 +43,7 @@ program testsetfile
   integer(EOS_INTEGER) :: one
   integer(EOS_INTEGER) :: info_item
   character*4096 filename, filename2, fn
-  character(4096) :: dirList(4)
+  character(4096) :: dirList(6)
   character(EOS_MaxErrMsgLen) :: errorMessage
 
   integer indx1, i
@@ -246,10 +248,20 @@ program testsetfile
 
   print*,"-----------------------------------------"
 
-  dirList(1) = "/usr/projects/data/eos"
-  dirList(2) = "/opt/local/codes/data/eos"
-  dirList(3) = "/usr/gapps/lanl-data/eos"
-  dirList(4) = "/projects/lanl-data/eos"
+  dirList(1) = ""
+  call eos_getenv_wrapper(dirList(1), "CI_PROJECT_DIR")
+
+  indx1 = index(dirList(1),char(0)) ! find first NULL character
+  dirList(1)(indx1:len(dirList(1))) = ' ' ! remove NULL character and all other trailing characters
+  dirList(1) = trim(dirList(1)) // '/eospac6-data/data/eos'
+
+  dirList(2) = "/usr/projects/data/eos"
+  dirList(3) = "/opt/local/codes/data/eos"
+  dirList(4) = "/usr/gapps/lanl-data/eos"
+  dirList(5) = "/projects/lanl-data/eos"
+  dirList(6) = "/local/data/eos"
+
+  write(*,'(a)') (trim(dirList(i)), i=1,5)
 
   lexist = .FALSE.
   do i = 1, ubound(dirList,1)
@@ -279,6 +291,12 @@ program testsetfile
      stop
   endif
 
+  write(*,'(a)') "-----------------------------------------"
+  write(*,'(a)') "Selected files to be used below:"
+  write(*,'(5x,a)') trim(filename)
+  write(*,'(5x,a)') trim(filename2)
+  write(*,'(a/)') "-----------------------------------------"
+
   do indx1 =1,190
 
      matid = ideos(indx1)
@@ -295,6 +313,7 @@ program testsetfile
 
      call eos_CreateTables(ntables,itabletype,matid,eoshandle,err1)
      if(err1.ne.0)then
+        err1 = err1 - int(err1 / 10000) * 10000
         call eos_GetErrorMessage(err1, errorMessage)
      else
         errormessage = ""
@@ -304,6 +323,7 @@ program testsetfile
 
      call eos_SetDataFileName(eoshandle, matid, itabletype, fn, err1)
      if(err1.ne.0)then
+        err1 = err1 - int(err1 / 10000) * 10000
         call eos_GetErrorMessage(err1, errorMessage)
      else
         errormessage = ""
@@ -314,6 +334,7 @@ program testsetfile
 
      call eos_LoadTables(ntables, eoshandle,err1)
      if(err1.ne.0)then
+        err1 = err1 - int(err1 / 10000) * 10000
         call eos_GetErrorMessage(err1, errorMessage)
      else
         errormessage = ""
@@ -326,6 +347,7 @@ program testsetfile
      write(*,'(a,i6)') " info_item=",info_item
      call eos_GetTableInfo(eoshandle,one,info_item, comment_string_length,err1)
      if(err1.ne.0)then
+        err1 = err1 - int(err1 / 10000) * 10000
         call eos_GetErrorMessage(err1, errorMessage)
      else
         errormessage = ""
@@ -335,6 +357,7 @@ program testsetfile
 
      call eos_GetTableInfo(eoshandle,one,info_item, comment_string_length,err1)
      if(err1.ne.0)then
+        err1 = err1 - int(err1 / 10000) * 10000
         call eos_GetErrorMessage(err1, errorMessage)
      else
         errormessage = ""
@@ -347,6 +370,7 @@ program testsetfile
      itabletype = EOS_T_DUt
      call eos_CreateTables(ntables,itabletype,matid,eoshandle,err1)
      if(err1.ne.0)then
+        err1 = err1 - int(err1 / 10000) * 10000
         call eos_GetErrorMessage(err1, errorMessage)
      else
         errormessage = ""
@@ -356,6 +380,7 @@ program testsetfile
 
      call eos_SetDataFileName(eoshandle, matid, itabletype, fn, err1)
      if(err1.ne.0)then
+        err1 = err1 - int(err1 / 10000) * 10000
         call eos_GetErrorMessage(err1, errorMessage)
      else
         errormessage = ""
@@ -366,6 +391,7 @@ program testsetfile
 
      call eos_LoadTables(ntables, eoshandle,err1)
      if(err1.ne.0)then
+        err1 = err1 - int(err1 / 10000) * 10000
         call eos_GetErrorMessage(err1, errorMessage)
      else
         errormessage = ""
@@ -378,6 +404,7 @@ program testsetfile
      itabletype = EOS_Pt_DUt
      call eos_CreateTables(ntables,itabletype,matid,eoshandle,err1)
      if(err1.ne.0)then
+        err1 = err1 - int(err1 / 10000) * 10000
         call eos_GetErrorMessage(err1, errorMessage)
      else
         errormessage = ""
@@ -387,6 +414,7 @@ program testsetfile
 
      call eos_SetDataFileName(eoshandle, matid, itabletype, fn, err1)
      if(err1.ne.0)then
+        err1 = err1 - int(err1 / 10000) * 10000
         call eos_GetErrorMessage(err1, errorMessage)
      else
         errormessage = ""
@@ -397,6 +425,7 @@ program testsetfile
 
      call eos_LoadTables(ntables, eoshandle,err1)
      if(err1.ne.0)then
+        err1 = err1 - int(err1 / 10000) * 10000
         call eos_GetErrorMessage(err1, errorMessage)
      else
         errormessage = ""
@@ -407,6 +436,7 @@ program testsetfile
      itabletype = EOS_Ut_DT
      call eos_CreateTables(ntables,itabletype,matid,eoshandle,err1)
      if(err1.ne.0)then
+        err1 = err1 - int(err1 / 10000) * 10000
         call eos_GetErrorMessage(err1, errorMessage)
      else
         errormessage = ""
@@ -416,6 +446,7 @@ program testsetfile
 
      call eos_SetDataFileName(eoshandle, matid, itabletype, fn, err1)
      if(err1.ne.0)then
+        err1 = err1 - int(err1 / 10000) * 10000
         call eos_GetErrorMessage(err1, errorMessage)
      else
         errormessage = ""
@@ -426,6 +457,7 @@ program testsetfile
 
      call eos_LoadTables(ntables, eoshandle,err1)
      if(err1.ne.0)then
+        err1 = err1 - int(err1 / 10000) * 10000
         call eos_GetErrorMessage(err1, errorMessage)
      else
         errormessage = ""

@@ -17,7 +17,7 @@ Ordered list of Sesame files searched:
 TableHandle=0 matid =  3720 source = /opt/local/codes/data/eos/sesame page =  1
 Data Type = EOS_Ac_D
 Loading Options: EOS_MONOTONIC_IN_Y, EOS_SPLIT_COWAN, EOS_SPLIT_FORCED
-Description = Specific-Free-Energy Cold Curve (MJ/kg) (Density (Mg/m^3)-dependent)
+Description = Specific-Helmholtz-Free-Energy Cold Curve (MJ/kg) (Density (Mg/m^3)-dependent)
   fconv =   1.000000000000000E+00         xconv =   1.000000000000000E+00         yconv =   1.000000000000000E+00
 
                      y =   0.000000000000000E+00

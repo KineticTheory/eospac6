@@ -4,16 +4,11 @@
 #include "ses_externs.h"
 #include "ses_internals.h"
 
-#define TRY_OPTIONAL
-
-#ifdef TRY_OPTIONAL
 #include <stdarg.h>
 #include <ctype.h>
-#endif
 
 #undef DEBUG_PRINT
 
-#ifdef TRY_OPTIONAL
 /****
  *
  *
@@ -90,12 +85,6 @@ ses_error_flag ses_set_format(ses_number num_vars, ...) {
     }
 
     va_end(valist);
-
-#else
-ses_error_flag ses_set_format(ses_file_handle the_handle, ses_file_type the_file_type, ses_ascii_word_type ascii_word_type) {
-#endif
-
-    return_value = SES_NO_ERROR;  // GINGER remove when conditional is gone.
 
   if (ses_is_valid(the_handle) == SES_FALSE) {
 #ifdef DEBUG_PRINT

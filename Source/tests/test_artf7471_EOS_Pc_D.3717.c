@@ -8,7 +8,7 @@
  ********************************************************************/
 
 /*! \file
- *  \ingroup tests
+ *  \ingroup C tests
  *  \brief Check that the correct tables are being loaded for EOS_Pc_D
  *         and material 3717 with a forced EOS_SPLIT_NUM_PROP option.
  *

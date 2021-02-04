@@ -22,6 +22,7 @@
 #include "eos_RecordType1.h"
 #include "eos_RecordType2.h"
 #include "eos_RecordType6.h"
+#include "eos_HashTable.h"
 
 NRmachPrecData _eos_machinePrecisionData = {
   0,                            // gotMachinePrecision
@@ -35,8 +36,7 @@ void eos_GetMachinePrecision (EOS_REAL *eps, EOS_REAL *epsneg)
 {
 
 #ifdef SHOW_MACH_PRECISION
-  printf
-    ("eos_GetMachinePrecision is estimating this machine's precision.\n");
+  printf("eos_GetMachinePrecision is estimating this machine's precision.\n");
 #endif
 
   EOS_REAL one = (EOS_REAL) (1);
@@ -163,43 +163,61 @@ void eos_HandleErrorEosInterpolation (void *ptr, EOS_INTEGER errorCode)
  *  n    = the number of elements in the table X.     
  *  x[]  = a table of increasing elements to be searched in.
  *  ix   = step size to traverse array x[]
+ *  x_ht = hashtable for x, pass NULL to use hunt and locate search (slower)
  * 
  * On return 
  *
  *  EOS_INTEGER *errorCode    scalar error code
  *  EOS_INTEGER *xyBounds     interpolation errors per xy-pair
  * 
- *  EOS_INTEGER J[] = a vector of length N of integers locating the position     
+ *  EOS_INTEGER J[] = a vector of length my of integers locating the position     
  *                    of each element of y[] in the x[] table:       
  *                    x[j[i]] <= y[i] < x[j[i]+1], i=1...my
  ********************************************************************************/
+#ifdef DEBUG_EOS_SRCHDF
+static EOS_INTEGER _eos_srchdf_counter = 0;
+#endif
 
-void _eos_srchdf (EOS_INTEGER my, EOS_REAL y[], EOS_INTEGER iy,
-                  EOS_INTEGER n, EOS_REAL x[], EOS_INTEGER ix,
-                  EOS_INTEGER j[], EOS_INTEGER *xyBounds,
+
+void _eos_srchdf (EOS_INTEGER my, EOS_REAL* y, EOS_INTEGER iy,
+                  EOS_INTEGER n, EOS_REAL* x, EOS_INTEGER ix,
+                  EOS_INTEGER* j, eos_HashTable1D* x_ht, EOS_INTEGER *xyBounds,
                   EOS_INTEGER *errorCode)
 {
-  EOS_INTEGER i, err, k;
+  EOS_INTEGER i;
+#ifdef DEBUG_EOS_SRCHDF
+  _eos_srchdf_counter++;
+#endif
   *errorCode = EOS_OK;
 
-  k = 0;
-  for (i = 0; i < my; i++) {
-    j[i] = _eos_hunt (x, n, ix, y[i], k, &err);
-    xyBounds[i] = err;
-    if (eos_GetStandardErrorCodeFromCustomErrorCode(err) != EOS_OK)
-      *errorCode = err;
-    if (IS_EXTRAPOLATED (eos_GetStandardErrorCodeFromCustomErrorCode(*errorCode)))
-      *errorCode = EOS_INTERP_EXTRAPOLATED;
-    if (eos_GetStandardErrorCodeFromCustomErrorCode(*errorCode) == EOS_UNDEFINED) {
-      k = 0;
-      continue;
-    }
+  EOS_BOOLEAN useGpuData=EOS_FALSE;
+  EOS_BOOLEAN skipExtrap = _EOS_GET_SKIPEXTRAPCHECK_EOSDATAMAP;;
 
-    if (i < my - 1 && y[i + 1] >= y[i])
-      k = j[i];                 /* make the found index a new starting point */
-    else
-      k = 0;
+#ifdef DO_OFFLOAD
+    useGpuData=_EOS_GET_USEGPUDATA_EOSDATAMAP;
+#endif
+
+  eos_Search (x, n, ix /* step */, y, my, j, xyBounds, x_ht, errorCode);
+
+  if (!skipExtrap && !useGpuData){
+    for (i = 0; i < my; i++) {
+      if (IS_EXTRAPOLATED (eos_GetStandardErrorCodeFromCustomErrorCode(xyBounds[i])))
+	*errorCode = EOS_INTERP_EXTRAPOLATED;
+    }
   }
+
+#ifdef DEBUG_EOS_SRCHDF
+#ifndef DO_OFFLOAD
+  printf("\n# fcmp_ignore: _eos_srchdf_counter = %d\n# fcmp_ignore: _eos_srchdf: %10s  %10s %23s %23s\n", _eos_srchdf_counter, "i", "j[i]", "x[j[i]]", "y[i]");
+  for (i = 0; i < my; i++) {
+    /* if (i==0 || i==100) */
+    printf("# fcmp_ignore: _eos_srchdf: %10d. %10d %23.15e %23.15e n=%d my=%d ix=%d xyBounds[i]=%d\n", i, j[i], x[j[i]], y[i], n, my, ix, xyBounds[i]);
+  }
+  printf("\n");
+#endif
+#endif
+
+
 }
 
 /*!**********************************************************************
@@ -236,29 +254,29 @@ EOS_INTEGER _eos_CombineExtrapErrors (EOS_INTEGER xErr_in, EOS_INTEGER yErr_in)
       return yErr;
   }
   if (xErr==EOS_xHi_yOk   && (yErr==EOS_xHi_yOk ||
-			      yErr==EOS_xOk_yHi ||
-			      yErr==EOS_xHi_yHi))
+                              yErr==EOS_xOk_yHi ||
+                              yErr==EOS_xHi_yHi))
     return EOS_xHi_yHi;
 
   if (xErr==EOS_xLo_yOk   && (yErr==EOS_xLo_yOk ||
-			      yErr==EOS_xOk_yLo ||
-			      yErr==EOS_xLo_yLo))
+                              yErr==EOS_xOk_yLo ||
+                              yErr==EOS_xLo_yLo))
     return EOS_xLo_yLo;
 
   if (xErr==EOS_xHi_yOk   && (yErr==EOS_xLo_yOk ||
-			      yErr==EOS_xOk_yLo ||
-			      yErr==EOS_xHi_yLo))
+                              yErr==EOS_xOk_yLo ||
+                              yErr==EOS_xHi_yLo))
     return EOS_xHi_yLo;
 
   if (xErr==EOS_xLo_yOk   && (yErr==EOS_xHi_yOk ||
-			      yErr==EOS_xOk_yHi ||
-			      yErr==EOS_xLo_yHi))
+                              yErr==EOS_xOk_yHi ||
+                              yErr==EOS_xLo_yHi))
     return EOS_xLo_yHi;
 
   if (xErr==EOS_UNDEFINED || yErr==EOS_UNDEFINED) return EOS_UNDEFINED;
 
   /* default case */
-    return EOS_OK;
+  return EOS_OK;
 }
 
 /*!**********************************************************************
@@ -278,6 +296,10 @@ EOS_INTEGER _eos_CombineExtrapErrors (EOS_INTEGER xErr_in, EOS_INTEGER yErr_in)
  ************************************************************************/
 void _eos_SplitExtrapErrors (EOS_INTEGER xyBounds, EOS_INTEGER *xErr, EOS_INTEGER *yErr)
 {
+
+  EOS_BOOLEAN skipExtrap = _EOS_GET_SKIPEXTRAPCHECK_EOSDATAMAP;;
+  if (skipExtrap) 
+    return;
   *xErr = *yErr = EOS_OK;
 
   switch (xyBounds) {
@@ -330,10 +352,10 @@ void _eos_SplitExtrapErrors (EOS_INTEGER xyBounds, EOS_INTEGER *xErr, EOS_INTEGE
    EOS_REAL    *upperbound array of upper bounds of target solutions
  *********************************************************************************************************************/
 void _eos_DumpIndicesToFile (char *fn, char *mode,
-			     EOS_INTEGER nsrch,
-			     EOS_REAL *xtbls, EOS_REAL *ytbls, EOS_REAL **ftbls,
-			     EOS_INTEGER *ix_low, EOS_INTEGER *iy_low,
-			     EOS_REAL *lowerbound, EOS_REAL *upperbound)
+                             EOS_INTEGER nsrch,
+                             EOS_REAL *xtbls, EOS_REAL *ytbls, EOS_REAL **ftbls,
+                             EOS_INTEGER *ix_low, EOS_INTEGER *iy_low,
+                             EOS_REAL *lowerbound, EOS_REAL *upperbound)
 {
   int j;
   FILE *fp;
@@ -342,24 +364,26 @@ void _eos_DumpIndicesToFile (char *fn, char *mode,
 
   if (lowerbound == NULL || upperbound == NULL)
     fprintf(fp,"%-5s %3s %3s %23s %23s %23s\n",
-	    "i","ix","iy","xtbl[ix]","ytbl[iy]","ftbl[iy][ix]");
+            "i","ix","iy","xtbl[ix]","ytbl[iy]","ftbl[iy][ix]");
   else
     fprintf(fp,"%-5s %3s %3s %23s %23s %23s %23s %23s\n",
-	    "i","ix","iy","xtbl[ix]","ytbl[iy]","ftbl[iy][ix]","lowerbound","upperbound");
+            "i","ix","iy","xtbl[ix]","ytbl[iy]","ftbl[iy][ix]","lowerbound","upperbound");
 
   for (j=0; j<nsrch; j++) {
     fprintf(fp,"%-5d %3d %3d",j,ix_low[j],iy_low[j]);
     if (lowerbound == NULL || upperbound == NULL)
       fprintf(fp," %23.15e %23.15e %23.15e\n",
-	      xtbls[ix_low[j]],ytbls[iy_low[j]],ftbls[iy_low[j]][ix_low[j]]);
+              xtbls[ix_low[j]],ytbls[iy_low[j]],ftbls[iy_low[j]][ix_low[j]]);
     else
       fprintf(fp," %23.15e %23.15e %23.15e %23.15e %23.15e\n",
-	      xtbls[ix_low[j]],ytbls[iy_low[j]],ftbls[iy_low[j]][ix_low[j]],
-	      lowerbound[j],upperbound[j]);
+              xtbls[ix_low[j]],ytbls[iy_low[j]],ftbls[iy_low[j]][ix_low[j]],
+              lowerbound[j],upperbound[j]);
   }
 
+  fprintf(fp,"\n");
   if (fp) fclose(fp);
 }
+
 /*!**************************************************************************************************************** 
    function eos_SearchIndices_YF
    Takes an array of values of Y and corresponding values of F(x,y) and for each y, F(x,y) pair, finds the closest
@@ -381,6 +405,8 @@ void _eos_DumpIndicesToFile (char *fn, char *mode,
    EOS_INTEGER nGhostData  number of "ghost" data points added at each isotherm/isochore extremum
                            (which are used to smooth interpolation at table boundaries)
    EOS_REAL coldCurve[]    optional input cold curve that was subtracted from F before log10 is taken
+   eos_HashTable1D Y_ht    hashtable for Y values (can be NULL)
+   eos_HashTable2D F_ht    hashtable for F values (can be NULL)
    EOS_INTEGER adjustF     flag, whether or not the F0 is in the same form as F
 
    Outputs:
@@ -396,68 +422,62 @@ void _eos_DumpIndicesToFile (char *fn, char *mode,
    EOS_INTEGER *xyBounds     interpolation errors per xy-pair
    EOS_INTEGER *err;        output error code
  *********************************************************************************************************************/
-
+#ifdef DEBUG_EOS_SEARCHINDICES_YF
+static EOS_INTEGER eos_SearchIndices_YF_counter = 0;
+#endif
 void eos_SearchIndices_YF (EOS_REAL Y0[], EOS_REAL F0[], EOS_INTEGER npoints,
                            EOS_REAL X[], EOS_REAL Y[], EOS_REAL **F,
                            EOS_INTEGER nx, EOS_INTEGER ny, EOS_INTEGER nGhostData,
                            EOS_INTEGER Low_IY0[], EOS_INTEGER Low_IX0[],
                            EOS_INTEGER High_IY0[], EOS_INTEGER High_IX0[],
-                           EOS_REAL *coldCurve, EOS_INTEGER adjustF,
+                           EOS_REAL *coldCurve, eos_HashTable1D* Y_ht, eos_HashTable2D* F_ht, EOS_INTEGER adjustF,
                            EOS_INTEGER *xyBounds, EOS_INTEGER *err)
 {
-  EOS_INTEGER err1 = EOS_OK, err2 =
-    EOS_OK, i, k;
-  EOS_REAL *origF;              /* array used to store original values of F, w/o cold curve and log10 */
-
+  EOS_INTEGER err1 = EOS_OK, err2 = EOS_OK, i;
   *err = EOS_OK;
 
-  if (adjustF) /* DAP: this is currently not used ... however, reenable if cold curve data separated */
-    origF = (EOS_REAL *) malloc (nx * sizeof (EOS_REAL));
-
-  /* first find y-range, assume the values of YX0[] are INCREASING */
-  k = 0;
-  for (i = 0; i < npoints; i++) {
-
-    Low_IY0[i] = _eos_hunt (&(Y[nGhostData]), ny-1-nGhostData*2,
-			    1, Y0[i], k, &err1); /* lower bound */
-    Low_IY0[i] += nGhostData; /* increment index since _eos_hunt output is offset */
-    if (eos_GetStandardErrorCodeFromCustomErrorCode(err1) == EOS_UNDEFINED) {
-      *err = err1;
-      continue;                 /* move to the next point */
-    }
-    xyBounds[i] = err1;
-    High_IY0[i] = Low_IY0[i] + 1;
+  for (i = 0; i < npoints; i++) {                                                                           
+    xyBounds[i] = EOS_OK;
   }
 
-  /* now find f-range along Low_Y, High_Y, it will give us indexes of x */
-  k = 0;
+  /* initialize indexes */
   for (i = 0; i < npoints; i++) {
+    Low_IX0[i]  = 0;
+    High_IX0[i] = 0;
+    Low_IY0[i]  = 0;
+    High_IY0[i] = 0;
+  }
 
-    High_IX0[i] = _eos_hunt (&(F[High_IY0[i]][nGhostData]), nx-1-nGhostData*2,
-			     1, F0[i], k, &err2);     /* upper bound */
-    Low_IX0[i] = _eos_hunt (&(F[Low_IY0[i]][nGhostData]), nx-1-nGhostData*2,
-			    1, F0[i], k, &err1);      /* lower bound */
-    Low_IX0[i] += nGhostData; /* increment index since _eos_hunt output is offset */
-    High_IX0[i] += nGhostData; /* increment index since _eos_hunt output is offset */
-
+  /* first find y-range, assume the values of YX0[] are INCREASING */
+  eos_Search (&(Y[nGhostData]), ny-nGhostData*2, 1, Y0, npoints, Low_IY0, xyBounds, Y_ht, &err1);
+  for (i = 0; i < npoints; i++) {
+    Low_IY0[i] += nGhostData; /* increment index since eos_Search output is offset */
+    High_IY0[i] = Low_IY0[i] + 1;
+  }
+  /* now find f-range along Low_Y, High_Y, it will give us indexes of x */
+  for (i = 0; i < npoints; i++) {
+    eos_Search (&(F[High_IY0[i]][nGhostData]), nx-nGhostData*2, 1,
+      &(F0[i]), 1, &(High_IX0[i]), xyBounds,
+      F_ht == NULL ? NULL : &F_ht->rowTables[High_IY0[i]], &err2); /* upper bound */
+    eos_Search (&(F[Low_IY0[i]][nGhostData]),  nx-nGhostData*2, 1,
+      &(F0[i]), 1, &(Low_IX0[i]), xyBounds,
+      F_ht == NULL ? NULL : &F_ht->rowTables[Low_IY0[i]], &err1); /* lower bound */
+    Low_IX0[i]  += nGhostData; /* increment index since eos_Search output is offset */
+    High_IX0[i] += nGhostData; /* increment index since eos_Search output is offset */
     xyBounds[i] = EOS_OK; /* disable xyBounds[i] assignment in this function --
-			     leave it to the parent function's control */
-    continue;
+                             leave it to the parent function's control */
+  }
 
-    if (IS_EXTRAPOLATED (eos_GetStandardErrorCodeFromCustomErrorCode(err1)) ||
-	IS_EXTRAPOLATED (eos_GetStandardErrorCodeFromCustomErrorCode(err2)) ||
-        eos_GetStandardErrorCodeFromCustomErrorCode(err1) == EOS_UNDEFINED ||
-	eos_GetStandardErrorCodeFromCustomErrorCode(err2) == EOS_UNDEFINED ||
-	IS_EXTRAPOLATED (xyBounds[i])) {
-      err1 = (eos_GetStandardErrorCodeFromCustomErrorCode(err1) == EOS_UNDEFINED) ? err2 : err1;
-      *err = EOS_INTERP_EXTRAPOLATED;
-      xyBounds[i] = _eos_CombineExtrapErrors (xyBounds[i], err1);
-    }
+#ifdef DEBUG_EOS_SEARCHINDICES_YF
+  printf("\n# fcmp_ignore: eos_SearchIndices_YF_counter = %d\n# fcmp_ignore: eos_SearchIndices_YF: %10s  %11s %11s %11s %11s\n",
+         eos_SearchIndices_YF_counter, "i", "Low_IX0[i]", "High_IX0[i]", "Low_IY0[i]", "High_IY0[i]");
+  for (i = 0; i < npoints; i++) {
+    /* if (i==0 || i==100) */
+    printf("# fcmp_ignore: eos_SearchIndices_YF: %10d. %11d %11d %11d %11d npoints=%d\n", i, Low_IX0[i], High_IX0[i], Low_IY0[i], High_IY0[i], npoints);
+  }
+  printf("\n");
+#endif
 
-  } /* for i=0 to npoints */
-
-  if (adjustF)
-    EOS_FREE (origF);
 }
 
 //#define C_CRANFILL_ORIGINAL 1
@@ -465,108 +485,156 @@ void eos_SearchIndices_YF (EOS_REAL Y0[], EOS_REAL F0[], EOS_INTEGER npoints,
 /*************************************************************************************
  *       eos_RationalInterpolate4
  *       purpose   -- interpolate F(x) for value of x given 4 known points closest to x.
+ *       _create_ghostdata = input  boolean enables _create_ghostdata logic in eos_RationalInterpolate4
  *       srchX = input value, x, used to interpolate F.
  *       F[4] = input array containing 4 tabulated F values.
  *       X[4] = input array containing 4 tabulated X values.
  *       fvalv    = output pointer containing interpolated value of function F(x)
  *       dfvalv   = output pointer OPTIONAL, containing the derivative of function F(x)
  *************************************************************************************/
-void eos_RationalInterpolate4 (EOS_REAL srchX, EOS_REAL *X, EOS_REAL *F,
-                               EOS_REAL *fvalv, EOS_REAL *dfvalv)
-{
+void eos_RationalInterpolate4 (EOS_BOOLEAN _create_ghostdata, EOS_REAL *srchX, EOS_REAL *X, EOS_REAL *F,
+                               EOS_REAL *fvalv, EOS_REAL *dfvalv, EOS_INTEGER ninds) {
 
-  EOS_REAL rx3, rx4, sxv, txv, fx1, fxx1, gxx1, wx1, dxg1, dxg2, dxg3, rxv;
-  EOS_REAL ftg1, ftg2, ftg3, ftg4;
+  EOS_INTEGER i;
+  EOS_BOOLEAN use_df = (dfvalv==NULL?EOS_FALSE:EOS_TRUE);
 
-  EOS_REAL denom1, denom2;
 
-  ftg1 = F[1];
-  ftg2 = F[2];
-  ftg3 = F[0];
-  ftg4 = F[3];
+#ifdef DO_OFFLOAD
+  EOS_BOOLEAN  useGpuData=_EOS_GET_USEGPUDATA_EOSDATAMAP;
+  /* input value, srchX, marked as * corresponds to target values, fvalv and dfvalv */
+#pragma omp target if(useGpuData) is_device_ptr(srchX, F, X, fvalv, dfvalv) 
+  {
+#pragma omp teams distribute parallel for
+#endif /* DO_OFFLOAD */
+#ifndef DISABLE_OMP_SIMD_PRAGMA
+#pragma omp simd
+#endif
+  for (i=0; i<ninds; i++){
+    EOS_REAL X0, X1, X2, X3;
+    EOS_REAL ftg1, ftg2, ftg3, ftg4;
+    if (_create_ghostdata && srchX[i] < X[1+i*4]) {
+      /* Xghost        X[0]   *    X[1]        X[2]        X[3] */
+      /* Fghost        F[0]   *    F[1]        F[2]        F[3] */
+      X0 = 2*X[0+i*4] - X[1+i*4]; /* assume increasing order */
+      X1 = X[0+i*4];
+      X2 = X[1+i*4];
+      X3 = X[2+i*4];
+      ftg1 = F[0];
+      ftg2 = F[1];
+      ftg3 = F[0] + (X0 - X1) / (X2 - X1) * (F[1] - F[0]); /* DAP 2020-05-12: This is verified for consistency with _eos_CreateGhostData logic */
+      ftg4 = F[2];
+    }
+    else if (_create_ghostdata && srchX[i] >= X[2+i*4]) {
+      /* X[0]        X[1]        X[2]    *   X[3]        Xghost */
+      /* F[0]        F[1]        F[2]    *   F[3]        Fghost */
+      X0 = X[1+i*4];
+      X1 = X[2+i*4];
+      X2 = X[3+i*4];
+      X3 = X[3+i*4] + (X[3+i*4] - X[2+i*4]); /* assume increasing order */
+      ftg1 = F[2+i*4];
+      ftg2 = F[3+i*4];
+      ftg3 = F[1+i*4];
+      ftg4 = F[2+i*4] + (X3 - X1) / (X2 - X1) * (F[3+i*4] - F[2+i*4]); /* DAP 2020-05-12: This is verified for consistency with _eos_CreateGhostData logic */
+    }
+    else {
+      /* X[0]        X[1]    *   X[2]        X[3] */
+      X0 = X[0+i*4];
+      X1 = X[1+i*4];
+      X2 = X[2+i*4];
+      X3 = X[3+i*4];
+      ftg1 = F[1+i*4];
+      ftg2 = F[2+i*4];
+      ftg3 = F[0+i*4];
+      ftg4 = F[3+i*4];
+    }
 
-  /* interpolate values of eos function f(x,y) and derivative. */
-  dxg1 = X[1] - X[0];
-  dxg2 = X[2] - X[1];
+    /* interpolate values of eos function f(x,y) and derivative. */
+    EOS_REAL dxg1 = X1 - X0;
+    EOS_REAL dxg2 = X2 - X1;
 #ifndef C_CRANFILL_ORIGINAL
-  dxg3 = X[3] - X[2];
+    EOS_REAL dxg3 = X3 - X2;
 #ifdef DISABLE_FLOOR_CHECK
-  denom1 = dxg2;
+    EOS_REAL denom1 = dxg2;
 #else
-  denom1 = FLOOR(dxg2);
+    EOS_REAL denom1 = FLOOR(dxg2);
 #endif
-  rxv = (srchX - X[1]) / denom1;
+    EOS_REAL rxv = (srchX[i] - X1) / denom1;
 #else
-  dxg3 = X[3] - X[1];
-  rxv = (srchX - X[1]) / dxg2;
+    EOS_REAL dxg3 = X3 - X1;
+    EOS_REAL rxv = (srchX[i] - X1) / dxg2;
 #endif
 
 #ifndef C_CRANFILL_ORIGINAL
-#ifdef DISABLE_FLOOR_CHECK
-  denom1 = dxg2;
-#else
-  denom1 = FLOOR(dxg2);
-#endif
-  rx3 = -dxg1 / denom1;
-  rx4 = dxg3 / denom1 + 1.0;
-#else
-  rx3 = -dxg1 / dxg2;
-  rx4 = dxg3 / dxg2;
-#endif
-
-  sxv = (rx3 > rxv) ? rx3 : rxv;
-  sxv = (rx4 < sxv) ? rx4 : sxv;
-  /* sxv  =  MIN (rx4, MAX (rx3, rxv)); */
-
-  txv = (rxv > (EOS_REAL) 0.0) ? rxv : (EOS_REAL) 0.0;
-  txv = (txv < (EOS_REAL) 1.0) ? txv : (EOS_REAL) 1.0;
-  /*txv  =  MIN (1.0, MAX (0.0, rxv)); */
-
-  fx1 = ftg2 - ftg1;
-#ifndef C_CRANFILL_ORIGINAL
-#ifdef DISABLE_FLOOR_CHECK
-  denom1 = rx3;
-  denom2 = (EOS_REAL) 1.0 - rx3;
-#else
-  denom1 = FLOOR(rx3);
-  denom2 = FLOOR((EOS_REAL) 1.0 - rx3);
-#endif
-  fxx1 = (fx1 - (ftg3 - ftg1) / denom1) / denom2;
-
-#ifdef DISABLE_FLOOR_CHECK
-  denom1 = rx4;
-  denom2 = (EOS_REAL) 1.0 - rx4;
-#else
-  denom1 = FLOOR(rx4);
-  denom2 = FLOOR((EOS_REAL) 1.0 - rx4);
-#endif
-  gxx1 = (fx1 - (ftg4 - ftg1) / denom1) / denom2 - fxx1;
-
-#else
-  fxx1 = (fx1 - (ftg3 - ftg1) / rx3) / ((EOS_REAL) 1.0 - rx3);
-  gxx1 = (fx1 - (ftg4 - ftg1) / rx4) / ((EOS_REAL) 1.0 - rx4) - fxx1;
-#endif
-
-  wx1 = txv * FABS (fxx1);
-  wx1 = wx1 / (wx1 + ((EOS_REAL) 1.0 - txv) * FABS (fxx1 + gxx1) + TINY_D);
-  fxx1 = fxx1 + wx1 * gxx1;
-  fx1 = fx1 - ((EOS_REAL) 1.0 - sxv - sxv) * fxx1;
-  *fvalv = ftg1 + rxv * fx1 - sxv * sxv * fxx1;
-
-  /* find and derivative wrt y of gathered eos data table y,f values. */
-#ifndef C_CRANFILL_ORIGINAL
-  if (dfvalv) {
 #ifdef DISABLE_FLOOR_CHECK
     denom1 = dxg2;
 #else
     denom1 = FLOOR(dxg2);
 #endif
-    *dfvalv = (fx1 - wx1 * ((EOS_REAL) 1.0 - wx1) * gxx1) / denom1;
-  }
+    EOS_REAL rx3 = -dxg1 / denom1;
+    EOS_REAL rx4 = dxg3 / denom1 + 1.0;
 #else
-  if (dfvalv)
-    *dfvalv = (fx1 - wx1 * ((EOS_REAL) 1.0 - wx1) * gxx1) / dxg2;
+    EOS_REAL rx3 = -dxg1 / dxg2;
+    EOS_REAL rx4 = dxg3 / dxg2;
 #endif
+
+    EOS_REAL sxv = (rx3 > rxv) ? rx3 : rxv;
+
+    sxv = (rx4 < sxv) ? rx4 : sxv;
+  /* sxv  =  MIN (rx4, MAX (rx3, rxv)); */
+
+    EOS_REAL txv = (rxv > (EOS_REAL) 0.0) ? rxv : (EOS_REAL) 0.0;
+    txv = (txv < (EOS_REAL) 1.0) ? txv : (EOS_REAL) 1.0;
+  /*txv  =  MIN (1.0, MAX (0.0, rxv)); */
+    
+    EOS_REAL fx1 = ftg2 - ftg1;
+#ifndef C_CRANFILL_ORIGINAL
+#ifdef DISABLE_FLOOR_CHECK
+    denom1 = rx3;
+    EOS_REAL denom2 = (EOS_REAL) 1.0 - rx3;
+#else
+    denom1 = FLOOR(rx3);
+    EOS_REAL denom2 = FLOOR((EOS_REAL) 1.0 - rx3);
+#endif
+    EOS_REAL fxx1 = (fx1 - (ftg3 - ftg1) / denom1) / denom2;
+
+#ifdef DISABLE_FLOOR_CHECK
+    denom1 = rx4;
+    denom2 = (EOS_REAL) 1.0 - rx4;
+#else
+    denom1 = FLOOR(rx4);
+    denom2 = FLOOR((EOS_REAL) 1.0 - rx4);
+#endif
+    EOS_REAL gxx1 = (fx1 - (ftg4 - ftg1) / denom1) / denom2 - fxx1;
+    
+#else
+    EOS_REAL fxx1 = (fx1 - (ftg3 - ftg1) / rx3) / ((EOS_REAL) 1.0 - rx3);
+    EOS_REAL gxx1 = (fx1 - (ftg4 - ftg1) / rx4) / ((EOS_REAL) 1.0 - rx4) - fxx1;
+#endif
+
+    EOS_REAL wx1 = txv * FABS (fxx1);
+    wx1 = wx1 / (wx1 + ((EOS_REAL) 1.0 - txv) * FABS (fxx1 + gxx1) + TINY_D);
+    fxx1 = fxx1 + wx1 * gxx1;
+    fx1 = fx1 - ((EOS_REAL) 1.0 - sxv - sxv) * fxx1;
+    fvalv[i] = ftg1 + rxv * fx1 - sxv * sxv * fxx1;
+  /* find and derivative wrt y of gathered eos data table y,f values. */
+#ifndef C_CRANFILL_ORIGINAL
+    if (use_df) {
+#ifdef DISABLE_FLOOR_CHECK
+      denom1 = dxg2;
+#else
+      denom1 = FLOOR(dxg2);
+#endif
+      dfvalv[i] = (fx1 - wx1 * ((EOS_REAL) 1.0 - wx1) * gxx1) / denom1;
+    }
+#else
+    if (use_df)
+      dfvalv[i] = (fx1 - wx1 * ((EOS_REAL) 1.0 - wx1) * gxx1) / dxg2;
+#endif
+  }
+#ifdef DO_OFFLOAD
+  }
+#endif
+
 }
 
 /*****************************************************************************
@@ -578,6 +646,7 @@ void eos_RationalInterpolate4 (EOS_REAL srchX, EOS_REAL *X, EOS_REAL *F,
  *                     function (4-point) search-interpolation on eos
  *                     function f(x,y) holding y fixed. Uses linear
  *                     extrapolation.
+ *       _create_ghostdata = input  boolean enables _create_ghostdata logic in eos_RationalInterpolate4
  *       nsrch    = input  integer length of search vectors.
  *       nxtbl    = input  integer number of data table x values (1 if x is fixed).
  *       nytbl    = input  integer number of data table y values (1 if y is fixed).
@@ -594,6 +663,7 @@ void eos_RationalInterpolate4 (EOS_REAL srchX, EOS_REAL *X, EOS_REAL *F,
  *                         fixed:
  *                         ='x' holds x fixed (original/default logic)
  *                         ='y' holds y fixed (new logic)
+ *       ytbls_ht = input  hashtable for ytbls array, can be NULL
  *       EOS_INTEGER output *xyBounds     interpolation errors per xy-pair
  *       EOS_INTEGER *err  = output error code
  *
@@ -623,34 +693,61 @@ void eos_RationalInterpolate4 (EOS_REAL srchX, EOS_REAL *X, EOS_REAL *F,
  *            jx+2 ->        4
  *
  ********************************************************************/
-
-void eos_RationalInterpolate (EOS_INTEGER nsrch, EOS_INTEGER nxtbl,
+void eos_RationalInterpolate (EOS_BOOLEAN _create_ghostdata,
+                              EOS_INTEGER nsrch, EOS_INTEGER nxtbl,
                               EOS_INTEGER nytbl, EOS_INTEGER ixtbl,
                               EOS_REAL *ytbls, EOS_REAL *ftbls,
                               EOS_REAL *yvalv, EOS_REAL *fvalv,
                               EOS_REAL *dfvalv, char fixedVar,
+                              eos_HashTable1D *ytbls_ht,
                               EOS_INTEGER *xyBounds, EOS_INTEGER *err)
 {
-  EOS_INTEGER err1, jx, jv, jy, j, vect_size;
-  EOS_REAL interpX[4], interpF[4], *df;
-  EOS_INTEGER *iyv = (EOS_INTEGER *) malloc (nsrch * sizeof (EOS_INTEGER));
-  char *ptr;
+  EOS_INTEGER err1, jx, jv, j, vect_size;
+  EOS_REAL *interpX, *interpF;
 
+  EOS_INTEGER *iyv;
+
+#ifdef DO_OFFLOAD
+  int h, t;
+#endif
   *err = EOS_OK;
 
   // if (4-point) search-interpolation is impossible, return.
   vect_size = (fixedVar == 'y') ? nxtbl : nytbl;
   if (vect_size < 4) {
-    ptr = (char *) iyv;
-    EOS_FREE (ptr);
-    iyv = NULL;
     return;
   }
 
+#ifdef DO_OFFLOAD
+  EOS_BOOLEAN  useGpuData=_EOS_GET_USEGPUDATA_EOSDATAMAP;
+
+  t = omp_get_default_device();
+  h = omp_get_initial_device();
+#endif /* DO_OFFLOAD */
+
+#ifdef DO_OFFLOAD
+  if (!useGpuData)
+#endif /* DO_OFFLOAD */
+  {
+    iyv = (EOS_INTEGER*) malloc (nsrch * sizeof (EOS_INTEGER));
+    interpX = (EOS_REAL*) malloc (4*nsrch * sizeof (EOS_REAL));
+    interpF = (EOS_REAL*) malloc (4*nsrch * sizeof (EOS_REAL));
+  }
+#ifdef DO_OFFLOAD
+  else
+  { 
+    iyv = omp_target_alloc(nsrch * sizeof (EOS_INTEGER), t);
+    interpF = omp_target_alloc(4*nsrch * sizeof (EOS_REAL), t);
+    interpX = omp_target_alloc(4*nsrch * sizeof (EOS_REAL), t);
+  }
+#endif /* DO_OFFLOAD */
+
+  
   /* perform vector table searches to load search vectors containing
      indices and spacings of nearest data table y values to yvalv. */
-  _eos_srchdf (nsrch, yvalv, 1, vect_size - 1, ytbls, 1, iyv, xyBounds,
-               &err1);
+  _eos_srchdf (nsrch, yvalv, 1, vect_size, ytbls, 1, iyv, ytbls_ht, xyBounds, &err1);
+  
+
   /* ignore error, might be only one point */
 
   /* gather nearest eos data table f values. */
@@ -661,122 +758,54 @@ void eos_RationalInterpolate (EOS_INTEGER nsrch, EOS_INTEGER nxtbl,
   if (jx <= 0)
     jx = 0;
 
-  for (jv = 0; jv < nsrch; jv++) {
 
-    jy = iyv[jv] - 1;
-    while (jy > vect_size - 4)
-      jy--;                     /* adjust so that there are 2 values on the right */
-    if (jy < 0)
-      jy = 0;
-    for (j = 0; j < 4; j++) {
-      interpX[j] = ytbls[jy + j];
-      if (fixedVar == 'x')
-        interpF[j] = ftbls[(jx) + (jy + j) * nxtbl];
-      else                      /* 'y' */
-        interpF[j] = ftbls[(jy + j) + (jx) * nxtbl];
-    }
-    df = (dfvalv != NULL) ? &(dfvalv[jv]) : NULL;
-    eos_RationalInterpolate4 (yvalv[jv], interpX, interpF, &(fvalv[jv]), df);
-  }                             /* 1, nsrch loop */
+#ifdef DO_OFFLOAD
+#pragma omp target if (useGpuData) is_device_ptr(interpF, interpX, iyv, ftbls, ytbls)
+  {
+#pragma omp teams distribute parallel for
+#endif /* DO_OFFLOAD */
+#ifndef DISABLE_OMP_SIMD_PRAGMA
+#pragma omp simd
+#endif
+    for (jv = 0; jv < nsrch; jv++) {
+      EOS_INTEGER jy = iyv[jv] - 1;
+      while (jy > vect_size - 4)
+	jy--;                     /* adjust so that there are 2 values on the right */
+      if (jy < 0)
+	jy = 0;
+      for (j = 0; j < 4; j++) {
+	interpX[jv*4+j] = ytbls[jy + j];
+	if (fixedVar == 'x') {
+	  interpF[jv*4+j] = ftbls[(jx) + (jy + j) * nxtbl];
+	} else                      /* 'y' */ {
+	  interpF[jv*4+j] = ftbls[(jy + j) + (jx) * nxtbl];
+	}
+      }
+    }                             /* 1, nsrch loop */
+#ifdef DO_OFFLOAD
+  }
+#endif /* DO_OFFLOAD */
 
-  ptr = (char *) iyv;
-  EOS_FREE (ptr);
-  iyv = NULL;
+  eos_RationalInterpolate4 (_create_ghostdata, &(yvalv[0]), &(interpX[0]), &(interpF[0]), &(fvalv[0]), &(dfvalv[0]), nsrch);
+
+
+#ifdef DO_OFFLOAD
+  if(!useGpuData)
+#endif /* DO_OFFLOAD */
+  {
+    free(iyv); free(interpF); free(interpX);
+  }
+#ifdef DO_OFFLOAD
+  else
+  {
+    omp_target_free(iyv, t);
+    omp_target_free(interpF, t);
+    omp_target_free(interpX, t);
+  }
+#endif /* DO_OFFLOAD */
+
   if (eos_GetStandardErrorCodeFromCustomErrorCode(*err) == EOS_OK)
     *err = err1;
-}
-
-/********************************************************************
-    eos_GenerateYSubgrid
-    purpose:     for nVals values on y-grid: iy[j], j=0,nVals  interpolate the new value of f(searchx, Y[iy[j]]) 
-	            where the srchX is outside the X-grid. Also returns the x-partial derivative at the middle grid point 
-	inputs:
-		EOS_INTEGER nVals  - the number of F-values to generate.
-	        EOS_INTEGER iy  - the indexes oof the nVals Y-values to generate a grid at.
-		EOS_REAL srchX  - x at which to generate a subgrid.
-	        EOS_REAL    ix  - idex x of srchX, at which to generate y-subgrid.
-	        EOS_INTEGER nX  - x-dimension of the table
-		EOS_INTEGER nY  - y-dimension of the table
-                EOS_REAL    *X  - Y-array
-		EOS_REAL   **F  - F(x,y) table
-
-     output:    EOS_REAL *searchF - interpolated nVals values F(srchX, Y[iy[i]]), i = 0, nVals
-	        EOS_INTEGER *err  - output error code
-		EOS_REAL *dFx     -  nVals partial derivatives computed at x=srchX
-	 NOTE:      returns results with cold curve subtracted!
-**********************************************************************/
-
-void eos_GenerateYSubgrid (EOS_INTEGER nVals, EOS_INTEGER *iy, EOS_REAL srchX,
-                           EOS_INTEGER ix, EOS_INTEGER nX, EOS_INTEGER nY,
-                           EOS_REAL *X, EOS_REAL **F, EOS_REAL *srchF,
-                           EOS_REAL *dFx, EOS_INTEGER *err)
-{
-  EOS_INTEGER i, j;
-  EOS_REAL *deriv, interpX[4], interpF[4];
-
-  *err = EOS_OK;
-
-  ix--;                         /* take 2 points on the left and 2 on the right */
-  while (ix > nX - 4)
-    ix--;
-  if (ix < 0)
-    ix++;
-
-  for (i = 0; i < nVals; i++) {
-    /* gather nearest eos data table f values. */
-    for (j = 0; j < 4; j++) {
-      interpX[j] = X[ix + j];
-      interpF[j] = F[iy[i]][ix + j];
-    }
-    deriv = (i == 1) ? dFx : NULL;
-    eos_RationalInterpolate4 (srchX, interpX, interpF, &(srchF[i]), deriv);
-  }
-}
-
-/*****************************************************************************************
-    eos_GenerateXSubgrid
-    purpose:    for nVals values on x-grid: ix[j], j=0,nVals  interpolate the new value of f(X[ix[j]], searchY) 
-	            where the searchY is outside the Y-grid. Also returns the y-partial derivative at the middle grid point 
-	inputs:
-		EOS_INTEGER nVals  - the number of F-values to generate.
-	        EOS_INTEGER ix  - the indexes of the nVals fixed X-values to generate grid points at.
-	        EOS_REAL srchY  - the Y value value to interpolate grid values at
-		EOS_INTEGER iy  - index of srchY at which to generate grid.
-	        EOS_INTEGER nX  - x-dimension of the table
-		EOS_INTEGER nY  - y-dimension of the table
-                EOS_REAL    *Y  - Y-array
-		EOS_REAL   **F  - F(x,y) table
-
-     output:    EOS_REAL *searchF - interpolated nVals values F(X[ix[i]], srchY), i = 0, nVals
-		EOS_REAL *dFy - nVals partial derivatives computed at y=srchY
-                EOS_INTEGER *err - output error code   
-	 NOTE:      returns results with cold curve subtracted!
-******************************************************************************************/
-
-void eos_GenerateXSubgrid (EOS_INTEGER nVals, EOS_INTEGER *ix, EOS_REAL srchY,
-                           EOS_INTEGER iy, EOS_INTEGER nX, EOS_INTEGER nY,
-                           EOS_REAL *Y, EOS_REAL **F, EOS_REAL *srchF,
-                           EOS_REAL *dFy, EOS_INTEGER *err)
-{
-  EOS_INTEGER i, j;
-  EOS_REAL *deriv, interpY[4], interpF[4];
-  *err = EOS_OK;
-
-  iy--;                         /* take 2 points on the left and 2 on the right */
-  while (iy > nY - 4)
-    iy--;
-  if (iy < 0)
-    iy++;
-
-  for (i = 0; i < nVals; i++) {
-    /* gather nearest eos data table f values. */
-    for (j = 0; j < 4; j++) {
-      interpY[j] = Y[iy + j];
-      interpF[j] = F[iy + j][ix[i]];
-    }
-    deriv = (i == 1) ? dFy : NULL;
-    eos_RationalInterpolate4 (srchY, interpY, interpF, &(srchF[i]), deriv);
-  }
 }
 
 /****************************************************************************************************** 
@@ -800,6 +829,8 @@ void eos_GenerateXSubgrid (EOS_INTEGER nVals, EOS_INTEGER *ix, EOS_REAL srchY,
    EOS_INTEGER nGhostData  number of "ghost" data points added at each isotherm/isochore extremum
                            (which are used to smooth interpolation at table boundaries)
    EOS_REAL coldCurve[]    optional input cold curve that was subtracted from F before log10 is taken
+   eos_HashTable1D X_ht    hashtable for X values (can be NULL)
+   eos_HashTable2D F_ht    hashtable for F values (can be NULL)
    EOS_INTEGER adjustF     flag, whether or not the F0 is in the same form as F
 
    Outputs:
@@ -815,72 +846,66 @@ void eos_GenerateXSubgrid (EOS_INTEGER nVals, EOS_INTEGER *ix, EOS_REAL srchY,
    EOS_INTEGER *xyBounds     interpolation errors per xy-pair
    EOS_INTEGER *err         output error code
 **************************************************************************************************/
-
+#ifdef DEBUG_EOS_SEARCHINDICES_XF
+static EOS_INTEGER eos_SearchIndices_XF_counter = 0;
+#endif
 void eos_SearchIndices_XF (EOS_REAL X0[], EOS_REAL F0[], EOS_INTEGER npoints,
                            EOS_REAL X[], EOS_REAL Y[], EOS_REAL **F,
                            EOS_INTEGER nx, EOS_INTEGER ny, EOS_INTEGER nGhostData,
                            EOS_INTEGER Low_IY0[], EOS_INTEGER Low_IX0[],
                            EOS_INTEGER High_IY0[], EOS_INTEGER High_IX0[],
-                           EOS_REAL *coldCurve, EOS_INTEGER adjustF,
+                           EOS_REAL *coldCurve, eos_HashTable1D* X_ht, eos_HashTable2D* F_ht, EOS_INTEGER adjustF,
                            EOS_INTEGER *xyBounds, EOS_INTEGER *err)
 {
-  EOS_INTEGER err1 = EOS_OK, err2 = EOS_OK, _err1 = EOS_OK, _err2 = EOS_OK, i, k;
-  EOS_REAL *origF;              /* array used to store original values of F, w/o cold curve and log10 */
-
+  EOS_INTEGER err1 = EOS_OK, err2 = EOS_OK, i;
   *err = EOS_OK;
 
-  if (adjustF)
-    origF = (EOS_REAL *) malloc (ny * sizeof (EOS_REAL));
+
+  /* initialize indexes */
+  for (i = 0; i < npoints; i++) {
+    Low_IX0[i]  = 0;
+    High_IX0[i] = 0;
+    Low_IY0[i]  = 0;
+    High_IY0[i] = 0;
+  }
 
   /* first find x-range, assume the values of IX0[] are INCREASING */
-  k = 0;
+  eos_Search (&(X[nGhostData]), nx-nGhostData*2, 1, X0, npoints, Low_IX0, xyBounds, X_ht, &err1);
   for (i = 0; i < npoints; i++) {
-    Low_IX0[i] = _eos_hunt (&(X[nGhostData]), nx-1-nGhostData*2,
-			    1, X0[i], k, &err1); /* lower bound */
-    Low_IX0[i] += nGhostData; /* increment index since _eos_hunt output is offset */
-    if (eos_GetStandardErrorCodeFromCustomErrorCode(err1) == EOS_UNDEFINED) {
-      *err = err1;
-      continue;                 /* move to the next point */
-    }
-    xyBounds[i] = err1;
+    Low_IX0[i] += nGhostData; /* increment index since eos_Search output is offset */
     High_IX0[i] = Low_IX0[i] + 1;
   }
 
   /* now find f-range along Low_X, High_X, it will give us indexes of y */
-  k = 0;
   for (i = 0; i < npoints; i++) {
-
-    High_IY0[i] = _eos_hunt (&(F[nGhostData][High_IX0[i]]), ny-1-nGhostData*2,
-			     nx, F0[i], k, &err2); /* upper bound */
-    Low_IY0[i] = _eos_hunt (&(F[nGhostData][Low_IX0[i]]), ny-1-nGhostData*2,
-			    nx, F0[i], k, &err1); /* lower bound */
-    Low_IY0[i] += nGhostData; /* increment index since _eos_hunt output is offset */
-    High_IY0[i] += nGhostData; /* increment index since _eos_hunt output is offset */
-
+    eos_Search (&(F[nGhostData][High_IX0[i]]), ny-nGhostData*2, nx,
+      &(F0[i]), 1, &(High_IY0[i]), xyBounds,
+      F_ht == NULL ? NULL : &F_ht->colTables[High_IX0[i]], &err2); /* upper bound */
+    eos_Search (&(F[nGhostData][Low_IX0[i]]),  ny-nGhostData*2, nx,
+      &(F0[i]), 1, &(Low_IY0[i]),  xyBounds,
+      F_ht == NULL ? NULL : &F_ht->colTables[Low_IX0[i]], &err1); /* lower bound */
+    Low_IY0[i]  += nGhostData; /* increment index since eos_Search output is offset */
+    High_IY0[i] += nGhostData; /* increment index since eos_Search output is offset */
     xyBounds[i] = EOS_OK; /* disable xyBounds[i] assignment in this function --
-			     leave it to the parent function's control */
-    continue;
+                             leave it to the parent function's control */
+  }
 
-    _err1 = eos_GetStandardErrorCodeFromCustomErrorCode(err1);
-    _err2 = eos_GetStandardErrorCodeFromCustomErrorCode(err2);
-    if (IS_EXTRAPOLATED (_err1) || IS_EXTRAPOLATED (_err2) ||
-        _err1 == EOS_UNDEFINED || _err2 == EOS_UNDEFINED ||
-	IS_EXTRAPOLATED (xyBounds[i])) {
-      err1 = (_err1 == EOS_UNDEFINED) ? err2 : err1;
-      *err = EOS_INTERP_EXTRAPOLATED;
-      xyBounds[i] = _eos_CombineExtrapErrors (xyBounds[i], err1);
-    }
+#ifdef DEBUG_EOS_SEARCHINDICES_XF
+  printf("\n# fcmp_ignore: eos_SearchIndices_XF_counter = %d\n# fcmp_ignore: eos_searchindices_xf: %10s  %11s %11s %11s %11s\n",
+         eos_SearchIndices_XF_counter, "i", "Low_IX0[i]", "High_IX0[i]", "Low_IY0[i]", "High_IY0[i]");
+  for (i = 0; i < npoints; i++) {
+    /* if (i==0 || i==100) */
+    printf("# fcmp_ignore: eos_SearchIndices_XF: %10d. %11d %11d %11d %11d npoints=%d\n", i, Low_IX0[i], High_IX0[i], Low_IY0[i], High_IY0[i], npoints);
+  }
+  printf("\n");
+#endif
 
-  } /* for i=0 to npoints */
-
-  if (adjustF)
-    EOS_FREE (origF);
 }
 
 /*******************************************************************************
 	function eos_InterpolateEosInterpolation
-	The eos_InterpolateEosInterpolation() routine provides interpolated values for a single material using a table handle associated with 
-	ata stored within an data table.
+	The eos_InterpolateEosInterpolation() routine provides interpolated values for a single material using a
+    table handle associated with  data stored within an data table.
 
 	The input arguments are:
 		EOS_INTEGER tableHandle	  This is a scalar EOS_INTEGER handle to a particular data table. 
@@ -895,7 +920,6 @@ void eos_SearchIndices_XF (EOS_REAL X0[], EOS_REAL F0[], EOS_INTEGER npoints,
 		EOS_REAL dFy[nXYPairs]	  array of the interpolated partial derivatives of fVals with respect to y. 
 		EOS_INTEGER errorCode	  error code of the interpolation: EOS_INTERP_EXTRAPOLATED or EOS_OK
 *********************************************************************************/
-
 void eos_InterpolateEosInterpolation (eos_Interpolation *me,
                                       EOS_INTEGER tableHandle,
                                       EOS_INTEGER nXYPairs, EOS_REAL *xVals,
@@ -923,28 +947,32 @@ void eos_InterpolateEosInterpolation (eos_Interpolation *me,
   if (!_eos_machinePrecisionData.gotMachinePrecision) {
     /* determine the current machine's floating point precision */
     _eos_machinePrecisionData.gotMachinePrecision = 1;
-    eos_GetMachinePrecision (&_eos_machinePrecisionData.eps,
-                             &_eos_machinePrecisionData.epsneg);
+    eos_GetMachinePrecision (&_eos_machinePrecisionData.eps, &_eos_machinePrecisionData.epsneg);
     _eos_machinePrecisionData.maxIter = 100;
-    _eos_machinePrecisionData.maxErr =
-      pow (MAX
-           (_eos_machinePrecisionData.eps, _eos_machinePrecisionData.epsneg),
-           0.75);
+    _eos_machinePrecisionData.maxErr = pow (MAX(_eos_machinePrecisionData.eps, _eos_machinePrecisionData.epsneg), 0.75);
   }
 
   /* get eos Data pointer and the dataType from global data map */
-  eosData =
-    eos_GetEosDataEosDataMap (&gEosDataMap, tableHandle, &dataType, &err);
+  eosData = eos_GetEosDataEosDataMap (&gEosDataMap, tableHandle, &dataType, &err);
   if (eos_GetStandardErrorCodeFromCustomErrorCode(err) != EOS_OK) {
     ((eos_ErrorHandler *) me)->HandleError (me, tableHandle, err);
     *errorCode = err;
     return;
   }
 
+  EOS_BOOLEAN skipExtrap;
+  eos_GetOptionEosInterpolation (me, tableHandle, EOS_SKIP_EXTRAP_CHECK, &skipExtrap, &err);
+  gEosDataMap.skipExtrapCheck =  skipExtrap;
+
   if (dt)
     dataType = *dt;
 
-  /* allocated xyBounds list to store per point error specific to extrapolation */
+#ifdef DO_OFFLOAD
+  EOS_BOOLEAN useGpuData = _EOS_GET_USEGPUDATA_EOSDATAMAP;
+#endif /* DO_OFFLOAD */
+
+  /* if useGpuData then xyBounds is not valid.
+     allocated xyBounds list to store per point error specific to extrapolation */
   if (me->interpolationDataList[tableHandle]->nAlloc == 0)
     me->interpolationDataList[tableHandle]->xyBounds =
       (EOS_INTEGER *) malloc (nXYPairs * sizeof (EOS_INTEGER));
@@ -957,7 +985,7 @@ void eos_InterpolateEosInterpolation (eos_Interpolation *me,
   me->interpolationDataList[tableHandle]->lastErrorCode = EOS_OK;
   for (i = 0; i < nXYPairs; i++)
     me->interpolationDataList[tableHandle]->xyBounds[i] = EOS_OK;
-
+    
   /* process x-conversion option */
   xconv =
     eos_getRealOptionFromTableHandle (tableHandle, EOS_X_CONVERT, errorCode);
@@ -976,145 +1004,335 @@ void eos_InterpolateEosInterpolation (eos_Interpolation *me,
   if (eos_GetStandardErrorCodeFromCustomErrorCode(*errorCode) != EOS_OK)
     return;
 
-  if ( me->interpolationDataList[tableHandle]->enableXYpassthru
-       || me->interpolationDataList[tableHandle]->enableXYmodify ) {
-
-    /* use host's arrays directly */
-    X = xVals;
-    Y = yVals;
-
-  }
-  else {
-
-    /* Allocate temporary memory */
-    X = (EOS_REAL *) malloc (nXYPairs * sizeof (EOS_REAL));
-    Y = (EOS_REAL *) malloc (nXYPairs * sizeof (EOS_REAL));
-
-  }
-
   /* Is data stored as log10 values? */
   logAxes = EOS_TYPE_TO_LOG_AXES(dataType);
 
+ 
+#ifdef DO_OFFLOAD
+  if (!useGpuData)
+#endif /* DO_OFFLOAD */
+  {
+    if ( me->interpolationDataList[tableHandle]->enableXYpassthru
+         || me->interpolationDataList[tableHandle]->enableXYmodify ) {
 
-  if ( ! me->interpolationDataList[tableHandle]->enableXYpassthru ) {
-
-    /* Apply supplied conversion factors to convert input to Sesame default units.
-       Enforce temperature and density minimums. */
-    for (i = 0; i < nXYPairs; i++) {
-      if (! logAxes && EOS_TYPE_TO_INDEP_VAR1(dataType) == EOS_D && xVals[i] < 0.0)
-        X[i] = 0.0;
-      else
-        X[i] = xVals[i] / FLOOR (xconv);
-      if (! logAxes && EOS_TYPE_TO_INDEP_VAR2(dataType) == EOS_T && yVals[i] < 0.0)
-        Y[i] = 0.0;
-      else
-        Y[i] = yVals[i] / FLOOR (yconv);
-    }
-
-    /* Convert input to log10 values for 500 and 600 Sesame tables if necessary */
-    if (logAxes) {
-      for (i = 0; i < nXYPairs; i++) {
-        X[i] = log10 (MAX (TINY_D, X[i]));
-        Y[i] = log10 (MAX (TINY_D, Y[i]));
-      }
-    }
-
-  }
-
-  { /* Interpolate the data according to recordType */
-    if (eosData->recordType == EOS_RECORD_TYPE6) {
-      for (i = 0; i < nXYPairs; i++) {
-        fVals[i] = 0.0;
-        /* dFx and dFy are ignored for this record type */
-      }
+      /* use host's arrays directly */
+      X = xVals;
+      Y = yVals;
+      
     }
     else {
+
+      /* Allocate temporary memory */
+      X = (EOS_REAL *) malloc (nXYPairs * sizeof (EOS_REAL));
+      Y = (EOS_REAL *) malloc (nXYPairs * sizeof (EOS_REAL));
+      
+    }
+    if ( ! me->interpolationDataList[tableHandle]->enableXYpassthru ) {
+      
+      /* Apply supplied conversion factors to convert input to Sesame default units.
+         Enforce temperature and density minimums. */
+      for (i = 0; i < nXYPairs; i++) {
+        if (! logAxes && EOS_TYPE_TO_INDEP_VAR1(dataType) == EOS_D && xVals[i] < 0.0)
+          X[i] = 0.0;
+        else
+          X[i] = xVals[i] / FLOOR (xconv);
+        if (! logAxes && EOS_TYPE_TO_INDEP_VAR2(dataType) == EOS_T && yVals[i] < 0.0)
+          Y[i] = 0.0;
+        else
+          Y[i] = yVals[i] / FLOOR (yconv);
+      }
+      
+      /* Convert input to log10 values for 500 and 600 Sesame tables if necessary */
+      if (logAxes) {
+        for (i = 0; i < nXYPairs; i++) {
+          X[i] = log10 (MAX (TINY_D, X[i]));
+          Y[i] = log10 (MAX (TINY_D, Y[i]));
+        }
+      }
+      
+    }
+    
+    { /* Interpolate the data according to recordType */
+      if (eosData->recordType == EOS_RECORD_TYPE6) {
+        for (i = 0; i < nXYPairs; i++) {
+          fVals[i] = 0.0;
+          /* dFx and dFy are ignored for this record type */
+        }
+      }
+      else {
+        for (i = 0; i < nXYPairs; i++) {
+          fVals[i] = 0.0;
+          dFx[i] = 0.0;
+          dFy[i] = 0.0;
+        }
+      }
+      if (eosData->Interpolate)
+        eosData->Interpolate (eosData, tableHandle, dataType, nXYPairs, X, Y, fVals, dFx, dFy,
+                              me->interpolationDataList[tableHandle]->xyBounds, &err);
+      else /* wrong record type */
+        err = EOS_INVALID_DATA_TYPE;
+    }
+
+    /* Convert output from log10 values for 500 and 600 Sesame tables if necessary */
+    if (logAxes) {
+      for (i = 0; i < nXYPairs; i++) {
+        fVals[i] = pow (10.0, MIN (HUGE_LOG_D, fVals[i]));
+      }
+      if (eosData->recordType != EOS_RECORD_TYPE6) {
+        for (i = 0; i < nXYPairs; i++) {
+          dFx[i] = fVals[i] / MAX (TINY_D, xVals[i]) * dFx[i];
+          dFy[i] = fVals[i] / MAX (TINY_D, yVals[i]) * dFy[i];
+        }
+      }
+    }
+    
+    /* Apply supplied conversion factors to convert output to host code units */
+    if (fconv != 1.0) {
+      for (i = 0; i < nXYPairs; i++) {
+        fVals[i] *= fconv;
+      }
+      if (eosData->recordType != EOS_RECORD_TYPE6) {
+        for (i = 0; i < nXYPairs; i++) {
+          dFx[i] *= fconv;
+          dFy[i] *= fconv;
+        }
+      }
+    }
+    
+    if (eosData->recordType != EOS_RECORD_TYPE6) {
+      if (xconv != 1.0) {
+        for (i = 0; i < nXYPairs; i++)
+          dFx[i] /= FLOOR (xconv);
+      }
+      if (yconv != 1.0) {
+        for (i = 0; i < nXYPairs; i++)
+          dFy[i] /= FLOOR (yconv);
+      }
+    }
+
+    EOS_BOOLEAN skipExtrap = _EOS_GET_SKIPEXTRAPCHECK_EOSDATAMAP;;
+
+    if (!skipExtrap){
+      /* Set extrapolation error codes if input less than temperature
+	 or density minimum. */
+      xyBounds = me->interpolationDataList[tableHandle]->xyBounds;
+      for (i = 0; i < nXYPairs; i++) {
+	
+	_eos_SplitExtrapErrors (xyBounds[i], &xErr, &yErr);
+	
+	if (EOS_TYPE_TO_INDEP_VAR1(dataType) == EOS_D && xVals[i] < 0.0)
+	  xErr = EOS_xLo_yOk;
+	if (EOS_TYPE_TO_INDEP_VAR2(dataType) == EOS_T && yVals[i] < 0.0)
+	  yErr = EOS_xOk_yLo;
+	
+	if (xyBounds[i] != EOS_CANT_INVERT_DATA)
+	  xyBounds[i] = _eos_CombineExtrapErrors (xErr, yErr);
+	
+	if (xyBounds[i] != EOS_OK) {
+	  err = EOS_INTERP_EXTRAPOLATED;
+	  me->interpolationDataList[tableHandle]->lastErrorCode = err;
+	}
+      }
+    }
+    if ( ! me->interpolationDataList[tableHandle]->enableXYpassthru
+         && ! me->interpolationDataList[tableHandle]->enableXYmodify ) {
+      
+      if (X)
+        EOS_FREE (X);
+      if (Y)
+        EOS_FREE (Y);
+      
+    }
+
+    if ( ! me->interpolationDataList[tableHandle]->enableXYpassthru
+         && me->interpolationDataList[tableHandle]->enableXYmodify
+         && me->interpolationDataList[tableHandle]->useHostXY) {
+
+      if (logAxes) {
+        /* Convert previously-modified input to 10^x and 10^y values for 500 and 600 Sesame tables if necessary */
+        for (i = 0; i < nXYPairs; i++) {
+          xVals[i] = pow(10.0, (MAX (TINY_D, X[i])));
+          yVals[i] = pow(10.0, (MAX (TINY_D, Y[i])));
+        }
+      }
+      else {
+        /* Apply supplied conversion factors to convert previously-modified input back to host units.
+           NOTE: Previously-enforced temperature and density minimums cannot be undone. */
+        for (i = 0; i < nXYPairs; i++) {
+          xVals[i] = X[i] * FLOOR (xconv);
+          yVals[i] = Y[i] * FLOOR (yconv);
+        }
+      }
+
+    }
+
+    if (eos_GetStandardErrorCodeFromCustomErrorCode(err) != EOS_OK) {
+      ((eos_ErrorHandler *) me)->HandleError (me, tableHandle, err);
+      *errorCode = err;
+      return;
+    }
+  }
+#ifdef DO_OFFLOAD
+  else
+  {
+    EOS_BOOLEAN isRecType6 = (eosData->recordType == EOS_RECORD_TYPE6);
+    if ( ! me->interpolationDataList[tableHandle]->enableXYpassthru ) {
+            
+      EOS_BOOLEAN var1 = EOS_TYPE_TO_INDEP_VAR1(dataType) == EOS_D;
+      EOS_BOOLEAN var2 = EOS_TYPE_TO_INDEP_VAR2(dataType) == EOS_T;
+      int t = omp_get_default_device();
+      if (var1 || (var2 || logAxes)) {
+        EOS_REAL fxconv=FLOOR(xconv);
+        EOS_REAL fyconv=FLOOR(yconv);
+        EOS_REAL tinyD=TINY_D; tinyD=log10(tinyD); 
+#pragma omp target is_device_ptr(xVals,yVals) 
+        {
+#pragma omp teams distribute parallel for
+          for (i = 0; i < nXYPairs; i++) {
+            if (! logAxes && var1 && xVals[i] < 0.0)
+              xVals[i] = 0.0;
+            else if (xconv!=1.0)
+              xVals[i] = xVals[i] / fxconv;
+            if (! logAxes && var2 && yVals[i] < 0.0)
+              yVals[i] = 0.0;
+            else if (yconv != 1.0)
+              yVals[i] = yVals[i] / fyconv;
+	    
+            // Convert input to log10 values for 500 and 600 Sesame tables if necessary 
+            if (logAxes) {
+              xVals[i] = log10 (xVals[i]); if (tinyD>xVals[i]) xVals[i]=tinyD;
+              yVals[i] = log10 (yVals[i]); if (tinyD>yVals[i]) yVals[i]=tinyD;
+            }
+
+          }      
+        }
+      }
+    }
+
+#pragma omp target is_device_ptr(fVals)
+    {
+#pragma omp teams distribute parallel for
       for (i = 0; i < nXYPairs; i++) {
         fVals[i] = 0.0;
-        dFx[i] = 0.0;
-        dFy[i] = 0.0;
+      }
+    }
+
+    if (!isRecType6) {
+#pragma omp target is_device_ptr(dFy,dFx)      
+      {
+#pragma omp teams distribute parallel for
+        for (i = 0; i < nXYPairs; i++) {
+          dFx[i] = 0.0;
+          dFy[i] = 0.0;
+        }
       }
     }
     if (eosData->Interpolate)
-      eosData->Interpolate (eosData, tableHandle, dataType, nXYPairs, X, Y, fVals, dFx, dFy,
+      eosData->Interpolate (eosData, tableHandle, dataType, nXYPairs, xVals, yVals, fVals, dFx, dFy,
                             me->interpolationDataList[tableHandle]->xyBounds, &err);
     else /* wrong record type */
       err = EOS_INVALID_DATA_TYPE;
-  }
-
-  /* Convert output from log10 values for 500 and 600 Sesame tables if necessary */
-  if (logAxes) {
-    for (i = 0; i < nXYPairs; i++) {
-      fVals[i] = pow (10.0, MIN (HUGE_LOG_D, fVals[i]));
+   
+    /* Convert output from log10 values for 500 and 600 Sesame tables if necessary */
+    if (logAxes) {
+#pragma omp target is_device_ptr(fVals)
+      {
+#pragma omp teams distribute parallel for
+        for (i = 0; i < nXYPairs; i++) {
+          fVals[i] = pow (10.0, MIN (HUGE_LOG_D, fVals[i]));
+        }
+      }
+      if (!isRecType6) {
+#pragma omp target is_device_ptr(dFy,dFx, fVals, xVals, yVals)      
+        {
+#pragma omp teams distribute parallel for
+          for (i = 0; i < nXYPairs; i++) {
+            dFx[i] = fVals[i] / MAX (TINY_D, xVals[i]) * dFx[i];
+            dFy[i] = fVals[i] / MAX (TINY_D, yVals[i]) * dFy[i];
+          }
+        }
+      }
     }
-    if (eosData->recordType != EOS_RECORD_TYPE6) {
-      for (i = 0; i < nXYPairs; i++) {
-        dFx[i] = fVals[i] / MAX (TINY_D, xVals[i]) * dFx[i];
-        dFy[i] = fVals[i] / MAX (TINY_D, yVals[i]) * dFy[i];
+  
+    
+    /* Apply supplied conversion factors to convert output to host code units */
+    if (fconv != 1.0) {
+#pragma omp target is_device_ptr(fVals)
+      {
+#pragma omp teams distribute parallel for
+        for (i = 0; i < nXYPairs; i++) {
+          fVals[i] *= fconv;
+        }
+      }
+      
+      if (!isRecType6) {
+#pragma omp target is_device_ptr(dFy,dFx)      
+        {
+#pragma omp teams distribute parallel for
+          for (i = 0; i < nXYPairs; i++) {
+            dFx[i] *= fconv;
+            dFy[i] *= fconv;
+          }
+        }
+      }
+    }
+    
+  
+    EOS_BOOLEAN revert = ( ! me->interpolationDataList[tableHandle]->enableXYpassthru
+                           && me->interpolationDataList[tableHandle]->enableXYmodify
+                           && me->interpolationDataList[tableHandle]->useHostXY);
+    if (revert && xconv!=1.0) {
+#pragma omp target is_device_ptr(xVals)
+      {
+#pragma omp teams distribute parallel for
+        for (i = 0; i < nXYPairs; i++){
+          xVals[i] *= FLOOR(xconv);
+        }
+      }
+    }
+    if (revert && yconv!=1.0) {
+#pragma omp target is_device_ptr(yVals)
+      {
+#pragma omp teams distribute parallel for
+        for (i = 0; i < nXYPairs; i++){
+          yVals[i] *= FLOOR(yconv);
+        }
+      }
+    }
+
+    if (!isRecType6 && xconv != 1.0) {
+#pragma omp target is_device_ptr(dFx)
+      {
+#pragma omp teams distribute parallel for
+        for (i = 0; i < nXYPairs; i++){
+          dFx[i] /= FLOOR (xconv);
+        }
+      }
+    }
+    
+    if (!isRecType6 && yconv != 1.0) {
+#pragma omp target is_device_ptr(dFy)
+      {
+#pragma omp teams distribute parallel for
+        for (i = 0; i < nXYPairs; i++){
+          dFy[i] /= FLOOR (yconv);
+        }
+      }
+    }
+
+    if (logAxes) {
+      /* Convert previously-modified input to 10^x and 10^y values for 500 and 600 Sesame tables if necessary */
+#pragma omp target is_device_ptr(xVals, yVals)
+      {
+#pragma omp teams distribute parallel for
+	for (i = 0; i < nXYPairs; i++) {
+	  xVals[i] = pow(10.0, (MAX (TINY_D, xVals[i])));
+	  yVals[i] = pow(10.0, (MAX (TINY_D, yVals[i])));
+	}
       }
     }
   }
-
-  /* Apply supplied conversion factors to convert output to host code units */
-  if (fconv != 1.0) {
-    for (i = 0; i < nXYPairs; i++) {
-      fVals[i] *= fconv;
-    }
-    if (eosData->recordType != EOS_RECORD_TYPE6) {
-      for (i = 0; i < nXYPairs; i++) {
-        dFx[i] *= fconv;
-        dFy[i] *= fconv;
-      }
-    }
-  }
-
-  if (eosData->recordType != EOS_RECORD_TYPE6) {
-    if (xconv != 1.0) {
-      for (i = 0; i < nXYPairs; i++)
-        dFx[i] /= FLOOR (xconv);
-    }
-    if (yconv != 1.0) {
-      for (i = 0; i < nXYPairs; i++)
-        dFy[i] /= FLOOR (yconv);
-    }
-  }
-
-  /* Set extrapolation error codes if input less than temperature
-     or density minimum. */
-  xyBounds = me->interpolationDataList[tableHandle]->xyBounds;
-  for (i = 0; i < nXYPairs; i++) {
-
-    _eos_SplitExtrapErrors (xyBounds[i], &xErr, &yErr);
-
-    if (EOS_TYPE_TO_INDEP_VAR1(dataType) == EOS_D && xVals[i] < 0.0)
-      xErr = EOS_xLo_yOk;
-    if (EOS_TYPE_TO_INDEP_VAR2(dataType) == EOS_T && yVals[i] < 0.0)
-      yErr = EOS_xOk_yLo;
-
-    if (xyBounds[i] != EOS_CANT_INVERT_DATA)
-      xyBounds[i] = _eos_CombineExtrapErrors (xErr, yErr);
-
-    if (xyBounds[i] != EOS_OK) {
-      err = EOS_INTERP_EXTRAPOLATED;
-      me->interpolationDataList[tableHandle]->lastErrorCode = err;
-    }
-  }
-
-  if ( ! me->interpolationDataList[tableHandle]->enableXYpassthru
-       && ! me->interpolationDataList[tableHandle]->enableXYmodify ) {
-
-    if (X)
-      EOS_FREE (X);
-    if (Y)
-      EOS_FREE (Y);
-
-  }
-
-  if (eos_GetStandardErrorCodeFromCustomErrorCode(err) != EOS_OK) {
-    ((eos_ErrorHandler *) me)->HandleError (me, tableHandle, err);
-    *errorCode = err;
-    return;
-  }
+#endif /* DO_OFFLOAD */
 }
 
 /*!**************************************************************
@@ -1139,14 +1357,16 @@ void eos_InterpolateEosInterpolation (eos_Interpolation *me,
  *
  ****************************************************************/
 void _eos_CheckExtrapCategory0(EOS_INTEGER nGhostData,
-			       EOS_INTEGER nxtbl, EOS_INTEGER nytbl,
-			       EOS_REAL *xtbls, EOS_REAL *ytbls,
-			       EOS_INTEGER nsrch, EOS_REAL *xvals, EOS_REAL *yvals,
-			       EOS_INTEGER *xyBounds, EOS_INTEGER *err)
+                               EOS_INTEGER nxtbl, EOS_INTEGER nytbl,
+                               EOS_REAL *xtbls, EOS_REAL *ytbls,
+                               EOS_INTEGER nsrch, EOS_REAL *xvals, EOS_REAL *yvals,
+                               EOS_INTEGER *xyBounds, EOS_INTEGER *err)
 {
   int j;
   EOS_INTEGER xErr, yErr, nG;
-
+  EOS_BOOLEAN skipExtrap = _EOS_GET_SKIPEXTRAPCHECK_EOSDATAMAP;;
+  if (skipExtrap)
+    return;
   nG = MAX(0, nGhostData);
 
   *err = EOS_OK;
@@ -1185,38 +1405,43 @@ void _eos_CheckExtrapCategory0(EOS_INTEGER nGhostData,
  * Populate xyBounds array with appropriate extrapolation error
  * codes.
  *
- * Input Variables:
- * EOS_BOOLEAN use_discontinuous_derivatives - input - specify which helper function to use
- * EOS_INTEGER nGhostData - number of ghost nodes added to original table
- * EOS_INTEGER *iy_low    - y index into ytbls that is lower bound of yvals
- * EOS_BOOLEAN doRational - use the birational interpolator for bounds check
- * EOS_INTEGER nxtbl      - size of xtbls array
- * EOS_INTEGER nytbl      - size of ytbls array
- * EOS_REAL    *xtbls     - array of tabulated X data
- * EOS_REAL    *ytbls     - array of tabulated Y data
- * EOS_REAL    **ftbls    - array of tabulated F data
- * EOS_INTEGER nsrch      - size of xvals, yvals and xyBounds arrays
- * EOS_REAL    *fvals     - array of F values to check for extrapolation
- * EOS_REAL    *yvals     - array of Y values to check for extrapolation
+ * @param[in] use_discontinuous_derivatives  
+ *            specify which helper function to use
+ * @param[in] nGhostData    number of ghost nodes added to original table
+ * @param[in] iy_low        y index into ytbls that is lower bound of yvals
+ * @param[in] doRational    use the birational interpolator for bounds check
+ * @param[in] nxtbl         size of xtbls array
+ * @param[in] nytbl         size of ytbls array
+ * @param[in] xtbls         array of tabulated X data
+ * @param[in] ytbls         array of tabulated Y data
+ * @param[in] ftbls         array of tabulated F data
+ * @param[in] nsrch         size of xvals, yvals and xyBounds arrays
+ * @param[in] fvals         array of F values to check for extrapolation
+ * @param[in] yvals         array of Y values to check for extrapolation
+ * @param[in] xtbls_ht      hashtable for xtbls values (can be NULL)
+ * @param[in] ytbls_ht      hashtable for ytbls values (can be NULL)
  *
- * Output Variables:
- * EOS_INTEGER *xyBounds  - array of extrapolation error codes
- * EOS_INTEGER *err       - error code
+ * @param[out] xyBounds     array of extrapolation error codes
+ * @param[out] err          error code
  *
  ****************************************************************/
 void _eos_CheckExtrapCategory1(EOS_BOOLEAN use_discontinuous_derivatives,
-			       EOS_INTEGER nGhostData, EOS_INTEGER *iy_low,
-			       EOS_BOOLEAN doRational,
-			       EOS_INTEGER nxtbl, EOS_INTEGER nytbl,
-			       EOS_REAL *xtbls, EOS_REAL *ytbls, EOS_REAL **ftbls,
-			       EOS_INTEGER nsrch, EOS_REAL *fvals, EOS_REAL *yvals,
-			       EOS_INTEGER *xyBounds, EOS_INTEGER *err)
+                               EOS_INTEGER nGhostData, EOS_INTEGER *iy_low,
+                               EOS_BOOLEAN doRational,
+                               EOS_INTEGER nxtbl, EOS_INTEGER nytbl,
+                               EOS_REAL *xtbls, EOS_REAL *ytbls, EOS_REAL **ftbls,
+                               EOS_INTEGER nsrch, EOS_REAL *fvals, EOS_REAL *yvals,
+                               eos_HashTable1D *xtbls_ht, eos_HashTable1D* ytbls_ht,
+                               EOS_INTEGER *xyBounds, EOS_INTEGER *err)
 {
   int i, j;
   EOS_INTEGER xErr, yErr, nG, min_index, max_index;
   EOS_REAL *fvals1, *fvals2, *dFx, *dFy, *min_x, *max_x, **_ftbls_;
   EOS_INTEGER *ix_low1, *ix_low2;
 
+  EOS_BOOLEAN skipExtrap = _EOS_GET_SKIPEXTRAPCHECK_EOSDATAMAP;;
+  if (skipExtrap)
+    return;
   ix_low1 = (EOS_INTEGER *) malloc (nsrch * sizeof (EOS_INTEGER));
   ix_low2 = (EOS_INTEGER *) malloc (nsrch * sizeof (EOS_INTEGER));
   min_x = (EOS_REAL *) malloc (nsrch * sizeof (EOS_REAL));
@@ -1245,9 +1470,9 @@ void _eos_CheckExtrapCategory1(EOS_BOOLEAN use_discontinuous_derivatives,
 
   if (doRational) { /* use birational */
     eos_BiRationalInterpolate (nsrch, nxtbl, nytbl, xtbls, ytbls, ftbls, ix_low1, iy_low,
-			       min_x, yvals, fvals1, dFx, dFy, xyBounds, err);
+                               min_x, yvals, fvals1, dFx, dFy, xyBounds, err);
     eos_BiRationalInterpolate (nsrch, nxtbl, nytbl, xtbls, ytbls, ftbls, ix_low2, iy_low,
-			       max_x, yvals, fvals2, dFx, dFy, xyBounds, err);
+                               max_x, yvals, fvals2, dFx, dFy, xyBounds, err);
   }
   else { /* use bilinear */
     _ftbls_ = (EOS_REAL **) malloc ((nytbl-2*nG) * sizeof (EOS_REAL*));
@@ -1255,14 +1480,14 @@ void _eos_CheckExtrapCategory1(EOS_BOOLEAN use_discontinuous_derivatives,
       _ftbls_[j] = (EOS_REAL *) malloc ((nxtbl-2*nG) * sizeof (EOS_REAL));
     for (j=0; j<nytbl-2*nG; j++)
       for (i=0; i<nxtbl-2*nG; i++)
-	_ftbls_[j][i] = ftbls[j+nG][i+nG];
+        _ftbls_[j][i] = ftbls[j+nG][i+nG];
 
     eos_BiLineInterpolate (use_discontinuous_derivatives,
-			   nsrch, nxtbl-2*nG, nytbl-2*nG, xtbls+nG, ytbls+nG, _ftbls_,
-			   min_x, yvals, fvals1, dFx, dFy, xyBounds, err);
+                           nsrch, nxtbl-2*nG, nytbl-2*nG, xtbls+nG, ytbls+nG, _ftbls_, nG,
+                           min_x, yvals, fvals1, dFx, dFy, xtbls_ht, ytbls_ht, xyBounds, err);
     eos_BiLineInterpolate (use_discontinuous_derivatives,
-			   nsrch, nxtbl-2*nG, nytbl-2*nG, xtbls+nG, ytbls+nG, _ftbls_,
-			   max_x, yvals, fvals2, dFx, dFy, xyBounds, err);
+                           nsrch, nxtbl-2*nG, nytbl-2*nG, xtbls+nG, ytbls+nG, _ftbls_, nG,
+                           max_x, yvals, fvals2, dFx, dFy, xtbls_ht, ytbls_ht, xyBounds, err);
 
     for (j=0; j<nytbl-2*nG; j++)
       EOS_FREE(_ftbls_[j]);
@@ -1321,6 +1546,8 @@ void _eos_CheckExtrapCategory1(EOS_BOOLEAN use_discontinuous_derivatives,
  * EOS_INTEGER nsrch      - size of xvals, yvals and xyBounds arrays
  * EOS_REAL    *xvals     - array of X values to check for extrapolation
  * EOS_REAL    *fvals     - array of F values to check for extrapolation
+ * eos_HashTable1D *xtbls_ht - hashtable for xtbls (can be NULL)
+ * eos_HashTable1D *ytbls_ht - hashtable for ytbls (can be NULL)
  *
  * Output Variables:
  * EOS_INTEGER *xyBounds  - array of extrapolation error codes
@@ -1328,18 +1555,22 @@ void _eos_CheckExtrapCategory1(EOS_BOOLEAN use_discontinuous_derivatives,
  *
  ****************************************************************/
 void _eos_CheckExtrapCategory2(EOS_BOOLEAN use_discontinuous_derivatives,
-			       EOS_INTEGER nGhostData, EOS_INTEGER *ix_low,
-			       EOS_BOOLEAN doRational,
-			       EOS_INTEGER nxtbl, EOS_INTEGER nytbl,
-			       EOS_REAL *xtbls, EOS_REAL *ytbls, EOS_REAL **ftbls,
-			       EOS_INTEGER nsrch, EOS_REAL *xvals, EOS_REAL *fvals,
-			       EOS_INTEGER *xyBounds, EOS_INTEGER *err)
+                               EOS_INTEGER nGhostData, EOS_INTEGER *ix_low,
+                               EOS_BOOLEAN doRational,
+                               EOS_INTEGER nxtbl, EOS_INTEGER nytbl,
+                               EOS_REAL *xtbls, EOS_REAL *ytbls, EOS_REAL **ftbls,
+                               EOS_INTEGER nsrch, EOS_REAL *xvals, EOS_REAL *fvals,
+                               eos_HashTable1D* xtbls_ht, eos_HashTable1D* ytbls_ht,
+                               EOS_INTEGER *xyBounds, EOS_INTEGER *err)
 {
   int i, j;
   EOS_INTEGER xErr, yErr, nG, min_index, max_index;
   EOS_REAL *fvals1, *fvals2, *dFx, *dFy, *min_y, *max_y, **_ftbls_;
   EOS_INTEGER *iy_low1, *iy_low2;
 
+  EOS_BOOLEAN skipExtrap = _EOS_GET_SKIPEXTRAPCHECK_EOSDATAMAP;;
+  if (skipExtrap)
+    return;
   *err = EOS_OK;
 
   iy_low1 = (EOS_INTEGER *) malloc (nsrch * sizeof (EOS_INTEGER));
@@ -1370,9 +1601,9 @@ void _eos_CheckExtrapCategory2(EOS_BOOLEAN use_discontinuous_derivatives,
 
   if (doRational) { /* use birational */
     eos_BiRationalInterpolate (nsrch, nxtbl, nytbl, xtbls, ytbls, ftbls, ix_low, iy_low1,
-			       xvals, min_y, fvals1, dFx, dFy, xyBounds, err);
+                               xvals, min_y, fvals1, dFx, dFy, xyBounds, err);
     eos_BiRationalInterpolate (nsrch, nxtbl, nytbl, xtbls, ytbls, ftbls, ix_low, iy_low2,
-			       xvals, max_y, fvals2, dFx, dFy, xyBounds, err);
+                               xvals, max_y, fvals2, dFx, dFy, xyBounds, err);
   }
   else { /* use bilinear */
     _ftbls_ = (EOS_REAL **) malloc ((nytbl-2*nG) * sizeof (EOS_REAL*));
@@ -1380,14 +1611,14 @@ void _eos_CheckExtrapCategory2(EOS_BOOLEAN use_discontinuous_derivatives,
       _ftbls_[j] = (EOS_REAL *) malloc ((nxtbl-2*nG) * sizeof (EOS_REAL));
     for (j=0; j<nytbl-2*nG; j++)
       for (i=0; i<nxtbl-2*nG; i++)
-	_ftbls_[j][i] = ftbls[j+nG][i+nG];
+        _ftbls_[j][i] = ftbls[j+nG][i+nG];
 
     eos_BiLineInterpolate (use_discontinuous_derivatives,
-			   nsrch, nxtbl-2*nG, nytbl-2*nG, xtbls+nG, ytbls+nG, _ftbls_,
-			   xvals, min_y, fvals1, dFx, dFy, xyBounds, err);
+                           nsrch, nxtbl-2*nG, nytbl-2*nG, xtbls+nG, ytbls+nG, _ftbls_, nG,
+                           xvals, min_y, fvals1, dFx, dFy, xtbls_ht, ytbls_ht, xyBounds, err);
     eos_BiLineInterpolate (use_discontinuous_derivatives,
-			   nsrch, nxtbl-2*nG, nytbl-2*nG, xtbls+nG, ytbls+nG, _ftbls_,
-			   xvals, max_y, fvals2, dFx, dFy, xyBounds, err);
+                           nsrch, nxtbl-2*nG, nytbl-2*nG, xtbls+nG, ytbls+nG, _ftbls_, nG,
+                           xvals, max_y, fvals2, dFx, dFy, xtbls_ht, ytbls_ht, xyBounds, err);
 
     for (j=0; j<nytbl-2*nG; j++)
       EOS_FREE(_ftbls_[j]);
@@ -1447,12 +1678,16 @@ void _eos_CheckExtrapCategory2(EOS_BOOLEAN use_discontinuous_derivatives,
  *
  ****************************************************************/
 EOS_INTEGER _eos_CheckExtrapEosInterpolationGeneric(EOS_REAL xMin, EOS_REAL xMax, EOS_REAL yMin, EOS_REAL yMax,
-						    EOS_INTEGER nsrch, EOS_REAL *xvals, EOS_REAL *yvals,
-						    EOS_INTEGER *xyBounds)
+                                                    EOS_INTEGER nsrch, EOS_REAL *xvals, EOS_REAL *yvals,
+                                                    EOS_INTEGER *xyBounds)
 {
   int j;
   EOS_INTEGER xErr, yErr;
   EOS_INTEGER err = EOS_OK;
+  EOS_BOOLEAN skipExtrap = _EOS_GET_SKIPEXTRAPCHECK_EOSDATAMAP;;
+
+  if (skipExtrap)
+    return err;
 
   for (j=0; j<nsrch; j++) {
     xErr = yErr = EOS_OK;
@@ -1512,7 +1747,6 @@ EOS_xLo_yOk	The x argument was low, the y argument was OK.
 EOS_xLo_yHi	The x argument was low, the y argument was OK.
 EOS_xOk_yHi	The x argument is OK and the y argument is high. 
 *******************************************************************/
-
 void eos_CheckExtrapEosInterpolation (eos_Interpolation *me,
                                       EOS_INTEGER tableHandle,
                                       EOS_INTEGER nXYPairs, EOS_REAL *srchX,
@@ -1521,8 +1755,12 @@ void eos_CheckExtrapEosInterpolation (eos_Interpolation *me,
 {
   eos_Data *eosData;
   EOS_INTEGER dataType, i, err = EOS_OK;
-
   *errorCode = EOS_OK;
+
+  
+  EOS_BOOLEAN skipExtrap = _EOS_GET_SKIPEXTRAPCHECK_EOSDATAMAP;;
+  if (skipExtrap) 
+    return;
 
   /* first check last interpolation error for this handle. If the error was not EOS_OK,
      then return the cached in xyBounds values */
@@ -1545,7 +1783,7 @@ void eos_CheckExtrapEosInterpolation (eos_Interpolation *me,
   { /* Check extrapolation according to recordType */
     if (eosData->CheckExtrap)
       eosData->CheckExtrap (eosData, tableHandle, dataType,
-			    nXYPairs, srchX, srchY, xyBounds, &err);
+                            nXYPairs, srchX, srchY, xyBounds, &err);
     else /* wrong record type */
       err = EOS_INVALID_DATA_TYPE;
   }
@@ -1580,27 +1818,28 @@ void eos_CheckExtrapEosInterpolation (eos_Interpolation *me,
  *                                           eos function f(x,y) 
  * EOS_REAL    searchDFy[numZones]           derivative wrt non-fixed var
  * EOS_CHAR    fixedVar;                     which var i s fixed: 'x' or 'y'
+ * eos_HashTable1D *YValues_ht               hashtable for YValues (can be NULL)
  * EOS_INTEGER *xyBounds                     interpolation errors per xy-pair
  * EOS_INTEGER *err                          output error code
  * 
  ************************************************************************/
-
 void eos_LineInterpolate (EOS_BOOLEAN use_discontinuous_derivatives,
-			  EOS_INTEGER numZones, EOS_INTEGER numXVals,
+                          EOS_INTEGER numZones, EOS_INTEGER numXVals,
                           EOS_INTEGER numYVals, EOS_INTEGER fixedIndex,
                           EOS_REAL *YValues, EOS_REAL **FVals,
                           EOS_REAL *searchYVals, EOS_REAL *searchFVals,
                           EOS_REAL *searchDFy, EOS_CHAR fixedVar,
+                          eos_HashTable1D* YValues_ht,
                           EOS_INTEGER *xyBounds, EOS_INTEGER *err)
 {
   if (use_discontinuous_derivatives)
     _eos_LineInterpolateWithOriginalDerivatives (numZones, numXVals, numYVals, fixedIndex,
-						 YValues, FVals, searchYVals, searchFVals,
-						 searchDFy, fixedVar, xyBounds, err);
+                                                 YValues, FVals, searchYVals, searchFVals,
+                                                 searchDFy, fixedVar, YValues_ht, xyBounds, err);
   else
     _eos_LineInterpolateWithContinuousDerivatives (numZones, numXVals, numYVals, fixedIndex,
-						   YValues, FVals, searchYVals, searchFVals,
-						   searchDFy, fixedVar, xyBounds, err);
+                                                   YValues, FVals, searchYVals, searchFVals,
+                                                   searchDFy, fixedVar, YValues_ht, xyBounds, err);
 }
 
 /************************************************************************
@@ -1626,23 +1865,37 @@ void eos_LineInterpolate (EOS_BOOLEAN use_discontinuous_derivatives,
  *                                           eos function f(x,y) 
  * EOS_REAL    searchDFy[numZones]           derivative wrt non-fixed var
  * EOS_CHAR    fixedVar;                     which var i s fixed: 'x' or 'y'
+ * eos_HashTable1D *YValues_ht               hashtable for YValues (can be NULL)
  * EOS_INTEGER *xyBounds                     interpolation errors per xy-pair
  * EOS_INTEGER *err                          output error code
  * 
  ************************************************************************/
 
 void _eos_LineInterpolateWithContinuousDerivatives (EOS_INTEGER numZones, EOS_INTEGER numXVals,
-						    EOS_INTEGER numYVals, EOS_INTEGER fixedIndex,
-						    EOS_REAL *YValues, EOS_REAL **FVals,
-						    EOS_REAL *searchYVals, EOS_REAL *searchFVals,
-						    EOS_REAL *searchDFy, EOS_CHAR fixedVar,
-						    EOS_INTEGER *xyBounds, EOS_INTEGER *err)
+                                                    EOS_INTEGER numYVals, EOS_INTEGER fixedIndex,
+                                                    EOS_REAL *YValues, EOS_REAL **FVals,
+                                                    EOS_REAL *searchYVals, EOS_REAL *searchFVals,
+                                                    EOS_REAL *searchDFy, EOS_CHAR fixedVar, eos_HashTable1D* YValues_ht,
+                                                    EOS_INTEGER *xyBounds, EOS_INTEGER *err)
 {
-  EOS_INTEGER j, jfixed, *iyv, err1, go_upwards, offset;
-  EOS_REAL dyg, ryv, ftg[4], delta_f, stag_y1, stag_y2, dfdy1, dfdy2;
+  EOS_INTEGER j, *iyv, err1, jfixed;
   *err = EOS_OK;
 
-  iyv = (EOS_INTEGER *) malloc (numZones * sizeof (EOS_INTEGER));       /* indexes of Y near which Y points are */
+  EOS_BOOLEAN useGpuData = EOS_FALSE;
+
+#ifdef DO_OFFLOAD
+  EOS_INTEGER t;
+  useGpuData = _EOS_GET_USEGPUDATA_EOSDATAMAP;
+  t = omp_get_default_device();
+  if (!useGpuData) {
+#endif
+    iyv = (EOS_INTEGER *) malloc (numZones * sizeof (EOS_INTEGER));       /* indexes of Y near which Y points are */
+#ifdef DO_OFFLOAD
+  } else{
+    iyv = omp_target_alloc(numZones*sizeof(EOS_INTEGER),t);
+  }
+#endif
+
 
   /* if (2-point) search-interpolation is impossible, return. */
   if (fixedVar == 'x' && numYVals <= 1)
@@ -1651,11 +1904,11 @@ void _eos_LineInterpolateWithContinuousDerivatives (EOS_INTEGER numZones, EOS_IN
     return;
 
   /*
-     perform vector table searches to load search vectors containing
-     indices and spacings of nearest data table y values to input searchYVals.
-   */
+    perform vector table searches to load search vectors containing
+    indices and spacings of nearest data table y values to input searchYVals.
+  */
   if (fixedVar == 'x') {
-    _eos_srchdf (numZones, searchYVals, 1, numYVals - 1, YValues, 1, iyv,
+    _eos_srchdf (numZones, searchYVals, 1, numYVals, YValues, 1, iyv, YValues_ht,
                  xyBounds, &err1);
     if (eos_GetStandardErrorCodeFromCustomErrorCode(err1) != EOS_OK)
       *err = err1;
@@ -1664,7 +1917,7 @@ void _eos_LineInterpolateWithContinuousDerivatives (EOS_INTEGER numZones, EOS_IN
   }
   else {                        /* y is fixed */
 
-    _eos_srchdf (numZones, searchYVals, 1, numXVals - 1, YValues, 1, iyv,
+    _eos_srchdf (numZones, searchYVals, 1, numXVals, YValues, 1, iyv, YValues_ht,
                  xyBounds, &err1);
     if (eos_GetStandardErrorCodeFromCustomErrorCode(err1) != EOS_OK)
       *err = err1;
@@ -1675,55 +1928,85 @@ void _eos_LineInterpolateWithContinuousDerivatives (EOS_INTEGER numZones, EOS_IN
   if (jfixed < 0)
     jfixed = 0;
   /*
-     .... interpolate values of eos function f(x,y) and derivative.
-   */
-  for (j = 0; j < numZones; j++) {
-    if (xyBounds[j] == EOS_UNDEFINED) {
-      searchFVals[j] = 0.0;
-      continue;
+    .... interpolate values of eos function f(x,y) and derivative.
+  */
+
+
+
+#ifdef DO_OFFLOAD
+#pragma omp target if(useGpuData) is_device_ptr(YValues, searchYVals, FVals, searchFVals, searchDFy, iyv)
+  {
+#pragma omp teams distribute parallel for                                                      
+#endif /* DO_OFFLOAD */
+#ifndef DISABLE_OMP_SIMD_PRAGMA
+#pragma omp simd
+#endif
+    for (j = 0; j < numZones; j++) {
+    /*    
+        if (xyBounds[j] == EOS_UNDEFINED) {
+   		searchFVals[j] = 0.0;
+    	continue;
+    	}
+    */
+
+      EOS_INTEGER go_upwards, offset;
+      EOS_REAL dyg, ryv, delta_f, stag_y1, stag_y2, dfdy1, dfdy2;
+      EOS_REAL ftg0, ftg1, ftg2, ftg3;
+      EOS_REAL *FVals_flat = !useGpuData?&FVals[0][0]:&FVals[0];
+      /* compute fractionals and differentials */
+      dyg = YValues[iyv[j] + 1] - YValues[iyv[j]];
+      ryv = (searchYVals[j] - YValues[iyv[j]]) / dyg;
+      if (fixedVar == 'x') {
+	if(iyv[j]>0)
+	  ftg0 = FVals_flat[(iyv[j] - 1)*numXVals+jfixed]; /* left side of previous interval */
+			    ftg1 = FVals_flat[iyv[j]*numXVals+jfixed];     /* left side of interval */
+			    ftg2 = FVals_flat[(iyv[j] + 1)*numXVals+jfixed]; /* right side of interval */
+			    if(iyv[j]<numYVals-2)
+			      ftg3 = FVals_flat[(iyv[j] + 2)*numXVals+jfixed]; /* right side of next interval */
+			    }
+	  else {                      /* y is fixed */
+	    if(iyv[j]>0)
+	      ftg0 = FVals_flat[jfixed*numXVals+iyv[j] - 1]; /* left side of previous interval */
+	    ftg1 = FVals_flat[jfixed*numXVals+iyv[j]];     /* left side of interval */
+	    ftg2 = FVals_flat[jfixed*numXVals+iyv[j] + 1]; /* right side of interval */
+	    if(iyv[j]<numXVals-2)
+	      ftg3 = FVals_flat[jfixed*numXVals+iyv[j] + 2]; /* right side of next interval */
+	  }
+	
+	/* interpolate value of function only. */
+	delta_f = ftg2 - ftg1;         /* dF */
+	searchFVals[j] = ftg1 + ryv * delta_f; /* F0 + (dY'/dY) * dF */
+	/* derivative wrt y. */
+	
+	if (searchDFy) {
+	  /*determine whether to use staggered cell upward or downward*/
+	  go_upwards = searchYVals[j] >= (YValues[iyv[j] + 1] + YValues[iyv[j]])/2;
+	  offset=((go_upwards && iyv[j]<(fixedVar=='x'?numYVals:numXVals)-2) || iyv[j]==0); /* note: 0 or 1 */
+	  /* if(offset^go_upwards) warn(extrapolation); */
+	  stag_y1 = (YValues[iyv[j] + offset - 1] + YValues[iyv[j] + offset])/2;
+	  stag_y2 = (YValues[iyv[j] + offset] + YValues[iyv[j] + offset + 1])/2;
+	  EOS_REAL ftgo  = (offset==0?ftg0:ftg1);
+	  EOS_REAL ftgo1 = (offset==0?ftg1:ftg2);
+	  EOS_REAL ftgo2 = (offset==0?ftg2:ftg3);
+	  dfdy1 = (ftgo1 - ftgo )/(YValues[iyv[j] + offset] - YValues[iyv[j] + offset - 1]);
+	  dfdy2 = (ftgo2 - ftgo1)/(YValues[iyv[j] + offset + 1] - YValues[iyv[j] + offset]);
+	  
+	  searchDFy[j] = ((stag_y2 - searchYVals[j]) * dfdy1 + (searchYVals[j] - stag_y1) * dfdy2)/(stag_y2 - stag_y1);  /* dF/dY */
+	}
+      }
+#ifdef DO_OFFLOAD
     }
+#endif
 
-    /* compute fractionals and differentials */
-    dyg = YValues[iyv[j] + 1] - YValues[iyv[j]];
-    ryv = (searchYVals[j] - YValues[iyv[j]]) / dyg;
-    if (fixedVar == 'x') {
-      if(iyv[j]>0)
-	ftg[0] = FVals[iyv[j] - 1][jfixed]; /* left side of previous interval */
-      ftg[1] = FVals[iyv[j]][jfixed];     /* left side of interval */
-      ftg[2] = FVals[iyv[j] + 1][jfixed]; /* right side of interval */
-      if(iyv[j]<numYVals-2)
-	ftg[3] = FVals[iyv[j] + 2][jfixed]; /* right side of next interval */
+#ifdef DO_OFFLOAD
+    if (!useGpuData) {
+#endif /* DO_OFFLOAD */
+      EOS_FREE (iyv);
+#ifdef DO_OFFLOAD
+    } else {
+      omp_target_free(iyv, t);
     }
-    else {                      /* y is fixed */
-      if(iyv[j]>0)
-	ftg[0] = FVals[jfixed][iyv[j] - 1]; /* left side of previous interval */
-      ftg[1] = FVals[jfixed][iyv[j]];     /* left side of interval */
-      ftg[2] = FVals[jfixed][iyv[j] + 1]; /* right side of interval */
-      if(iyv[j]<numXVals-2)
-	ftg[3] = FVals[jfixed][iyv[j] + 2]; /* right side of next interval */
-    }
-
-    /* interpolate value of function only. */
-    delta_f = ftg[2] - ftg[1];         /* dF */
-    searchFVals[j] = ftg[1] + ryv * delta_f; /* F0 + (dY'/dY) * dF */
-
-    /* derivative wrt y. */
-
-    if (searchDFy) {
-      /*determine whether to use staggered cell upward or downward*/
-      go_upwards = searchYVals[j] >= (YValues[iyv[j] + 1] + YValues[iyv[j]])/2;
-      offset=((go_upwards && iyv[j]<(fixedVar=='x'?numYVals:numXVals)-2) || iyv[j]==0); /* note: 0 or 1 */
-      /* if(offset^go_upwards) warn(extrapolation); */
-      stag_y1 = (YValues[iyv[j] + offset - 1] + YValues[iyv[j] + offset])/2;
-      stag_y2 = (YValues[iyv[j] + offset] + YValues[iyv[j] + offset + 1])/2;
-      dfdy1 = (ftg[offset + 1] - ftg[offset])/(YValues[iyv[j] + offset] - YValues[iyv[j] + offset - 1]);
-      dfdy2 = (ftg[offset + 2] - ftg[offset + 1])/(YValues[iyv[j] + offset + 1] - YValues[iyv[j] + offset]);
-
-      searchDFy[j] = ((stag_y2 - searchYVals[j]) * dfdy1 + (searchYVals[j] - stag_y1) * dfdy2)/(stag_y2 - stag_y1);  /* dF/dY */
-    }
-  }
-
-  EOS_FREE (iyv);
+#endif /* DO_OFFLOAD */
 }
 
 /************************************************************************
@@ -1752,24 +2035,35 @@ void _eos_LineInterpolateWithContinuousDerivatives (EOS_INTEGER numZones, EOS_IN
  *                                           eos function f(x,y) 
  * EOS_REAL    searchDFy[numZones]           derivative wrt non-fixed var
  * EOS_CHAR    fixedVar;                     which var i s fixed: 'x' or 'y'
+ * eos_HashTable1D *YValues_ht               hashtable for YValues (can be NULL)
  * EOS_INTEGER *xyBounds                     interpolation errors per xy-pair
  * EOS_INTEGER *err                          output error code
  * 
  ************************************************************************/
-
 void _eos_LineInterpolateWithOriginalDerivatives (EOS_INTEGER numZones, EOS_INTEGER numXVals,
-						  EOS_INTEGER numYVals, EOS_INTEGER fixedIndex,
-						  EOS_REAL *YValues, EOS_REAL **FVals,
-						  EOS_REAL *searchYVals, EOS_REAL *searchFVals,
-						  EOS_REAL *searchDFy, EOS_CHAR fixedVar,
-						  EOS_INTEGER *xyBounds, EOS_INTEGER *err)
+                                                  EOS_INTEGER numYVals, EOS_INTEGER fixedIndex,
+                                                  EOS_REAL *YValues, EOS_REAL **FVals,
+                                                  EOS_REAL *searchYVals, EOS_REAL *searchFVals,
+                                                  EOS_REAL *searchDFy, EOS_CHAR fixedVar, eos_HashTable1D* YValues_ht,
+                                                  EOS_INTEGER *xyBounds, EOS_INTEGER *err)
 {
   EOS_INTEGER j, jfixed, *iyv, err1;
-  EOS_REAL dyg, ryv, ftg1, ftg2, ftg3;
+  EOS_BOOLEAN useGpuData = EOS_FALSE;
   *err = EOS_OK;
 
-  iyv = (EOS_INTEGER *) malloc (numZones * sizeof (EOS_INTEGER));       /* indexes of Y near which Y points are */
-
+#ifdef DO_OFFLOAD
+  EOS_INTEGER t;
+  useGpuData = _EOS_GET_USEGPUDATA_EOSDATAMAP;
+  t = omp_get_default_device();
+  if (!useGpuData) {
+#endif
+    iyv = (EOS_INTEGER *) malloc (numZones * sizeof (EOS_INTEGER));       /* indexes of Y near which Y points are */
+#ifdef DO_OFFLOAD
+  } else {
+    iyv = omp_target_alloc(numZones*sizeof(EOS_INTEGER),t);
+  }
+#endif /* DO_OFFLOAD */
+  
   /* if (2-point) search-interpolation is impossible, return. */
   if (fixedVar == 'x' && numYVals <= 1)
     return;
@@ -1777,11 +2071,11 @@ void _eos_LineInterpolateWithOriginalDerivatives (EOS_INTEGER numZones, EOS_INTE
     return;
 
   /*
-     perform vector table searches to load search vectors containing
-     indices and spacings of nearest data table y values to input searchYVals.
-   */
+    perform vector table searches to load search vectors containing
+    indices and spacings of nearest data table y values to input searchYVals.
+  */
   if (fixedVar == 'x') {
-    _eos_srchdf (numZones, searchYVals, 1, numYVals - 1, YValues, 1, iyv,
+    _eos_srchdf (numZones, searchYVals, 1, numYVals, YValues, 1, iyv, YValues_ht,
                  xyBounds, &err1);
     if (err1 != EOS_OK)
       *err = err1;
@@ -1790,7 +2084,7 @@ void _eos_LineInterpolateWithOriginalDerivatives (EOS_INTEGER numZones, EOS_INTE
   }
   else {                        /* y is fixed */
 
-    _eos_srchdf (numZones, searchYVals, 1, numXVals - 1, YValues, 1, iyv,
+    _eos_srchdf (numZones, searchYVals, 1, numXVals, YValues, 1, iyv, YValues_ht,
                  xyBounds, &err1);
     if (err1 != EOS_OK)
       *err = err1;
@@ -1801,25 +2095,40 @@ void _eos_LineInterpolateWithOriginalDerivatives (EOS_INTEGER numZones, EOS_INTE
   if (jfixed < 0)
     jfixed = 0;
   /*
-     .... interpolate values of eos function f(x,y) and derivative.
-   */
+    .... interpolate values of eos function f(x,y) and derivative.
+  */
+
+
+#ifdef DO_OFFLOAD
+#pragma omp target if(useGpuData) is_device_ptr(YValues, iyv, searchYVals, FVals, searchFVals, searchDFy)
+  {
+    #pragma omp teams distribute parallel for
+#endif /* DO_OFFLOAD */
+#ifndef DISABLE_OMP_SIMD_PRAGMA
+#pragma omp simd
+#endif
+
   for (j = 0; j < numZones; j++) {
-    if (xyBounds[j] == EOS_UNDEFINED) {
+
+    EOS_REAL *FVals_flat = !useGpuData?&FVals[0][0]:&FVals[0];
+    EOS_REAL ftg1, ftg2, ftg3;
+    /*
+      if (xyBounds[j] == EOS_UNDEFINED) {
       searchFVals[j] = 0.0;
       continue;
     }
+    */
 
     /* compute fractionals and differentials */
-    dyg = YValues[iyv[j] + 1] - YValues[iyv[j]];
-    ryv = (searchYVals[j] - YValues[iyv[j]]) / dyg;
+    EOS_REAL dyg = YValues[iyv[j] + 1] - YValues[iyv[j]];
+    EOS_REAL ryv = (searchYVals[j] - YValues[iyv[j]]) / dyg;
     if (fixedVar == 'x') {
-      ftg1 = FVals[iyv[j]][jfixed];     /* left side of interval */
-      ftg2 = FVals[iyv[j] + 1][jfixed]; /* right side of interval */
+      ftg1 = FVals_flat[iyv[j] * numXVals + jfixed];     /* left side of interval */
+      ftg2 = FVals_flat[(iyv[j] + 1) * numXVals + jfixed]; /* right side of interval */
     }
     else {                      /* y is fixed */
-
-      ftg1 = FVals[jfixed][iyv[j]];     /* left side of interval */
-      ftg2 = FVals[jfixed][iyv[j] + 1]; /* right side of interval */
+      ftg1 = FVals_flat[jfixed * numXVals + iyv[j]];     /* left side of interval */
+      ftg2 = FVals_flat[jfixed * numXVals + iyv[j] + 1]; /* right side of interval */
     }
 
     ftg3 = ftg2 - ftg1;
@@ -1833,8 +2142,20 @@ void _eos_LineInterpolateWithOriginalDerivatives (EOS_INTEGER numZones, EOS_INTE
       searchDFy[j] = ftg3 / dyg;  /* dF/dY */
     }
   }
+#ifdef DO_OFFLOAD
+  }
+#endif /* DO_OFFLOAD */
 
+#ifdef DO_OFFLOAD
+  if (!useGpuData) {
+#endif /* DO_OFFLOAD */
   EOS_FREE (iyv);
+#ifdef DO_OFFLOAD
+  } else {
+    omp_target_free(iyv, t);
+  }
+#endif /* DO_OFFLOAD */
+
 }
 
 /*********************************************************************************************
@@ -1857,25 +2178,27 @@ void _eos_LineInterpolateWithOriginalDerivatives (EOS_INTEGER numZones, EOS_INTE
        searchFVals    = output real(r8kind) array containing interpolated values of eos function f(x,y) 
        searchDFx[numZones]           derivative wrt x
        searchDFy[numZones]           derivative wrt y
+       XValues_ht    = input  hashtable for XValues (can be NULL)
+       YValues_ht    = input  hashtable for YValues (can be NULL)
 	   EOS_INTEGER *xyBounds     output - interpolation errors per xy-pair
 ************************************************************************************************/
 void eos_BiLineInterpolate (EOS_BOOLEAN use_discontinuous_derivatives,
-			    EOS_INTEGER numZones, EOS_INTEGER numXVals,
+                            EOS_INTEGER numZones, EOS_INTEGER numXVals,
                             EOS_INTEGER numYVals, EOS_REAL *XValues,
-                            EOS_REAL *YValues, EOS_REAL **FValues,
+                            EOS_REAL *YValues, EOS_REAL **FValues, EOS_INTEGER nGhostData,
                             EOS_REAL *searchXVals, EOS_REAL *searchYVals,
                             EOS_REAL *searchFVals, EOS_REAL *searchDFx,
-                            EOS_REAL *searchDFy, EOS_INTEGER *xyBounds,
+                            EOS_REAL *searchDFy, eos_HashTable1D* XValues_ht, eos_HashTable1D* YValues_ht, EOS_INTEGER *xyBounds,
                             EOS_INTEGER *err)
 {
   if (use_discontinuous_derivatives)
     _eos_BiLineInterpolateWithOriginalDerivatives (numZones, numXVals, numYVals, XValues, YValues,
-						   FValues, searchXVals, searchYVals, searchFVals,
-						   searchDFx, searchDFy, xyBounds, err);
+                                                   FValues, nGhostData, searchXVals, searchYVals, searchFVals,
+                                                   searchDFx, searchDFy, XValues_ht, YValues_ht, xyBounds, err);
   else
     _eos_BiLineInterpolateWithContinuousDerivatives (numZones, numXVals, numYVals, XValues, YValues,
-						     FValues, searchXVals, searchYVals, searchFVals,
-						     searchDFx, searchDFy, xyBounds, err);
+                                                     FValues, nGhostData, searchXVals, searchYVals, searchFVals,
+                                                     searchDFx, searchDFy, XValues_ht, YValues_ht, xyBounds, err);
 
 }
 
@@ -1889,32 +2212,51 @@ void eos_BiLineInterpolate (EOS_BOOLEAN use_discontinuous_derivatives,
        numXVals    = input  integer number of data table x values.
        numYVals    = input  integer number of data table y values.
        XValues    = input  real(r8kind) array containing data table x values.
+       XValues_ht = input  hashtable for XValues array
        YValues    = input  real(r8kind) array containing data table y values.
+       YValues_ht = input  hashtable for YValues array
        FValues    = input  real(r8kind) array containing data table f values.
        searchXVals    = input  real(r8kind) search vector containing x values.
        searchYVals    = input  real(r8kind) search vector containing y values.
        searchFVals    = output real(r8kind) array containing interpolated values of eos function f(x,y) 
        searchDFx[numZones]           derivative wrt x
        searchDFy[numZones]           derivative wrt y
+       XValues_ht    = input  hashtable for XValues (can be NULL)
+       YValues_ht    = input  hashtable for YValues (can be NULL)
 	   EOS_INTEGER *xyBounds     output - interpolation errors per xy-pair
 ************************************************************************************************/
 void _eos_BiLineInterpolateWithContinuousDerivatives (EOS_INTEGER numZones, EOS_INTEGER numXVals,
-						      EOS_INTEGER numYVals, EOS_REAL *XValues,
-						      EOS_REAL *YValues, EOS_REAL **FValues,
-						      EOS_REAL *searchXVals, EOS_REAL *searchYVals,
-						      EOS_REAL *searchFVals, EOS_REAL *searchDFx,
-						      EOS_REAL *searchDFy, EOS_INTEGER *xyBounds,
-						      EOS_INTEGER *err)
+                                                      EOS_INTEGER numYVals, EOS_REAL *XValues,
+                                                      EOS_REAL *YValues, EOS_REAL **FValues, EOS_INTEGER nGhostData,
+                                                      EOS_REAL *searchXVals, EOS_REAL *searchYVals,
+                                                      EOS_REAL *searchFVals, EOS_REAL *searchDFx,
+                                                      EOS_REAL *searchDFy, eos_HashTable1D* XValues_ht, eos_HashTable1D* YValues_ht, EOS_INTEGER *xyBounds,
+                                                      EOS_INTEGER *err)
 {
-  EOS_INTEGER err1, j, *iyv, *ixv, *xyBounds2;
-  EOS_REAL ftg11, ftg12, ftg21, ftg22, x1, x2, y1, y2;
-  EOS_REAL derivs[2];
+  EOS_INTEGER err1, *iyv, *ixv, j, *xyBounds2;
+
+
+  *err = EOS_OK;
+  EOS_BOOLEAN useGpuData=EOS_FALSE;
+
+#ifdef DO_OFFLOAD
+  EOS_INTEGER t;
+  useGpuData = _EOS_GET_USEGPUDATA_EOSDATAMAP;
+  t = omp_get_default_device();
+  if (!useGpuData) {
+#endif
+      iyv = (EOS_INTEGER *) malloc (numZones * sizeof (EOS_INTEGER));       /* indexes of Y near which Y points are */
+      ixv = (EOS_INTEGER *) malloc (numZones * sizeof (EOS_INTEGER));       /* indices of X near which X points are */
+#ifdef DO_OFFLOAD
+    } else {
+     ixv = omp_target_alloc(numZones*sizeof(EOS_INTEGER),t);
+     iyv = omp_target_alloc(numZones*sizeof(EOS_INTEGER),t);
+    }
+#endif /* DO_OFFLOAD */
 
   *err = EOS_OK;
 
-  iyv = (EOS_INTEGER *) malloc (numZones * sizeof (EOS_INTEGER));       /* indices of Y near which Y points are */
-  ixv = (EOS_INTEGER *) malloc (numZones * sizeof (EOS_INTEGER));       /* indices of X near which X points are */
-  xyBounds2 = (EOS_INTEGER *) malloc (numZones * sizeof (EOS_INTEGER));
+  if(!useGpuData) xyBounds2 = (EOS_INTEGER *) malloc (numZones * sizeof (EOS_INTEGER));
 
   /* if (2-point) search-interpolation is impossible, return. */
   if (numYVals <= 1)
@@ -1923,48 +2265,54 @@ void _eos_BiLineInterpolateWithContinuousDerivatives (EOS_INTEGER numZones, EOS_
   /* .... perform vector table searches to load search vectors containing
      .... indices and spacings of nearest data table x,y values to x,searchYVals. */
 
-  _eos_srchdf (numZones, searchXVals, 1, numXVals - 1, XValues, 1, ixv,
-               xyBounds, &err1);
+  _eos_srchdf (numZones, searchXVals, 1, numXVals, XValues, 1, ixv, XValues_ht, xyBounds, &err1);
   /* ignore error, it might be for one point only */
   if (eos_GetStandardErrorCodeFromCustomErrorCode(err1) != EOS_OK)
     *err = err1;
 
-  _eos_srchdf (numZones, searchYVals, 1, numYVals - 1, YValues, 1, iyv,
-               xyBounds2, &err1);
+  _eos_srchdf (numZones, searchYVals, 1, numYVals, YValues, 1, iyv, YValues_ht, useGpuData?xyBounds:xyBounds2, &err1);
   /* ignore error, it might be for one point only */
   if (eos_GetStandardErrorCodeFromCustomErrorCode(err1) != EOS_OK)
     *err = err1;
+
+  /* ensure proper initial placement of bilinear stencil at table edges while ignoring ghost data */
+
+#ifdef DO_OFFLOAD
+#pragma omp target if(useGpuData) is_device_ptr(ixv, iyv)
+  {
+#pragma omp teams distribute parallel for
+#endif /* DO_OFFLOAD */
+#ifndef DISABLE_OMP_SIMD_PRAGMA
+#pragma omp simd
+#endif
+
+  for (j = 0; j < numZones; j++) {
+    ixv[j] = MIN(ixv[j], numXVals-2-nGhostData);
+    iyv[j] = MIN(iyv[j], numYVals-2-nGhostData);
+  }
+#ifdef DO_OFFLOAD
+  }
+#endif
 
   /* .... interpolate values of eos function f(x,y) and derivatives. */
-  for (j = 0; j < numZones; j++) {
+  eos_bilinearInterpolate(XValues, numXVals, YValues, numYVals, FValues, ixv, iyv, numZones,searchXVals, searchYVals, searchFVals);
 
-    xyBounds[j] = _eos_CombineExtrapErrors (xyBounds[j], xyBounds2[j]);
-    if (xyBounds[j] == EOS_UNDEFINED) {
-      searchFVals[j] = 0.0;
-      continue;
-    }
+  eos_BilinearDerivatives(XValues, YValues, FValues, numXVals, numYVals, ixv, nGhostData, iyv, nGhostData, numZones, searchXVals, searchYVals,searchDFx, searchDFy);
+  
 
-    /* gather nearest eos data table f values. */
-    ftg11 = FValues[iyv[j]][ixv[j]];
-    ftg21 = FValues[iyv[j]][ixv[j] + 1];
-    ftg12 = FValues[iyv[j] + 1][ixv[j]];
-    ftg22 = FValues[iyv[j] + 1][ixv[j] + 1];
-
-    /* interpolate value of function only. */
-    x1 = XValues[ixv[j]];
-    x2 = XValues[ixv[j] + 1];
-    y1 = YValues[iyv[j]];
-    y2 = YValues[iyv[j] + 1];
+#ifdef DO_OFFLOAD
+  if (!useGpuData){
+#endif
+    EOS_FREE (iyv);
+    EOS_FREE (ixv);
+    EOS_FREE (xyBounds2)
+#ifdef DO_OFFLOAD
+  } else {
+    omp_target_free(ixv, t);
+    omp_target_free(iyv, t);
+  }
+#endif
     
-    eos_bilinearInterpolate(x1, x2, y1, y2, ftg11, ftg21, ftg12, ftg22, searchXVals[j], searchYVals[j], &searchFVals[j]);
-    eos_BilinearDerivatives(XValues, YValues, FValues, numXVals, numYVals, ixv[j], iyv[j], searchXVals[j], searchYVals[j],derivs);
-    searchDFx[j] = derivs[0];
-    searchDFy[j] = derivs[1];
-}
-
-  EOS_FREE (iyv);
-  EOS_FREE (ixv);
-  EOS_FREE (xyBounds2);
 }
 
 /*********************************************************************************************
@@ -1977,30 +2325,46 @@ void _eos_BiLineInterpolateWithContinuousDerivatives (EOS_INTEGER numZones, EOS_
        numXVals    = input  integer number of data table x values.
        numYVals    = input  integer number of data table y values.
        XValues    = input  real(r8kind) array containing data table x values.
+       XValues_ht = input  hashtable for XValues array
        YValues    = input  real(r8kind) array containing data table y values.
+       YValues_ht = input  hashtable for YValues array
        FValues    = input  real(r8kind) array containing data table f values.
        searchXVals    = input  real(r8kind) search vector containing x values.
        searchYVals    = input  real(r8kind) search vector containing y values.
        searchFVals    = output real(r8kind) array containing interpolated values of eos function f(x,y) 
        searchDFx[numZones]           derivative wrt x
        searchDFy[numZones]           derivative wrt y
+       XValues_ht    = input  hashtable for XValues (can be NULL)
+       YValues_ht    = input  hashtable for YValues (can be NULL)
 	   EOS_INTEGER *xyBounds     output - interpolation errors per xy-pair
 ************************************************************************************************/
 void _eos_BiLineInterpolateWithOriginalDerivatives (EOS_INTEGER numZones, EOS_INTEGER numXVals,
-						    EOS_INTEGER numYVals, EOS_REAL *XValues,
-						    EOS_REAL *YValues, EOS_REAL **FValues,
-						    EOS_REAL *searchXVals, EOS_REAL *searchYVals,
-						    EOS_REAL *searchFVals, EOS_REAL *searchDFx,
-						    EOS_REAL *searchDFy, EOS_INTEGER *xyBounds,
-						    EOS_INTEGER *err)
+                                                    EOS_INTEGER numYVals, EOS_REAL *XValues,
+                                                    EOS_REAL *YValues, EOS_REAL **FValues, EOS_INTEGER nGhostData,
+                                                    EOS_REAL *searchXVals, EOS_REAL *searchYVals,
+                                                    EOS_REAL *searchFVals, EOS_REAL *searchDFx,
+                                                    EOS_REAL *searchDFy, eos_HashTable1D* XValues_ht, eos_HashTable1D* YValues_ht, EOS_INTEGER *xyBounds,
+                                                    EOS_INTEGER *err)
 {
   EOS_INTEGER err1, j, *iyv, *ixv, *xyBounds2;
-  EOS_REAL dxg, dyg, ryv, rxv, ftg11, ftg12, ftg21, ftg22, fx1, fy1, fxy1;
   *err = EOS_OK;
 
-  iyv = (EOS_INTEGER *) malloc (numZones * sizeof (EOS_INTEGER));       /* indexes of Y near which Y points are */
-  ixv = (EOS_INTEGER *) malloc (numZones * sizeof (EOS_INTEGER));       /* indexes of X near which X points are */
-  xyBounds2 = (EOS_INTEGER *) malloc (numZones * sizeof (EOS_INTEGER));
+  EOS_BOOLEAN useGpuData = EOS_FALSE;
+  if (!useGpuData) xyBounds2 = (EOS_INTEGER *) malloc (numZones * sizeof (EOS_INTEGER));
+#ifdef DO_OFFLOAD
+  EOS_INTEGER t;
+  useGpuData = _EOS_GET_USEGPUDATA_EOSDATAMAP;
+  t = omp_get_default_device();
+  if (!useGpuData) {
+#endif
+    iyv = (EOS_INTEGER *) malloc (numZones * sizeof (EOS_INTEGER));       /* indexes of Y near which Y points are */
+    ixv = (EOS_INTEGER *) malloc (numZones * sizeof (EOS_INTEGER));       /* indexes of X near which X points are */
+#ifdef DO_OFFLOAD
+  } else {
+    iyv = omp_target_alloc(numZones*sizeof(EOS_INTEGER),t);
+    ixv = omp_target_alloc(numZones*sizeof(EOS_INTEGER),t);
+  }
+#endif
 
   /* if (2-point) search-interpolation is impossible, return. */
   if (numYVals <= 1)
@@ -2009,38 +2373,59 @@ void _eos_BiLineInterpolateWithOriginalDerivatives (EOS_INTEGER numZones, EOS_IN
   /* .... perform vector table searches to load search vectors containing
      .... indices and spacings of nearest data table x,y values to x,searchYVals. */
 
-  _eos_srchdf (numZones, searchXVals, 1, numXVals - 1, XValues, 1, ixv,
-               xyBounds, &err1);
+  _eos_srchdf (numZones, searchXVals, 1, numXVals, XValues, 1, ixv, XValues_ht, xyBounds, &err1);
   /* ignore error, it might be for one point only */
   if (err1 != EOS_OK)
     *err = err1;
 
-  _eos_srchdf (numZones, searchYVals, 1, numYVals - 1, YValues, 1, iyv,
-               xyBounds2, &err1);
+  _eos_srchdf (numZones, searchYVals, 1, numYVals, YValues, 1, iyv, YValues_ht, useGpuData?xyBounds:xyBounds2, &err1);
   /* ignore error, it might be for one point only */
   if (err1 != EOS_OK)
     *err = err1;
+
+  /* ensure proper initial placement of bilinear stencil at table edges while ignoring ghost data */
+  /* for (j = 0; j < numZones; j++) { */
+  /*   ixv[j] = MAX(MIN(ixv[j], numXVals-2-nGhostData), nGhostData+1); */
+  /*   iyv[j] = MAX(MIN(iyv[j], numYVals-2-nGhostData), nGhostData+1); */
+  /* } */
 
   /* .... interpolate values of eos function f(x,y) and derivatives. */
-  for (j = 0; j < numZones; j++) {
 
-    xyBounds[j] = _eos_CombineExtrapErrors (xyBounds[j], xyBounds2[j]);
-    if (xyBounds[j] == EOS_UNDEFINED) {
+#ifdef DO_OFFLOAD
+#pragma omp target if(useGpuData) is_device_ptr(FValues, YValues, XValues, searchFVals, searchXVals, searchYVals)
+  {
+    #pragma omp teams distribute parallel for                                                       
+#endif /* DO_OFFLOAD */
+#ifndef DISABLE_OMP_SIMD_PRAGMA
+#pragma omp simd
+#endif
+
+  for (j = 0; j < numZones; j++) {
+    EOS_REAL *FValues_flat = !useGpuData?&FValues[0][0]:&FValues[0];
+
+    /*
+      xyBounds[j] = _eos_CombineExtrapErrors (xyBounds[j], xyBounds2[j]);
+      if (xyBounds[j] == EOS_UNDEFINED) {
       searchFVals[j] = 0.0;
       continue;
-    }
-
+      }
+    */
+    EOS_REAL dxg, dyg, ryv, rxv, ftg11, ftg12, ftg21, ftg22, fx1, fy1, fxy1;
+    EOS_INTEGER ix = ixv[j];
+    EOS_INTEGER iy = iyv[j];
     /* compute fractionals and differentials */
-    dxg = XValues[ixv[j] + 1] - XValues[ixv[j]];
-    rxv = (searchXVals[j] - XValues[ixv[j]]) / dxg;
-    dyg = YValues[iyv[j] + 1] - YValues[iyv[j]];
-    ryv = (searchYVals[j] - YValues[iyv[j]]) / dyg;
+    dxg = XValues[ix + 1] - XValues[ix];
+    rxv = (searchXVals[j] - XValues[ix]) / dxg;
+    dyg = YValues[iy + 1] - YValues[iy];
+    ryv = (searchYVals[j] - YValues[iy]) / dyg;
 
     /* gather nearest eos data table f values. */
-    ftg11 = FValues[iyv[j]][ixv[j]];
-    ftg21 = FValues[iyv[j]][ixv[j] + 1];
-    ftg12 = FValues[iyv[j] + 1][ixv[j]];
-    ftg22 = FValues[iyv[j] + 1][ixv[j] + 1];
+    EOS_INTEGER i0 = iy * numXVals;
+    EOS_INTEGER i1 = i0 + numXVals;
+    ftg11 = FValues_flat[i0 + ix];
+    ftg21 = FValues_flat[i0 + ix + 1];
+    ftg12 = FValues_flat[i1 + ix];
+    ftg22 = FValues_flat[i1 + ix + 1];
 
     /* interpolate value of function only. */
     fx1 = ftg21 - ftg11;
@@ -2052,10 +2437,22 @@ void _eos_BiLineInterpolateWithOriginalDerivatives (EOS_INTEGER numZones, EOS_IN
     searchDFy[j] = (fy1 + rxv * fxy1) / dyg;    /* dF/dY */
     searchDFx[j] = (fx1 + ryv * fxy1) / dxg;    /* dF/dX */
   }
+#ifdef DO_OFFLOAD
+  }
+#endif
 
-  EOS_FREE (iyv);
-  EOS_FREE (ixv);
-  EOS_FREE (xyBounds2);
+#ifdef DO_OFFLOAD
+  if (!useGpuData) {
+#endif /* DO_OFFLOAD */
+    EOS_FREE (ixv);
+    EOS_FREE (iyv);
+    EOS_FREE (xyBounds2);
+#ifdef DO_OFFLOAD
+  } else {
+    omp_target_free(ixv, t);
+    omp_target_free(iyv, t);
+  }
+#endif /* DO_OFFLOAD */
 }
 
 /*********************************************************************************************
@@ -2064,27 +2461,60 @@ void _eos_BiLineInterpolateWithOriginalDerivatives (EOS_INTEGER numZones, EOS_IN
                   search-interpolation on eos function f(x,y).
                   uses linear extrapolation.
      arguments --
-        y1    y2
-     x1 ftg11 ftg12
-     x2 ftg21 ftg22     
-
-     x1, x2 -- x values as labeled in diagram
-     y1, y2 -- y values as labeled in diagram
-     ftg11, ftg12, ftg21, ftg22 -- function values as labeled in diagram
 
      searchFVals    = output real(r8kind) array containing interpolated value of eos function f(x,y) 
      
 ************************************************************************************************/
+void eos_bilinearInterpolate(EOS_REAL* XValues, EOS_INTEGER numXVals, EOS_REAL* YValues, 
+			     EOS_INTEGER numYVals, EOS_REAL** FValues, EOS_INTEGER* ixv, 
+			     EOS_INTEGER* iyv, EOS_INTEGER numZones,EOS_REAL* searchXVals, 
+			     EOS_REAL* searchYVals, EOS_REAL* searchFVals)
+{
 
-void eos_bilinearInterpolate(EOS_REAL x1, EOS_REAL x2, EOS_REAL y1, EOS_REAL y2, EOS_REAL ftg11,
-			     EOS_REAL ftg21, EOS_REAL ftg12, EOS_REAL ftg22, EOS_REAL searchX,
-			     EOS_REAL searchY, EOS_REAL *searchF) {
+  EOS_INTEGER j;
+  EOS_BOOLEAN useGpuData = EOS_FALSE;
 
-  EOS_REAL X, Y;
-  X = (searchX-x1)/(x2-x1);
-  Y = (searchY-y1)/(y2-y1);
-  *searchF = (1 - Y)*(1 - X)*ftg11 + (1 - Y)*X*ftg21 + Y*(1 - X)*ftg12 + Y*X*ftg22;
+
+#ifdef DO_OFFLOAD
+  useGpuData=_EOS_GET_USEGPUDATA_EOSDATAMAP;
+#pragma omp target if(useGpuData) is_device_ptr(FValues, ixv, iyv, XValues, YValues, searchXVals,searchYVals,searchFVals)
+  {
+#pragma omp teams distribute parallel for
+#endif /* DO_OFFLOAD */
+#ifndef DISABLE_OMP_SIMD_PRAGMA
+#pragma omp simd
+#endif
+  for(j=0; j<numZones; j++) {
+ 
+  EOS_REAL *FValues_flat = !useGpuData?&FValues[0][0]:&FValues[0];
   
+    /*
+      xyBounds[j] = _eos_CombineExtrapErrors (xyBounds[j], xyBounds2[j]);
+      if (xyBounds[j] == EOS_UNDEFINED) {
+      searchFVals[j] = 0.0;
+      continue;
+      }
+    */
+  
+    /* gather nearest eos data table f values. */
+  
+    EOS_INTEGER ix = ixv[j];
+    EOS_INTEGER iy = iyv[j];
+    EOS_INTEGER i0 = iy * numXVals;
+    EOS_INTEGER i1 = i0 + numXVals;
+    EOS_REAL ftg11 = FValues_flat[i0 + ix];
+    EOS_REAL ftg21 = FValues_flat[i0 + ix + 1];
+    EOS_REAL ftg12 = FValues_flat[i1 + ix];
+    EOS_REAL ftg22 = FValues_flat[i1 + ix + 1];
+
+    EOS_REAL x1 = XValues[ix];
+    EOS_REAL x2 = XValues[ix + 1];
+    EOS_REAL y1 = YValues[iy];
+    EOS_REAL y2 = YValues[iy + 1];
+    
+    EOS_REAL X = (searchXVals[j]-x1)/(x2-x1);
+    EOS_REAL Y = (searchYVals[j]-y1)/(y2-y1);
+    searchFVals[j] = (1 - Y)*(1 - X)*ftg11 + (1 - Y)*X*ftg21 + Y*(1 - X)*ftg12 + Y*X*ftg22;
   // deprecated
   /*   EOS_REAL fx1; */
   /*   fx1 = ftg21 - ftg11; */
@@ -2094,8 +2524,12 @@ void eos_bilinearInterpolate(EOS_REAL x1, EOS_REAL x2, EOS_REAL y1, EOS_REAL y2,
   /*   searchDFx[j] = (fx1 + ryv * fxy1) / dxg;    /\* dF/dX *\/ */
   /*   printf("case %i: old answer <%g,%g>\n(", j, searchDFx[j], searchDFy[j]); */
 
-}
+  }
+#ifdef DO_OFFLOAD
+  }
+#endif
 
+}
 
 /*************************************************************************************
       eos_BilinearDerivatives()
@@ -2108,113 +2542,135 @@ void eos_bilinearInterpolate(EOS_REAL x1, EOS_REAL x2, EOS_REAL y1, EOS_REAL y2,
        FValues    = input  real(r8kind) array containing data table f values.
        numXVals    = input  integer number of data table x values.
        numYVals    = input  integer number of data table y values.
-       ixv    = input  index of lowest x value of cell in which the search point lies
-       iyv    = input index of lowest y value of cell in which the search point lies
+       ixv    = input  array of lowest x value of cell in which the search point lies
+       iyv    = input array of lowest y value of cell in which the search point lies
+       numZones    = input number of points in searchXVal/searchYVal and output
        searchXVal    = input  real number, x value.
        searchYVal    = input  real number, y value.
-       derivs    = output  array of size 2 and values dF/dx, dF/dy
+       searchDFx, searchDFy  = output  arrays dF/dx, dF/dy
 
 **************************************************************************************/
-
-void eos_BilinearDerivatives(EOS_REAL *XValues, EOS_REAL *YValues, EOS_REAL **FValues, EOS_INTEGER numXVals, EOS_INTEGER numYVals, EOS_INTEGER ixv, 
-			     EOS_INTEGER iyv, EOS_REAL searchXVal, EOS_REAL searchYVal, EOS_REAL *derivs)
+void eos_BilinearDerivatives(EOS_REAL *XValues, EOS_REAL *YValues, EOS_REAL **FValues, 
+			     EOS_INTEGER numXVals, EOS_INTEGER numYVals,
+                             EOS_INTEGER* ixv, EOS_INTEGER min_ixv, EOS_INTEGER* iyv, 
+			     EOS_INTEGER min_iyv, EOS_INTEGER numZones, EOS_REAL* searchXVal, 
+			     EOS_REAL* searchYVal, EOS_REAL *searchDFx, EOS_REAL *searchDFy)
 {
-  EOS_REAL x0, x1, x2, x3, y0, y1, y2, y3, X, Y, ftg11, ftg21, ftg12, ftg22, ftg01, ftg02, ftg31, ftg32, ftg13, ftg23, dfx12, ftg10, ftg20, dfx11, dfx21, dfx22, 
-    dfy21, dfy11, dfy12, dfy22, dfxX, dfxY, dfyX, dfyY;
-  EOS_BOOLEAN go_right, go_up;
 
-  x1 = XValues[ixv];
-  x2 = XValues[ixv + 1];
-  y1 = YValues[iyv];
-  y2 = YValues[iyv + 1];
-  
-  X = (searchXVal-x1)/(x2-x1);
-  Y = (searchYVal-y1)/(y2-y1);
+  EOS_INTEGER j;
 
-  /* gather nearest eos data table f values. */
-  ftg11 = FValues[iyv][ixv];
-  ftg21 = FValues[iyv][ixv + 1];
-  ftg12 = FValues[iyv + 1][ixv];
-  ftg22 = FValues[iyv + 1][ixv + 1];
+  EOS_BOOLEAN useGpuData = EOS_FALSE;
 
-  /* Pick left or right direction based on position of search point,
-     but don't leave the grid!  This assumes that the grid is at
-     least 2 x 2. */
+#ifdef DO_OFFLOAD
+  useGpuData=_EOS_GET_USEGPUDATA_EOSDATAMAP;
+#pragma omp target if(useGpuData) is_device_ptr(FValues, ixv, iyv, XValues, YValues, searchXVal,searchYVal, searchDFx, searchDFy)
+  {
+#pragma omp teams distribute parallel for
+#endif /* DO_OFFLOAD */
+#ifndef DISABLE_OMP_SIMD_PRAGMA
+#pragma omp simd
+#endif
 
-  /* Note: we may need to set an extrapolation flag here. */
-  go_right = (searchXVal >= (x1+x2)/2)?EOS_TRUE:EOS_FALSE;
-  if((go_right && ixv<numXVals-2) || ixv==0){
-    //if(!go_right) warn(extrapolate);
-    /*use cell to right*/
-    /*First calculate the derivatives in the x direction along the top and bottom edges of the cell*/
-    //    printf("right");
-    x3 = XValues[ixv+2];
-    ftg31 = FValues[iyv][ixv+2];
-    ftg32 = FValues[iyv+1][ixv+2];
-    dfx12 = (ftg22 - ftg12)/(x2 - x1);
-    dfx11 = (ftg21 - ftg11)/(x2 - x1);
-    /*Now calculate the derivative along the edges of the cell to the right of the current cell. */
-    dfx21 = (ftg31-ftg21)/(x3-x2);
-    dfx22 = (ftg32-ftg22)/(x3-x2);
-    dfxX = (searchXVal - (x1+x2)/2)/((x2+x3)/2 - (x1+x2)/2);
+    for (j=0; j<numZones; j++){
+      EOS_REAL x0, x1, x2, x3, y0, y1, y2, y3, X, Y, ftg11, ftg21, 
+	ftg12, ftg22, ftg01, ftg02, ftg31, ftg32, ftg13, ftg23, dfx12, 
+	ftg10, ftg20, dfx11, dfx21, dfx22, 
+	dfy21, dfy11, dfy12, dfy22, dfxX, dfxY, dfyX, dfyY;
+      EOS_BOOLEAN go_right, go_up;
+      EOS_REAL *FValues_flat = !useGpuData?&FValues[0][0]:&FValues[0];
+
+      x1 = XValues[ixv[j]];
+      x2 = XValues[ixv[j] + 1];
+      y1 = YValues[iyv[j]];
+      y2 = YValues[iyv[j] + 1];
+      
+      X = (searchXVal[j]-x1)/(x2-x1);
+      Y = (searchYVal[j]-y1)/(y2-y1);
+      
+      /* gather nearest eos data table f values. */
+      ftg11 = FValues_flat[iyv[j] * numXVals + ixv[j]];
+      ftg21 = FValues_flat[iyv[j] * numXVals + ixv[j] + 1];
+      ftg12 = FValues_flat[(iyv[j] + 1) * numXVals + ixv[j]];
+      ftg22 = FValues_flat[(iyv[j] + 1) * numXVals + ixv[j] + 1];
+      
+      /* Pick left or right direction based on position of search point,
+	 but don't leave the grid!  This assumes that the grid is at
+	 least 2 x 2. */
+      
+      /* Note: we may need to set an extrapolation flag here. */
+      go_right = (searchXVal[j] >= (x1+x2)/2)?EOS_TRUE:EOS_FALSE;
+      if((go_right && ixv[j]<numXVals-2-min_ixv) || ixv[j]==min_ixv) {
+	/* use cell to right */
+	/* The (ixv<numXVals-2-min_ixv) criteria assumes that there are min_ixv points to ignore (i.e., nGhostData) */
+	/* First calculate the derivatives in the x direction along the top and bottom edges of the cell */
+	x3 = XValues[ixv[j]+2];
+	ftg31 = FValues_flat[iyv[j] * numXVals + ixv[j]+2];
+	ftg32 = FValues_flat[(iyv[j]+1) * numXVals + ixv[j]+2];
+	dfx12 = (ftg22 - ftg12)/FLOOR(x2 - x1);
+	dfx11 = (ftg21 - ftg11)/FLOOR(x2 - x1);
+	/*Now calculate the derivative along the edges of the cell to the right of the current cell. */
+	dfx21 = (ftg31-ftg21)/FLOOR(x3-x2);
+	dfx22 = (ftg32-ftg22)/FLOOR(x3-x2);
+	dfxX = (searchXVal[j] - (x1+x2)/2)/FLOOR((x2+x3)/2 - (x1+x2)/2);
+      }
+      else {
+	/* use cell to left */
+	x0 = XValues[ixv[j]-1];
+	ftg01 = FValues_flat[iyv[j] * numXVals + ixv[j]-1];
+	ftg02 = FValues_flat[(iyv[j]+1) * numXVals + ixv[j]-1];
+	/*Calculate the derivatives in the x direction along the top and bottom edges of the cell*/
+	dfx22 = (ftg22 - ftg12)/FLOOR(x2 - x1);
+	dfx21 = (ftg21 - ftg11)/FLOOR(x2 - x1);
+	/*Now calculate the derivative along the edges of the cell to the left of the current cell. */
+	dfx12 = (ftg12-ftg02)/FLOOR(x1-x0);
+	dfx11 = (ftg11-ftg01)/FLOOR(x1-x0);
+	dfxX = (searchXVal[j] - (x0+x1)/2)/FLOOR((x1+x2)/2 - (x0+x1)/2);
+      }
+      dfxY = Y;
+      
+      /* Note: we may need to set an extrapolation flag here. */
+      go_up=(searchYVal[j] >= (y1+y2)/2)?EOS_TRUE:EOS_FALSE;
+      if((go_up && iyv[j]<numYVals-2-min_iyv) || iyv[j]==min_iyv) {
+	/* use cell above */
+	/* The (iyv<numYVals-2-min_iyv) criteria assumes that there are min_iyv points to ignore (i.e., nGhostData) */
+	/* First calculate the derivatives in the y direction along the left and right edges of the cell */
+	//    printf("up");
+	y3 = YValues[iyv[j]+2];
+	ftg13 = FValues_flat[(iyv[j]+2) * numXVals + ixv[j]];
+	ftg23 = FValues_flat[(iyv[j]+2) * numXVals + ixv[j]+1];
+	dfy21 = (ftg22 - ftg21)/FLOOR(y2 - y1);
+	dfy11 = (ftg12 - ftg11)/FLOOR(y2 - y1);
+	/*Now calculate the derivative along the edges of the cell above the current cell. */
+	dfy12 = (ftg13-ftg12)/FLOOR(y3-y2);
+	dfy22 = (ftg23-ftg22)/FLOOR(y3-y2);
+	dfyY = (searchYVal[j] - (y1+y2)/2)/FLOOR((y2+y3)/2 - (y1+y2)/2);
+      }
+      else {
+	/* use cell below */
+	y0 = YValues[iyv[j]-1];
+	ftg10 = FValues_flat[(iyv[j]-1) * numXVals + ixv[j]];
+	ftg20 = FValues_flat[(iyv[j]-1) * numXVals + ixv[j]+1];
+	/*Calculate the derivatives in the y direction along the left and right edges of the cell*/
+	dfy22 = (ftg22 - ftg21)/FLOOR(y2 - y1);
+	dfy12 = (ftg12 - ftg11)/FLOOR(y2 - y1);
+	/*Now calculate the derivative along the edges of the cell below the current cell. */
+	dfy21 = (ftg21-ftg20)/FLOOR(y1-y0);
+	dfy11 = (ftg11-ftg10)/FLOOR(y1-y0);
+	dfyY = (searchYVal[j] - (y0+y1)/2)/FLOOR((y1+y2)/2 - (y0+y1)/2);
+      }
+      dfyX = X;
+      
+      /*Now do a bilinear interpolation over the new cell.*/
+      /*derivative of F wrt x*/
+      searchDFx[j]= (1 - dfxY)*(1 - dfxX)*dfx11 + (1 - dfxY)*dfxX*dfx21 + dfxY*(1 - dfxX)*dfx12 + dfxY*dfxX*dfx22;
+      /*derivative of F wrt y*/
+      searchDFy[j] = (1 - dfyY)*(1 - dfyX)*dfy11 + (1 - dfyY)*dfyX*dfy21 + dfyY*(1 - dfyX)*dfy12 + dfyY*dfyX*dfy22; 
+    }
+#ifdef DO_OFFLOAD
   }
-  else{ 
-    //if(go_right) warn(extrapolate);
-    /*use cell to left*/
-    //    printf("left");
-    x0 = XValues[ixv-1];
-    ftg01 = FValues[iyv][ixv-1];
-    ftg02 = FValues[iyv+1][ixv-1];
-    /*Calculate the derivatives in the x direction along the top and bottom edges of the cell*/
-    dfx22 = (ftg22 - ftg12)/(x2 - x1);
-    dfx21 = (ftg21 - ftg11)/(x2 - x1);
-    /*Now calculate the derivative along the edges of the cell to the left of the current cell. */
-    dfx12 = (ftg12-ftg02)/(x1-x0);
-    dfx11 = (ftg11-ftg01)/(x1-x0);
-    dfxX = (searchXVal - (x0+x1)/2)/((x1+x2)/2 - (x0+x1)/2);
-  }
-  dfxY = Y;
+#endif
 
-  /* Note: we may need to set an extrapolation flag here. */
-  go_up=(searchYVal >= (y1+y2)/2)?EOS_TRUE:EOS_FALSE;
-  if((go_up && iyv<numYVals-2) || iyv==0){
-    //if(!go_up) warn(extrapolate);
-    /*use cell above*/
-    /*First calculate the derivatives in the y direction along the left and right edges of the cell*/
-    //    printf("up");
-    y3 = YValues[iyv+2];
-    ftg13 = FValues[iyv+2][ixv];
-    ftg23 = FValues[iyv+2][ixv+1];
-    dfy21 = (ftg22 - ftg21)/(y2 - y1);
-    dfy11 = (ftg12 - ftg11)/(y2 - y1);
-    /*Now calculate the derivative along the edges of the cell above the current cell. */
-    dfy12 = (ftg13-ftg12)/(y3-y2);
-    dfy22 = (ftg23-ftg22)/(y3-y2);
-    dfyY = (searchYVal - (y1+y2)/2)/((y2+y3)/2 - (y1+y2)/2);
-  }
-  else{ 
-    //if(go_up) warn(extrapolate);
-    /*use cell below*/
-    y0 = YValues[iyv-1];
-    ftg10 = FValues[iyv-1][ixv];
-    ftg20 = FValues[iyv-1][ixv+1];
-    /*Calculate the derivatives in the y direction along the left and right edges of the cell*/
-    dfy22 = (ftg22 - ftg21)/(y2 - y1);
-    dfy12 = (ftg12 - ftg11)/(y2 - y1);
-    /*Now calculate the derivative along the edges of the cell below the current cell. */
-    dfy21 = (ftg21-ftg20)/(y1-y0);
-    dfy11 = (ftg11-ftg10)/(y1-y0);
-    dfyY = (searchYVal - (y0+y1)/2)/((y1+y2)/2 - (y0+y1)/2);
-  }
-  dfyX = X;
-  
-  /*Now do a bilinear interpolation over the new cell.*/
-  /*derivative of F wrt x*/
-  derivs[0] = (1 - dfxY)*(1 - dfxX)*dfx11 + (1 - dfxY)*dfxX*dfx21 + dfxY*(1 - dfxX)*dfx12 + dfxY*dfxX*dfx22;
-  /*derivative of F wrt y*/
-  derivs[1] = (1 - dfyY)*(1 - dfyX)*dfy11 + (1 - dfyY)*dfyX*dfy21 + dfyY*(1 - dfyX)*dfy12 + dfyY*dfyX*dfy22; 
 }
-
 
 /*************************************************************************************
  *     eos_InverseBilinearInterpolateFY()
@@ -2233,9 +2689,13 @@ void eos_BilinearDerivatives(EOS_REAL *XValues, EOS_REAL *YValues, EOS_REAL **FV
  *       X        = in/out real array containing data table x values.
  *       Y        = in/out real array containing data table y values.
  *       F        = in/out real 2d array containing data table f values.
+ *  EOS_INTEGER nGhostData  number of "ghost" data points added at each isotherm/isochore extremum
+ *                          (which are used to smooth interpolation at table boundaries)
  *       EOS_INTEGER *xyBounds     interpolation errors per xy-pair
  *       err      = output error code
  *       coldCurve = optional rational input cold curve that was subtracted from F
+ *       Y_ht     = hashtable for searchY
+ *       F_ht     = hashtable for searchF
  **************************************************************************************/
 void eos_InverseBilinearInterpolateFY (EOS_INTEGER numZones,
                                        EOS_REAL *searchY, EOS_REAL *searchF,
@@ -2243,17 +2703,19 @@ void eos_InverseBilinearInterpolateFY (EOS_INTEGER numZones,
                                        EOS_REAL *searchDFy, EOS_REAL *resultX,
                                        EOS_INTEGER numXVals,
                                        EOS_INTEGER numYVals, EOS_REAL *X,
-                                       EOS_REAL *Y, EOS_REAL **F,
-                                       EOS_REAL *coldCurve,
+                                       EOS_REAL *Y, EOS_REAL **F, EOS_REAL *coldCurve, 
+                                       eos_HashTable1D *Y_ht, eos_HashTable2D *F_ht,
+                                       EOS_INTEGER nGhostData,
                                        EOS_INTEGER *xyBounds,
                                        EOS_INTEGER *err)
 {
   /* macros to enable debugging output in this function */
 //#define _EOS_DUMP_INDEX_DATA_INVERSEBILINEARINTERPOLATEFY
 
-  EOS_INTEGER i, *iy_low, *iy_high, *ix_low, *ix_high, haveCC, nGhostData=0, xErr, yErr;
-  EOS_REAL F11, F22, F12, F21, X1, X2, Y1, Y2, u, v, fX1, fX2, fu, fv;
+  EOS_INTEGER i, *iy_low, *iy_high, *ix_low, *ix_high, haveCC;
+  EOS_REAL F11, F22, F12, F21, X1, X2, Y1, Y2;
   EOS_REAL derivs[2];
+  EOS_REAL *F_flat = &F[0][0];
 #ifdef _EOS_DUMP_INDEX_DATA_INVERSEBILINEARINTERPOLATEFY
   char *fn = "eos_InverseBilinearInterpolateFY.indices";
   char *appendMode = "a";
@@ -2271,183 +2733,58 @@ void eos_InverseBilinearInterpolateFY (EOS_INTEGER numZones,
 
   eos_SearchIndices_YF (searchY, searchF, numZones, X, Y, F, numXVals,
                         numYVals, nGhostData, iy_low, ix_low, iy_high, ix_high, coldCurve,
-                        haveCC, xyBounds, err);
+                        Y_ht, F_ht, haveCC, xyBounds, err);
   if (eos_GetStandardErrorCodeFromCustomErrorCode(*err) == EOS_UNDEFINED)
     return;
 
 #ifdef _EOS_DUMP_INDEX_DATA_INVERSEBILINEARINTERPOLATEFY
-  _eos_DumpIndicesToFile (fn, mode, numZones, X, Y, F,
-			  ix_low, iy_low, NULL, NULL);
+  _eos_DumpIndicesToFile (fn, mode, numZones, X, Y, F, ix_low, iy_low, NULL, NULL);
+  mode = appendMode; /* reset mode for indices output file */
 #endif
 
  
-/* #ifndef DISABLE_OMP_SIMD_PRAGMA */
-/* #pragma omp simd */
-/* #endif */
- for (i = 0; i < numZones; i++) {
+#ifndef DISABLE_OMP_SIMD_PRAGMA 
+#pragma omp simd 
+#endif 
+  for (i = 0; i < numZones; i++) {
 
     F11 =
-      (haveCC) ? F[iy_low[i]][ix_low[i]] +
-      coldCurve[ix_low[i]] : F[iy_low[i]][ix_low[i]];
+      (haveCC) ? F_flat[iy_low[i] * numXVals + ix_low[i]] +
+      coldCurve[ix_low[i]] : F_flat[iy_low[i] * numXVals + ix_low[i]];
     F22 =
-      (haveCC) ? F[iy_low[i]+1][ix_low[i]+1] +
-      coldCurve[ix_low[i]+1] : F[iy_low[i]+1][ix_low[i]+1];
+      (haveCC) ? F_flat[(iy_low[i]+1) * numXVals + ix_low[i]+1] +
+      coldCurve[ix_low[i]+1] : F_flat[(iy_low[i]+1)  * numXVals + ix_low[i]+1];
     F21 =
-      (haveCC) ? F[iy_low[i]][ix_low[i]+1] +
-      coldCurve[ix_low[i]+1] : F[iy_low[i]][ix_low[i]+1];
+      (haveCC) ? F_flat[iy_low[i] * numXVals + ix_low[i]+1] +
+      coldCurve[ix_low[i]+1] : F_flat[iy_low[i] * numXVals + ix_low[i]+1];
     F12 =
-      (haveCC) ? F[iy_low[i]+1][ix_low[i]] +
-      coldCurve[ix_low[i]] : F[iy_low[i]+1][ix_low[i]];
+      (haveCC) ? F_flat[(iy_low[i]+1) * numXVals + ix_low[i]] +
+      coldCurve[ix_low[i]] : F_flat[(iy_low[i]+1) * numXVals + ix_low[i]];
     X1 = X[ix_low[i]];
     X2 = X[ix_low[i]+1];
     Y1 = Y[iy_low[i]];
     Y2 = Y[iy_low[i]+1];
 
-    /*now use a bisection method test to determine if there is a zero in the chosen interval [u, v]=[X1, X2]*/
-    u = X1;
-    v = X2;
-    eos_bilinearInterpolate(X1, X2, Y1, Y2, F11, F21, F12, F22, u, searchY[i], &fX1);
-    eos_bilinearInterpolate(X1, X2, Y1, Y2, F11, F21, F12, F22, v, searchY[i], &fX2);
-    fu = fX1-searchF[i];
-    fv = fX2-searchF[i];
-
-    /*If search function gave bad cell then we look for a correct cell using a binary search.*/
-    if(fu*fv>0){
-
-      EOS_INTEGER lo = 0; /*index of lowest x isoline (to be changed as we search)*/
-      EOS_INTEGER hi = numXVals-1; /*index of highest x isoline (to be changed as we search)*/
-      EOS_REAL f_lo, f_hi;
-      EOS_BOOLEAN too_lo, too_hi; /*true if we are off the left (or right) edge of grid*/
-      F11 =
-	(haveCC) ? F[iy_low[i]][lo] +
-	coldCurve[lo] : F[iy_low[i]][lo];
-      F22 =
-	(haveCC) ? F[iy_low[i]+1][lo+1] +
-	coldCurve[lo+1] : F[iy_low[i]+1][lo+1];
-      F21 =
-	(haveCC) ? F[iy_low[i]][lo+1] +
-	coldCurve[lo+1] : F[iy_low[i]][lo+1];
-      F12 =
-	(haveCC) ? F[iy_low[i]+1][lo] +
-	coldCurve[lo] : F[iy_low[i]+1][lo];
-
-      X1 = X[lo];
-      X2 = X[lo + 1];
-      Y1 = Y[iy_low[i]];
-      Y2 = Y[iy_low[i]+1];
-
-      /*beginning value of isoline*/
-      eos_bilinearInterpolate(X1, X2, Y1, Y2, F11, F21, F12, F22, X1, searchY[i], &f_lo);
-
-
-      F11 =
-	(haveCC) ? F[iy_low[i]][hi-1] +
-	coldCurve[hi-1] : F[iy_low[i]][hi-1];
-      F22 =
-	(haveCC) ? F[iy_low[i]+1][hi] +
-	coldCurve[hi] : F[iy_low[i]+1][hi];
-      F21 =
-	(haveCC) ? F[iy_low[i]][hi] +
-	coldCurve[hi] : F[iy_low[i]][hi];
-      F12 =
-	(haveCC) ? F[iy_low[i]+1][hi-1] +
-	coldCurve[hi-1] : F[iy_low[i]+1][hi-1];
-
-      X1 = X[hi-1];
-      X2 = X[hi];
-      Y1 = Y[iy_low[i]];
-      Y2 = Y[iy_low[i]+1];
-
-      /*end value of isoline*/
-      eos_bilinearInterpolate(X1, X2, Y1, Y2, F11, F21, F12, F22, X2, searchY[i], &f_hi);
-
-
-      /*Report extrapolation (or not) here*/
-      too_lo = (searchF[i]<f_lo)?EOS_TRUE:EOS_FALSE;
-      too_hi = (searchF[i]>f_hi)?EOS_TRUE:EOS_FALSE;
-
-      if(too_lo)
-	xErr = EOS_xLo_yOk;
-      else if(too_hi)
-	xErr = EOS_xHi_yOk;
-      else
-	xErr = EOS_OK;
-      
-      if(searchY[i]<Y[0])
-        yErr = EOS_xOk_yLo;
-      else if(searchY[i]>Y[numYVals-1])
-	yErr = EOS_xOk_yHi;
-      else
-	yErr = EOS_OK;
-	      
-      xyBounds[i] = _eos_CombineExtrapErrors(xErr, yErr);
-      
-      /*start binary search; when hi-lo = 1 you have bracketed 1 cell*/
-      while(hi-lo>1){
-	EOS_INTEGER mid = (hi+lo)/2;
-	EOS_REAL f_mid; /*f value at midpoint of interval*/
-	F11 =
-	  (haveCC) ? F[iy_low[i]][mid] +
-	  coldCurve[mid] : F[iy_low[i]][mid];
-	F22 =
-	  (haveCC) ? F[iy_low[i]+1][mid+1] +
-	  coldCurve[mid+1] : F[iy_low[i]+1][mid+1];
-	F21 =
-	  (haveCC) ? F[iy_low[i]][mid+1] +
-	  coldCurve[mid+1] : F[iy_low[i]][mid+1];
-	F12 =
-	  (haveCC) ? F[iy_low[i]+1][mid] +
-	  coldCurve[mid] : F[iy_low[i]+1][mid];
-
-	X1 = X[mid];
-	X2 = X[mid + 1];
-	Y1 = Y[iy_low[i]];
-	Y2 = Y[iy_low[i]+1];
-
-	/*mid value of isoline*/
-	eos_bilinearInterpolate(X1, X2, Y1, Y2, F11, F21, F12, F22, X1, searchY[i], &f_mid);
-
-	/*pick which side the zero is on*/
-	if(searchF[i]<f_mid)
-	  hi = mid;
-	else 
-	  lo = mid;
-      }	
-
-      /*now that we have chosen the correct cell, calculate the values to be used in the interpolator*/
-      F11 =
-	(haveCC) ? F[iy_low[i]][lo] +
-	coldCurve[lo] : F[iy_low[i]][lo];
-      F22 =
-	(haveCC) ? F[iy_low[i]+1][lo+1] +
-	coldCurve[lo+1] : F[iy_low[i]+1][lo+1];
-      F21 =
-	(haveCC) ? F[iy_low[i]][lo+1] +
-	coldCurve[lo+1] : F[iy_low[i]][lo+1];
-      F12 =
-	(haveCC) ? F[iy_low[i]+1][lo] +
-	coldCurve[lo] : F[iy_low[i]+1][lo];
-
-      X1 = X[lo];
-      X2 = X[lo + 1];
-      Y1 = Y[iy_low[i]];
-      Y2 = Y[iy_low[i]+1];
-
-      ix_low[i] = lo; /* save 'lo' index */
-
+#ifdef _EOS_DUMP_INDEX_DATA_INVERSEBILINEARINTERPOLATEFY
+    {
+      FILE *fp;
+      fp = fopen (fn, mode);
+      fprintf(fp,"%-5d %3d %3d %23.15e %23.15e %23.15e F11=%23.15e F12=%23.15e F21=%23.15e F22=%23.15e X1=%23.15e X2=%23.15e Y1=%23.15e Y2=%23.15e\n",
+              i,ix_low[i],iy_low[i],X[ix_low[i]],Y[iy_low[i]],F[iy_low[i]][ix_low[i]],F11,F12,F21,F22,X1,X2,Y1,Y2);
+      if (fp) fclose(fp);
     }
+#endif
 
     /* exact inversion finite difference equation */
-    resultX[i] = ((X1 - X2)*(Y1 - Y2)*searchF[i] + F12*X2*(Y1 - searchY[i]) + F22*X1*(-Y1 + searchY[i]) - F21*X1*(-Y2 + searchY[i]) + F11*X2*(-Y2 + searchY[i]))/ (F12*(Y1 - searchY[i]) + F22*(-Y1 + searchY[i]) + F11*(-Y2 + searchY[i]) - F21*(-Y2 + searchY[i]));
-
+    resultX[i] =
+      ((X1 - X2)*(Y1 - Y2)*searchF[i] + F12*X2*(Y1 - searchY[i]) +
+       F22*X1*(-Y1 + searchY[i]) - F21*X1*(-Y2 + searchY[i]) + F11*X2*(-Y2 + searchY[i])) /
+      FLOOR(F12*(Y1 - searchY[i]) + F22*(-Y1 + searchY[i]) + F11*(-Y2 + searchY[i]) - F21*(-Y2 + searchY[i]));
+  }
     /* Now use resultY and searchX to determine dF/dx, dF/dy and then convert to dX/df
        and dX/dy later in  eos_RecordType1.c interpolate function under
        CATEGORY1(all partial derivatives) */
-    eos_BilinearDerivatives(X, Y, F,numXVals, numYVals, ix_low[i],
-			    iy_low[i], resultX[i], searchY[i], derivs);
-    searchDFx[i] = derivs[0];
-    searchDFy[i] = derivs[1];
-  }
+  eos_BilinearDerivatives(X, Y, F, numXVals, numYVals, ix_low, nGhostData, iy_low, nGhostData, numZones, resultX, searchY,searchDFx, searchDFy);
 
   EOS_FREE (ix_low);
   EOS_FREE (iy_low);
@@ -2476,6 +2813,10 @@ void eos_InverseBilinearInterpolateFY (EOS_INTEGER numZones,
  *       X        = in/out real array containing data table x values.
  *       Y        = in/out real array containing data table y values.
  *       F        = in/out 2d real array containing data table f values.
+ *       X_ht     = input hashtable for X array (can be NULL)
+ *       Y_ht     = input hashtable for Y array (can be NULL)
+ *  EOS_INTEGER nGhostData  number of "ghost" data points added at each isotherm/isochore extremum
+ *                          (which are used to smooth interpolation at table boundaries)
  *       NOTE: coldCurve is already subtracted from searchF values.
  *       EOS_INTEGER *xyBounds     interpolation errors per xy-pair
  *       err      = output error code
@@ -2486,23 +2827,24 @@ void eos_InverseBilinearInterpolateXF (EOS_INTEGER numZones,
                                        EOS_REAL *searchDFy, EOS_REAL *resultY,
                                        EOS_INTEGER numXVals,
                                        EOS_INTEGER numYVals, EOS_REAL *X,
-                                       EOS_REAL *Y, EOS_REAL **F,
+                                       EOS_REAL *Y, EOS_REAL **F, eos_HashTable1D* X_ht,
+                                       eos_HashTable2D* F_ht, EOS_INTEGER nGhostData,
                                        EOS_INTEGER *xyBounds,
                                        EOS_INTEGER *err)
 {
   /* macros to enable debugging output in this function */
 //#define _EOS_DUMP_INDEX_DATA_INVERSEBILINEARINTERPOLATEXF
 
-  EOS_INTEGER i, *iy_low, *iy_high, *ix_low, *ix_high, nGhostData=0, xErr, yErr;
-  EOS_REAL F11, F22, F12, F21, X1, X2, Y1,
-    Y2, u, v, fu, fv, fY1, fY2, derivs[2];
+  EOS_INTEGER i, *iy_low, *iy_high, *ix_low, *ix_high;
+  EOS_REAL F11, F22, F12, F21, X1, X2, Y1, Y2, derivs[2];
 #ifdef _EOS_DUMP_INDEX_DATA_INVERSEBILINEARINTERPOLATEXF
   char *fn = "eos_InverseBilinearInterpolateXF.indices";
   char *appendMode = "a";
   static char *mode = "w";
 #endif
-
+  EOS_REAL *F_flat = &F[0][0];
   *err = EOS_OK;
+
 
   iy_low = (EOS_INTEGER *) malloc (numZones * sizeof (EOS_INTEGER));    /* indexes of Y near which Y points are */
   iy_high = (EOS_INTEGER *) malloc (numZones * sizeof (EOS_INTEGER));   /* indexes of X near which X points are */
@@ -2510,137 +2852,51 @@ void eos_InverseBilinearInterpolateXF (EOS_INTEGER numZones,
   ix_high = (EOS_INTEGER *) malloc (numZones * sizeof (EOS_INTEGER));   /* indexes of X near which X points are */
 
   eos_SearchIndices_XF (searchX, searchF, numZones, X, Y, F, numXVals,
-                        numYVals, nGhostData, iy_low, ix_low, iy_high, ix_high, NULL, 0,
+                        numYVals, nGhostData, iy_low, ix_low, iy_high, ix_high, NULL, X_ht, F_ht, 0,
                         xyBounds, err);
   if (eos_GetStandardErrorCodeFromCustomErrorCode(*err) == EOS_UNDEFINED)
     return;
 
 #ifdef _EOS_DUMP_INDEX_DATA_INVERSEBILINEARINTERPOLATEXF
-  _eos_DumpIndicesToFile (fn, mode, numZones, X, Y, F,
-			  ix_low, iy_low, NULL, NULL);
+  _eos_DumpIndicesToFile (fn, mode, numZones, X, Y, F, ix_low, iy_low, NULL, NULL);
+  mode = appendMode; /* reset mode for indices output file */
 #endif
 
-/* #ifndef DISABLE_OMP_SIMD_PRAGMA */
-/* #pragma omp simd */
-/* #endif */
+#ifndef DISABLE_OMP_SIMD_PRAGMA 
+#pragma omp simd 
+#endif 
   for (i = 0; i < numZones; i++) {
-    F11 = F[iy_low[i]][ix_low[i]];
-    F22 = F[iy_low[i]+1][ix_low[i]+1];
-    F21 = F[iy_low[i]][ix_low[i]+1];
-    F12 = F[iy_low[i]+1][ix_low[i]];
+    F11 = F_flat[iy_low[i] * numXVals + ix_low[i]];
+    F22 = F_flat[(iy_low[i]+1) * numXVals + ix_low[i]+1];
+    F21 = F_flat[iy_low[i] * numXVals + ix_low[i]+1];
+    F12 = F_flat[(iy_low[i]+1) * numXVals + ix_low[i]];
     X1 = X[ix_low[i]];
     X2 = X[ix_low[i]+1];
     Y1 = Y[iy_low[i]];
     Y2 = Y[iy_low[i]+1];
 
-    /*now use a bisection method test to determine if there is a zero in the chosen interval [u, v]=[Y1, Y2]*/
-    u = Y1;
-    v = Y2;
-    eos_bilinearInterpolate(X1, X2, Y1, Y2, F11, F21, F12, F22, searchX[i], u, &fY1);
-    eos_bilinearInterpolate(X1, X2, Y1, Y2, F11, F21, F12, F22, searchX[i], v, &fY2);
-    fu = fY1-searchF[i];
-    fv = fY2-searchF[i];
-  
-    if(fu*fv>0) {
-      EOS_INTEGER lo = 0; /*index of lowest y isoline (to be changed as we search)*/
-      EOS_INTEGER hi = numYVals-1; /*index of highest y isoline (to be changed as we search)*/
-      EOS_REAL f_lo, f_hi;
-      EOS_BOOLEAN too_lo, too_hi; /*true if we are off the bottom (or top) edge of grid*/
-
-      /*values to calculate beginning value of isoline*/
-      F11 = F[lo][ix_low[i]];
-      F22 = F[lo+1][ix_low[i]+1];
-      F21 = F[lo][ix_low[i]+1];
-      F12 = F[lo+1][ix_low[i]];
-      X1 = X[ix_low[i]];
-      X2 = X[ix_low[i]+1];
-      Y1 = Y[lo];
-      Y2 = Y[lo+1];
-
-      /*beginning value of isoline*/
-      eos_bilinearInterpolate(X1, X2, Y1, Y2, F11, F21, F12, F22, searchX[i], Y1, &f_lo);
-
-      /*values to calculate end value of isoline*/
-      F11 = F[hi-1][ix_low[i]];
-      F22 = F[hi][ix_low[i]+1];
-      F21 = F[hi-1][ix_low[i]+1];
-      F12 = F[hi][ix_low[i]];
-      X1 = X[ix_low[i]];
-      X2 = X[ix_low[i]+1];
-      Y1 = Y[hi-1];
-      Y2 = Y[hi];
-
-      /*end value of isoline*/
-      eos_bilinearInterpolate(X1, X2, Y1, Y2, F11, F21, F12, F22, searchX[i], Y2, &f_hi);
-
-      /*Report extrapolation (or not) here*/
-      too_lo = (searchF[i]<f_lo)?EOS_TRUE:EOS_FALSE;
-      too_hi = (searchF[i]>f_hi)?EOS_TRUE:EOS_FALSE;
-    
-      if(too_lo)
-	yErr = EOS_xOk_yLo;
-      else if(too_hi)
-	yErr = EOS_xOk_yHi;
-      else
-	yErr = EOS_OK;
-    
-      if(searchX[i]<X[0])
-	xErr = EOS_xLo_yOk;
-      else if(searchX[i]>X[numYVals-1])
-	xErr = EOS_xHi_yOk;
-      else
-	xErr = EOS_OK;
-
-      xyBounds[i] = _eos_CombineExtrapErrors(xErr, yErr);
-
-      /*start binary search; when hi-lo = 1 you have bracketed 1 cell*/
-      while(hi-lo>1){
-	EOS_INTEGER mid = (hi+lo)/2;
-	EOS_REAL f_mid; /*f value at midpoint of interval*/
-	F11 = F[mid][ix_low[i]];
-	F22 = F[mid+1][ix_low[i]+1];
-	F21 = F[mid][ix_low[i]+1];
-	F12 = F[mid+1][ix_low[i]];
-	X1 = X[ix_low[i]];
-	X2 = X[ix_low[i]+1];
-	Y1 = Y[mid];
-	Y2 = Y[mid+1];
-
-	/*mid value of isoline*/
-	eos_bilinearInterpolate(X1, X2, Y1, Y2, F11, F21, F12, F22, searchX[i], Y1, &f_mid);
-      
-	/*pick which side the zero is on*/
-	if(searchF[i]<f_mid)
-	  hi = mid;
-	else 
-	  lo = mid;
-      }
-
-      /*now that we have chosen the correct cell, calculate the values to be used in the interpolator*/
-      F11 = F[lo][ix_low[i]];
-      F22 = F[lo+1][ix_low[i]+1];
-      F21 = F[lo][ix_low[i]+1];
-      F12 = F[lo+1][ix_low[i]]; 
-    
-      X1 = X[ix_low[i]];
-      X2 = X[ix_low[i]+1];
-      Y1 = Y[lo];
-      Y2 = Y[lo+1];
-
-      iy_low[i] = lo; /* save 'lo' index */
+#ifdef _EOS_DUMP_INDEX_DATA_INVERSEBILINEARINTERPOLATEXF
+    {
+      FILE *fp;
+      fp = fopen (fn, mode);
+      fprintf(fp,"%-5d %3d %3d %23.15e %23.15e %23.15e F11=%23.15e F12=%23.15e F21=%23.15e F22=%23.15e X1=%23.15e X2=%23.15e Y1=%23.15e Y2=%23.15e\n",
+              i,ix_low[i],iy_low[i],X[ix_low[i]],Y[iy_low[i]],F[iy_low[i]][ix_low[i]],F11,F12,F21,F22,X1,X2,Y1,Y2);
+      if (fp) fclose(fp);
     }
+#endif
 
     /* exact inversion finite difference equation */
-    resultY[i] = ((X1 - X2)*(Y1 - Y2)*searchF[i] + F12*Y1*(X2 - searchX[i]) - (-(F22*Y1) + F21*Y2)*(-X1 + searchX[i]) + F11*Y2*(-X2 + searchX[i]))/(F12*(X2 - searchX[i]) - (F21 - F22)*(-X1 + searchX[i]) + F11*(-X2 + searchX[i]));
+    resultY[i] =
+      ((X1 - X2)*(Y1 - Y2)*searchF[i] + F12*Y1*(X2 - searchX[i]) -
+       (-(F22*Y1) + F21*Y2)*(-X1 + searchX[i]) + F11*Y2*(-X2 + searchX[i])) /
+      FLOOR(F12*(X2 - searchX[i]) - (F21 - F22)*(-X1 + searchX[i]) + F11*(-X2 + searchX[i]));
+  }
 
     /* Now use resultY and searchX to determine dF/dx, dF/dy and then convert to dY/dx
        and dY/df later in eos_RecordType1.c interpolate function under
        CATEGORY2(all partial derivatives) */
-    eos_BilinearDerivatives(X, Y, F, numXVals, numYVals, ix_low[i], 
-			    iy_low[i], searchX[i], resultY[i], derivs);
-    searchDFx[i]= derivs[0];
-    searchDFy[i]= derivs[1]; 
-  }
+  eos_BilinearDerivatives(X, Y, F, numXVals, numYVals, ix_low, nGhostData, iy_low, nGhostData, numZones,  searchX, resultY, searchDFx, searchDFy);
+
 
   EOS_FREE (ix_low);
   EOS_FREE (iy_low);
@@ -2658,6 +2914,7 @@ void eos_InverseBilinearInterpolateXF (EOS_INTEGER numZones,
  *     purpose   --  Given an array of f find values of x, the function is F(x).
  *
  *     arguments --
+ *       EOS_BOOLEAN _create_ghostdata = input  boolean enables _create_ghostdata logic in eos_RationalInterpolate4
  *       EOS_BOOLEAN iterative = use an iterative algorithm if true
  *       nsrch    = input number of search F points
  *       searchF  = input search F values
@@ -2666,28 +2923,33 @@ void eos_InverseBilinearInterpolateXF (EOS_INTEGER numZones,
  *       nxtbl    = input  integer number of data table x values.
  *       xtbls    = in/out real array containing data table x values.
  *       ftbls    = in/out real array containing data table f values.
+ *       ftbls_ht = input hashtable for ftbls (can be NULL)
  *       EOS_INTEGER *xyBounds     out, interpolation errors per xy-pair
  *       err      = output error code
  ****************************************************************************/
-void eos_InverseRationalInterpolateF (EOS_BOOLEAN iterative, EOS_INTEGER nsrch, EOS_REAL *searchF,
+void eos_InverseRationalInterpolateF (EOS_BOOLEAN _create_ghostdata,
+                                      EOS_INTEGER nsrch, EOS_REAL *searchF,
                                       EOS_REAL *searchDFx, EOS_REAL *resultX,
                                       EOS_INTEGER nxtbl, EOS_REAL *xtbls,
-                                      EOS_REAL *ftbls, EOS_INTEGER *xyBounds,
+                                      EOS_REAL *ftbls, eos_HashTable1D* ftbls_ht, EOS_INTEGER *xyBounds,
                                       EOS_INTEGER *err)
 {
-  EOS_INTEGER err1, i, jv, *ix_low, x_index[4], inc;
-  EOS_REAL RIPointsX[4], RIPointsF[4], F, ferr, upperbound, lowerbound, delta, deltaold;
+  EOS_INTEGER err1, i, jv, *ix_low, inc;
+  EOS_REAL *RIPointsX, *RIPointsF, F, ferr=0.0, upperbound, lowerbound, delta, deltaold;
 
   *err = EOS_OK;
   ix_low = (EOS_INTEGER *) malloc (nsrch * sizeof (EOS_INTEGER));
 
   // search F to locate indexes of X
-  _eos_srchdf (nsrch, searchF, 1, nxtbl - 1, ftbls, 1, ix_low, xyBounds, &err1);
+  _eos_srchdf (nsrch, searchF, 1, nxtbl, ftbls, 1, ix_low, ftbls_ht, xyBounds, &err1);
   /* ignore error, it might be for one point only */
 
   /* take 4 x-points i and their corresponding F(x) for each search F value. 
      These points will stay constant with each iteration, 
-     because X is limited by only 1 cell of X-grid (x_low, x_high) */
+     becacause X is limited by only 1 cell of X-grid (x_low, x_high) */
+
+  RIPointsF = (EOS_REAL *) malloc (4*nsrch * sizeof (EOS_REAL));
+  RIPointsX = (EOS_REAL *) malloc (4*nsrch * sizeof (EOS_REAL));
 
   for (jv = 0; jv < nsrch; jv++) {
 
@@ -2699,61 +2961,17 @@ void eos_InverseRationalInterpolateF (EOS_BOOLEAN iterative, EOS_INTEGER nsrch, 
       inc = 0;
 
     for (i = 0; i < 4; i++) {
-      x_index[i] = inc + i;
-      RIPointsX[i] = xtbls[x_index[i]];
-      RIPointsF[i] = ftbls[x_index[i]];
+
+      RIPointsX[jv*4+i] = xtbls[inc+i];
+      RIPointsF[jv*4+i] = ftbls[inc+i];
     }
+  }
 
     /* Calculate X and dX/dF */
-    eos_RationalInterpolate4 (searchF[jv], RIPointsF, RIPointsX, &(resultX[jv]), &(searchDFx[jv]));
+  eos_RationalInterpolate4 (_create_ghostdata, &(searchF[0]), &(RIPointsF[0]), &(RIPointsX[0]), &(resultX[0]), &(searchDFx[0]), nsrch); 
 
-    if (iterative) { /* iterate to a solution of x(F) using initial guess, x=resultX[jv]; Newton-Bisection */
-
-      i = 1; /* initialize iteration counter */
-      lowerbound = RIPointsX[0];
-      upperbound = 1.0e99; //RIPointsX[3];
-      deltaold = upperbound - lowerbound;
-      delta    = deltaold;
-      ferr     = 0.0; /* initialize max error value */
-
-      do { /* DO loop to perform Newton-Bisection  hybrid algorithm to
-	      solve for the inverted resultX[] values */
-
-	/* calculate new F value based upon current resultX[jv] estimate */
-	eos_RationalInterpolate4 (resultX[jv], RIPointsX, RIPointsF, &F, &(searchDFx[jv]));
-
-	/* Narrow the interval */
-	if ((F - searchF[jv]) < 0.0)
-	  lowerbound = resultX[jv];
-	else
-	  upperbound = resultX[jv];
-
-	if ((FABS (2.0 * (F - searchF[jv])) >
-	     FABS (deltaold * searchDFx[jv])) ||
-	    (((resultX[jv] - upperbound) * searchDFx[jv] - (F - searchF[jv])) *
-	     ((resultX[jv] - lowerbound) * searchDFx[jv] - (F - searchF[jv])) > 0.0)) {
-	  /* Perform Bisection -- Newton step is either out of range or not decreasing fast enough */
-	  delta = (EOS_REAL) 0.5 *(upperbound - lowerbound);
-	  resultX[jv] = lowerbound + delta;
-	  ferr = MAX(ferr, FABS(delta / (RIPointsX[2] - RIPointsX[1])));
-	}
-	else {
-	  /* Perform Newton step */
-	  ferr = MAX(ferr, FABS((searchF[jv] - F) / (RIPointsF[2] - RIPointsF[1])));
-	  delta = (F - searchF[jv]) / searchDFx[jv];   /* estimate */
-	  resultX[jv] = resultX[jv] - delta;
-	}
-
-	i++; /* increment iteration counter */
-
-      } /* end of Newton-Bisection DO loop */
-      while ((ferr > _eos_machinePrecisionData.maxErr) &&
-	     (i < _eos_machinePrecisionData.maxIter));
-
-    }
-
+  for (jv = 0; jv < nsrch; jv++) {
     searchDFx[jv] = 1.0 / FLOOR(searchDFx[jv]); /* convert dF/dx to dx/dF */
-
   }                             /* jv loop */
 
   if ((ferr > _eos_machinePrecisionData.maxErr) && (i >= _eos_machinePrecisionData.maxIter))
@@ -2763,6 +2981,8 @@ void eos_InverseRationalInterpolateF (EOS_BOOLEAN iterative, EOS_INTEGER nsrch, 
     *err = err1;
 
   EOS_FREE (ix_low);
+  EOS_FREE (RIPointsX);
+  EOS_FREE (RIPointsF);
 }
 
 /***************************************************************************
@@ -2783,18 +3003,19 @@ void eos_InverseRationalInterpolateF (EOS_BOOLEAN iterative, EOS_INTEGER nsrch, 
  *       EOS_INTEGER *xyBounds     interpolation errors per xy-pair
  *       err      = output error code
  ****************************************************************************/
-
 void eos_InverseInterpolateF (EOS_INTEGER nsrch, EOS_REAL *searchF,
                               EOS_REAL *searchDFx, EOS_REAL *resultX,
                               EOS_INTEGER nxtbl, EOS_REAL *X, EOS_REAL *F,
+                              eos_HashTable1D* F_ht,
                               EOS_INTEGER *xyBounds, EOS_INTEGER *err)
 {
   EOS_INTEGER i, *ix_low;
   ix_low = (EOS_INTEGER *) malloc (nsrch * sizeof (EOS_INTEGER));
 
+
   *err = EOS_OK;
   // search F to locate indexes of X
-  _eos_srchdf (nsrch, searchF, 1, nxtbl - 1, F, 1, ix_low, xyBounds, err);
+  _eos_srchdf (nsrch, searchF, 1, nxtbl, F, 1, ix_low, F_ht, xyBounds, err);
   /* ignore error, it might be for only one point */
 
   for (i = 0; i < nsrch; i++) {
@@ -2830,58 +3051,98 @@ void eos_InverseInterpolateF (EOS_INTEGER nsrch, EOS_REAL *searchF,
  *       xtbls = input  real array containing data table x values.
  *       ytbls = input  real array containing data table y values.
  *       ftbls = input  real array containing data table f values.
+ *       ytbls_ht = input  hashtable for ytbls (can be NULL)
+ *       ftbls_ht = input  hashtable for ftbls (can be NULL)
  *       EOS_INTEGER *xyBounds     interpolation errors per xy-pair
  *       err      = output error code
  ******************************************************************************************/
 #define ENABLE_EOS_RATIONALINTERPOLATEXY
 #ifdef ENABLE_EOS_RATIONALINTERPOLATEXY
+
 void eos_RationalInterpolateXY (EOS_INTEGER nsrch, EOS_REAL *searchX,
-				EOS_REAL *searchY, EOS_REAL *searchDFx,
-				EOS_REAL *searchDFy, EOS_REAL *resultF,
-				EOS_INTEGER nxtbl, EOS_INTEGER nytbl,
-				EOS_REAL *xtbls, EOS_REAL *ytbls,
-				EOS_REAL **ftbls, EOS_REAL *coldCurve, EOS_INTEGER nGhostData,
-				EOS_INTEGER *xyBounds, EOS_INTEGER *err)
-{
-  /* macros to enable debugging output in this function;
+                                EOS_REAL *searchY, EOS_REAL *searchDFx,
+                                EOS_REAL *searchDFy, EOS_REAL *resultF,
+                                EOS_INTEGER nxtbl, EOS_INTEGER nytbl,
+                                EOS_REAL *xtbls, EOS_REAL *ytbls,
+                                EOS_REAL **ftbls, EOS_REAL *coldCurve, EOS_INTEGER nGhostData,
+                                eos_HashTable1D* xtbls_ht, eos_HashTable1D* ytbls_ht,
+                                EOS_INTEGER *xyBounds, EOS_INTEGER *err){
+
+/* macros to enable debugging output in this function;
      used to make algorithm logic more easily read */
 //#define _EOS_DUMP_INDEX_DATA_RATIONALINTERPOLATEXY
 
   EOS_INTEGER i, *ix_low, *iy_low, returnErr=EOS_OK;
-
 #ifdef _EOS_DUMP_INDEX_DATA_RATIONALINTERPOLATEXY
   char *fn = "eos_RationalInterpolateXY.indices";
   char *appendMode = "a";
   static char *mode = "w";
 #endif
 
+  EOS_BOOLEAN skipExtrap = _EOS_GET_SKIPEXTRAPCHECK_EOSDATAMAP;;
+  EOS_BOOLEAN useGpuData=EOS_FALSE;
+#ifdef DO_OFFLOAD
+  useGpuData = _EOS_GET_USEGPUDATA_EOSDATAMAP;
+#endif /* DO_OFFLOAD */
   *err = EOS_OK;
 
-  iy_low = (EOS_INTEGER *) malloc (nsrch * sizeof (EOS_INTEGER));
-  ix_low = (EOS_INTEGER *) malloc (nsrch * sizeof (EOS_INTEGER));
+#ifdef DO_OFFLOAD
+  int t_, h_;
+
+  t_ = omp_get_default_device();
+  h_ = omp_get_initial_device();
+#endif  
+
+#ifdef DO_OFFLOAD
+  if (!useGpuData)
+#endif /* DO_OFFLOAD */
+  {
+    iy_low = (EOS_INTEGER *) malloc (nsrch * sizeof (EOS_INTEGER));
+    ix_low = (EOS_INTEGER *) malloc (nsrch * sizeof (EOS_INTEGER));
+  }
+#ifdef DO_OFFLOAD
+  else
+  {
+    ix_low=omp_target_alloc(nsrch*sizeof(EOS_INTEGER),t_);
+    iy_low=omp_target_alloc(nsrch*sizeof(EOS_INTEGER),t_);
+  }
+#endif /* DO_OFFLOAD */
 
   /* search table to locate indexes of X, Y */
-  _eos_srchdf (nsrch, searchY, 1, nytbl - 1, ytbls, 1, iy_low, xyBounds, err);
-  _eos_srchdf (nsrch, searchX, 1, nxtbl - 1, xtbls, 1, ix_low, xyBounds, err);
+  _eos_srchdf (nsrch, searchY, 1, nytbl, ytbls, 1, iy_low, ytbls_ht, xyBounds, err);
+  _eos_srchdf (nsrch, searchX, 1, nxtbl, xtbls, 1, ix_low, xtbls_ht, xyBounds, err);
 
   /* ensure proper initial placement of birational stencil at table edges */
-  for (i=0; i<nsrch; i++) {
-    ix_low[i] = MAX(MIN(ix_low[i], nxtbl-3), 1);
-    iy_low[i] = MAX(MIN(iy_low[i], nytbl-3), 1);
+
+#ifdef DO_OFFLOAD
+#pragma omp target if(useGpuData) is_device_ptr(ix_low, iy_low)
+  {
+#pragma omp teams distribute parallel for
+#endif /* DO_OFFLOAD */
+#ifndef DISABLE_OMP_SIMD_PRAGMA
+#pragma omp simd
+#endif
+
+    for (i=0; i<nsrch; i++) {
+      ix_low[i] = MAX(MIN(ix_low[i], nxtbl-3), 1);
+      iy_low[i] = MAX(MIN(iy_low[i], nytbl-3), 1);
+    }
+#ifdef DO_OFFLOAD
   }
+#endif
 
   i = 1; /* initialize iteration counter */
 
-  eos_BiRationalInterpolate (nsrch, nxtbl, nytbl, xtbls, ytbls, ftbls, ix_low, iy_low,
-			     searchX, searchY, resultF, searchDFx, searchDFy, xyBounds, err);
+  eos_BiRationalInterpolate (nsrch, nxtbl, nytbl, xtbls, ytbls, ftbls, ix_low, iy_low, searchX, searchY, resultF, searchDFx, searchDFy, xyBounds, err);
 
   /* set extrapolation error codes appropriately */
-  _eos_CheckExtrapCategory0(nGhostData, nxtbl, nytbl, xtbls, ytbls,
-			    nsrch, searchX, searchY, xyBounds, &returnErr);
+  if (!useGpuData && !skipExtrap) 
+    _eos_CheckExtrapCategory0(nGhostData, nxtbl, nytbl, xtbls, ytbls,
+			      nsrch, searchX, searchY, xyBounds, &returnErr);
 
 #ifdef _EOS_DUMP_INDEX_DATA_RATIONALINTERPOLATEXY
   _eos_DumpIndicesToFile (fn, mode, nsrch, xtbls, ytbls, ftbls,
-			  ix_low, iy_low, NULL, NULL);
+                          ix_low, iy_low, NULL, NULL);
 #endif
 
 #ifdef DUMP_WARNINGS
@@ -2891,8 +3152,20 @@ void eos_RationalInterpolateXY (EOS_INTEGER nsrch, EOS_REAL *searchX,
   if (! *err &&  returnErr)
     *err = returnErr;
 
-  EOS_FREE (iy_low);
-  EOS_FREE (ix_low);
+#ifdef DO_OFFLOAD
+  if (!useGpuData)
+#endif /* DO_OFFLOAD */
+  {
+    EOS_FREE (iy_low);
+    EOS_FREE (ix_low);
+  }
+#ifdef DO_OFFLOAD
+  else
+  {
+    omp_target_free(ix_low,t_);
+    omp_target_free(iy_low,t_);
+  }
+#endif /* DO_OFFLOAD */
 
 #ifdef _EOS_DUMP_INDEX_DATA_RATIONALINTERPOLATEXY
   mode = appendMode; /* reset mode for indices output file */
@@ -2926,35 +3199,36 @@ void eos_InverseRationalInterpolateFY (EOS_INTEGER nsrch, EOS_REAL *searchY,
                                        EOS_INTEGER nxtbl, EOS_INTEGER nytbl,
                                        EOS_REAL *xtbls, EOS_REAL *ytbls,
                                        EOS_REAL **ftbls, EOS_REAL *coldCurve,
-                                       EOS_INTEGER nGhostData, EOS_INTEGER *xyBounds,
-                                       EOS_INTEGER *err, EOS_CHAR **errMsg)
+                                       EOS_INTEGER nGhostData, eos_HashTable1D *xtbls_ht,
+                                       eos_HashTable1D *ytbls_ht, eos_HashTable2D *ftbls_ht,
+                                       EOS_INTEGER *xyBounds, EOS_INTEGER *err, EOS_CHAR **errMsg)
 {
   /* macros to enable debugging output in this function;
      used to make algorithm logic more easily read */
 //#define _EOS_DUMP_INDEX_DATA_INVERSERATIONALINTERPOLATEFY
 //#define DEBUG_EOS_INVERSERATIONALINTERPOLATEFY
 #ifdef DEBUG_EOS_INVERSERATIONALINTERPOLATEFY
-# define _EOS_PRINT_ITERATION_MARK(macro_s1,macro_s2,macro_i,macro_s3) \
-         printf("%s %s iteration %d%s\n",macro_s1,macro_s2,macro_i,macro_s3);
-# define _EOS_PRINT_ITERATION_DETAIL \
-         if (ferr_xy[j] > _eos_machinePrecisionData.maxErr) \
-           printf("%s: i=%d j=%d lower=%21.15e upper=%21.15e delta=%21.15e ferr=%21.15e resultY=%21.15e searchDFy=%21.15e fvals=%21.15e searchX=%21.15e searchF=%21.15e\n", \
-                  tmp_str, i, j, lowerbound[j], upperbound[j], delta[j], ferr_xy[j], resultY[j], searchDFy[j], fvals[j], searchX[j], searchF[j]);
-# define _EOS_PRINT_JLOOP_DATA \
-	printf("%2d. ", j); \
-	k0 = MIN(iy_low[j], iy_high[j]); \
-	kn = MAX(iy_low[j]+1, iy_high[j]+1); \
-	for (k=k0; k<=kn; k++) \
-	  printf("y[%d]=%12.5e ",k,ytbls[k]); \
-	printf("\n"); \
-	printf("    F[%d][%d]=%12.5e F[%d][%d]=%12.5e\n    F[%d][%d]=%12.5e F[%d][%d]=%12.5e : X=%12.5e F=%12.5e Y=%12.5e fvals=%12.5e delta=%12.5e L=%12.5e U=%12.5e err=%12.5e\n", \
-	       iy_low[j]   ,ix_low[j] ,ftbls[iy_low[j]   ][ix_low[j]], \
-	       iy_low[j]+1 ,ix_low[j] ,ftbls[iy_low[j]+1 ][ix_low[j]], \
-	       iy_high[j]  ,ix_high[j],ftbls[iy_high[j]  ][ix_high[j]], \
-	       iy_high[j]+1,ix_high[j],ftbls[iy_high[j]+1][ix_high[j]], \
-	       searchX[j],searchF[j],resultY[j],fvals[j],delta[j], \
-	       lowerbound[j],upperbound[j],ferr_xy[j] \
-	       );
+# define _EOS_PRINT_ITERATION_MARK(macro_s1,macro_s2,macro_i,macro_s3)  \
+  printf("%s %s iteration %d%s\n",macro_s1,macro_s2,macro_i,macro_s3);
+# define _EOS_PRINT_ITERATION_DETAIL                                    \
+  if (ferr_xy[j] > _eos_machinePrecisionData.maxErr)                    \
+    printf("%s: i=%d j=%d lower=%21.15e upper=%21.15e delta=%21.15e ferr=%21.15e resultY=%21.15e searchDFy=%21.15e fvals=%21.15e searchX=%21.15e searchF=%21.15e\n", \
+           tmp_str, i, j, lowerbound[j], upperbound[j], delta[j], ferr_xy[j], resultY[j], searchDFy[j], fvals[j], searchX[j], searchF[j]);
+# define _EOS_PRINT_JLOOP_DATA                                          \
+  printf("%2d. ", j);                                                   \
+  k0 = MIN(iy_low[j], iy_high[j]);                                      \
+  kn = MAX(iy_low[j]+1, iy_high[j]+1);                                  \
+  for (k=k0; k<=kn; k++)                                                \
+    printf("y[%d]=%12.5e ",k,ytbls[k]);                                 \
+  printf("\n");                                                         \
+  printf("    F[%d][%d]=%12.5e F[%d][%d]=%12.5e\n    F[%d][%d]=%12.5e F[%d][%d]=%12.5e : X=%12.5e F=%12.5e Y=%12.5e fvals=%12.5e delta=%12.5e L=%12.5e U=%12.5e err=%12.5e\n", \
+         iy_low[j]   ,ix_low[j] ,ftbls[iy_low[j]   ][ix_low[j]],        \
+         iy_low[j]+1 ,ix_low[j] ,ftbls[iy_low[j]+1 ][ix_low[j]],        \
+         iy_high[j]  ,ix_high[j],ftbls[iy_high[j]  ][ix_high[j]],       \
+         iy_high[j]+1,ix_high[j],ftbls[iy_high[j]+1][ix_high[j]],       \
+         searchX[j],searchF[j],resultY[j],fvals[j],delta[j],            \
+         lowerbound[j],upperbound[j],ferr_xy[j]                         \
+         );
 #else
 # define _EOS_PRINT_ITERATION_MARK(macro_s1,macro_s2,macro_i,macro_s3)
 # define _EOS_PRINT_ITERATION_DETAIL
@@ -2966,7 +3240,11 @@ void eos_InverseRationalInterpolateFY (EOS_INTEGER nsrch, EOS_REAL *searchY,
   EOS_REAL *fvals, *fvals1, *fvals2, ferr, *ferr_xy, *deltaold, *delta,
     *lowerbound, *upperbound, *mid_x;
   EOS_BOOLEAN foundRoot, *found_zero;
+#ifdef DEBUG_EOS_INVERSERATIONALINTERPOLATEFY
   EOS_CHAR tmp_str[50];
+#endif
+
+  EOS_REAL *ftbls_flat = &ftbls[0][0];
 
 #ifdef _EOS_DUMP_INDEX_DATA_INVERSERATIONALINTERPOLATEFY
   char *fn = "eos_InverseRationalInterpolateFY.indices";
@@ -2995,8 +3273,8 @@ void eos_InverseRationalInterpolateFY (EOS_INTEGER nsrch, EOS_REAL *searchY,
 
   /* search table to locate indexes of X, Y */
   eos_SearchIndices_YF (searchY, searchF, nsrch, xtbls, ytbls, ftbls, nxtbl,
-                        nytbl, nGhostData, iy_low, ix_low, iy_high, ix_high, coldCurve, 1,
-                        xyBounds, err);
+                        nytbl, nGhostData, iy_low, ix_low, iy_high, ix_high,
+                        coldCurve, ytbls_ht, ftbls_ht, 1, xyBounds, err);
   if (eos_GetStandardErrorCodeFromCustomErrorCode(*err) == EOS_INTERP_EXTRAPOLATED ||
       eos_GetStandardErrorCodeFromCustomErrorCode(*err) == EOS_UNDEFINED)
     returnErr = EOS_INTERP_EXTRAPOLATED;
@@ -3017,8 +3295,8 @@ void eos_InverseRationalInterpolateFY (EOS_INTEGER nsrch, EOS_REAL *searchY,
     /* reset binary search values */
     for (j=0; j<nsrch; j++) {
       if (i==1) { /* first time through loop, initialize indices to extreme bounds */
-	ix_low[j] = 0;
-	ix_low2[j] = nxtbl-3;
+        ix_low[j] = 0;
+        ix_low2[j] = nxtbl-3;
       }
       ix_low1[j] = (ix_low2[j] + ix_low[j])/2; /* what is the mid point ? */
       lowerbound[j] = xtbls[ix_low[j]];
@@ -3028,28 +3306,28 @@ void eos_InverseRationalInterpolateFY (EOS_INTEGER nsrch, EOS_REAL *searchY,
 
     /*interpolate at upper, lower bounds and midpoint for whole array*/
     eos_BiRationalInterpolate (nsrch, nxtbl, nytbl, xtbls, ytbls, ftbls, ix_low1, iy_low,
-			       mid_x, searchY, fvals1, searchDFx, searchDFy, xyBounds, err);
+                               mid_x, searchY, fvals1, searchDFx, searchDFy, xyBounds, err);
     eos_BiRationalInterpolate (nsrch, nxtbl, nytbl, xtbls, ytbls, ftbls, ix_low, iy_low,
-			       lowerbound, searchY, fvals, searchDFx, searchDFy, xyBounds, err);
+                               lowerbound, searchY, fvals, searchDFx, searchDFy, xyBounds, err);
     eos_BiRationalInterpolate (nsrch, nxtbl, nytbl, xtbls, ytbls, ftbls, ix_low2, iy_low,
-			       upperbound, searchY, fvals2, searchDFx, searchDFy, xyBounds, err);
+                               upperbound, searchY, fvals2, searchDFx, searchDFy, xyBounds, err);
 
     for (j=0; j<nsrch; j++) {
       found_zero[j] = EOS_TRUE; /* reset flag */
       if (searchF[j] < fvals1[j]) /* change upperbound index */
-	ix_low2[j] = MAX(AVERAGE (EOS_INTEGER, ix_low[j], ix_low2[j]), 1);
+        ix_low2[j] = MAX(AVERAGE (EOS_INTEGER, ix_low[j], ix_low2[j]), 1);
       else /* change lowerbound index */
-	ix_low[j]  = MAX(AVERAGE (EOS_INTEGER, ix_low[j], ix_low2[j]), 1);
+        ix_low[j]  = MAX(AVERAGE (EOS_INTEGER, ix_low[j], ix_low2[j]), 1);
 
       ix_low1[j] = MAX(AVERAGE (EOS_INTEGER, ix_low[j], ix_low2[j]), 1); /* change middle index */
 
       if ((searchF[j] < fvals[j]) ||
-	  (searchF[j] > fvals2[j]) ||
-	  (ix_low2[j] - ix_low[j] > 1))
-	found_zero[j] = foundRoot = EOS_FALSE; /* at least one root is not yet adequately bounded */
+          (searchF[j] > fvals2[j]) ||
+          (ix_low2[j] - ix_low[j] > 1))
+        found_zero[j] = foundRoot = EOS_FALSE; /* at least one root is not yet adequately bounded */
 
       if (ix_low2[j] - ix_low[j] <= 1)
-	found_zero[j] = EOS_TRUE; /* override since extrapolation will occur */
+        found_zero[j] = EOS_TRUE; /* override since extrapolation will occur */
 
       lowerbound[j] = xtbls[ix_low[j]];
       mid_x[j] = xtbls[ix_low1[j]];
@@ -3066,13 +3344,15 @@ void eos_InverseRationalInterpolateFY (EOS_INTEGER nsrch, EOS_REAL *searchY,
   } /* end of root finding loop */
 
   /* Determine extrapolation error codes and assign them to the xyBounds array */
-  _eos_CheckExtrapCategory1(EOS_FALSE, nGhostData, iy_low, EOS_TRUE,
-			    nxtbl, nytbl, xtbls, ytbls, ftbls,
-			    nsrch, searchF, searchY, xyBounds, err);
-  if (eos_GetStandardErrorCodeFromCustomErrorCode(*err) == EOS_INTERP_EXTRAPOLATED ||
-      eos_GetStandardErrorCodeFromCustomErrorCode(*err) == EOS_UNDEFINED)
-    returnErr = EOS_INTERP_EXTRAPOLATED;
-
+  EOS_BOOLEAN skipExtrap = _EOS_GET_SKIPEXTRAPCHECK_EOSDATAMAP;;
+  if (!skipExtrap){
+    _eos_CheckExtrapCategory1(EOS_FALSE, nGhostData, iy_low, EOS_TRUE,
+			      nxtbl, nytbl, xtbls, ytbls, ftbls,
+			      nsrch, searchF, searchY, xtbls_ht, ytbls_ht, xyBounds, err);
+    if (eos_GetStandardErrorCodeFromCustomErrorCode(*err) == EOS_INTERP_EXTRAPOLATED ||
+	eos_GetStandardErrorCodeFromCustomErrorCode(*err) == EOS_UNDEFINED)
+      returnErr = EOS_INTERP_EXTRAPOLATED;
+  }
 
   /*if searchF > upperboundF, then we extend the search interval*/
   /*AMH: Should this just be an if (combine with above while; put if outside)?*/
@@ -3081,11 +3361,11 @@ void eos_InverseRationalInterpolateFY (EOS_INTEGER nsrch, EOS_REAL *searchY,
 
     foundRoot = EOS_TRUE;
     eos_BiRationalInterpolate (nsrch, nxtbl, nytbl, xtbls, ytbls, ftbls, ix_low2, iy_low,
-			       upperbound, searchY, fvals2, searchDFx, searchDFy, xyBounds, err);
+                               upperbound, searchY, fvals2, searchDFx, searchDFy, xyBounds, err);
     for (j=0; j<nsrch; j++) {
       if (searchF[j] > fvals2[j]) { /* change upperbound value */
-	upperbound[j] *= 2.0;
-	foundRoot = EOS_FALSE; /* at least one root is not yet adequately bounded */
+        upperbound[j] *= 2.0;
+        foundRoot = EOS_FALSE; /* at least one root is not yet adequately bounded */
       }
     } /* end for (j=0; j<nsrch; j++) */
 
@@ -3103,7 +3383,7 @@ void eos_InverseRationalInterpolateFY (EOS_INTEGER nsrch, EOS_REAL *searchY,
 
 #ifdef _EOS_DUMP_INDEX_DATA_INVERSERATIONALINTERPOLATEFY
   _eos_DumpIndicesToFile (fn, mode, nsrch, xtbls, ytbls, ftbls,
-			  ix_low, iy_low, lowerbound, upperbound);
+                          ix_low, iy_low, lowerbound, upperbound);
 #endif
 
 #ifdef DUMP_WARNINGS
@@ -3113,22 +3393,22 @@ void eos_InverseRationalInterpolateFY (EOS_INTEGER nsrch, EOS_REAL *searchY,
   i = 1; /* initialize iteration counter */
 
   do { /* DO loop to perform Newton-Bisection  hybrid algorithm to
-	  solve for the inverted resultX[] values */
+          solve for the inverted resultX[] values */
 
     /* calculate new fvals[] values based upon current resultX[] estimates */
     eos_BiRationalInterpolate (nsrch, nxtbl, nytbl, xtbls, ytbls, ftbls, ix_low, iy_low,
-			       resultX, searchY, fvals, searchDFx, searchDFy, xyBounds, err);
+                               resultX, searchY, fvals, searchDFx, searchDFy, xyBounds, err);
 
     for (j=0; j<nsrch; j++) {
       /* check for div-by-zero while using tabulated data */
-      if (((EOS_REAL) 0) == (ftbls[iy_low[j]][ix_low[j]+1] - ftbls[iy_low[j]][ix_low[j]])) {
-	*err = EOS_INTERP_EXTRAPOLATED;
-	xyBounds[j] = EOS_CANT_INVERT_DATA;
-	continue;
+      if (((EOS_REAL) 0) == (ftbls_flat[iy_low[j] * nxtbl +ix_low[j]+1] - ftbls_flat[iy_low[j] * nxtbl + ix_low[j]])) {
+        *err = EOS_INTERP_EXTRAPOLATED;
+        xyBounds[j] = EOS_CANT_INVERT_DATA;
+        continue;
       }
 
       ferr_xy[j] = FABS((searchF[j] - fvals[j]) /
-			(ftbls[iy_low[j]][ix_low[j]+1] - ftbls[iy_low[j]][ix_low[j]]));
+                        (ftbls_flat[iy_low[j] * nxtbl + ix_low[j]+1] - ftbls_flat[iy_low[j] * nxtbl + ix_low[j]]));
     }
 
     _EOS_PRINT_ITERATION_MARK("begin","Newton-Bisection",i,"");
@@ -3144,28 +3424,44 @@ void eos_InverseRationalInterpolateFY (EOS_INTEGER nsrch, EOS_REAL *searchY,
 
       /* Narrow the interval */
       if ((fvals[j] - searchF[j]) < 0.0)
-	lowerbound[j] = resultX[j];
+        lowerbound[j] = resultX[j];
       else
-	upperbound[j] = resultX[j];
+        upperbound[j] = resultX[j];
 
       if ((FABS (2.0 * (fvals[j] - searchF[j])) >
-	   FABS (deltaold[j] * searchDFx[j])) ||
-	  (((resultX[j] - upperbound[j]) * searchDFx[j] - (fvals[j] - searchF[j])) *
-	   ((resultX[j] - lowerbound[j]) * searchDFx[j] - (fvals[j] - searchF[j])) > 0.0)) {
-	/* Perform Bisection -- Newton step is either out of range or not decreasing fast enough */
-	sprintf(tmp_str,"bisect");
-	delta[j] = (EOS_REAL) 0.5 *(upperbound[j] - lowerbound[j]);
-	resultX[j] = lowerbound[j] + delta[j];
-	ferr_xy[j] = FABS(delta[j] /
-			  (xtbls[ix_low[j]+1] - xtbls[ix_low[j]]));
+           FABS (deltaold[j] * searchDFx[j])) ||
+          (((resultX[j] - upperbound[j]) * searchDFx[j] - (fvals[j] - searchF[j])) *
+           ((resultX[j] - lowerbound[j]) * searchDFx[j] - (fvals[j] - searchF[j])) > 0.0)) {
+        /* Perform Bisection -- Newton step is either out of range or not decreasing fast enough */
+#ifdef DEBUG_EOS_INVERSERATIONALINTERPOLATEFY
+        sprintf(tmp_str,"bisect");
+#endif
+        delta[j] = (EOS_REAL) 0.5 *(upperbound[j] - lowerbound[j]);
+        resultX[j] = lowerbound[j] + delta[j];
+        ferr_xy[j] = FABS(delta[j] /
+                          (xtbls[ix_low[j]+1] - xtbls[ix_low[j]]));
       }
       else {
-	/* Perform Newton step */
-	sprintf(tmp_str,"newton");
-	ferr_xy[j] = FABS((searchF[j] - fvals[j]) /
-			  (ftbls[iy_low[j]][ix_low[j]+1] - ftbls[iy_low[j]][ix_low[j]]));
-	delta[j] = (fvals[j] - searchF[j]) / searchDFx[j];   /* estimate */
-	resultX[j] = resultX[j] - delta[j];
+        /* Perform Newton step */
+        EOS_REAL d = ftbls_flat[iy_low[j] * nxtbl + ix_low[j]+1] - ftbls_flat[iy_low[j] * nxtbl + ix_low[j]];
+        if (d == 0.0)
+        {
+          d = 1.0;
+#ifdef DEBUG_EOS_INVERSERATIONALINTERPOLATEFY
+          printf("%s(%d):d = ftbls_flat[%d*%d+%d] - ftbls_flat[%d*%d+%d] = %g - %g = %g\n",
+                 __FILE__, __LINE__,
+                 iy_low[j]+1, nxtbl, ix_low[j], iy_low[j], nxtbl, ix_low[j],
+                 ftbls_flat[(iy_low[j]+1)*nxtbl+ix_low[j]], ftbls_flat[iy_low[j]*nxtbl+ix_low[j]], d);
+          assert(d != 0.0);
+#endif
+        }
+#ifdef DEBUG_EOS_INVERSERATIONALINTERPOLATEFY
+        sprintf(tmp_str,"newton");
+#endif
+        ferr_xy[j] = FABS((searchF[j] - fvals[j]) / d);
+        d = searchDFx[j];
+        delta[j] = (fvals[j] - searchF[j]) / d;   /* estimate */
+        resultX[j] = resultX[j] - delta[j];
       }
 
       _EOS_PRINT_ITERATION_DETAIL;
@@ -3175,14 +3471,16 @@ void eos_InverseRationalInterpolateFY (EOS_INTEGER nsrch, EOS_REAL *searchY,
 
     }
 
+#ifdef DEBUG_EOS_INVERSERATIONALINTERPOLATEFY
     sprintf(tmp_str," (max err=%12.5e)\n",ferr);
+#endif
     _EOS_PRINT_ITERATION_MARK("end","Newton-Bisection",i,tmp_str);
 
     i++; /* increment iteration counter */
 
   } /* end of Newton-Bisection DO loop */
   while ((ferr > _eos_machinePrecisionData.maxErr) &&
-	 (i < _eos_machinePrecisionData.maxIter));
+         (i < _eos_machinePrecisionData.maxIter));
 
   if ((ferr > _eos_machinePrecisionData.maxErr) &&
       (i >= _eos_machinePrecisionData.maxIter)) {
@@ -3190,25 +3488,25 @@ void eos_InverseRationalInterpolateFY (EOS_INTEGER nsrch, EOS_REAL *searchY,
       *err = EOS_INTERP_EXTRAPOLATED;
       /* adjust error code to account for extrapolation and failed convergence */
       for (j=0; j<nsrch; j++) {
-	if (ferr_xy[j] > _eos_machinePrecisionData.maxErr && found_zero[j]) {
-	  returnErr = xyBounds[j] = EOS_CONVERGENCE_FAILED;
-	}
+        if (ferr_xy[j] > _eos_machinePrecisionData.maxErr && found_zero[j]) {
+          returnErr = xyBounds[j] = EOS_CONVERGENCE_FAILED;
+        }
       }
       if (eos_GetStandardErrorCodeFromCustomErrorCode(returnErr) == EOS_CONVERGENCE_FAILED) {
-	/* send user a modified error message */
-	eos_SetCustomMsg_str (errMsg,
-			      "EOS_INTERP_EXTRAPOLATED: Interpolation caused extrapolation beyond data table boundaries (Newton-Bisection method exceeded %i iterations given convergence criterion %e (rel.err=%g))",
-			      _eos_machinePrecisionData.maxIter,
-			      _eos_machinePrecisionData.maxErr, ferr);
+        /* send user a modified error message */
+        eos_SetCustomMsg_str (errMsg,
+                              "EOS_INTERP_EXTRAPOLATED: Interpolation caused extrapolation beyond data table boundaries (Newton-Bisection method exceeded %i iterations given convergence criterion %e (rel.err=%g))",
+                              _eos_machinePrecisionData.maxIter,
+                              _eos_machinePrecisionData.maxErr, ferr);
       }
     }
     else {
       *err = EOS_CONVERGENCE_FAILED;
       /* send user a warning message */
       eos_SetCustomMsg_str (errMsg,
-			    "EOSPAC WARNING: Newton-Bisection method exceeded %i iterations given convergence criterion %e (rel.err=%g)",
-			    _eos_machinePrecisionData.maxIter,
-			    _eos_machinePrecisionData.maxErr, ferr);
+                            "EOSPAC WARNING: Newton-Bisection method exceeded %i iterations given convergence criterion %e (rel.err=%g)",
+                            _eos_machinePrecisionData.maxIter,
+                            _eos_machinePrecisionData.maxErr, ferr);
     }
   }
 
@@ -3256,6 +3554,9 @@ void eos_InverseRationalInterpolateFY (EOS_INTEGER nsrch, EOS_REAL *searchY,
  *       NOTE: coldCurve is already subtracted from searchF values -- unless
  *             the ENABLE_COLD_CURVE_REMOVAL macro is defined in
  *             eos_LoadRecordType1.
+ *       X_ht = input  hashtable for xtbls (can be NULL)
+ *       Y_ht = input  hashtable for ytbls (can be NULL)
+ *       F_ht = input  hashtable for ftbls (can be NULL)
  *       EOS_INTEGER *xyBounds     interpolation errors per xy-pair
  *       err      = output error code
  ******************************************************************************************/
@@ -3264,9 +3565,9 @@ void eos_InverseRationalInterpolateXF (EOS_INTEGER nsrch, EOS_REAL *searchX,
                                        EOS_REAL *searchDFy, EOS_REAL *resultY,
                                        EOS_INTEGER nxtbl, EOS_INTEGER nytbl,
                                        EOS_REAL *xtbls, EOS_REAL *ytbls,
-                                       EOS_REAL **ftbls, EOS_INTEGER nGhostData,
-                                       EOS_INTEGER *xyBounds, EOS_INTEGER dataType,
-				       EOS_BOOLEAN invertAtSetup,
+                                       EOS_REAL **ftbls, eos_HashTable1D* X_ht, eos_HashTable1D* Y_ht, eos_HashTable2D* F_ht,
+                                       EOS_INTEGER nGhostData, EOS_INTEGER *xyBounds, EOS_INTEGER dataType,
+                                       EOS_BOOLEAN invertAtSetup,
                                        EOS_INTEGER *err, EOS_CHAR **errMsg)
 {
   /* macros to enable debugging output in this function;
@@ -3274,27 +3575,27 @@ void eos_InverseRationalInterpolateXF (EOS_INTEGER nsrch, EOS_REAL *searchX,
 //#define _EOS_DUMP_INDEX_DATA_INVERSERATIONALINTERPOLATEXF
 //#define DEBUG_EOS_INVERSERATIONALINTERPOLATEXF
 #ifdef DEBUG_EOS_INVERSERATIONALINTERPOLATEXF
-# define _EOS_PRINT_ITERATION_MARK(macro_s1,macro_s2,macro_i,macro_s3) \
-         printf("%s %s iteration %d%s\n",macro_s1,macro_s2,macro_i,macro_s3);
-# define _EOS_PRINT_ITERATION_DETAIL \
-         if (ferr_xy[j] > _eos_machinePrecisionData.maxErr) \
-           printf("%s: i=%d j=%d lower=%21.15e upper=%21.15e delta=%21.15e ferr=%21.15e resultY=%21.15e searchDFy=%21.15e fvals=%21.15e searchX=%21.15e searchF=%21.15e\n", \
-                  tmp_str, i, j, lowerbound[j], upperbound[j], delta[j], ferr_xy[j], resultY[j], searchDFy[j], fvals[j], searchX[j], searchF[j]);
-# define _EOS_PRINT_JLOOP_DATA \
-	printf("%2d. ", j); \
-	k0 = MIN(iy_low[j], iy_high[j]); \
-	kn = MAX(iy_low[j]+1, iy_high[j]+1); \
-	for (k=k0; k<=kn; k++) \
-	  printf("y[%d]=%12.5e ",k,ytbls[k]); \
-	printf("\n"); \
-	printf("    F[%d][%d]=%12.5e F[%d][%d]=%12.5e\n    F[%d][%d]=%12.5e F[%d][%d]=%12.5e : X=%12.5e F=%12.5e Y=%12.5e fvals=%12.5e delta=%12.5e L=%12.5e U=%12.5e err=%12.5e\n", \
-	       iy_low[j]   ,ix_low[j] ,ftbls[iy_low[j]   ][ix_low[j]], \
-	       iy_low[j]+1 ,ix_low[j] ,ftbls[iy_low[j]+1 ][ix_low[j]], \
-	       iy_high[j]  ,ix_high[j],ftbls[iy_high[j]  ][ix_high[j]], \
-	       iy_high[j]+1,ix_high[j],ftbls[iy_high[j]+1][ix_high[j]], \
-	       searchX[j],searchF[j],resultY[j],fvals[j],delta[j], \
-	       lowerbound[j],upperbound[j],ferr_xy[j] \
-	       );
+# define _EOS_PRINT_ITERATION_MARK(macro_s1,macro_s2,macro_i,macro_s3)  \
+  printf("%s %s iteration %d%s\n",macro_s1,macro_s2,macro_i,macro_s3);
+# define _EOS_PRINT_ITERATION_DETAIL                                    \
+  if (ferr_xy[j] > _eos_machinePrecisionData.maxErr)                    \
+    printf("%s: i=%d j=%d lower=%21.15e upper=%21.15e delta=%21.15e ferr=%21.15e resultY=%21.15e searchDFy=%21.15e fvals=%21.15e searchX=%21.15e searchF=%21.15e\n", \
+           tmp_str, i, j, lowerbound[j], upperbound[j], delta[j], ferr_xy[j], resultY[j], searchDFy[j], fvals[j], searchX[j], searchF[j]);
+# define _EOS_PRINT_JLOOP_DATA                                          \
+  printf("%2d. ", j);                                                   \
+  k0 = MIN(iy_low[j], iy_high[j]);                                      \
+  kn = MAX(iy_low[j]+1, iy_high[j]+1);                                  \
+  for (k=k0; k<=kn; k++)                                                \
+    printf("y[%d]=%12.5e ",k,ytbls[k]);                                 \
+  printf("\n");                                                         \
+  printf("    F[%d][%d]=%12.5e F[%d][%d]=%12.5e\n    F[%d][%d]=%12.5e F[%d][%d]=%12.5e : X=%12.5e F=%12.5e Y=%12.5e fvals=%12.5e delta=%12.5e L=%12.5e U=%12.5e err=%12.5e\n", \
+         iy_low[j]   ,ix_low[j] ,ftbls[iy_low[j]   ][ix_low[j]],        \
+         iy_low[j]+1 ,ix_low[j] ,ftbls[iy_low[j]+1 ][ix_low[j]],        \
+         iy_high[j]  ,ix_high[j],ftbls[iy_high[j]  ][ix_high[j]],       \
+         iy_high[j]+1,ix_high[j],ftbls[iy_high[j]+1][ix_high[j]],       \
+         searchX[j],searchF[j],resultY[j],fvals[j],delta[j],            \
+         lowerbound[j],upperbound[j],ferr_xy[j]                         \
+         );
 #else
 # define _EOS_PRINT_ITERATION_MARK(macro_s1,macro_s2,macro_i,macro_s3)
 # define _EOS_PRINT_ITERATION_DETAIL
@@ -3306,7 +3607,9 @@ void eos_InverseRationalInterpolateXF (EOS_INTEGER nsrch, EOS_REAL *searchX,
   EOS_REAL *fvals, *fvals1, *fvals2, ferr, *ferr_xy, *deltaold, *delta,
     *lowerbound, *upperbound, *mid_y;
   EOS_BOOLEAN foundRoot, *found_zero;
+#ifdef DEBUG_EOS_INVERSERATIONALINTERPOLATEXF
   EOS_CHAR tmp_str[50];
+#endif
 
 #ifdef _EOS_DUMP_INDEX_DATA_INVERSERATIONALINTERPOLATEXF
   char *fn = "eos_InverseRationalInterpolateXF.indices";
@@ -3332,10 +3635,11 @@ void eos_InverseRationalInterpolateXF (EOS_INTEGER nsrch, EOS_REAL *searchX,
   lowerbound = (EOS_REAL *) malloc (nsrch * sizeof (EOS_REAL));
   upperbound = (EOS_REAL *) malloc (nsrch * sizeof (EOS_REAL));
   mid_y = (EOS_REAL *) malloc (nsrch * sizeof (EOS_REAL));
+  EOS_REAL *ftbls_flat = &ftbls[0][0];
 
   /* search table to locate indexes of X, Y */
   eos_SearchIndices_XF (searchX, searchF, nsrch, xtbls, ytbls, ftbls, nxtbl,
-                        nytbl, nGhostData, iy_low, ix_low, iy_high, ix_high, NULL, 0,
+                        nytbl, nGhostData, iy_low, ix_low, iy_high, ix_high, NULL, X_ht, F_ht, 0,
                         xyBounds, err);
   if (eos_GetStandardErrorCodeFromCustomErrorCode(*err) == EOS_INTERP_EXTRAPOLATED ||
       eos_GetStandardErrorCodeFromCustomErrorCode(*err) == EOS_UNDEFINED)
@@ -3357,8 +3661,8 @@ void eos_InverseRationalInterpolateXF (EOS_INTEGER nsrch, EOS_REAL *searchX,
     /* reset binary search values */
     for (j=0; j<nsrch; j++) {
       if (i==1) { /* first time through loop, initialize indices to extreme bounds */
-	iy_low[j] = 1;
-	iy_low2[j] = nytbl-1-2*nGhostData;
+        iy_low[j] = 1;
+        iy_low2[j] = nytbl-1-2*nGhostData;
       }
       iy_low1[j] = (iy_low2[j] + iy_low[j])/2; /* what is the mid point ? */
       lowerbound[j] = ytbls[iy_low[j]];
@@ -3368,28 +3672,28 @@ void eos_InverseRationalInterpolateXF (EOS_INTEGER nsrch, EOS_REAL *searchX,
 
     /*interpolate at upper, lower bounds and midpoint for whole array*/
     eos_BiRationalInterpolate (nsrch, nxtbl, nytbl, xtbls, ytbls, ftbls, ix_low, iy_low,
-			       searchX, lowerbound, fvals, searchDFx, searchDFy, xyBounds, err);
+                               searchX, lowerbound, fvals, searchDFx, searchDFy, xyBounds, err);
     eos_BiRationalInterpolate (nsrch, nxtbl, nytbl, xtbls, ytbls, ftbls, ix_low, iy_low1,
-			       searchX, mid_y, fvals1, searchDFx, searchDFy, xyBounds, err);
+                               searchX, mid_y, fvals1, searchDFx, searchDFy, xyBounds, err);
     eos_BiRationalInterpolate (nsrch, nxtbl, nytbl, xtbls, ytbls, ftbls, ix_low, iy_low2,
-			       searchX, upperbound, fvals2, searchDFx, searchDFy, xyBounds, err);
+                               searchX, upperbound, fvals2, searchDFx, searchDFy, xyBounds, err);
 
     for (j=0; j<nsrch; j++) {
       found_zero[j] = EOS_TRUE; /* reset flag */
       if (searchF[j] < fvals1[j]) /* change upperbound index */
-	iy_low2[j] = MAX(AVERAGE (EOS_INTEGER, iy_low[j], iy_low2[j]), 1);
+        iy_low2[j] = MAX(AVERAGE (EOS_INTEGER, iy_low[j], iy_low2[j]), 1);
       else /* change lowerbound index */
-	iy_low[j]  = MAX(AVERAGE (EOS_INTEGER, iy_low[j], iy_low2[j]), 1);
+        iy_low[j]  = MAX(AVERAGE (EOS_INTEGER, iy_low[j], iy_low2[j]), 1);
 
       iy_low1[j] = MAX(AVERAGE (EOS_INTEGER, iy_low[j], iy_low2[j]), 1); /* change middle index */
 
       if ((searchF[j] < fvals[j]) ||
-	  (searchF[j] > fvals2[j]) ||
-	  (iy_low2[j] - iy_low[j] > 1))
-	found_zero[j] = EOS_FALSE; /* at least one root is not yet adequately bounded */
+          (searchF[j] > fvals2[j]) ||
+          (iy_low2[j] - iy_low[j] > 1))
+        found_zero[j] = EOS_FALSE; /* at least one root is not yet adequately bounded */
 
       if (iy_low2[j] - iy_low[j] <= 1)
-	found_zero[j] = EOS_TRUE; /* override since extrapolation will occur */
+        found_zero[j] = EOS_TRUE; /* override since extrapolation will occur */
 
       lowerbound[j] = ytbls[iy_low[j]];
       mid_y[j]      = ytbls[iy_low1[j]];
@@ -3406,13 +3710,16 @@ void eos_InverseRationalInterpolateXF (EOS_INTEGER nsrch, EOS_REAL *searchX,
   } /* end of root finding loop */
 
   /* Determine extrapolation error codes and assign them to the xyBounds array */
-  _eos_CheckExtrapCategory2(EOS_FALSE, nGhostData, ix_low, EOS_TRUE,
-			    nxtbl, nytbl, xtbls, ytbls, ftbls,
-			    nsrch, searchX, searchF, xyBounds, err);
-  if (eos_GetStandardErrorCodeFromCustomErrorCode(*err) == EOS_INTERP_EXTRAPOLATED ||
-      eos_GetStandardErrorCodeFromCustomErrorCode(*err) == EOS_UNDEFINED)
-    returnErr = EOS_INTERP_EXTRAPOLATED;
+  EOS_BOOLEAN skipExtrap = _EOS_GET_SKIPEXTRAPCHECK_EOSDATAMAP;;
 
+  if (!skipExtrap){
+    _eos_CheckExtrapCategory2(EOS_FALSE, nGhostData, ix_low, EOS_TRUE,
+			      nxtbl, nytbl, xtbls, ytbls, ftbls,
+			      nsrch, searchX, searchF, X_ht, Y_ht, xyBounds, err);
+    if (eos_GetStandardErrorCodeFromCustomErrorCode(*err) == EOS_INTERP_EXTRAPOLATED ||
+	eos_GetStandardErrorCodeFromCustomErrorCode(*err) == EOS_UNDEFINED)
+      returnErr = EOS_INTERP_EXTRAPOLATED;
+  }
 #ifndef __DISALLOW_POSITIVE_XF_EXTRAPOLATION_IF_INVERTATSETUP__
 #  define __ALLOW_POSITIVE_EXTRAPOLATION_IF_INVERTATSETUP__
 #endif
@@ -3420,15 +3727,15 @@ void eos_InverseRationalInterpolateXF (EOS_INTEGER nsrch, EOS_REAL *searchX,
   i = 1;
   do {
 
-  /* reset upperbound if necessary to allow for extrapolation */
+    /* reset upperbound if necessary to allow for extrapolation */
 
     foundRoot = EOS_TRUE;
     eos_BiRationalInterpolate (nsrch, nxtbl, nytbl, xtbls, ytbls, ftbls, ix_low, iy_low2,
-			       searchX, upperbound, fvals2, searchDFx, searchDFy, xyBounds, err);
+                               searchX, upperbound, fvals2, searchDFx, searchDFy, xyBounds, err);
     for (j=0; j<nsrch; j++) {
       if (searchF[j] > fvals2[j]) { /* change upperbound value */
-	upperbound[j] *= 2.0;
-	foundRoot = EOS_FALSE; /* at least one root is not yet adequately bounded */
+        upperbound[j] *= 2.0;
+        foundRoot = EOS_FALSE; /* at least one root is not yet adequately bounded */
       }
     } /* end for (j=0; j<nsrch; j++) */
 
@@ -3445,10 +3752,10 @@ void eos_InverseRationalInterpolateXF (EOS_INTEGER nsrch, EOS_REAL *searchX,
     /* reset lowerbound if necessary to allow for extrapolation */
 
     eos_BiRationalInterpolate (nsrch, nxtbl, nytbl, xtbls, ytbls, ftbls, ix_low, iy_low,
-			       searchX, lowerbound, fvals, searchDFx, searchDFy, xyBounds, err);
+                               searchX, lowerbound, fvals, searchDFx, searchDFy, xyBounds, err);
     for (j=0; j<nsrch; j++) {
       if (searchF[j] < fvals[j]) { /* change lowerbound value */
-	lowerbound[j] = - ytbls[nytbl-1-2*nGhostData];
+        lowerbound[j] = - ytbls[nytbl-1-2*nGhostData];
       }
     } /* end for (j=0; j<nsrch; j++) */
 
@@ -3465,7 +3772,7 @@ void eos_InverseRationalInterpolateXF (EOS_INTEGER nsrch, EOS_REAL *searchX,
 
 #ifdef _EOS_DUMP_INDEX_DATA_INVERSERATIONALINTERPOLATEXF
   _eos_DumpIndicesToFile (fn, mode, nsrch, xtbls, ytbls, ftbls,
-			  ix_low, iy_low, lowerbound, upperbound);
+                          ix_low, iy_low, lowerbound, upperbound);
 #endif
 
 #ifdef DUMP_WARNINGS
@@ -3475,22 +3782,24 @@ void eos_InverseRationalInterpolateXF (EOS_INTEGER nsrch, EOS_REAL *searchX,
   i = 1; /* initialize iteration counter */
 
   do { /* DO loop to perform Newton-Bisection  hybrid algorithm to
-	  solve for the inverted resultY[] values */
+          solve for the inverted resultY[] values */
 
     /* calculate new fvals[] values based upon current resultY[] estimates */
     eos_BiRationalInterpolate (nsrch, nxtbl, nytbl, xtbls, ytbls, ftbls, ix_low, iy_low,
-			       searchX, resultY, fvals, searchDFx, searchDFy, xyBounds, err);
+                               searchX, resultY, fvals, searchDFx, searchDFy, xyBounds, err);
 
     for (j=0; j<nsrch; j++) {
       /* check for div-by-zero while using tabulated data */
-      if (((EOS_REAL) 0) == (ftbls[iy_low[j]+1][ix_low[j]] - ftbls[iy_low[j]][ix_low[j]])) {
-	*err = EOS_INTERP_EXTRAPOLATED;
-	xyBounds[j] = EOS_CANT_INVERT_DATA;
-	continue;
+      if (((EOS_REAL) 0) == (ftbls_flat[(iy_low[j]+1)*nxtbl+ix_low[j]] - ftbls_flat[iy_low[j]*nxtbl+ix_low[j]])) {
+        if (!skipExtrap) {
+        *err = EOS_INTERP_EXTRAPOLATED;
+        }
+        xyBounds[j] = EOS_CANT_INVERT_DATA;
+        continue;
       }
 
       ferr_xy[j] = FABS((searchF[j] - fvals[j]) /
-			(ftbls[iy_low[j]+1][ix_low[j]] - ftbls[iy_low[j]][ix_low[j]]));
+                        (ftbls_flat[(iy_low[j]+1)*nxtbl+ix_low[j]] - ftbls_flat[iy_low[j]*nxtbl+ix_low[j]]));
     }
     _EOS_PRINT_ITERATION_MARK("begin","Newton-Bisection",i,"");
 
@@ -3505,28 +3814,45 @@ void eos_InverseRationalInterpolateXF (EOS_INTEGER nsrch, EOS_REAL *searchX,
 
       /* Narrow the interval */
       if ((fvals[j] - searchF[j]) < 0.0)
-	lowerbound[j] = resultY[j];
+        lowerbound[j] = resultY[j];
       else
-	upperbound[j] = resultY[j];
+        upperbound[j] = resultY[j];
 
       if ((FABS (2.0 * (fvals[j] - searchF[j])) >
-	   FABS (deltaold[j] * searchDFy[j])) ||
-	  (((resultY[j] - upperbound[j]) * searchDFy[j] - (fvals[j] - searchF[j])) *
-	   ((resultY[j] - lowerbound[j]) * searchDFy[j] - (fvals[j] - searchF[j])) > 0.0)) {
-	/* Perform Bisection -- Newton step is either out of range or not decreasing fast enough */
-	sprintf(tmp_str,"bisect");
-	delta[j] = (EOS_REAL) 0.5 *(upperbound[j] - lowerbound[j]);
-	resultY[j] = lowerbound[j] + delta[j];
-	ferr_xy[j] = FABS(delta[j] /
-		       (ytbls[iy_low[j]+1] - ytbls[iy_low[j]]));
+           FABS (deltaold[j] * searchDFy[j])) ||
+          (((resultY[j] - upperbound[j]) * searchDFy[j] - (fvals[j] - searchF[j])) *
+           ((resultY[j] - lowerbound[j]) * searchDFy[j] - (fvals[j] - searchF[j])) > 0.0)) {
+        /* Perform Bisection -- Newton step is either out of range or not decreasing fast enough */
+#ifdef DEBUG_EOS_INVERSERATIONALINTERPOLATEXF
+        sprintf(tmp_str,"bisect");
+#endif
+        delta[j] = (EOS_REAL) 0.5 *(upperbound[j] - lowerbound[j]);
+        resultY[j] = lowerbound[j] + delta[j];
+        ferr_xy[j] = FABS(delta[j] /
+                          (ytbls[iy_low[j]+1] - ytbls[iy_low[j]]));
       }
       else {
-	/* Perform Newton step */
-	sprintf(tmp_str,"newton");
-	ferr_xy[j] = FABS((searchF[j] - fvals[j]) /
-		       (ftbls[iy_low[j]+1][ix_low[j]] - ftbls[iy_low[j]][ix_low[j]]));
-	delta[j] = (fvals[j] - searchF[j]) / searchDFy[j];   /* estimate */
-	resultY[j] = resultY[j] - delta[j];
+        /* Perform Newton step */
+        EOS_REAL d = ftbls_flat[(iy_low[j]+1)*nxtbl+ix_low[j]] - ftbls_flat[iy_low[j]*nxtbl+ix_low[j]];
+        EOS_REAL n = searchF[j] - fvals[j];
+        if (d == 0.0)
+        {
+          d = 1.0;
+#ifdef DEBUG_EOS_INVERSERATIONALINTERPOLATEXF
+          printf("%s(%d):d = ftbls_flat[%d*%d+%d] - ftbls_flat[%d*%d+%d] = %g - %g = %g\n",
+                 __FILE__, __LINE__,
+                 iy_low[j]+1, nxtbl, ix_low[j], iy_low[j], nxtbl, ix_low[j],
+                 ftbls_flat[(iy_low[j]+1)*nxtbl+ix_low[j]], ftbls_flat[iy_low[j]*nxtbl+ix_low[j]], d);
+          assert(d != 0.0);
+#endif
+        }
+#ifdef DEBUG_EOS_INVERSERATIONALINTERPOLATEXF
+        sprintf(tmp_str,"newton");
+#endif
+        ferr_xy[j] = FABS(n / d);
+        d = searchDFy[j];
+        delta[j] = (fvals[j] - searchF[j]) / d;   /* estimate */
+        resultY[j] = resultY[j] - delta[j];
       }
 
       _EOS_PRINT_ITERATION_DETAIL;
@@ -3536,14 +3862,16 @@ void eos_InverseRationalInterpolateXF (EOS_INTEGER nsrch, EOS_REAL *searchX,
 
     }
 
+#ifdef DEBUG_EOS_INVERSERATIONALINTERPOLATEXF
     sprintf(tmp_str," (max err=%12.5e)\n",ferr);
+#endif
     _EOS_PRINT_ITERATION_MARK("end","Newton-Bisection",i,tmp_str);
 
     i++; /* increment iteration counter */
 
   } /* end of Newton-Bisection DO loop */
   while ((ferr > _eos_machinePrecisionData.maxErr) &&
-	 (i < _eos_machinePrecisionData.maxIter));
+         (i < _eos_machinePrecisionData.maxIter));
 
   if ((ferr > _eos_machinePrecisionData.maxErr) &&
       (i >= _eos_machinePrecisionData.maxIter)) {
@@ -3551,25 +3879,25 @@ void eos_InverseRationalInterpolateXF (EOS_INTEGER nsrch, EOS_REAL *searchX,
       *err = EOS_INTERP_EXTRAPOLATED;
       /* adjust error code to account for extrapolation and failed convergence */
       for (j=0; j<nsrch; j++) {
-	if (ferr_xy[j] > _eos_machinePrecisionData.maxErr && found_zero[j]) {
-	  returnErr = xyBounds[j] = EOS_CONVERGENCE_FAILED;
-	}
+        if (ferr_xy[j] > _eos_machinePrecisionData.maxErr && found_zero[j]) {
+          returnErr = xyBounds[j] = EOS_CONVERGENCE_FAILED;
+        }
       }
       if (eos_GetStandardErrorCodeFromCustomErrorCode(returnErr) == EOS_CONVERGENCE_FAILED) {
-	/* send user a modified error message */
-	eos_SetCustomMsg_str (errMsg,
-			      "EOS_INTERP_EXTRAPOLATED: Interpolation caused extrapolation beyond data table boundaries (Newton-Bisection method exceeded %i iterations given convergence criterion %e (rel.err=%g))",
-			      _eos_machinePrecisionData.maxIter,
-			      _eos_machinePrecisionData.maxErr, ferr);
+        /* send user a modified error message */
+        eos_SetCustomMsg_str (errMsg,
+                              "EOS_INTERP_EXTRAPOLATED: Interpolation caused extrapolation beyond data table boundaries (Newton-Bisection method exceeded %i iterations given convergence criterion %e (rel.err=%g))",
+                              _eos_machinePrecisionData.maxIter,
+                              _eos_machinePrecisionData.maxErr, ferr);
       }
     }
     else {
       *err = EOS_CONVERGENCE_FAILED;
       /* send user a warning message */
       eos_SetCustomMsg_str (errMsg,
-			    "EOSPAC WARNING: Newton-Bisection method exceeded %i iterations given convergence criterion %e (rel.err=%g)",
-			    _eos_machinePrecisionData.maxIter,
-			    _eos_machinePrecisionData.maxErr, ferr);
+                            "EOSPAC WARNING: Newton-Bisection method exceeded %i iterations given convergence criterion %e (rel.err=%g)",
+                            _eos_machinePrecisionData.maxIter,
+                            _eos_machinePrecisionData.maxErr, ferr);
     }
   }
 
@@ -3598,7 +3926,7 @@ void eos_InverseRationalInterpolateXF (EOS_INTEGER nsrch, EOS_REAL *searchX,
 #endif
 }
 
-/**************************************************************************************
+/*************************************************************************************
      eos_BiRationalInterpolate()
      purpose   -- performs 1 2-D rational interpolations based on Cranfill and Kerley
                   algorithm for search-interpolation on eos function f(x,y).
@@ -3641,113 +3969,111 @@ c
 void eos_BiRationalInterpolate (EOS_INTEGER numZones, EOS_INTEGER numXVals,
                                 EOS_INTEGER numYVals, EOS_REAL *XValues,
                                 EOS_REAL *YValues, EOS_REAL **FValues,
-				EOS_INTEGER *ixv, EOS_INTEGER *iyv,
+                                EOS_INTEGER *ixv, EOS_INTEGER *iyv,
                                 EOS_REAL *searchXVals, EOS_REAL *searchYVals,
                                 EOS_REAL *searchFVals, EOS_REAL *searchDFx,
                                 EOS_REAL *searchDFy, EOS_INTEGER *xyBounds,
                                 EOS_INTEGER *err)
 {
-  EOS_INTEGER i, ix, iy;
-  EOS_REAL ftg31, ftg32, ftg13, ftg11, ftg12, ftg14, ftg23, ftg21, ftg22,
-    ftg24, ftg41, ftg42, fxy1;
-  EOS_REAL rx3, rx4, sxv, txv, ry3, ry4, syv, tyv, fx1, fxx1, gxx1, fx2, fxx2,
-    gxx2, fy1, fyy1, gxy1, gyx1, gyy1, fy2, fyy2, gyy2, wx1, wx2, wy1, wy2,
-    dxg1, dxg2, dxg3, dyg1, dyg2, dyg3, rxv, ryv;
 
+  EOS_INTEGER i;
   *err = EOS_OK;
 
   /* if (2-point) search-interpolation is impossible, return. */
-  if (numYVals <= 1)
+  if (numYVals <= 4 || numXVals <=4)  
     return;
+
+  EOS_BOOLEAN get_df = ((searchDFx==NULL||searchDFy==NULL)?EOS_FALSE:EOS_TRUE);
+#ifdef DO_OFFLOAD
+  EOS_BOOLEAN useGpuData=_EOS_GET_USEGPUDATA_EOSDATAMAP;
+#endif /* DO_OFFLOAD */
+
 
 #ifndef DISABLE_OMP_SIMD_PRAGMA
 #pragma omp simd
 #endif
+#ifdef DO_OFFLOAD
+#pragma omp target if(useGpuData) is_device_ptr(FValues, searchXVals, searchYVals, ixv, iyv, XValues, YValues, searchFVals, searchDFx, searchDFy)
+  {
+    #pragma omp teams distribute parallel for
+#endif
   for (i = 0; i < numZones; i++) {
-    if (xyBounds[i] == EOS_UNDEFINED)
-        continue;               /* move to another point */
+#ifdef DO_OFFLOAD
+    EOS_REAL *FValues_flat = useGpuData ? &FValues[0] : &FValues[0][0];
+#else
+    EOS_REAL *FValues_flat = &FValues[0][0];
+#endif /* DO_OFFLOAD */
+    EOS_INTEGER ix = MIN(numXVals - 3, MAX(1, ixv[i]));
+    EOS_INTEGER iy = MIN(numYVals - 3, MAX(1, iyv[i]));
+    
+    EOS_REAL dxg1 = XValues[ix] - XValues[ix - 1];
+    EOS_REAL dxg2 = XValues[ix + 1] - XValues[ix];
+    EOS_REAL dxg3 = XValues[ix + 2] - XValues[ix + 1];
+    EOS_REAL rxv = (searchXVals[i] - XValues[ix]) / dxg2;
 
-    ix = ixv[i];
-    iy = iyv[i];
-    while (ix < 1)
-      ix++;
-    while (iy < 1)
-      iy++;
-    while (ix > numXVals - 3)
-      ix--;
-    while (iy > numYVals - 3)
-      iy--;
+    EOS_REAL dyg1 = YValues[iy] - YValues[iy - 1];
+    EOS_REAL dyg2 = YValues[iy + 1] - YValues[iy];
+    EOS_REAL dyg3 = YValues[iy + 2] - YValues[iy + 1];
+    EOS_REAL ryv = (searchYVals[i] - YValues[iy]) / dyg2;
+    EOS_REAL ftg31 = FValues_flat[(iy + 0) * numXVals + ( ix - 1 )];
+    EOS_REAL ftg32 = FValues_flat[(iy + 1) * numXVals + ( ix - 1 )];
+    EOS_REAL ftg13 = FValues_flat[(iy - 1) * numXVals + ( ix + 0 )];
+    EOS_REAL ftg11 = FValues_flat[(iy + 0) * numXVals + ( ix + 0 )];
+    EOS_REAL ftg12 = FValues_flat[(iy + 1) * numXVals + ( ix + 0 )];
+    EOS_REAL ftg14 = FValues_flat[(iy + 2) * numXVals + ( ix + 0 )];
+    EOS_REAL ftg23 = FValues_flat[(iy - 1) * numXVals + ( ix + 1 )];
+    EOS_REAL ftg21 = FValues_flat[(iy + 0) * numXVals + ( ix + 1 )];
+    EOS_REAL ftg22 = FValues_flat[(iy + 1) * numXVals + ( ix + 1 )];
+    EOS_REAL ftg24 = FValues_flat[(iy + 2) * numXVals + ( ix + 1 )];
+    EOS_REAL ftg41 = FValues_flat[(iy + 0) * numXVals + ( ix + 2 )];
+    EOS_REAL ftg42 = FValues_flat[(iy + 1) * numXVals + ( ix + 2 )];
 
-    // DAP: dump searched indices
-    //printf("%d of %d\tixv[i]: %d\tiyv[i]: %d\n",i+1,numZones,ixv[i],iyv[i]);
-
-    ftg31 = FValues[iy + 0][ix - 1];
-    ftg32 = FValues[iy + 1][ix - 1];
-    ftg13 = FValues[iy - 1][ix + 0];
-    ftg11 = FValues[iy + 0][ix + 0];
-    ftg12 = FValues[iy + 1][ix + 0];
-    ftg14 = FValues[iy + 2][ix + 0];
-    ftg23 = FValues[iy - 1][ix + 1];
-    ftg21 = FValues[iy + 0][ix + 1];
-    ftg22 = FValues[iy + 1][ix + 1];
-    ftg24 = FValues[iy + 2][ix + 1];
-    ftg41 = FValues[iy + 0][ix + 2];
-    ftg42 = FValues[iy + 1][ix + 2];
-
-    dxg1 = XValues[ix] - XValues[ix - 1];
-    dxg2 = XValues[ix + 1] - XValues[ix];
-    dxg3 = XValues[ix + 2] - XValues[ix + 1];
-    rxv = (searchXVals[i] - XValues[ix]) / dxg2;
-
-    dyg1 = YValues[iy] - YValues[iy - 1];
-    dyg2 = YValues[iy + 1] - YValues[iy];
-    dyg3 = YValues[iy + 2] - YValues[iy + 1];
-    ryv = (searchYVals[i] - YValues[iy]) / dyg2;
-
-    rx3 = -dxg1 / dxg2;
-    rx4 = dxg3 / dxg2 + (EOS_REAL) 1.0;
-    sxv = (rx3 > rxv) ? rx3 : rxv;
+    EOS_REAL rx3 = -dxg1 / dxg2;
+    EOS_REAL rx4 = dxg3 / dxg2 + (EOS_REAL) 1.0;
+    EOS_REAL sxv = (rx3 > rxv) ? rx3 : rxv;
     sxv = (sxv < rx4) ? sxv : rx4;
-    //        sxv  =  min (rx4, max (rx3, rxv))
-    txv = (rxv > (EOS_REAL) 0.0) ? rxv : (EOS_REAL) 0.0;
+     //        sxv  =  min (rx4, max (rx3, rxv))
+    EOS_REAL txv = (rxv > (EOS_REAL) 0.0) ? rxv : (EOS_REAL) 0.0;
     txv = (txv < (EOS_REAL) 1.0) ? txv : (EOS_REAL) 1.0;
     //        txv  =  min ( one, max ( zero, rxv))
 
-    ry3 = -dyg1 / dyg2;
-    ry4 = dyg3 / dyg2 + (EOS_REAL) 1.0;
-    syv = (ry3 > ryv) ? ry3 : ryv;
+    EOS_REAL ry3 = -dyg1 / dyg2;
+    EOS_REAL ry4 = dyg3 / dyg2 + (EOS_REAL) 1.0;
+    EOS_REAL syv = (ry3 > ryv) ? ry3 : ryv;
     syv = (syv < ry4) ? syv : ry4;
     //        syv  =  min (ry4, max (ry3, ryv))
-    tyv = (ryv > (EOS_REAL) 0.0) ? ryv : (EOS_REAL) 0.0;
+    EOS_REAL tyv = (ryv > (EOS_REAL) 0.0) ? ryv : (EOS_REAL) 0.0;
     tyv = (tyv < (EOS_REAL) 1.0) ? tyv : (EOS_REAL) 1.0;
     //        tyv  =  min ( one, max ( zero, ryv))
 
-    fx1 = ftg21 - ftg11;
-    fxx1 = (fx1 - (ftg31 - ftg11) / rx3) / ((EOS_REAL) 1.0 - rx3);
-    gxx1 = (fx1 - (ftg41 - ftg11) / rx4) / ((EOS_REAL) 1.0 - rx4) - fxx1;
-    fx2 = ftg22 - ftg12;
-    fxx2 = (fx2 - (ftg32 - ftg12) / rx3) / ((EOS_REAL) 1.0 - rx3);
-    gxx2 = (fx2 - (ftg42 - ftg12) / rx4) / ((EOS_REAL) 1.0 - rx4) - fxx2;
+    EOS_REAL fx1 = ftg21 - ftg11;
+    EOS_REAL fxx1 = (fx1 - (ftg31 - ftg11) / rx3) / ((EOS_REAL) 1.0 - rx3);
+    EOS_REAL gxx1 = (fx1 - (ftg41 - ftg11) / rx4) / ((EOS_REAL) 1.0 - rx4) - fxx1;
+    EOS_REAL fx2 = ftg22 - ftg12;
+    EOS_REAL fxx2 = (fx2 - (ftg32 - ftg12) / rx3) / ((EOS_REAL) 1.0 - rx3);
+    EOS_REAL gxx2 = (fx2 - (ftg42 - ftg12) / rx4) / ((EOS_REAL) 1.0 - rx4) - fxx2;
 
-    fy1 = ftg12 - ftg11;
-    fyy1 = (fy1 - (ftg13 - ftg11) / ry3) / ((EOS_REAL) 1.0 - ry3);
-    gyy1 = (fy1 - (ftg14 - ftg11) / ry4) / ((EOS_REAL) 1.0 - ry4) - fyy1;
-    fy2 = ftg22 - ftg21;
-    fyy2 = (fy2 - (ftg23 - ftg21) / ry3) / ((EOS_REAL) 1.0 - ry3);
-    gyy2 = (fy2 - (ftg24 - ftg21) / ry4) / ((EOS_REAL) 1.0 - ry4) - fyy2;
-    wx1 = txv * FABS (fxx1);
+    EOS_REAL fy1 = ftg12 - ftg11;
+    EOS_REAL fyy1 = (fy1 - (ftg13 - ftg11) / ry3) / ((EOS_REAL) 1.0 - ry3);
+    EOS_REAL gyy1 = (fy1 - (ftg14 - ftg11) / ry4) / ((EOS_REAL) 1.0 - ry4) - fyy1;
+    EOS_REAL fy2 = ftg22 - ftg21;
+    EOS_REAL fyy2 = (fy2 - (ftg23 - ftg21) / ry3) / ((EOS_REAL) 1.0 - ry3);
+    EOS_REAL gyy2 = (fy2 - (ftg24 - ftg21) / ry4) / ((EOS_REAL) 1.0 - ry4) - fyy2;
+    
+    EOS_REAL wx1 = txv * FABS (fxx1);
     wx1 = wx1 / (wx1 + ((EOS_REAL) 1.0 - txv) * FABS (fxx1 + gxx1) + TINY_D);
-    wx2 = txv * FABS (fxx2);
+    EOS_REAL wx2 = txv * FABS (fxx2);
     wx2 = wx2 / (wx2 + ((EOS_REAL) 1.0 - txv) * FABS (fxx2 + gxx2) + TINY_D);
-    wy1 = tyv * FABS (fyy1);
+    EOS_REAL wy1 = tyv * FABS (fyy1);
     wy1 = wy1 / (wy1 + ((EOS_REAL) 1.0 - tyv) * FABS (fyy1 + gyy1) + TINY_D);
-    wy2 = tyv * FABS (fyy2);
+    EOS_REAL wy2 = tyv * FABS (fyy2);
     wy2 = wy2 / (wy2 + ((EOS_REAL) 1.0 - tyv) * FABS (fyy2 + gyy2) + TINY_D);
+    
     fxx1 = fxx1 + wx1 * gxx1;
-    gxy1 = fxx2 + wx2 * gxx2 - fxx1;
+    EOS_REAL gxy1 = fxx2 + wx2 * gxx2 - fxx1;
     fyy1 = fyy1 + wy1 * gyy1;
-    gyx1 = fyy2 + wy2 * gyy2 - fyy1;
-    fxy1 =
+    EOS_REAL gyx1 = fyy2 + wy2 * gyy2 - fyy1;
+    EOS_REAL fxy1 =
       fx2 - fx1 - ((EOS_REAL) 1.0 - sxv - sxv) * gxy1 - ((EOS_REAL) 1.0 -
                                                          syv - syv) * gyx1;
     fx1 = fx1 - ((EOS_REAL) 1.0 - sxv - sxv) * fxx1 - syv * syv * gyx1;
@@ -3756,15 +4082,19 @@ void eos_BiRationalInterpolate (EOS_INTEGER numZones, EOS_INTEGER numXVals,
     searchFVals[i] =
       ftg11 + rxv * fx1 - sxv * sxv * fxx1 + ryv * (fy1 + rxv * fxy1) -
       syv * syv * fyy1;
-    if (searchDFx)
+    
+    if (get_df)
       searchDFx[i] =
         (fx1 + ryv * (fxy1 - wx2 * ((EOS_REAL) 1.0 - wx2) * gxx2) -
          ((EOS_REAL) 1.0 - ryv) * wx1 * ((EOS_REAL) 1.0 - wx1) * gxx1) / dxg2;
-    if (searchDFy)
+    if (get_df)
       searchDFy[i] =
         (fy1 + rxv * (fxy1 - wy2 * ((EOS_REAL) 1.0 - wy2) * gyy2) -
          ((EOS_REAL) 1.0 - rxv) * wy1 * ((EOS_REAL) 1.0 - wy1) * gyy1) / dyg2;
   }
+#ifdef DO_OFFLOAD
+  }
+#endif
 
 }
 
@@ -3790,13 +4120,15 @@ void eos_ExpandGridInterpolate (EOS_INTEGER nAdd, EOS_INTEGER nX,
                                 EOS_REAL **newF, EOS_INTEGER *err)
 {
   EOS_INTEGER i, j, k, l, xyBound = EOS_OK;
+  EOS_REAL *F_flat = &F[0][0];
+
   * err = EOS_OK;
 
   for (i = 0; i < nY - 1; i++) {
     newY[i * (nAdd + 1)] = Y[i];
     for (j = 0; j < nX - 1; j++) {
       newX[j * (nAdd + 1)] = X[j];
-      newF[i * (nAdd + 1)][j * (nAdd + 1)] = F[i][j];
+      newF[i * (nAdd + 1)][j * (nAdd + 1)]  = F_flat[i * nX + j];
       for (k = 0; k <= nAdd; k++) {
         if (k > 0)
           newY[i * (nAdd + 1) + k] =
@@ -3810,11 +4142,11 @@ void eos_ExpandGridInterpolate (EOS_INTEGER nAdd, EOS_INTEGER nX,
           /* the window will be adjusted inside the call if i or j are not within 1, nY-3 range */
           if (l != 0 || k != 0)
             eos_BiRationalInterpolate (1, nX, nY, X, Y, F, &j, &i,
-                                        &(newX[j * (nAdd + 1) + l]),
-                                        &(newY[i * (nAdd + 1) + k]),
-                                        &(newF[i * (nAdd + 1) + k]
-                                          [j * (nAdd + 1) + l]), NULL, NULL,
-                                        &xyBound, err);
+                                       &(newX[j * (nAdd + 1) + l]),
+                                       &(newY[i * (nAdd + 1) + k]),
+                                       &(newF[i * (nAdd + 1) + k]
+                                         [j * (nAdd + 1) + l]), NULL, NULL,
+                                       &xyBound, err);
         }                       /* l - loop */
       }                         /* k - loop */
     }                           /* j - loop */
@@ -3823,31 +4155,31 @@ void eos_ExpandGridInterpolate (EOS_INTEGER nAdd, EOS_INTEGER nX,
   /* assign end points */
   newY[nY + (nY - 1) * nAdd - 1] = Y[nY - 1];
   newX[nX + (nX - 1) * nAdd - 1] = X[nX - 1];
-  newF[nY + (nY - 1) * nAdd - 1][nX + (nX - 1) * nAdd - 1] =
-    F[nY - 1][nX - 1];
+  newF[nY + (nY - 1) * nAdd - 1][nX + (nX - 1) * nAdd - 1]=
+    F_flat[(nY - 1) * nX + nX - 1];    
   /* fill in the edges */
   for (i = 0; i < nY - 1; i++) {
-    newF[i * (nAdd + 1)][nX + (nX - 1) * nAdd - 1] = F[i][nX - 1];
+    newF[i * (nAdd + 1)][nX + (nX - 1) * nAdd - 1] = F_flat[i * nX + nX - 1];
     j = nX - 1;
     for (k = 1; k <= nAdd; k++)
       eos_BiRationalInterpolate (1, nX, nY, X, Y, F, &j, &i,
-                                  &(newX[nX + (nX - 1) * nAdd - 1]),
-                                  &(newY[i * (nAdd + 1) + k]),
-                                  &(newF[i * (nAdd + 1) + k]
-                                    [nX + (nX - 1) * nAdd - 1]), NULL, NULL,
-                                  &xyBound, err);
+                                 &(newX[nX + (nX - 1) * nAdd - 1]),
+                                 &(newY[i * (nAdd + 1) + k]),
+                                 &(newF[i * (nAdd + 1) + k]
+                                   [nX + (nX - 1) * nAdd - 1]), NULL, NULL,
+                                 &xyBound, err);
   }
 
   for (j = 0; j < nX - 1; j++) {
-    newF[nY + (nY - 1) * nAdd - 1][j * (nAdd + 1)] = F[i][nX - 1];
+    newF[nY + (nY - 1) * nAdd - 1][j * (nAdd + 1)]= F_flat[i * nX + nX - 1];    
     i = nY - 1;
     for (l = 0; l <= nAdd; l++)
       eos_BiRationalInterpolate (1, nX, nY, X, Y, F, &j, &i,
-                                  &(newX[j * (nAdd + 1) + l]),
-                                  &(newY[nY + (nY - 1) * nAdd - 1]),
-                                  &(newF[nY + (nY - 1) * nAdd - 1]
-                                    [j * (nAdd + 1) + l]), NULL, NULL,
-                                  &xyBound, err);
+                                 &(newX[j * (nAdd + 1) + l]),
+                                 &(newY[nY + (nY - 1) * nAdd - 1]),
+                                 &(newF[nY + (nY - 1) * nAdd - 1]
+                                   [j * (nAdd + 1) + l]), NULL, NULL,
+                                 &xyBound, err);
   }
 }
 
@@ -3880,7 +4212,7 @@ void eos_ExpandGridInterpolate (EOS_INTEGER nAdd, EOS_INTEGER nX,
 EOS_INTEGER eos_TrapezoidIntegrate (EOS_INTEGER ilower, EOS_INTEGER iupper, EOS_REAL x,
                                     EOS_INTEGER nData, EOS_REAL *fData, EOS_REAL *xData,
                                     EOS_INTEGER nInsert, EOS_REAL *result,
-				    EOS_BOOLEAN keepTempArays)
+                                    EOS_BOOLEAN keepTempArays)
 {
   int i, j, index;
   EOS_INTEGER ierr = EOS_OK;
@@ -3906,7 +4238,7 @@ EOS_INTEGER eos_TrapezoidIntegrate (EOS_INTEGER ilower, EOS_INTEGER iupper, EOS_
   else {
 
     if (! (xavg && favg && df && xyBound)
-	&& nVals < ((nInsert + 1) * (iupper - ilower) + 1)) {
+        && nVals < ((nInsert + 1) * (iupper - ilower) + 1)) {
       /* allocate temporary arrays */
       nVals = (nInsert + 1) * (iupper - ilower) + 1;
       xavg = (EOS_REAL *) malloc (nVals * sizeof (EOS_REAL));
@@ -3921,8 +4253,8 @@ EOS_INTEGER eos_TrapezoidIntegrate (EOS_INTEGER ilower, EOS_INTEGER iupper, EOS_
       xavg[index] = xData[i];
       index++;
       for (j = 1; j < nInsert + 1; j++) {
-	xavg[index] = xavg[index - 1] + (xData[i + 1] - xData[i]) / (EOS_REAL)(nInsert+1);
-	index++;
+        xavg[index] = xavg[index - 1] + (xData[i + 1] - xData[i]) / (EOS_REAL)(nInsert+1);
+        index++;
       }
     }
     xavg[index++] = xData[i];
@@ -3930,21 +4262,21 @@ EOS_INTEGER eos_TrapezoidIntegrate (EOS_INTEGER ilower, EOS_INTEGER iupper, EOS_
     if (nData <= 3) {           // use a linear function to estimate average f(x)
 
       /* Note that argument 1 of eos_LineInterpolate is false, because the derivatives are
-	 irrelevant to this integration algorithm. */
+         irrelevant to this integration algorithm. */
       eos_LineInterpolate (EOS_FALSE, nVals, nData, 1, 0, xData, &fData, xavg, favg,
-                           df, 'y', xyBound, &ierr);
+                           df, 'y', NULL, xyBound, &ierr);
       if (eos_GetStandardErrorCodeFromCustomErrorCode(ierr) == EOS_INTERP_EXTRAPOLATED)
-	ierr = EOS_OK;
+        ierr = EOS_OK;
       if (eos_GetStandardErrorCodeFromCustomErrorCode(ierr) != EOS_OK)
         return (ierr);
 
     }
     else {                      // use a rational function to estimate average f(x)
 
-      eos_RationalInterpolate (nVals, nData, 1, 0, xData, fData, xavg, favg,
-			       df, 'y', xyBound, &ierr);
+      eos_RationalInterpolate (EOS_FALSE, nVals, nData, 1, 0, xData, fData, xavg, favg,
+                               df, 'y', NULL, xyBound, &ierr);
       if (eos_GetStandardErrorCodeFromCustomErrorCode(ierr) == EOS_INTERP_EXTRAPOLATED)
-	ierr = EOS_OK;
+        ierr = EOS_OK;
       if (eos_GetStandardErrorCodeFromCustomErrorCode(ierr) != EOS_OK)
         return (ierr);
 
@@ -4081,16 +4413,16 @@ void eos_MixInterpolate (eos_Interpolation *me, EOS_INTEGER nTables,
       me->interpolationDataList[tableHandles[i]]->dFySpecies = (EOS_REAL *) malloc (nXYPairs * sizeof (EOS_REAL));
       /* Initialize output arrays to zero if possible */
       for (j = 0; j < nXYPairs; j++) {
-	if (me->interpolationDataList[tableHandles[i]]->xSpecies)
-	  me->interpolationDataList[tableHandles[i]]->xSpecies[j]   = (EOS_REAL) 0.0;
-	if (me->interpolationDataList[tableHandles[i]]->ySpecies)
-	  me->interpolationDataList[tableHandles[i]]->ySpecies[j]   = (EOS_REAL) 0.0;
-	if (me->interpolationDataList[tableHandles[i]]->FSpecies)
-	  me->interpolationDataList[tableHandles[i]]->FSpecies[j]   = (EOS_REAL) 0.0;
-	if (me->interpolationDataList[tableHandles[i]]->dFxSpecies)
-	  me->interpolationDataList[tableHandles[i]]->dFxSpecies[j] = (EOS_REAL) 0.0;
-	if (me->interpolationDataList[tableHandles[i]]->dFySpecies)
-	  me->interpolationDataList[tableHandles[i]]->dFySpecies[j] = (EOS_REAL) 0.0;
+        if (me->interpolationDataList[tableHandles[i]]->xSpecies)
+          me->interpolationDataList[tableHandles[i]]->xSpecies[j]   = (EOS_REAL) 0.0;
+        if (me->interpolationDataList[tableHandles[i]]->ySpecies)
+          me->interpolationDataList[tableHandles[i]]->ySpecies[j]   = (EOS_REAL) 0.0;
+        if (me->interpolationDataList[tableHandles[i]]->FSpecies)
+          me->interpolationDataList[tableHandles[i]]->FSpecies[j]   = (EOS_REAL) 0.0;
+        if (me->interpolationDataList[tableHandles[i]]->dFxSpecies)
+          me->interpolationDataList[tableHandles[i]]->dFxSpecies[j] = (EOS_REAL) 0.0;
+        if (me->interpolationDataList[tableHandles[i]]->dFySpecies)
+          me->interpolationDataList[tableHandles[i]]->dFySpecies[j] = (EOS_REAL) 0.0;
       }
     }
   }
@@ -4195,10 +4527,10 @@ void eos_MixInterpolate (eos_Interpolation *me, EOS_INTEGER nTables,
       return;
     }
     /*
-       Not implemented for now. Olga
-       case EOS_At? free energy 
-       case EOS_St? entropy 
-     */
+      Not implemented for now. Olga
+      case EOS_At? free energy 
+      case EOS_St? entropy 
+    */
   }
 }
 
@@ -4259,35 +4591,35 @@ void eos_MixTempInterpolation (eos_Interpolation *me, EOS_INTEGER nTables,
 
   * errorCode = EOS_OK;
 
-    xmixr = (EOS_REAL *) malloc (nTables * nXYPairs * sizeof (EOS_REAL));
-    ymixr = (EOS_REAL *) malloc (nTables * nXYPairs * sizeof (EOS_REAL));
-    vmixr = (EOS_REAL *) malloc (nTables * nXYPairs * sizeof (EOS_REAL));
-    dmixr = (EOS_REAL *) malloc (nTables * nXYPairs * sizeof (EOS_REAL));
-    pmixr1 = (EOS_REAL *) malloc (nTables * nXYPairs * sizeof (EOS_REAL));
-    pmixr2 = (EOS_REAL *) malloc (nTables * nXYPairs * sizeof (EOS_REAL));
-    pmixr3 = (EOS_REAL *) malloc (nTables * nXYPairs * sizeof (EOS_REAL));
-    smixr1 = (EOS_REAL *) malloc (nTables * nXYPairs * sizeof (EOS_REAL));
-    smixr2 = (EOS_REAL *) malloc (nTables * nXYPairs * sizeof (EOS_REAL));
-    smixr3 = (EOS_REAL *) malloc (nTables * nXYPairs * sizeof (EOS_REAL));
+  xmixr = (EOS_REAL *) malloc (nTables * nXYPairs * sizeof (EOS_REAL));
+  ymixr = (EOS_REAL *) malloc (nTables * nXYPairs * sizeof (EOS_REAL));
+  vmixr = (EOS_REAL *) malloc (nTables * nXYPairs * sizeof (EOS_REAL));
+  dmixr = (EOS_REAL *) malloc (nTables * nXYPairs * sizeof (EOS_REAL));
+  pmixr1 = (EOS_REAL *) malloc (nTables * nXYPairs * sizeof (EOS_REAL));
+  pmixr2 = (EOS_REAL *) malloc (nTables * nXYPairs * sizeof (EOS_REAL));
+  pmixr3 = (EOS_REAL *) malloc (nTables * nXYPairs * sizeof (EOS_REAL));
+  smixr1 = (EOS_REAL *) malloc (nTables * nXYPairs * sizeof (EOS_REAL));
+  smixr2 = (EOS_REAL *) malloc (nTables * nXYPairs * sizeof (EOS_REAL));
+  smixr3 = (EOS_REAL *) malloc (nTables * nXYPairs * sizeof (EOS_REAL));
 
-    amixr = (EOS_REAL *) malloc (nTables * sizeof (EOS_REAL));
-    zeroConc = (EOS_INTEGER *) malloc (nTables * sizeof (EOS_INTEGER));
+  amixr = (EOS_REAL *) malloc (nTables * sizeof (EOS_REAL));
+  zeroConc = (EOS_INTEGER *) malloc (nTables * sizeof (EOS_INTEGER));
 
-    abarv = (EOS_REAL *) malloc (nXYPairs * sizeof (EOS_REAL));
-    vbarv = (EOS_REAL *) malloc (nXYPairs * sizeof (EOS_REAL));
-    dvdpt = (EOS_REAL *) malloc (nXYPairs * sizeof (EOS_REAL));
-    pdvdp = (EOS_REAL *) malloc (nXYPairs * sizeof (EOS_REAL));
-    vdvdv = (EOS_REAL *) malloc (nXYPairs * sizeof (EOS_REAL));
-    tdvdt = (EOS_REAL *) malloc (nXYPairs * sizeof (EOS_REAL));
-    sbarv1 = (EOS_REAL *) malloc (nXYPairs * sizeof (EOS_REAL));
-    sbarv2 = (EOS_REAL *) malloc (nXYPairs * sizeof (EOS_REAL));
-    sbarv3 = (EOS_REAL *) malloc (nXYPairs * sizeof (EOS_REAL));
-    pbarv1 = (EOS_REAL *) malloc (nXYPairs * sizeof (EOS_REAL));
-    pbarv2 = (EOS_REAL *) malloc (nXYPairs * sizeof (EOS_REAL));
-    pbarv3 = (EOS_REAL *) malloc (nXYPairs * sizeof (EOS_REAL));
+  abarv = (EOS_REAL *) malloc (nXYPairs * sizeof (EOS_REAL));
+  vbarv = (EOS_REAL *) malloc (nXYPairs * sizeof (EOS_REAL));
+  dvdpt = (EOS_REAL *) malloc (nXYPairs * sizeof (EOS_REAL));
+  pdvdp = (EOS_REAL *) malloc (nXYPairs * sizeof (EOS_REAL));
+  vdvdv = (EOS_REAL *) malloc (nXYPairs * sizeof (EOS_REAL));
+  tdvdt = (EOS_REAL *) malloc (nXYPairs * sizeof (EOS_REAL));
+  sbarv1 = (EOS_REAL *) malloc (nXYPairs * sizeof (EOS_REAL));
+  sbarv2 = (EOS_REAL *) malloc (nXYPairs * sizeof (EOS_REAL));
+  sbarv3 = (EOS_REAL *) malloc (nXYPairs * sizeof (EOS_REAL));
+  pbarv1 = (EOS_REAL *) malloc (nXYPairs * sizeof (EOS_REAL));
+  pbarv2 = (EOS_REAL *) malloc (nXYPairs * sizeof (EOS_REAL));
+  pbarv3 = (EOS_REAL *) malloc (nXYPairs * sizeof (EOS_REAL));
 
   /* macro used to free locally-allocated arrays */
-#define FREE_EOS_MIXTEMPINTERPOLATION_ARRAYS \
+#define FREE_EOS_MIXTEMPINTERPOLATION_ARRAYS                            \
   EOS_FREE(xmixr); EOS_FREE(ymixr); EOS_FREE(vmixr); EOS_FREE(dmixr); EOS_FREE(pmixr1); EOS_FREE(pmixr2); EOS_FREE(pmixr3); \
   EOS_FREE(smixr1); EOS_FREE(smixr2); EOS_FREE(smixr3); EOS_FREE(amixr); EOS_FREE(abarv); EOS_FREE(vbarv); EOS_FREE(sbarv1); \
   EOS_FREE(sbarv2); EOS_FREE(sbarv3); EOS_FREE(pbarv1); EOS_FREE(pbarv2); EOS_FREE(pbarv3); EOS_FREE(zeroConc); EOS_FREE(vdvdv); \
@@ -4298,12 +4630,12 @@ void eos_MixTempInterpolation (eos_Interpolation *me, EOS_INTEGER nTables,
   /* get atomic masses for all regions to be mixed */
   for (i = 0; i < nTables; i++) {
     /*call getTableData(itype-1_i_kind, jmixr-1_i_kind,
-       &                     ftabs, mtabs, materialID, aveAtomicNumber,
-       &                     aveAtomicWgt, refDensity, logAxes,
-       &                     xCnvrtFactor, yCnvrtFactor, fCnvrtFactor,
-       &                     fileId, nxTable, nyTable, xAxisIndex,
-       &                     yAxisIndex, tableIndex)
-     */
+      &                     ftabs, mtabs, materialID, aveAtomicNumber,
+      &                     aveAtomicWgt, refDensity, logAxes,
+      &                     xCnvrtFactor, yCnvrtFactor, fCnvrtFactor,
+      &                     fileId, nxTable, nyTable, xAxisIndex,
+      &                     yAxisIndex, tableIndex)
+    */
     eos_GetLoadedBulkDataEosDataMap (&gEosDataMap, tableHandles[i],
                                      &aveAtomicNumber, &aveAtomicWgt,
                                      &refDensity, errorCode);
@@ -4314,9 +4646,9 @@ void eos_MixTempInterpolation (eos_Interpolation *me, EOS_INTEGER nTables,
     amixr[i] = aveAtomicWgt;
   }
   /*
-     c.... average atomic masses for all zones to be processed.
-     c.... set indicators for regions mixed into the zones to be processed.
-   */
+    c.... average atomic masses for all zones to be processed.
+    c.... set indicators for regions mixed into the zones to be processed.
+  */
   for (j = 0; j < nXYPairs; j++) {
     abarv[j] = (EOS_REAL) 0.0;
     //   fmltv(jv) = iregs(jv)/(iregs(jv)+TINY)
@@ -4332,9 +4664,9 @@ void eos_MixTempInterpolation (eos_Interpolation *me, EOS_INTEGER nTables,
     }
   }
   /*
-     c.... initialize independent variables for all zones
-     c.... for each region to be mixed.
-   */
+    c.... initialize independent variables for all zones
+    c.... for each region to be mixed.
+  */
   for (i = 0; i < nTables; i++) {
     for (j = 0; j < nXYPairs; j++) {
       vmixr[i * nXYPairs + j] = abarv[j] / MAX (TINY_D, xVals[j]);
@@ -4348,11 +4680,11 @@ void eos_MixTempInterpolation (eos_Interpolation *me, EOS_INTEGER nTables,
     }
   }
   /*
-     c.... set pressure-balance function and derivatives
-     c.... for all zones for each region to be mixed.
-     c
-     c     initialize average pressure-balance function.
-   */
+    c.... set pressure-balance function and derivatives
+    c.... for all zones for each region to be mixed.
+    c
+    c     initialize average pressure-balance function.
+  */
   for (j = 0; j < nXYPairs; j++)
     pbarv1[j] = (EOS_REAL) 0.0;
 
@@ -4366,9 +4698,9 @@ void eos_MixTempInterpolation (eos_Interpolation *me, EOS_INTEGER nTables,
 
     for (i = 0; i < nTables; i++) {
       if (zeroConc[i]) {
-	for (j = 0; j < nXYPairs; j++)
-	  xmixr[i * nXYPairs + j] =
-	    ymixr[i * nXYPairs + j] = (EOS_REAL) 0.0; /* zero value for a constituent with a zero concentration */
+        for (j = 0; j < nXYPairs; j++)
+          xmixr[i * nXYPairs + j] =
+            ymixr[i * nXYPairs + j] = (EOS_REAL) 0.0; /* zero value for a constituent with a zero concentration */
         continue;
       }
 
@@ -4398,9 +4730,9 @@ void eos_MixTempInterpolation (eos_Interpolation *me, EOS_INTEGER nTables,
           amixr[i] / MAX (TINY_D, vmixr[i * nXYPairs + j]);
 
       /* DAP -- xmixr exhibits rounding error that may cause the following call of
-                eos_InterpolateEosInterpolation() to produce an extrapolation error code
-		when it shouldn't. This implies that some sort of rounding needs to be
-		imposed upon the values in xmixr prior to interpolation.
+         eos_InterpolateEosInterpolation() to produce an extrapolation error code
+         when it shouldn't. This implies that some sort of rounding needs to be
+         imposed upon the values in xmixr prior to interpolation.
       */
 
       /* set pressure-balance function and derivatives. */
@@ -4466,7 +4798,7 @@ void eos_MixTempInterpolation (eos_Interpolation *me, EOS_INTEGER nTables,
     }                           /* nTables loop (170) */
     /* 
        average pressure-balance function and derivatives for all zones to be processed.
-     */
+    */
     for (j = 0; j < nXYPairs; j++) {
       vbarv[j] = (EOS_REAL) 0.0;
       dvdpt[j] = (EOS_REAL) 0.0;
@@ -4572,9 +4904,9 @@ void eos_MixTempInterpolation (eos_Interpolation *me, EOS_INTEGER nTables,
   for (i = 0; i < nTables; i++) {
     for (j = 0; j < nXYPairs; j++) {
       if (me->interpolationDataList[tableHandles[i]]->xSpecies)
-	me->interpolationDataList[tableHandles[i]]->xSpecies[j] = xmixr[i * nXYPairs + j];
+        me->interpolationDataList[tableHandles[i]]->xSpecies[j] = xmixr[i * nXYPairs + j];
       if (me->interpolationDataList[tableHandles[i]]->ySpecies)
-	me->interpolationDataList[tableHandles[i]]->ySpecies[j] = ymixr[i * nXYPairs + j];
+        me->interpolationDataList[tableHandles[i]]->ySpecies[j] = ymixr[i * nXYPairs + j];
     }
   }
 
@@ -4582,7 +4914,7 @@ void eos_MixTempInterpolation (eos_Interpolation *me, EOS_INTEGER nTables,
      ... if eos function is pressure or charge state,
      ... set values of eos function f(x,y) and derivatives
      ... wrt alog(x,y) for all zones to be processed, and return.
-   */
+  */
   if (EOS_TYPE_TO_PRES_BAL_FUNC (gEosDataMap.tableTypes[tableHandles[0]]) ==
       gEosDataMap.tableTypes[tableHandles[0]])
     /* if data type same as pressure balance funct */
@@ -4615,10 +4947,10 @@ void eos_MixTempInterpolation (eos_Interpolation *me, EOS_INTEGER nTables,
   }                             /* END if data type same as pressure balance funct */
 
   /*
-     .... if eos function is not pressure or charge state,
-     .... set state function and derivatives for all zones
-     .... for each region to be mixed.
-   */
+    .... if eos function is not pressure or charge state,
+    .... set state function and derivatives for all zones
+    .... for each region to be mixed.
+  */
   for (i = 0; i < nTables; i++) {
     if (zeroConc[i])
       continue;                 // go to 440
@@ -4868,6 +5200,14 @@ void eos_GetOptionEosInterpolation (eos_Interpolation *me,
     *optionVal = me->interpolationDataList[tableHandle]->enableXYmodify;
     break;
 
+  case EOS_USE_HOST_XY:
+    *optionVal = me->interpolationDataList[tableHandle]->useHostXY;
+    break;
+
+  case EOS_SKIP_EXTRAP_CHECK:
+    *optionVal = me->interpolationDataList[tableHandle]->skipExtrapCheck;
+    break;
+
   default:
     *err = EOS_INVALID_OPTION_FLAG;
     break;
@@ -4917,7 +5257,7 @@ void eos_SetOptionEosInterpolation (eos_Interpolation *me, EOS_INTEGER tableHand
     if (!prerequisite) {
       *err = EOS_INVALID_OPTION_FLAG;
       *err = eos_SetCustomErrorMsg (tableHandle, *err,
-				    "EOS_INVALID_OPTION_FLAG: The option flag passed into eos_SetOption() is invalid because EOS_DISCONTINUOUS_DERIVATIVES can be used only in conjunction to EOS_LINEAR");
+                                    "EOS_INVALID_OPTION_FLAG: The option flag passed into eos_SetOption() is invalid because EOS_DISCONTINUOUS_DERIVATIVES can be used only in conjunction to EOS_LINEAR");
       ((eos_ErrorHandler *) me)->HandleError (me, tableHandle, *err);
       return;
     }
@@ -4935,6 +5275,16 @@ void eos_SetOptionEosInterpolation (eos_Interpolation *me, EOS_INTEGER tableHand
     me->interpolationDataList[tableHandle]->enableXYmodify = optionVal;
     break;
 
+  case EOS_USE_HOST_XY:
+    me->interpolationDataList[tableHandle]->enableXYpassthru = EOS_FALSE;
+    me->interpolationDataList[tableHandle]->enableXYmodify = optionVal;
+    me->interpolationDataList[tableHandle]->useHostXY = optionVal;
+    break;
+
+  case EOS_SKIP_EXTRAP_CHECK:
+    me->interpolationDataList[tableHandle]->skipExtrapCheck = optionVal;
+    break;
+
   case EOS_USE_CUSTOM_INTERP:
     me->interpolationDataList[tableHandle]->interpolationType = optionFlag;
 
@@ -4946,7 +5296,7 @@ void eos_SetOptionEosInterpolation (eos_Interpolation *me, EOS_INTEGER tableHand
     if (!prerequisite) {
       *err = EOS_INVALID_OPTION_FLAG;
       *err = eos_SetCustomErrorMsg (tableHandle, *err,
-				    "EOS_INVALID_OPTION_FLAG: The option flag passed into eos_SetOption() is invalid because EOS_USE_CUSTOM_INTERP can be used only in conjunction to EOS_PT_SMOOTHING");
+                                    "EOS_INVALID_OPTION_FLAG: The option flag passed into eos_SetOption() is invalid because EOS_USE_CUSTOM_INTERP can be used only in conjunction to EOS_PT_SMOOTHING");
       ((eos_ErrorHandler *) me)->HandleError (me, tableHandle, *err);
       return;
     }
@@ -4960,7 +5310,7 @@ void eos_SetOptionEosInterpolation (eos_Interpolation *me, EOS_INTEGER tableHand
     if (!(dataType == EOS_V_PtT || dataType == EOS_Ut_PtT)) {
       *err = EOS_INVALID_OPTION_FLAG;
       *err = eos_SetCustomErrorMsg (tableHandle, *err,
-				    "EOS_INVALID_OPTION_FLAG: The option flag passed into eos_SetOption() is invalid because EOS_USE_CUSTOM_INTERP can be used only with EOS_V_PtT and EOS_Ut_PtT");
+                                    "EOS_INVALID_OPTION_FLAG: The option flag passed into eos_SetOption() is invalid because EOS_USE_CUSTOM_INTERP can be used only with EOS_V_PtT and EOS_Ut_PtT");
       ((eos_ErrorHandler *) me)->HandleError (me, tableHandle, *err);
       return;
     }
@@ -5023,6 +5373,15 @@ void eos_ResetOptionEosInterpolation (eos_Interpolation *me,
     me->interpolationDataList[tableHandle]->enableXYmodify = EOS_FALSE;
     break;
 
+  case EOS_USE_HOST_XY:
+    me->interpolationDataList[tableHandle]->useHostXY = EOS_FALSE;
+    break;
+
+
+  case EOS_SKIP_EXTRAP_CHECK:
+    me->interpolationDataList[tableHandle]->skipExtrapCheck = EOS_FALSE;
+    break;
+
   default:
     *err = EOS_INVALID_OPTION_FLAG;
     break;
@@ -5040,8 +5399,7 @@ void eos_ResetOptionEosInterpolation (eos_Interpolation *me,
        nAdd        = number of points to insert.
 	   err         = output -- pointer to int error code
 ****************************************************************************************************/
-void eos_SetNumberOfHandles (eos_Interpolation *me, EOS_INTEGER nHandles,
-                             EOS_INTEGER *err)
+void eos_SetNumberOfHandles (eos_Interpolation *me, EOS_INTEGER nHandles, EOS_INTEGER *err)
 {
   int i;
   * err = EOS_OK;
@@ -5069,6 +5427,8 @@ void eos_SetNumberOfHandles (eos_Interpolation *me, EOS_INTEGER nHandles,
     me->interpolationDataList[i]->enableDiscontinuousDerivatives = EOS_FALSE;
     me->interpolationDataList[i]->enableXYpassthru = EOS_FALSE;
     me->interpolationDataList[i]->enableXYmodify = EOS_FALSE;
+    me->interpolationDataList[i]->useHostXY = EOS_FALSE;
+    me->interpolationDataList[i]->skipExtrapCheck = EOS_FALSE;
     me->interpolationDataList[i]->lastErrorCode = EOS_OK;
     me->interpolationDataList[i]->nXYPairs = 0;
     me->interpolationDataList[i]->nAlloc = 0;
@@ -5141,48 +5501,48 @@ void eos_MixEnergyInterpolation (eos_Interpolation *me, EOS_INTEGER nTables,
 
   * errorCode = EOS_OK;
 
-    xmixr = (EOS_REAL *) malloc (nTables * nXYPairs * sizeof (EOS_REAL));
-    ymixr = (EOS_REAL *) malloc (nTables * nXYPairs * sizeof (EOS_REAL));
-    vmixr = (EOS_REAL *) malloc (nTables * nXYPairs * sizeof (EOS_REAL));
-    dmixr = (EOS_REAL *) malloc (nTables * nXYPairs * sizeof (EOS_REAL));
-    emixr = (EOS_REAL *) malloc (nTables * nXYPairs * sizeof (EOS_REAL));
-    pmixr1 = (EOS_REAL *) malloc (nTables * nXYPairs * sizeof (EOS_REAL));
-    pmixr2 = (EOS_REAL *) malloc (nTables * nXYPairs * sizeof (EOS_REAL));
-    pmixr3 = (EOS_REAL *) malloc (nTables * nXYPairs * sizeof (EOS_REAL));
-    tmixr1 = (EOS_REAL *) malloc (nTables * nXYPairs * sizeof (EOS_REAL));
-    tmixr2 = (EOS_REAL *) malloc (nTables * nXYPairs * sizeof (EOS_REAL));
-    tmixr3 = (EOS_REAL *) malloc (nTables * nXYPairs * sizeof (EOS_REAL));
-    smixr1 = (EOS_REAL *) malloc (nTables * nXYPairs * sizeof (EOS_REAL));
-    smixr2 = (EOS_REAL *) malloc (nTables * nXYPairs * sizeof (EOS_REAL));
-    smixr3 = (EOS_REAL *) malloc (nTables * nXYPairs * sizeof (EOS_REAL));
+  xmixr = (EOS_REAL *) malloc (nTables * nXYPairs * sizeof (EOS_REAL));
+  ymixr = (EOS_REAL *) malloc (nTables * nXYPairs * sizeof (EOS_REAL));
+  vmixr = (EOS_REAL *) malloc (nTables * nXYPairs * sizeof (EOS_REAL));
+  dmixr = (EOS_REAL *) malloc (nTables * nXYPairs * sizeof (EOS_REAL));
+  emixr = (EOS_REAL *) malloc (nTables * nXYPairs * sizeof (EOS_REAL));
+  pmixr1 = (EOS_REAL *) malloc (nTables * nXYPairs * sizeof (EOS_REAL));
+  pmixr2 = (EOS_REAL *) malloc (nTables * nXYPairs * sizeof (EOS_REAL));
+  pmixr3 = (EOS_REAL *) malloc (nTables * nXYPairs * sizeof (EOS_REAL));
+  tmixr1 = (EOS_REAL *) malloc (nTables * nXYPairs * sizeof (EOS_REAL));
+  tmixr2 = (EOS_REAL *) malloc (nTables * nXYPairs * sizeof (EOS_REAL));
+  tmixr3 = (EOS_REAL *) malloc (nTables * nXYPairs * sizeof (EOS_REAL));
+  smixr1 = (EOS_REAL *) malloc (nTables * nXYPairs * sizeof (EOS_REAL));
+  smixr2 = (EOS_REAL *) malloc (nTables * nXYPairs * sizeof (EOS_REAL));
+  smixr3 = (EOS_REAL *) malloc (nTables * nXYPairs * sizeof (EOS_REAL));
 
-    amixr = (EOS_REAL *) malloc (nTables * sizeof (EOS_REAL));
-    zeroConc = (EOS_INTEGER *) malloc (nTables * sizeof (EOS_INTEGER));
+  amixr = (EOS_REAL *) malloc (nTables * sizeof (EOS_REAL));
+  zeroConc = (EOS_INTEGER *) malloc (nTables * sizeof (EOS_INTEGER));
 
-    abarv = (EOS_REAL *) malloc (nXYPairs * sizeof (EOS_REAL));
-    vbarv = (EOS_REAL *) malloc (nXYPairs * sizeof (EOS_REAL));
-    ebarv = (EOS_REAL *) malloc (nXYPairs * sizeof (EOS_REAL));
-    dvdpt = (EOS_REAL *) malloc (nXYPairs * sizeof (EOS_REAL));
-    dedtp = (EOS_REAL *) malloc (nXYPairs * sizeof (EOS_REAL));
-    dedpt = (EOS_REAL *) malloc (nXYPairs * sizeof (EOS_REAL));
-    tdedt = (EOS_REAL *) malloc (nXYPairs * sizeof (EOS_REAL));
-    dvdtp = (EOS_REAL *) malloc (nXYPairs * sizeof (EOS_REAL));
-    pdvdp = (EOS_REAL *) malloc (nXYPairs * sizeof (EOS_REAL));
-    pdedp = (EOS_REAL *) malloc (nXYPairs * sizeof (EOS_REAL));
-    vdvdv = (EOS_REAL *) malloc (nXYPairs * sizeof (EOS_REAL));
-    tdvdt = (EOS_REAL *) malloc (nXYPairs * sizeof (EOS_REAL));
-    sbarv1 = (EOS_REAL *) malloc (nXYPairs * sizeof (EOS_REAL));
-    sbarv2 = (EOS_REAL *) malloc (nXYPairs * sizeof (EOS_REAL));
-    sbarv3 = (EOS_REAL *) malloc (nXYPairs * sizeof (EOS_REAL));
-    pbarv1 = (EOS_REAL *) malloc (nXYPairs * sizeof (EOS_REAL));
-    pbarv2 = (EOS_REAL *) malloc (nXYPairs * sizeof (EOS_REAL));
-    pbarv3 = (EOS_REAL *) malloc (nXYPairs * sizeof (EOS_REAL));
-    tbarv1 = (EOS_REAL *) malloc (nXYPairs * sizeof (EOS_REAL));
-    tbarv2 = (EOS_REAL *) malloc (nXYPairs * sizeof (EOS_REAL));
-    tbarv3 = (EOS_REAL *) malloc (nXYPairs * sizeof (EOS_REAL));
+  abarv = (EOS_REAL *) malloc (nXYPairs * sizeof (EOS_REAL));
+  vbarv = (EOS_REAL *) malloc (nXYPairs * sizeof (EOS_REAL));
+  ebarv = (EOS_REAL *) malloc (nXYPairs * sizeof (EOS_REAL));
+  dvdpt = (EOS_REAL *) malloc (nXYPairs * sizeof (EOS_REAL));
+  dedtp = (EOS_REAL *) malloc (nXYPairs * sizeof (EOS_REAL));
+  dedpt = (EOS_REAL *) malloc (nXYPairs * sizeof (EOS_REAL));
+  tdedt = (EOS_REAL *) malloc (nXYPairs * sizeof (EOS_REAL));
+  dvdtp = (EOS_REAL *) malloc (nXYPairs * sizeof (EOS_REAL));
+  pdvdp = (EOS_REAL *) malloc (nXYPairs * sizeof (EOS_REAL));
+  pdedp = (EOS_REAL *) malloc (nXYPairs * sizeof (EOS_REAL));
+  vdvdv = (EOS_REAL *) malloc (nXYPairs * sizeof (EOS_REAL));
+  tdvdt = (EOS_REAL *) malloc (nXYPairs * sizeof (EOS_REAL));
+  sbarv1 = (EOS_REAL *) malloc (nXYPairs * sizeof (EOS_REAL));
+  sbarv2 = (EOS_REAL *) malloc (nXYPairs * sizeof (EOS_REAL));
+  sbarv3 = (EOS_REAL *) malloc (nXYPairs * sizeof (EOS_REAL));
+  pbarv1 = (EOS_REAL *) malloc (nXYPairs * sizeof (EOS_REAL));
+  pbarv2 = (EOS_REAL *) malloc (nXYPairs * sizeof (EOS_REAL));
+  pbarv3 = (EOS_REAL *) malloc (nXYPairs * sizeof (EOS_REAL));
+  tbarv1 = (EOS_REAL *) malloc (nXYPairs * sizeof (EOS_REAL));
+  tbarv2 = (EOS_REAL *) malloc (nXYPairs * sizeof (EOS_REAL));
+  tbarv3 = (EOS_REAL *) malloc (nXYPairs * sizeof (EOS_REAL));
 
   /* macro used to free locally-allocated arrays */
-#define FREE_EOS_MIXENERGYINTERPOLATION_ARRAYS \
+#define FREE_EOS_MIXENERGYINTERPOLATION_ARRAYS                          \
   EOS_FREE(xmixr); EOS_FREE(ymixr); EOS_FREE(vmixr); EOS_FREE(dmixr); EOS_FREE(emixr); EOS_FREE(pmixr1); EOS_FREE(pmixr2); EOS_FREE(pmixr3); \
   EOS_FREE(tmixr1); EOS_FREE(tmixr2); EOS_FREE(tmixr3); EOS_FREE(smixr1); EOS_FREE(smixr2); EOS_FREE(smixr3); EOS_FREE(amixr); EOS_FREE(zeroConc); EOS_FREE(abarv); \
   EOS_FREE(ebarv); EOS_FREE(vbarv); EOS_FREE(dvdpt); EOS_FREE(dvdtp); EOS_FREE(pdvdp); EOS_FREE(pdedp); EOS_FREE(vdvdv); EOS_FREE(tdvdt); \
@@ -5203,9 +5563,9 @@ void eos_MixEnergyInterpolation (eos_Interpolation *me, EOS_INTEGER nTables,
     amixr[i] = aveAtomicWgt;
   }
   /*
-     c.... average atomic masses for all zones to be processed.
-     c.... set indicators for regions mixed into the zones to be processed.
-   */
+    c.... average atomic masses for all zones to be processed.
+    c.... set indicators for regions mixed into the zones to be processed.
+  */
   for (j = 0; j < nXYPairs; j++) {
     abarv[j] = (EOS_REAL) 0.0;
     //   fmltv(jv) = iregs(jv)/(iregs(jv)+TINY)
@@ -5221,9 +5581,9 @@ void eos_MixEnergyInterpolation (eos_Interpolation *me, EOS_INTEGER nTables,
     }
   }
   /*
-     c.... initialize independent variables for all zones
-     c.... for each region to be mixed.
-   */
+    c.... initialize independent variables for all zones
+    c.... for each region to be mixed.
+  */
   for (i = 0; i < nTables; i++) {
     for (j = 0; j < nXYPairs; j++) {
       vmixr[i * nXYPairs + j] = abarv[j] / MAX (TINY_D, xVals[j]);
@@ -5240,11 +5600,11 @@ void eos_MixEnergyInterpolation (eos_Interpolation *me, EOS_INTEGER nTables,
     }
   }
   /*
-     c.... set pressure- & temperature-balance function and derivatives
-     c.... for all zones for each region to be mixed.
-     c
-     c     initialize average pressure-balance function.
-   */
+    c.... set pressure- & temperature-balance function and derivatives
+    c.... for all zones for each region to be mixed.
+    c
+    c     initialize average pressure-balance function.
+  */
   for (j = 0; j < nXYPairs; j++) {
     pbarv1[j] = (EOS_REAL) 0.0;
     tbarv1[j] = (EOS_REAL) 0.0;
@@ -5260,9 +5620,9 @@ void eos_MixEnergyInterpolation (eos_Interpolation *me, EOS_INTEGER nTables,
 
     for (i = 0; i < nTables; i++) {
       if (zeroConc[i]) {
-	for (j = 0; j < nXYPairs; j++)
-	  xmixr[i * nXYPairs + j] =
-	    ymixr[i * nXYPairs + j] = (EOS_REAL) 0.0; /* zero value for a constituent with a zero concentration */
+        for (j = 0; j < nXYPairs; j++)
+          xmixr[i * nXYPairs + j] =
+            ymixr[i * nXYPairs + j] = (EOS_REAL) 0.0; /* zero value for a constituent with a zero concentration */
         continue;
       }
 
@@ -5351,7 +5711,7 @@ void eos_MixEnergyInterpolation (eos_Interpolation *me, EOS_INTEGER nTables,
     }                           /* nTables loop (230) */
     /* 
        average temperature- & pressure-balance function and derivatives for all zones to be processed.
-     */
+    */
     for (j = 0; j < nXYPairs; j++) {
       vbarv[j] = (EOS_REAL) 0.0;
       ebarv[j] = (EOS_REAL) 0.0;
@@ -5384,9 +5744,9 @@ void eos_MixEnergyInterpolation (eos_Interpolation *me, EOS_INTEGER nTables,
                      + pmixr2[i * nXYPairs + j] * tmixr3[i * nXYPairs + j],
                      MAX (dmixr[i * nXYPairs + j],
                           MAX (FABS (dtpmx), MAX (FABS (dtpmy), TINY_D)
+                               )
                           )
-                     )
-          );
+                     );
         dmixr[i * nXYPairs + j] = dtpve;
         vfact = concInMix[i * nXYPairs + j] * vmixr[i * nXYPairs + j] / dtpve;
         efact = concInMix[i * nXYPairs + j] * emixr[i * nXYPairs + j] / dtpve;
@@ -5540,16 +5900,16 @@ void eos_MixEnergyInterpolation (eos_Interpolation *me, EOS_INTEGER nTables,
   for (i = 0; i < nTables; i++) {
     for (j = 0; j < nXYPairs; j++) {
       if (me->interpolationDataList[tableHandles[i]]->xSpecies)
-	me->interpolationDataList[tableHandles[i]]->xSpecies[j] = xmixr[i * nXYPairs + j];
+        me->interpolationDataList[tableHandles[i]]->xSpecies[j] = xmixr[i * nXYPairs + j];
       if (me->interpolationDataList[tableHandles[i]]->ySpecies)
-	me->interpolationDataList[tableHandles[i]]->ySpecies[j] = ymixr[i * nXYPairs + j];
+        me->interpolationDataList[tableHandles[i]]->ySpecies[j] = ymixr[i * nXYPairs + j];
     }
   }
 
   /* if eos function is temperature or pressure,
      set values of eos function f(x,y) and derivatives
      wrt x and y for all zones to be processed, and return.
-   */
+  */
 
 
   if (EOS_TYPE_TO_PRES_BAL_FUNC (gEosDataMap.tableTypes[tableHandles[0]]) ==
@@ -5583,10 +5943,10 @@ void eos_MixEnergyInterpolation (eos_Interpolation *me, EOS_INTEGER nTables,
 
 
   /*
-     .... if eos function is not pressure or temperature,
-     .... set state function and derivatives for all zones
-     .... for each region to be mixed.
-   */
+    .... if eos function is not pressure or temperature,
+    .... set state function and derivatives for all zones
+    .... for each region to be mixed.
+  */
   for (i = 0; i < nTables; i++) {
     if (zeroConc[i])
       continue;                 // go to 440
@@ -5664,7 +6024,6 @@ void eos_MixEnergyInterpolation (eos_Interpolation *me, EOS_INTEGER nTables,
   FREE_EOS_MIXENERGYINTERPOLATION_ARRAYS;       /* free all locally-allocated arrays */
 }
 
-
 /***********************************************************************
  * function: eos_MixPressureInterpolate()
  * Mixing for the function with pressure being its second independent variable.
@@ -5719,35 +6078,35 @@ void eos_MixPressureInterpolation (eos_Interpolation *me, EOS_INTEGER nTables,
     yCnvrtFactor, fCnvrtFactor;
   * errorCode = EOS_OK;
 
-    xmixr = (EOS_REAL *) malloc (nTables * nXYPairs * sizeof (EOS_REAL));
-    ymixr = (EOS_REAL *) malloc (nTables * nXYPairs * sizeof (EOS_REAL));
-    vmixr = (EOS_REAL *) malloc (nTables * nXYPairs * sizeof (EOS_REAL));
-    dmixr = (EOS_REAL *) malloc (nTables * nXYPairs * sizeof (EOS_REAL));
-    tmixr1 = (EOS_REAL *) malloc (nTables * nXYPairs * sizeof (EOS_REAL));
-    tmixr2 = (EOS_REAL *) malloc (nTables * nXYPairs * sizeof (EOS_REAL));
-    tmixr3 = (EOS_REAL *) malloc (nTables * nXYPairs * sizeof (EOS_REAL));
-    smixr1 = (EOS_REAL *) malloc (nTables * nXYPairs * sizeof (EOS_REAL));
-    smixr2 = (EOS_REAL *) malloc (nTables * nXYPairs * sizeof (EOS_REAL));
-    smixr3 = (EOS_REAL *) malloc (nTables * nXYPairs * sizeof (EOS_REAL));
+  xmixr = (EOS_REAL *) malloc (nTables * nXYPairs * sizeof (EOS_REAL));
+  ymixr = (EOS_REAL *) malloc (nTables * nXYPairs * sizeof (EOS_REAL));
+  vmixr = (EOS_REAL *) malloc (nTables * nXYPairs * sizeof (EOS_REAL));
+  dmixr = (EOS_REAL *) malloc (nTables * nXYPairs * sizeof (EOS_REAL));
+  tmixr1 = (EOS_REAL *) malloc (nTables * nXYPairs * sizeof (EOS_REAL));
+  tmixr2 = (EOS_REAL *) malloc (nTables * nXYPairs * sizeof (EOS_REAL));
+  tmixr3 = (EOS_REAL *) malloc (nTables * nXYPairs * sizeof (EOS_REAL));
+  smixr1 = (EOS_REAL *) malloc (nTables * nXYPairs * sizeof (EOS_REAL));
+  smixr2 = (EOS_REAL *) malloc (nTables * nXYPairs * sizeof (EOS_REAL));
+  smixr3 = (EOS_REAL *) malloc (nTables * nXYPairs * sizeof (EOS_REAL));
 
-    amixr = (EOS_REAL *) malloc (nTables * sizeof (EOS_REAL));
-    zeroConc = (EOS_INTEGER *) malloc (nTables * sizeof (EOS_INTEGER));
+  amixr = (EOS_REAL *) malloc (nTables * sizeof (EOS_REAL));
+  zeroConc = (EOS_INTEGER *) malloc (nTables * sizeof (EOS_INTEGER));
 
-    abarv = (EOS_REAL *) malloc (nXYPairs * sizeof (EOS_REAL));
-    vbarv = (EOS_REAL *) malloc (nXYPairs * sizeof (EOS_REAL));
-    dvdtp = (EOS_REAL *) malloc (nXYPairs * sizeof (EOS_REAL));
-    pdvdp = (EOS_REAL *) malloc (nXYPairs * sizeof (EOS_REAL));
-    vdvdv = (EOS_REAL *) malloc (nXYPairs * sizeof (EOS_REAL));
-    tdvdt = (EOS_REAL *) malloc (nXYPairs * sizeof (EOS_REAL));
-    sbarv1 = (EOS_REAL *) malloc (nXYPairs * sizeof (EOS_REAL));
-    sbarv2 = (EOS_REAL *) malloc (nXYPairs * sizeof (EOS_REAL));
-    sbarv3 = (EOS_REAL *) malloc (nXYPairs * sizeof (EOS_REAL));
-    tbarv1 = (EOS_REAL *) malloc (nXYPairs * sizeof (EOS_REAL));
-    tbarv2 = (EOS_REAL *) malloc (nXYPairs * sizeof (EOS_REAL));
-    tbarv3 = (EOS_REAL *) malloc (nXYPairs * sizeof (EOS_REAL));
+  abarv = (EOS_REAL *) malloc (nXYPairs * sizeof (EOS_REAL));
+  vbarv = (EOS_REAL *) malloc (nXYPairs * sizeof (EOS_REAL));
+  dvdtp = (EOS_REAL *) malloc (nXYPairs * sizeof (EOS_REAL));
+  pdvdp = (EOS_REAL *) malloc (nXYPairs * sizeof (EOS_REAL));
+  vdvdv = (EOS_REAL *) malloc (nXYPairs * sizeof (EOS_REAL));
+  tdvdt = (EOS_REAL *) malloc (nXYPairs * sizeof (EOS_REAL));
+  sbarv1 = (EOS_REAL *) malloc (nXYPairs * sizeof (EOS_REAL));
+  sbarv2 = (EOS_REAL *) malloc (nXYPairs * sizeof (EOS_REAL));
+  sbarv3 = (EOS_REAL *) malloc (nXYPairs * sizeof (EOS_REAL));
+  tbarv1 = (EOS_REAL *) malloc (nXYPairs * sizeof (EOS_REAL));
+  tbarv2 = (EOS_REAL *) malloc (nXYPairs * sizeof (EOS_REAL));
+  tbarv3 = (EOS_REAL *) malloc (nXYPairs * sizeof (EOS_REAL));
 
   /* macro used to free locally-allocated arrays */
-#define FREE_EOS_MIXPRESSUREINTERPOLATION_ARRAYS \
+#define FREE_EOS_MIXPRESSUREINTERPOLATION_ARRAYS                        \
   EOS_FREE(xmixr); EOS_FREE(ymixr); EOS_FREE(vmixr); EOS_FREE(dmixr); EOS_FREE(tmixr1); EOS_FREE(tmixr2); EOS_FREE(tmixr3); \
   EOS_FREE(smixr1); EOS_FREE(smixr2); EOS_FREE(smixr3); EOS_FREE(amixr); EOS_FREE(zeroConc); EOS_FREE(abarv); EOS_FREE(vbarv); \
   EOS_FREE(sbarv1); EOS_FREE(sbarv2); EOS_FREE(sbarv3); EOS_FREE(tbarv1); EOS_FREE(tbarv2); EOS_FREE(tbarv3); EOS_FREE(pdvdp); EOS_FREE(dvdtp); \
@@ -5767,9 +6126,9 @@ void eos_MixPressureInterpolation (eos_Interpolation *me, EOS_INTEGER nTables,
     amixr[i] = aveAtomicWgt;
   }
   /*
-     c.... average atomic masses for all zones to be processed.
-     c.... set indicators for regions mixed into the zones to be processed.
-   */
+    c.... average atomic masses for all zones to be processed.
+    c.... set indicators for regions mixed into the zones to be processed.
+  */
   for (j = 0; j < nXYPairs; j++) {
     abarv[j] = (EOS_REAL) 0.0;
     //   fmltv(jv) = iregs(jv)/(iregs(jv)+TINY)
@@ -5785,9 +6144,9 @@ void eos_MixPressureInterpolation (eos_Interpolation *me, EOS_INTEGER nTables,
     }
   }
   /*
-     c.... initialize independent variables for all zones
-     c.... for each region to be mixed.
-   */
+    c.... initialize independent variables for all zones
+    c.... for each region to be mixed.
+  */
   for (i = 0; i < nTables; i++) {
     for (j = 0; j < nXYPairs; j++) {
       vmixr[i * nXYPairs + j] = abarv[j] / MAX (TINY_D, xVals[j]);
@@ -5800,11 +6159,11 @@ void eos_MixPressureInterpolation (eos_Interpolation *me, EOS_INTEGER nTables,
     }
   }
   /*
-     c.... set temperature-balance function and derivatives
-     c.... for all zones for each region to be mixed.
-     c
-     c     initialize average pressure-balance function.
-   */
+    c.... set temperature-balance function and derivatives
+    c.... for all zones for each region to be mixed.
+    c
+    c     initialize average pressure-balance function.
+  */
   for (j = 0; j < nXYPairs; j++)
     tbarv1[j] = (EOS_REAL) 0.0;
 
@@ -5818,9 +6177,9 @@ void eos_MixPressureInterpolation (eos_Interpolation *me, EOS_INTEGER nTables,
 
     for (i = 0; i < nTables; i++) {
       if (zeroConc[i]) {
-	for (j = 0; j < nXYPairs; j++)
-	  xmixr[i * nXYPairs + j] =
-	    ymixr[i * nXYPairs + j] = (EOS_REAL) 0.0; /* zero value for a constituent with a zero concentration */
+        for (j = 0; j < nXYPairs; j++)
+          xmixr[i * nXYPairs + j] =
+            ymixr[i * nXYPairs + j] = (EOS_REAL) 0.0; /* zero value for a constituent with a zero concentration */
         continue;
       }
 
@@ -5880,7 +6239,7 @@ void eos_MixPressureInterpolation (eos_Interpolation *me, EOS_INTEGER nTables,
 
     /* 
        average temperature-balance function and derivatives for all zones to be processed.
-     */
+    */
     for (j = 0; j < nXYPairs; j++) {
       vbarv[j] = (EOS_REAL) 0.0;
       dvdtp[j] = (EOS_REAL) 0.0;
@@ -5985,9 +6344,9 @@ void eos_MixPressureInterpolation (eos_Interpolation *me, EOS_INTEGER nTables,
   for (i = 0; i < nTables; i++) {
     for (j = 0; j < nXYPairs; j++) {
       if (me->interpolationDataList[tableHandles[i]]->xSpecies)
-	me->interpolationDataList[tableHandles[i]]->xSpecies[j] = xmixr[i * nXYPairs + j];
+        me->interpolationDataList[tableHandles[i]]->xSpecies[j] = xmixr[i * nXYPairs + j];
       if (me->interpolationDataList[tableHandles[i]]->ySpecies)
-	me->interpolationDataList[tableHandles[i]]->ySpecies[j] = ymixr[i * nXYPairs + j];
+        me->interpolationDataList[tableHandles[i]]->ySpecies[j] = ymixr[i * nXYPairs + j];
     }
   }
 
@@ -5995,7 +6354,7 @@ void eos_MixPressureInterpolation (eos_Interpolation *me, EOS_INTEGER nTables,
      ... if eos function is temperature,
      ... set values of eos function f(x,y) and derivatives
      ... wrt x and y for all zones to be processed, and return.
-   */
+  */
   if (EOS_TYPE_TO_TEMP_BAL_FUNC (gEosDataMap.tableTypes[tableHandles[0]]) ==
       gEosDataMap.tableTypes[tableHandles[0]])
     /* if data type same as temperature balance funct */
@@ -6016,10 +6375,10 @@ void eos_MixPressureInterpolation (eos_Interpolation *me, EOS_INTEGER nTables,
   }                             /* END if data type same as temperature balance funct */
 
   /*
-     .... if eos function is not temperature,
-     .... set state function and derivatives for all zones
-     .... for each region to be mixed.
-   */
+    .... if eos function is not temperature,
+    .... set state function and derivatives for all zones
+    .... for each region to be mixed.
+  */
   for (i = 0; i < nTables; i++) {
     if (zeroConc[i])
       continue;                 // go to 400

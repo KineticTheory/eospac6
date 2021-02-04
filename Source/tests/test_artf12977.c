@@ -8,7 +8,7 @@
  ********************************************************************/
 
 /*! \file
- *  \ingroup tests
+ *  \ingroup C tests
  *  \brief Test packing and unpacking of data to verify issue #artf12977 is resolved.
  *         See <a href="https://tf.lanl.gov/sf/go/artf12977">artf12977</a> for details.
  *

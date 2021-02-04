@@ -8,7 +8,7 @@
  ********************************************************************/
 
 /*! \file
- *  \ingroup tests quick
+ *  \ingroup C tests quick
  *  \brief Ensure the new eos_SetDataFileName and eos_GetMaxDataFileNameLength
  *         work as expected for ASCII data file.
  *         See SourceForge© Issue #artf48272 for more details:
@@ -49,7 +49,7 @@ int main ()
   EOS_CHAR *files[] = {
     "./tests/data/sesame_small.ascii",
     "./tests/data/sesame_medium.ascii",
-    "./tests/data/sesame_big.ascii" /* this file is expected to fail, since it's unsupported in ses_io */
+    "./tests/data/sesame_big.ascii" /* DAP:2020-05-09 do not use this file, since it's unsupported in ses_io, which has insufficient error handling for ASCII */
   };
   EOS_INTEGER materialIDinFile[] = {
     99999,
@@ -68,6 +68,9 @@ int main ()
   filesL = sizeof(materialIDinFile) / sizeof(materialIDinFile[0]);
 
   for (whichFileIndexToUse = 0; whichFileIndexToUse < filesL; whichFileIndexToUse++) {
+
+    if (whichFileIndexToUse == filesL-1)
+      break; /* DAP:2020-05-09 do not use this file, since it's unsupported in ses_io, which has insufficient error handling for ASCII */
 
     for (i = 0; i < nTables; i++) matID[i] = materialIDinFile[whichFileIndexToUse];
 

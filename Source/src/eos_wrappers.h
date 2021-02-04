@@ -42,6 +42,9 @@
 #define eos_SetDataFileName_Cwrapper FC_FUNC(eos_setdatafilename_cwrapper,EOS_SETDATAFILENAME_CWRAPPER)
 #define eos_GetMaxDataFileNameLength FC_FUNC(eos_getmaxdatafilenamelength,EOS_GETMAXDATAFILENAMELENGTH)
 #define eos_ErrorCodesEqual FC_FUNC(eos_errorcodesequal,EOS_ERRORCODESEQUAL)
+#ifdef DO_OFFLOAD
+#define eos_GpuOffloadData FC_FUNC(eos_gpuoffloaddata,EOS_GPUOFFLOADDATA)
+#endif /* DO_OFFLOAD */
 
 #else /* !defined(HAVE_CONFIG_H) */
 
@@ -97,6 +100,9 @@
 #define eos_SetDataFileName EOS_SETDATAFILENAME
 #define eos_GetMaxDataFileNameLength EOS_GETMAXDATAFILENAMELENGTH
 #define eos_ErrorCodesEqual EOS_ERRORCODESEQUAL
+#ifdef DO_OFFLOAD
+#define eos_GpuOffloadData EOS_GPUOFFLOADDATA
+#endif /* DO_OFFLOAD */
 
 #elif defined lowercase
 
@@ -124,6 +130,9 @@
 #define eos_SetDataFileName eos_setdatafilename
 #define eos_GetMaxDataFileNameLength eos_getmaxdatafilenamelength
 #define eos_ErrorCodesEqual eos_errorcodesequal
+#ifdef DO_OFFLOAD
+#define eos_GpuOffloadData eos_gpuoffloaddata
+#endif /* DO_OFFLOAD */
 
 #elif defined lowercase_
 
@@ -151,6 +160,9 @@
 #define eos_SetDataFileName eos_setdatafilename_
 #define eos_GetMaxDataFileNameLength eos_getmaxdatafilenamelength_
 #define eos_ErrorCodesEqual eos_errorcodesequal_
+#ifdef DO_OFFLOAD
+#define eos_GpuOffloadData eos_gpuoffloaddata_
+#endif /* DO_OFFLOAD */
 
 #elif defined lowercase__
 
@@ -178,6 +190,9 @@
 #define eos_SetDataFileName eos_setdatafilename__
 #define eos_GetMaxDataFileNameLength eos_getmaxdatafilenamelength__
 #define eos_ErrorCodesEqual eos_errorcodesequal__
+#ifdef DO_OFFLOAD
+#define eos_GpuOffloadData eos_gpuoffloaddata__
+#endif /* DO_OFFLOAD */
 
 #elif defined _lowercase
 
@@ -205,6 +220,9 @@
 #define eos_SetDataFileName _eos_setdatafilename
 #define eos_GetMaxDataFileNameLength _eos_getmaxdatafilenamelength
 #define eos_ErrorCodesEqual _eos_errorcodesequal
+#ifdef DO_OFFLOAD
+#define eos_GpuOffloadData _eos_gpuoffloaddata
+#endif /* DO_OFFLOAD */
 
 #elif defined __lowercase
 
@@ -232,6 +250,9 @@
 #define eos_SetDataFileName __eos_setdatafilename
 #define eos_GetMaxDataFileNameLength __eos_getmaxdatafilenamelength
 #define eos_ErrorCodesEqual __eos_errorcodesequal
+#ifdef DO_OFFLOAD
+#define eos_GpuOffloadData __eos_gpuoffloaddata
+#endif /* DO_OFFLOAD */
 
 #else /* use lowercase_ as default */
 
@@ -259,6 +280,9 @@
 #define eos_SetDataFileName eos_setdatafilename_
 #define eos_GetMaxDataFileNameLength eos_getmaxdatafilenamelength_
 #define eos_ErrorCodesEqual eos_errorcodesequal_
+#ifdef DO_OFFLOAD
+#define eos_GpuOffloadData eos_gpuoffloaddata_
+#endif /* DO_OFFLOAD */
 
 #endif
 

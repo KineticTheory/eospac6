@@ -12,7 +12,7 @@
 
 #include <string.h>
 
-#define DEBUG_WRAP
+#undef DEBUG_WRAP
 
 #ifdef LC_UNDER
 ses_error_flag ses_comments_(ses_file_handle* pt_handle, ses_string return_value2, ses_number* the_size) {

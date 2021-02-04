@@ -6,7 +6,7 @@
  * Copyright -- see file named COPYRIGHTNOTICE
  *
  *********************************************************************/
- 
+
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -25,18 +25,17 @@
 
 #define _EOS_RECORDTYPE1INTERP_INTERNAL_PROTOTYPES
 #include "eos_RecordType1Interp.proto.h"
+
 #include "eos_RecordType2.h"
- 
+
 #include "eos_Utils.h"
 
 #include "eos_UtilsRage.h"
-
 #include "eos_Data.h"
-
 #include "eos_Interpolation.h"
- 
+
 #undef MY_DEBUG
- 
+
 static EOS_REAL *EOS_NullPtr = NULL;
 static const EOS_REAL pi = (EOS_REAL) 3.1415926535897932384626433832795;        // Pi
 static const EOS_REAL ONE = (EOS_REAL) 1;
@@ -49,8 +48,8 @@ static const EOS_REAL SEVEN = (EOS_REAL) 7;
 //static const EOS_REAL EIGHT = (EOS_REAL) 8;
 static const EOS_REAL NINE = (EOS_REAL) 9;
 static const EOS_REAL ZERO = (EOS_REAL) 0;
- 
-/***********************************************************************/
+
+/************************************************************************/
 /*!
  * \brief RecordType1 class constructor
  *
@@ -60,65 +59,71 @@ static const EOS_REAL ZERO = (EOS_REAL) 0;
  * \param[in]     th         - EOS_INTEGER     : table handle
  *
  * \return none
- * 
- ***********************************************************************/
+ *
+ ************************************************************************/
 void eos_ConstructRecordType1 (eos_RecordType1 *me, EOS_INTEGER th,
-			       EOS_INTEGER materialID)
+                               EOS_INTEGER materialID)
 {
   int i;
 
-  me->R = NULL;
-  me->NR = 0;
-  me->NT = 0;
+  /* SESAME table 201 data */
   me->avgAtomicNumber = (EOS_REAL) 0;
   me->avgAtomicWgt = (EOS_REAL) 0;
   me->refDensity = (EOS_REAL) 0;
   me->solidBulkModulus = (EOS_REAL) 0;
   me->exchangeCoefficient = (EOS_REAL) 0;
-  me->T = NULL;
-  me->table1 = NULL;
-  me->table2 = NULL;
-  me->table3 = NULL;
-  me->table4 = NULL;
-  me->coldCurve1 = NULL;
-  me->coldCurve2 = NULL;
-  me->coldCurve3 = NULL;
-  me->coldCurve4 = NULL;
 
-  me->temporary = NULL; /* used exclusively for temporary data exchange; not packed/unpacked */
+  /* SESAME table data */
+  me->NR = 0;
+  me->NT = 0;
+  me->R = NULL;
+  me->T = NULL;
+  for(i=0; i<MAX_TABLES_RECORDTYPE1; i++) {
+    me->table[i] = NULL;
+    me->coldCurve[i] = NULL;
+  }
+
+  for(i=0; i<MAX_TABLES_RECORDTYPE1; i++) {
+    me->_eos_EvaluateTaylor[i] = NULL;
+    me->isMonotonicX[i] = -1;
+    me->isMonotonicY[i] = -1;
+    me->shouldBeMonotonicX[i] = 0;
+    me->shouldBeMonotonicY[i] = 0;
+    me->shouldBeSmooth[i] = 0;
+    me->shouldBePtSmooth[i] = 0;
+  }
+
+  /* Customized storage for Taylor series representation of SESAME table data */
   me->Taylor_objects = NULL;
   me->TX = NULL;
   me->TY = NULL;
+
+  /* Miscellaneous metadata */
   me->tabulated_rhozero_exists = EOS_FALSE;
-  for(i=0; i<4; i++) me->_eos_EvaluateTaylor[i] = NULL;
-  me->isMonotonicX1 = -1;
-  me->isMonotonicX2 = -1;
-  me->isMonotonicX3 = -1;
-  me->isMonotonicX4 = -1;
-  me->isMonotonicY1 = -1;
-  me->isMonotonicY2 = -1;
-  me->isMonotonicY3 = -1;
-  me->isMonotonicY4 = -1;
-  me->shouldBeMonotonicX1 = 0;
-  me->shouldBeMonotonicX2 = 0;
-  me->shouldBeMonotonicX3 = 0;
-  me->shouldBeMonotonicX4 = 0;
-  me->shouldBeMonotonicY1 = 0;
-  me->shouldBeMonotonicY2 = 0;
-  me->shouldBeMonotonicY3 = 0;
-  me->shouldBeMonotonicY4 = 0;
-  me->shouldBeSmooth1 = 0;
-  me->shouldBeSmooth2 = 0;
-  me->shouldBeSmooth3 = 0;
-  me->shouldBeSmooth4 = 0;
-  me->shouldBePtSmooth1 = 0;
-  me->shouldBePtSmooth2 = 0;
-  me->shouldBePtSmooth3 = 0;
-  me->shouldBePtSmooth4 = 0;
   me->eosData.dataFileOffset = -1;
   me->eosData.dataFileIndex = -1;
   me->eosData.dataSize = 0;
+
+  me->eosData.varOrder = X_Y_F;
+  me->eosData.tmpVarOrder = -1;
+  me->rt2_handle = -1;
+  me->found_401 = EOS_FALSE;
+  me->isInvertedAtSetup = EOS_FALSE;
+  me->nGhostData = 0;
+  me->CreateGhostData = EOS_TRUE;
+  me->FreeUnusedArrays = EOS_TRUE;
+
+  /* Hashtables for use in eos_Search */
+  me->R_hashTable = NULL;
+  me->T_hashTable = NULL;
+  for (i = 0; i < MAX_TABLES_RECORDTYPE1; i++) {
+    me->hashTables[i] = NULL;
+  }
+
+  /* Create eos_DataMap */
   eos_ConstructEosData ((eos_Data *) me, th, materialID);
+
+  /* Define class-specific virtual functions */
   me->eosData.Load = eos_LoadRecordType1;
   me->eosData.Create = eos_CreateRecordType1;
   me->eosData.Destroy = eos_DestroyRecordType1;
@@ -136,33 +141,58 @@ void eos_ConstructRecordType1 (eos_RecordType1 *me, EOS_INTEGER th,
   me->eosData.SetMonotonicity = eos_SetMonotonicityRecordType1;
   me->eosData.GetMonotonicity = eos_GetMonotonicityRecordType1;
   me->eosData.GetSmoothing = eos_GetSmoothingRecordType1;
-  me->eosData.AreMonotonicRequirementsCompatible =
-    eos_AreMonotonicRequirementsCompatibleRecordType1;
+  me->eosData.AreMonotonicRequirementsCompatible = eos_AreMonotonicRequirementsCompatibleRecordType1;
   me->eosData.SetSmoothing = eos_SetSmoothingRecordType1;
-  me->eosData.AreSmoothingRequirementsCompatible =
-    eos_AreSmoothingRequirementsCompatibleRecordType1;
+  me->eosData.AreSmoothingRequirementsCompatible = eos_AreSmoothingRequirementsCompatibleRecordType1;
   me->eosData.Interpolate = eos_InterpolateRecordType1;
   me->eosData.CheckExtrap = eos_CheckExtrapRecordType1_using_extrapolationBounds;
   me->eosData.InvertAtSetup = eos_InvertAtSetupRecordType1;
   me->eosData.AllocateColdCurve = _eos_AllocateColdCurveRecordType1;
   me->eosData.CleanUpColdCurve = _eos_CleanUpColdCurveRecordType1;
   me->eosData.SetExtrapolationBounds = eos_SetExtrapolationBoundsRecordType1;
-  me->eosData.varOrder = X_Y_F;
-  me->eosData.tmpVarOrder = -1;
-  me->rt2_handle = -1;
-  me->found_401 = EOS_FALSE;
-  me->isInvertedAtSetup = EOS_FALSE;
+  me->eosData.eos_IsRequiredDataLoaded = eos_isRequiredDataLoadedRecordType1;
+  me->eosData.AreGhostDataRequired = eos_AreGhostDataRequiredRecordType1;
+  me->eosData.AddGhostData = eos_AddGhostDataRecordType1;
+  me->eosData.SetUseTmpGhostData = eos_SetUseTmpGhostDataRecordType1;
+  me->eosData.GenerateHashTables = eos_GenerateHashTablesRecordType1;
+#ifdef DEBUG_EOS_EXPANDGRIDINTERPOLATE      /* this is defined in eos_Utils.h */
+  me->eosData.DumpExpandedGrid = eos_DumpExpandedGridRecordType1;
+#endif
+
+#ifdef DO_OFFLOAD
+  me->gpu_ftbls_th1     = NULL;
+  me->gpu_ftbls_th2     = NULL;
+  me->gpu_ftbls_th3     = NULL;
+  me->gpu_ftbls_th4     = NULL;
+  me->gpu_ftbls_th5     = NULL;
+  me->gpu_xtbls_th1     = NULL;
+  me->gpu_xtbls_th2     = NULL;
+  me->gpu_xtbls_th3     = NULL;
+  me->gpu_xtbls_th4     = NULL;
+  me->gpu_xtbls_th5     = NULL;
+  me->gpu_ytbls_th1     = NULL;
+  me->gpu_ytbls_th2     = NULL;
+  me->gpu_ytbls_th3     = NULL;
+  me->gpu_ytbls_th4     = NULL;
+  me->gpu_ytbls_th5     = NULL;
+  me->gpu_coldCurve_th1 = NULL;
+  me->gpu_coldCurve_th2 = NULL;
+  me->gpu_coldCurve_th3 = NULL;
+  me->gpu_coldCurve_th4 = NULL;
+  me->gpu_coldCurve_th5 = NULL;
+  me->eosData.GpuOffloadData = eos_GpuOffloadDataRecordType1;
+#endif /* DO_OFFLOAD */
 }
 
 /***********************************************************************/
-/*! 
+/*!
  * \brief RecordType1 class destructor helper function
- * 
+ *
  * \param[in,out] *me        - eos_RecordType1 : data object pointer;
  *                             contents of *me are destroyed
  * \pram[in] first           - EOS_INTEGER : start index of me->Taylor_objects array to be destroyed
  * \pram[in] last            - EOS_INTEGER : last index of me->Taylor_objects array to be destroyed
- * 
+ *
  * \return none
  *
  ***********************************************************************/
@@ -173,9 +203,9 @@ void _eos_DestroyTaylorObjectSets (eos_RecordType1 *me, EOS_INTEGER first, EOS_I
   for (i = first; i <= last; i++) {
     if (me->Taylor_objects[i]) {
       for (j=0; j<(me->M * me->N); j++) {
-	eos_Taylor *p = NULL;
-	p = (me->Taylor_objects[i])[j];
-	if (p) p->Destroy(p);
+        eos_Taylor *p = NULL;
+        p = (me->Taylor_objects[i])[j];
+        if (p) p->Destroy(p);
       }
     }
     EOS_FREE(me->Taylor_objects[i]);
@@ -183,25 +213,33 @@ void _eos_DestroyTaylorObjectSets (eos_RecordType1 *me, EOS_INTEGER first, EOS_I
 }
 
 /***********************************************************************/
-/*! 
+/*!
  * \brief RecordType1 class destructor
- * 
+ *
  * \param[in,out] *me        - eos_RecordType1 : data object pointer;
  *                             contents of *me are destroyed
- * 
+ *
  * \return none
  *
  ***********************************************************************/
 void eos_DestroyRecordType1 (void* ptr)
 {
+  int i;
+  EOS_BOOLEAN isAnyTableAllocated = EOS_FALSE;
   eos_RecordType1 *me = (eos_RecordType1*) ptr;
- 
-  if (!me->table1 && !me->table2 && !me->table3 && !me->table4) {
-    if (!me->eosData.destructing)       /* to prevent circular calls to destructor */
+
+  for(i=0; i<MAX_TABLES_RECORDTYPE1; i++) {
+    if (me->table[i]) {
+      isAnyTableAllocated = EOS_TRUE;
+      break;
+    }
+  }
+  if (!isAnyTableAllocated) {
+    if (!me->eosData.destructing)       /* avoid circular destructor calls */
       eos_DestroyEosData (&(me->eosData));
     return;
   }
- 
+
   if (me->Taylor_objects) {
     _eos_DestroyTaylorObjectSets (me, 0, 3);
     EOS_FREE(me->Taylor_objects);
@@ -210,36 +248,71 @@ void eos_DestroyRecordType1 (void* ptr)
     EOS_FREE(me->TX);
     EOS_FREE(me->TY);
   }
- 
+
+#ifdef DO_OFFLOAD
+  {
+    int t_ = omp_get_default_device();
+    omp_target_free(me->gpu_ftbls_th1,     t_);
+    omp_target_free(me->gpu_ftbls_th2,     t_);
+    omp_target_free(me->gpu_ftbls_th3,     t_);
+    omp_target_free(me->gpu_ftbls_th4,     t_);
+    omp_target_free(me->gpu_ftbls_th5,     t_);
+    omp_target_free(me->gpu_xtbls_th1,     t_);
+    omp_target_free(me->gpu_xtbls_th2,     t_);
+    omp_target_free(me->gpu_xtbls_th3,     t_);
+    omp_target_free(me->gpu_xtbls_th4,     t_);
+    omp_target_free(me->gpu_xtbls_th5,     t_);
+    omp_target_free(me->gpu_ytbls_th1,     t_);
+    omp_target_free(me->gpu_ytbls_th2,     t_);
+    omp_target_free(me->gpu_ytbls_th3,     t_);
+    omp_target_free(me->gpu_ytbls_th4,     t_);
+    omp_target_free(me->gpu_ytbls_th5,     t_);
+    omp_target_free(me->gpu_coldCurve_th1, t_);
+    omp_target_free(me->gpu_coldCurve_th2, t_);
+    omp_target_free(me->gpu_coldCurve_th3, t_);
+    omp_target_free(me->gpu_coldCurve_th4, t_);
+    omp_target_free(me->gpu_coldCurve_th5, t_);
+  }
+#endif /* DO_OFFLOAD */
+
+  /* Free Hashtables */
+  if (me->R_hashTable) eos_HashTable1D_free(me->R_hashTable);
+  if (me->T_hashTable) eos_HashTable1D_free(me->T_hashTable);
+  for(i=0; i<MAX_TABLES_RECORDTYPE1; i++) {
+    if (me->hashTables[i]) {
+      eos_HashTable2D_free(me->hashTables[i]);
+    }
+  }
+
   eos_SetSizeRecordType1 (me, 0, 0, 0);
- 
-  if (!me->eosData.destructing) /* avoid circular destructor calls */
+
+  if (!me->eosData.destructing)       /* avoid circular destructor calls */
     eos_DestroyEosData (&(me->eosData));
 }
- 
+
 /***********************************************************************/
-/*! 
+/*!
  * \brief This function allocates data of RecordType1 for loading
- * 
+ *
  * \param[in,out] *ptr       - void : data object pointer;
  *                             internally recast to eos_RecordType1*
  *                             contents are allocated
  * \param[in]     th         - EOS_INTEGER : table handle
- * 
+ *
  * \return none
  *
  ***********************************************************************/
 void eos_CreateRecordType1 (void *ptr, EOS_INTEGER th)
 {
   eos_RecordType1 *me;
- 
+
   me = (eos_RecordType1 *) ptr;
 
   gEosDataMap.errorCodes[th] = EOS_OK; /* reset previous error */
- 
+
   /* set the sesame file indexes and offsets for RecordType1 */
   eos_SetFileIndexesRecordType1 (me, th);
- 
+
   if ((eos_GetStandardErrorCodeFromCustomErrorCode(gEosDataMap.errorCodes[th]) == EOS_DATA_TYPE_NOT_FOUND) &&
       !me->eosData.forceCreate) {
     // DAP - no error handling is done here so that eos_LoadRecordType1 can decide what to do in the case
@@ -247,29 +320,29 @@ void eos_CreateRecordType1 (void *ptr, EOS_INTEGER th)
     ((eos_ErrorHandler *) me)->HandleError (me, th, EOS_OK);
     return;
   }
- 
+
   if (gEosDataMap.errorCodes[th]) /* return previous error to parent */
     return;
- 
+
   /* check if there is enough data */
   if (me->eosData.dataSize < 2 + me->NR + me->NT + me->NR * me->NT) {   /* at least 1 subtable! */
     ((eos_ErrorHandler *) me)->HandleError (me, th, EOS_READ_DATA_FAILED);
     return;
   }
- 
+
   // allocate enough memory
   eos_SetSizeRecordType1 (me, me->NR, me->NT, me->eosData.tableNum);
 }
- 
+
 /***********************************************************************/
-/*! 
+/*!
  * \brief This function sets the sesame file indexes and offsets for RecordType1
- * 
+ *
  * \param[in,out] *ptr       - void : data object pointer;
  *                             internally recast to eos_RecordType1*
  *                             contents are allocated
  * \param[in]     th         - EOS_INTEGER : table handle
- * 
+ *
  * \return none
  *
  ***********************************************************************/
@@ -281,19 +354,19 @@ void eos_SetFileIndexesRecordType1 (void *ptr, EOS_INTEGER th)
   EOS_INTEGER ierr = EOS_OK;
   EOS_REAL *read_data;
   EOS_CHAR *errMsg = NULL;
- 
+
   me = (eos_RecordType1 *) ptr;
   matid = me->eosData.materialID;
   read_data = NULL;
- 
+
   {
     /* get the file offset for reading data and get back 6 reals: NR, NT, R[0], date1, date2 and version */
     ses_material_id mid = (ses_material_id)me->eosData.materialID;
     ses_table_id    tid = (ses_table_id)me->eosData.tableNum;
     nreals_to_read = 6;
     ierr = eos_SesSeekToDataTable (matid, me->eosData.tableNum, &read_data, nreals_to_read,
-				   &(me->eosData.dataFileIndex), &mid, &tid,
-				   &(me->eosData.dataSize), me->eosData.userDefinedDataFile, &errMsg);
+                                   &(me->eosData.dataFileIndex), &mid, &tid,
+                                   &(me->eosData.dataSize), me->eosData.userDefinedDataFile, &errMsg);
     if (errMsg) ierr = eos_SetCustomErrorMsg(th, ierr, "%s", errMsg);
     EOS_FREE(errMsg);
   }
@@ -311,7 +384,7 @@ void eos_SetFileIndexesRecordType1 (void *ptr, EOS_INTEGER th)
     ((eos_ErrorHandler *) me)->HandleError (me, th, ierr);
     return;
   }
- 
+
   // determine how many subtables are available;
   // return error code if requested is not available
   count = 0;
@@ -329,7 +402,7 @@ void eos_SetFileIndexesRecordType1 (void *ptr, EOS_INTEGER th)
     me->eosData.modificationDate = me->eosData.creationDate;
   /* read version number */
   me->eosData.latestVersion = (EOS_INTEGER) read_data[count++];
- 
+
   /* deallocate read_data[], which was allocated by eos_SesSeekToDataTable() above */
 #ifdef MY_DEBUG
   printf("In SetFileIndexes Record Type 1 before EOS_FREE read_data\n");
@@ -339,85 +412,385 @@ void eos_SetFileIndexesRecordType1 (void *ptr, EOS_INTEGER th)
   printf("In SetFileIndexes Record Type 1 after EOS_FREE read_data returning\n");
 #endif
 }
- 
+
 /***********************************************************************/
-/*! 
+/*!
  * \brief This an internal function that deallocates the unused data arrays.
- * 
+ *
  * \param[in,out] *me        - eos_RecordType1 : data object pointer;
  *                             contents are populated with data
- * 
+ *
  * \return none
  *
  ***********************************************************************/
 void _eos_FreeUnusedArraysRecordType1 (eos_RecordType1 *me)
 {
+  EOS_INTEGER i;
+
   /* free unused memory if subtables not loaded */
-  if (me->eosData.numSubtablesLoaded < 4 && me->table4) {
-    EOS_FREE (me->table4);
-    EOS_FREE (me->coldCurve4);
+  for(i=0; i<MAX_TABLES_RECORDTYPE1; i++) {
+    if (me->eosData.numSubtablesLoaded <= i && me->table[i]) {
+      EOS_FREE (me->table[i]);
+      EOS_FREE (me->coldCurve[i]);
+    }
   }
-  if (me->eosData.numSubtablesLoaded < 3 && me->table3) {
-    EOS_FREE (me->table3);
-    EOS_FREE (me->coldCurve3);
+#ifdef __ONE_OBJECT_PER_TABLEHANDLE__
+  if (!me->isInvertedAtSetup) {
+    EOS_INTEGER dataType = gEosDataMap.tableTypes[me->eosData.tableHandle];
+    EOS_INTEGER dataType_ref1 = EOS_EOS_TABLE_TYPE_REF1(dataType);
+    EOS_INTEGER dataType_ref2 = EOS_EOS_TABLE_TYPE_REF2(dataType);
+    EOS_INTEGER numtabs = me->eosData.numSubtablesLoaded;
+    for(i=0; i<numtabs; i++) {
+      if (i == EOS_TYPE_TO_SUB_TAB_NUM(dataType)-1) continue;
+      if (dataType_ref1 != EOS_NullTable && i == EOS_TYPE_TO_SUB_TAB_NUM(dataType_ref1)-1) continue;
+      if (dataType_ref2 != EOS_NullTable && i == EOS_TYPE_TO_SUB_TAB_NUM(dataType_ref2)-1) continue;
+      EOS_FREE (me->table[i]);
+      EOS_FREE (me->coldCurve[i]);
+      me->eosData.numSubtablesLoaded--;
+    }
   }
-  if (me->eosData.numSubtablesLoaded < 2 && me->table2) {
-    EOS_FREE (me->table2);
-    EOS_FREE (me->coldCurve2);
-  }
-  if (me->eosData.numSubtablesLoaded < 1 && me->table1) {
-    EOS_FREE (me->table1);
-    EOS_FREE (me->coldCurve1);
-  }
+#endif
 }
- 
+
 /***********************************************************************/
-/*! 
+/*!
+ * \brief This an internal helper function that loads Taylor Fit data arrays.
+ *
+ * \param[in,out] *me        - eos_RecordType1 : data object pointer;
+ *                             contents are populated with data
+ * \param[in]     th         - table handle
+ *
+ * \return        ierr       - EOS_INTEGER error code
+ *
+ ***********************************************************************/
+EOS_INTEGER _eos_LoadTaylorFit(eos_RecordType1 *me, EOS_INTEGER th)
+{
+  EOS_INTEGER i;
+  EOS_INTEGER ierr = EOS_OK;
+  EOS_INTEGER tableNum = me->eosData.tableNum;
+
+  /* is the datatpe a function with one independent variable? */
+  EOS_INTEGER dataType = eos_GetDataTypeFromTableHandle (th, &ierr);
+  EOS_BOOLEAN isOneDimDatatype = EOS_IS_ONE_DIM_TYPE (dataType);
+
+  me->Taylor_objects = (eos_Taylor***) malloc(4 * sizeof(eos_Taylor**));
+
+  /* create and populate Taylor objects for each P, U, A and S as required for available data */
+  if (isOneDimDatatype) {
+    for (i = 0; i < MAX_TABLES_RECORDTYPE1; i++) {
+      ierr = eos_Load1DTaylor(&(me->eosData), (ses_material_id)me->eosData.materialID, (ses_table_id)tableNum, i+1, &(me->TX), &(me->M), &(me->Taylor_objects[i]));
+      if (eos_GetStandardErrorCodeFromCustomErrorCode(ierr) == EOS_NO_DATA_TABLE) {
+        _eos_DestroyTaylorObjectSets (me, i, i);
+        continue; /* skip to next subtable */
+      }
+      if (ierr) break; /* exit loop and handle error */
+      me->eosData.numSubtablesLoaded++;
+    }
+  }
+  else {
+    for (i = 0; i < 4; i++) {
+      ierr = eos_Load2DTaylor(&(me->eosData), (ses_material_id)me->eosData.materialID, (ses_table_id)tableNum, i+1, &(me->TX), &(me->TY), &(me->M), &(me->N), &(me->Taylor_objects[i]));
+      if (eos_GetStandardErrorCodeFromCustomErrorCode(ierr) == EOS_NO_DATA_TABLE) {
+        _eos_DestroyTaylorObjectSets (me, i, i);
+        continue; /* skip to next subtable */
+      }
+      if (ierr) break; /* exit loop and handle error */
+      me->eosData.numSubtablesLoaded++;
+    }
+  }
+
+  if (me->eosData.numSubtablesLoaded > 0) {
+    ierr = EOS_OK;
+    me->eosData.isLoaded = 1;
+  }
+
+  if (ierr) {
+    ((eos_ErrorHandler *) me)->HandleError (me, th, ierr);
+    ierr = eos_SetCustomErrorMsg(th, ierr,
+                                 "eos_LoadRecordType1 ERROR, no Taylor polynomial fit data available for table handle, %i", th);
+    _eos_DestroyTaylorObjectSets (me, 0, 3);
+    EOS_FREE(me->Taylor_objects);
+    me->M = 0;
+    me->N = 0;
+    EOS_FREE(me->TX);
+    EOS_FREE(me->TY);
+    return(ierr);
+  }
+
+  /* Deallocate table arrays, since they will be unused */
+  eos_SetSizeRecordType1 (me, 0, 0, tableNum);
+
+  /* dataType-dependent evaluation function assignments */
+  for (i = 0; i < MAX_TABLES_RECORDTYPE1; i++) {
+    if (me->Taylor_objects[i]) me->_eos_EvaluateTaylor[i] = _eos_EvaluateTaylorFor_dataType_DT;
+  }
+  i = 0; if (!me->Taylor_objects[i] &&  me->Taylor_objects[2])
+           me->_eos_EvaluateTaylor[i] = _eos_EvaluateTransformedTaylorFor_Pt_DT;
+  i = 1; if (!me->Taylor_objects[i]) me->_eos_EvaluateTaylor[i] = _eos_EvaluateTransformedTaylorFor_Ut_DT;
+  i = 3; if (!me->Taylor_objects[i]) me->_eos_EvaluateTaylor[i] = _eos_EvaluateTransformedTaylorFor_St_DT;
+
+  /* all done */
+  return(ierr);
+}
+
+/***********************************************************************/
+/*!
+ * \brief This an internal helper function that loads SESAME 300-series data arrays.
+ *
+ * \param[in,out] *me         - eos_RecordType1 : data object pointer;
+ *                              contents are populated with data
+ * \param[in]     th          - table handle
+ * \param[in,out] **read_data - EOS_REAL : raw, loaded data pointer
+ *
+ * \return        ierr        - EOS_INTEGER error code
+ *
+ ***********************************************************************/
+EOS_INTEGER _eos_Load300SeriesTables(eos_RecordType1 *me, EOS_INTEGER th, EOS_REAL **read_data)
+{
+  EOS_REAL *temp_mod = NULL, *enion_mod = NULL, *anion_mod = NULL, *s_ion_mod = NULL, *p_ion = NULL, *g_ion = NULL;
+  EOS_REAL *dens = NULL, *temp = NULL, *anion = NULL, *enion = NULL, *s_ion = NULL;
+  EOS_BOOLEAN create_T0_data = EOS_FALSE;
+  EOS_BOOLEAN freeEnergyIsMissing = EOS_FALSE;
+  EOS_INTEGER i, j, ierr = EOS_OK;
+  EOS_INTEGER tableNum = me->eosData.tableNum;
+  eos_OptionValue *optVal = NULL;
+
+  /* load entropy subtable if possible */
+
+  if (me->eosData.dataSize <= (2 + me->NR + me->NT + 2 * me->NR * me->NT)) {
+    // Free energy table not in Sesame file.
+    freeEnergyIsMissing = EOS_TRUE;
+  }
+  else { /* consider the case where the free energy table contains all zeroes due to an OpenSesame bug,
+            which is described in eos/eospac-dev/eospac6#594 */
+    EOS_REAL anion_sum = 0.0;
+    /* set pointer value for free energy data table */
+    anion = &((*read_data)[me->NR + me->NT + 2 * me->NR * me->NT]);
+    /* If the sum of the free energy <= me->NR * me->NT * 1.0e-12, then assume the table contains all zeroes */
+    for (i = 0; i < me->NR * me->NT; i++) {
+      anion_sum += ABS(anion[i]);
+    }
+    if (anion_sum <= me->NR * me->NT * 1.0e-12)
+      freeEnergyIsMissing = EOS_TRUE;
+  }
+
+  optVal = _eos_getOptionEosData (&(me->eosData), EOS_CALC_FREE_ENERGY);
+  if (optVal->bval) {
+    EOS_CHAR *eos_appendedSourceStr = " (calculated using A=U-TS)";
+    EOS_CHAR *sesame_fname = NULL;
+    EOS_INTEGER eos_appendedSourceStrL, sesame_fnameL;
+    sesame_fname = _eos_GetSesameFileName (&(me->eosData));
+    sesame_fnameL = strlen(sesame_fname);
+    eos_appendedSourceStrL = strlen(eos_appendedSourceStr);
+    // Free energy is to be calculated.
+    freeEnergyIsMissing = EOS_TRUE;
+    /* store the description of this alternative data source */
+    EOS_FREE(me->eosData.altDataSource);
+    me->eosData.altDataSource = (EOS_CHAR*) malloc((eos_appendedSourceStrL + sesame_fnameL + 1) *sizeof(EOS_CHAR));
+    me->eosData.altDataSource = strcpy(me->eosData.altDataSource, sesame_fname);
+    me->eosData.altDataSource = strcat(me->eosData.altDataSource, eos_appendedSourceStr);
+  }
+
+  /* are the cold curve arrays allocated for 301 and 303 data? */
+  if ((tableNum == 301 || tableNum == 303) && tableNum != 306) {
+    EOS_INTEGER k;
+    me->eosData.coldCurveIsLoaded = EOS_TRUE; /* assume true unless discovered otherwise in following loop */
+    for(k=0; k<MAX_TABLES_RECORDTYPE1; k++) {
+      if (!me->coldCurve[k]) {
+        me->eosData.coldCurveIsLoaded = EOS_FALSE;
+        break;
+      }
+    }
+  }
+
+  /* set pointer values for independent variable data */
+  dens = &((*read_data)[0]);
+  temp = &((*read_data)[me->NR]);
+
+  optVal = _eos_getOptionEosData (&(me->eosData), EOS_CREATE_TZERO);
+  if (freeEnergyIsMissing && temp[0] > ZERO && optVal->bval) {
+    /* cold curve data and Free energy are unavailable, so linearly extrapolate U(rho,T=0)
+     * to allow entropy and free energy tables to be created
+     */
+    create_T0_data = EOS_TRUE;
+    temp_mod = (EOS_REAL*) malloc((me->NT+1) * sizeof(EOS_REAL)); // allocate temporary T array to include T=0
+
+    /* set temp_mod values */
+    temp_mod[0] = 0.0;
+    for (j = 0; j < me->NT; j++)
+      temp_mod[j+1] = temp[j];
+
+    temp = temp_mod; // reset pointer to temporary array
+  }
+
+  if ((freeEnergyIsMissing && temp[0] <= ZERO) || create_T0_data) {
+    // Free energy table is not in Sesame file
+    // cold curve data is available so free energy and entropy tables can be constructed
+
+    // Store the total size of the data to be stored for all subtables
+    me->eosData.dataSize = 2 + me->NR + me->NT + MAX_TABLES_RECORDTYPE1 * me->NR * me->NT;
+
+    // reallocate read_data to store MAX_TABLES_RECORDTYPE1 subtables: enion, anion, s_ion
+    *read_data = realloc (*read_data, (me->eosData.dataSize - 2) * sizeof (EOS_REAL));
+
+    /* set pointer values for data tables to be calculated */
+    p_ion = &((*read_data)[me->NR + me->NT]);
+    enion = &((*read_data)[me->NR + me->NT + me->NR * me->NT]);
+    anion = &((*read_data)[me->NR + me->NT + 2 * me->NR * me->NT]);
+    s_ion = &((*read_data)[me->NR + me->NT + 3 * me->NR * me->NT]);
+    g_ion = &((*read_data)[me->NR + me->NT + 4 * me->NR * me->NT]);
+
+    if (create_T0_data) {
+      enion_mod = (EOS_REAL*) malloc(me->NR * (me->NT+1) * sizeof(EOS_REAL));
+      anion_mod = (EOS_REAL*) malloc(me->NR * (me->NT+1) * sizeof(EOS_REAL));
+      s_ion_mod = (EOS_REAL*) malloc(me->NR * (me->NT+1) * sizeof(EOS_REAL));
+
+      enion = &((*read_data)[me->NR + me->NT + me->NR * me->NT]);
+
+      /* copy data to temporary array */
+      for (i = 0; i < me->NR; i++)
+        for (j = 0; j < me->NT; j++)
+          enion_mod[me->NR * (j+1) + i] = enion[me->NR * j + i];
+
+      for (i = 0; i < me->NR; i++) {
+        /* linearly extrapolate enion at [j=0,i] */
+        enion_mod[i] = enion_mod[me->NR + i] - enion_mod[me->NR * 2 + i];
+        enion_mod[i] /= temp[1] - temp[2];
+        enion_mod[i] *= temp[0] - temp[2];
+        enion_mod[i] += enion_mod[me->NR + i];
+      }
+    }
+    else {
+      /* reset pointer values for independent variable data */
+      dens = &((*read_data)[0]);
+      temp = &((*read_data)[me->NR]);
+    }
+
+    /* calculate entropy */
+
+    if (create_T0_data)
+      ierr = eos_Entropy (me, me->NR, me->NT+1, enion_mod, EOS_NullPtr, temp, dens, s_ion_mod);
+    else
+      ierr = eos_Entropy (me, me->NR, me->NT, enion, EOS_NullPtr, temp, dens, s_ion);
+    if (eos_GetStandardErrorCodeFromCustomErrorCode(ierr) != EOS_OK) {
+      /* ignore the error, just set the dataSize and numTables loaded */
+      me->eosData.dataSize = 2 + me->NR + me->NT + 2 * me->NR * me->NT;     /* only TWO subtables */
+      me->eosData.numSubtablesLoaded = 2;
+      ierr = EOS_OK;
+    }
+    else {
+      if (create_T0_data) {
+        /* copy entropy data */
+        for (i = 0; i < me->NR; i++)
+          for (j = 0; j < me->NT; j++)
+            s_ion[me->NR * j + i] = s_ion_mod[me->NR * (j+1) + i];
+        temp = &((*read_data)[me->NR]);
+      }
+      /* calculate helmholtz free energy */
+      for (i = 0; i < me->NR; i++)
+        for (j = 0; j < me->NT; j++)
+          anion[i + j * me->NR] = enion[i + j * me->NR] - temp[j] * s_ion[i + j * me->NR];
+    }
+  }
+  else if (freeEnergyIsMissing && temp[0] > ZERO) {
+    // cold curve data and Free energy are unavailable
+    me->eosData.coldCurveIsLoaded = EOS_FALSE;
+    /* set the dataSize and numTables loaded */
+    me->eosData.dataSize = 2 + me->NR + me->NT + 2 * me->NR * me->NT;     /* only TWO subtables */
+    me->eosData.numSubtablesLoaded = 2;
+  }
+  else {
+    // Free energy table is in Sesame file
+    // cold curve data is available so free energy and entropy tables can be constructed
+
+    // Store the total size of the data to be stored for all subtables
+    me->eosData.dataSize = 2 + me->NR + me->NT + MAX_TABLES_RECORDTYPE1 * me->NR * me->NT;
+
+    // reallocate read_data to store MAX_TABLES_RECORDTYPE1 subtables: enion, anion, s_ion
+    *read_data = realloc (*read_data, (me->eosData.dataSize - 2) * sizeof (EOS_REAL));
+
+    /* reset pointer values for independent variable data */
+    dens = &((*read_data)[0]);
+    temp = &((*read_data)[me->NR]);
+
+    /* set pointer values for data tables to be calculated */
+    p_ion = &((*read_data)[me->NR + me->NT]);
+    enion = &((*read_data)[me->NR + me->NT + me->NR * me->NT]);
+    anion = &((*read_data)[me->NR + me->NT + 2 * me->NR * me->NT]);
+    s_ion = &((*read_data)[me->NR + me->NT + 3 * me->NR * me->NT]);
+    g_ion = &((*read_data)[me->NR + me->NT + 4 * me->NR * me->NT]);
+
+    /* calculate entropy using free energy data */
+    ierr = eos_Entropy (me, me->NR, me->NT, enion, anion, temp, dens, s_ion);
+    if (eos_GetStandardErrorCodeFromCustomErrorCode(ierr) != EOS_OK) {
+      /* ignore the error, just set the dataSize and numTables loaded */
+      me->eosData.dataSize = 2 + me->NR + me->NT + 3 * me->NR * me->NT;     /* only THREE subtables */
+      me->eosData.numSubtablesLoaded = 3;
+      ierr = EOS_OK;
+    }
+  }
+
+  if (g_ion && p_ion) {
+    /* calculate gibbs free energy */
+    for (i = 0; i < me->NR; i++)
+      for (j = 0; j < me->NT; j++)
+        g_ion[i + j * me->NR] = anion[i + j * me->NR] + p_ion[i + j * me->NR] / FLOOR(dens[i]);
+  }
+
+  EOS_FREE (temp_mod); /* deallocate local memory */
+  EOS_FREE (enion_mod);
+  EOS_FREE (anion_mod);
+  EOS_FREE (s_ion_mod);
+
+  return(ierr);
+}
+
+/***********************************************************************/
+/*!
  * \brief This function loads data of RecordType1 and stores the data in the class's
  *  data structures.
- * 
+ *
  * \param[in,out] *ptr       - void : data object pointer;
  *                             internally recast to eos_RecordType1*
  *                             contents are populated with data
  * \param[in]     th         - table handle
- * 
+ *
  * \return none
  *
  ***********************************************************************/
 void eos_LoadRecordType1 (void *ptr, EOS_INTEGER th)
 {
   eos_RecordType1 *me;
-  EOS_INTEGER tableNum, i, j, count, index1, index2,
-    index3, index4;
+  EOS_INTEGER tableNum, i, j, k, count, index;
   EOS_INTEGER ierr = EOS_OK;
-  EOS_REAL *read_data, *dens, *temp, *enion, *anion, *s_ion;
+  EOS_REAL *read_data;
   eos_OptionValue *optVal = NULL;
   eos_OptionValue *optValForced = NULL;
   EOS_INTEGER splitOptFlag;
-  EOS_BOOLEAN freeEnergyIsMissing, use_taylor_fit = EOS_FALSE, use_maxwell_table = EOS_FALSE;
+  EOS_BOOLEAN use_taylor_fit = EOS_FALSE, use_maxwell_table = EOS_FALSE;
   EOS_CHAR *errMsg = NULL;
   //#define DEBUG_EOS_LOADRECORDTYPE1
 #ifdef DEBUG_EOS_LOADRECORDTYPE1
-  EOS_INTEGER k, l;
+  EOS_INTEGER l;
 #endif
- 
+
   me = (eos_RecordType1 *) ptr;
- 
+
   optVal = _eos_getOptionEosData (&(me->eosData), EOS_USE_MAXWELL_TABLE);
   use_maxwell_table = optVal->bval;
   if (use_maxwell_table && me->eosData.tableNum == 301) {
     me->eosData.tableNum = 311; /* modify table reference if appropriate */
   }
- 
+
   optVal = _eos_getOptionEosData (&(me->eosData), EOS_USE_TAYLOR_FIT);
   use_taylor_fit = optVal->bval;
   if (use_taylor_fit) {
     me->eosData.tableNum += 400; /* modify table reference */
   }
- 
+
   tableNum = me->eosData.tableNum;
   read_data = NULL;
- 
+
   /* check handle's error code; this was moved from Create upon the introduction
    * of the eos_SetDataFileName function */
   if (eos_GetStandardErrorCodeFromCustomErrorCode(gEosDataMap.errorCodes[th]) == EOS_MATERIAL_NOT_FOUND) {
@@ -425,102 +798,40 @@ void eos_LoadRecordType1 (void *ptr, EOS_INTEGER th)
     ((eos_ErrorHandler *) me)->HandleError (me, th, ierr);
     return;
   }
- 
+
   // load bulk data from 201 table
   ierr =
     eos_SesGetBulkData (me->eosData.materialID, me->eosData.userDefinedDataFile, me->eosData.dataFileIndex,
-			&(me->avgAtomicNumber), &(me->avgAtomicWgt), &(me->refDensity),
-			&(me->solidBulkModulus), &(me->exchangeCoefficient), &errMsg);
+                        &(me->avgAtomicNumber), &(me->avgAtomicWgt), &(me->refDensity),
+                        &(me->solidBulkModulus), &(me->exchangeCoefficient), &errMsg);
   if (errMsg) ierr = eos_SetCustomErrorMsg(th, ierr, "%s", errMsg);
   EOS_FREE(errMsg);
   if (ierr) {
     ((eos_ErrorHandler *) me)->HandleError (me, th, ierr);
     ierr = eos_SetCustomErrorMsg(th, ierr,
-				 "eos_RecordType1::eos_GetBulkData ERROR, bulk data not available for table handle, %i", th);
+                                 "eos_RecordType1::eos_GetBulkData ERROR, bulk data not available for table handle, %i", th);
     return;
   }
- 
+
   /* Load Taylor polynomial fit data if requested; then return */
   if (use_taylor_fit) {
-    /* is the datatpe a function with one independent variable? */
-    EOS_INTEGER dataType = eos_GetDataTypeFromTableHandle (th, &ierr);
-    EOS_BOOLEAN isOneDimDatatype = EOS_IS_ONE_DIM_TYPE (dataType);
- 
-    me->Taylor_objects = (eos_Taylor***) malloc(4 * sizeof(eos_Taylor**));
- 
-    /* create and populate Taylor objects for each P, U, A and S as required for available data */
-    if (isOneDimDatatype) {
-      for (i = 0; i < 4; i++) {
-	ierr = eos_Load1DTaylor(&(me->eosData), (ses_material_id)me->eosData.materialID, (ses_table_id)tableNum, i+1, &(me->TX), &(me->M), &(me->Taylor_objects[i]));
-	if (eos_GetStandardErrorCodeFromCustomErrorCode(ierr) == EOS_NO_DATA_TABLE) {
-	  //EOS_FREE(me->Taylor_objects[i]); /* free memory and nullify pointer */
-	  _eos_DestroyTaylorObjectSets (me, i, i);
-	  continue; /* skip to next subtable */
-	}
-	if (ierr) break; /* exit loop and handle error */
-	me->eosData.numSubtablesLoaded++;
-      }
-    }
-    else {
-      for (i = 0; i < 4; i++) {
-	ierr = eos_Load2DTaylor(&(me->eosData), (ses_material_id)me->eosData.materialID, (ses_table_id)tableNum, i+1, &(me->TX), &(me->TY), &(me->M), &(me->N), &(me->Taylor_objects[i]));
-	if (eos_GetStandardErrorCodeFromCustomErrorCode(ierr) == EOS_NO_DATA_TABLE) {
-	  //EOS_FREE(me->Taylor_objects[i]); /* free memory and nullify pointer */
-	  _eos_DestroyTaylorObjectSets (me, i, i);
-	  continue; /* skip to next subtable */
-	}
-	if (ierr) break; /* exit loop and handle error */
-	me->eosData.numSubtablesLoaded++;
-      }
-    }
- 
-    if (me->eosData.numSubtablesLoaded > 0) {
-      ierr = EOS_OK;
-      me->eosData.isLoaded = 1;
-    }
- 
-    if (ierr) {
-      ((eos_ErrorHandler *) me)->HandleError (me, th, ierr);
-      ierr = eos_SetCustomErrorMsg(th, ierr,
-				   "eos_LoadRecordType1 ERROR, no Taylor polynomial fit data available for table handle, %i", th);
-      _eos_DestroyTaylorObjectSets (me, 0, 3);
-      EOS_FREE(me->Taylor_objects);
-      me->M = 0;
-      me->N = 0;
-      EOS_FREE(me->TX);
-      EOS_FREE(me->TY);
-      return;
-    }
- 
-    /* Deallocate table arrays, since they will be unused */
-    eos_SetSizeRecordType1 (me, 0, 0, tableNum);
- 
-    /* dataType-dependent evaluation function assignments */
-    for (i = 0; i < 4; i++) {
-      if (me->Taylor_objects[i]) me->_eos_EvaluateTaylor[i] = _eos_EvaluateTaylorFor_dataType_DT;
-    }
-    i = 0; if (!me->Taylor_objects[i] &&  me->Taylor_objects[2])
-	     me->_eos_EvaluateTaylor[i] = _eos_EvaluateTransformedTaylorFor_Pt_DT;
-    i = 1; if (!me->Taylor_objects[i]) me->_eos_EvaluateTaylor[i] = _eos_EvaluateTransformedTaylorFor_Ut_DT;
-    i = 3; if (!me->Taylor_objects[i]) me->_eos_EvaluateTaylor[i] = _eos_EvaluateTransformedTaylorFor_St_DT;
- 
-    /* all done */
-    return;
+    ierr = _eos_LoadTaylorFit(me, th);
+    return; /* all done */
   }
- 
+
   /* Load the read_data array with all of the available data. If necessary,
      use the selected analytical model for ions to create 303 or 304 Sesame table data */
   splitOptFlag = -1;
   if (tableNum == 303 || tableNum == 304 || tableNum == 305)    /* model only valid to create 303, 304 or 305 data */
     eos_GetAnalyticalEOSFlags (me, &splitOptFlag, &optValForced);
- 
+
   if (splitOptFlag != -1 && optValForced && optValForced->bval) {
     /* Forced-usage of the selected analytical model to create table data */
- 
+
     // initialize error code
     if (eos_GetStandardErrorCodeFromCustomErrorCode(gEosDataMap.errorCodes[th]) == EOS_DATA_TYPE_NOT_FOUND)
       gEosDataMap.errorCodes[th] = EOS_OK;
- 
+
     ierr = eos_AnalyticalEOS (me, splitOptFlag, &read_data, &errMsg);
     if (errMsg) ierr = eos_SetCustomErrorMsg(th, ierr, "%s", errMsg);
     EOS_FREE(errMsg);
@@ -529,407 +840,97 @@ void eos_LoadRecordType1 (void *ptr, EOS_INTEGER th)
       return;
     }
   }
- 
+
   if (!(optValForced && optValForced->bval)) {
     /* just load data from Sesame file, if available, or do unforced splitting if requested */
- 
+
     if (me->eosData.dataSize < 2) {     /* eos_CreateRecordType1 failed to load data */
- 
+
       if (splitOptFlag != -1 &&
-	  (tableNum == 303 || tableNum == 304)) {
-	/* do unforced splitting if requested */
-	ierr = eos_AnalyticalEOS (me, splitOptFlag, &read_data, &errMsg);
-	if (errMsg) ierr = eos_SetCustomErrorMsg(th, ierr, "%s", errMsg);
-	EOS_FREE(errMsg);
-	if (ierr) {
-	  ((eos_ErrorHandler *) me)->HandleError (me, th, ierr);
-	  return;
-	}
+          (tableNum == 303 || tableNum == 304)) {
+        /* do unforced splitting if requested */
+        ierr = eos_AnalyticalEOS (me, splitOptFlag, &read_data, &errMsg);
+        if (errMsg) ierr = eos_SetCustomErrorMsg(th, ierr, "%s", errMsg);
+        EOS_FREE(errMsg);
+        if (ierr) {
+          ((eos_ErrorHandler *) me)->HandleError (me, th, ierr);
+          return;
+        }
       }
       else {                    /* tableNum doesn't exist in Sesame for current matID and no splitting requested */
-	ierr = EOS_DATA_TYPE_NOT_FOUND;
+        ierr = EOS_DATA_TYPE_NOT_FOUND;
       }
- 
+
     }
     else {
- 
+
       // load available data tables from Sesame file
       ierr = eos_SesLoadSesameFiles (me->eosData.materialID, me->eosData.tableNum, me->eosData.dataFileIndex, &read_data, me->eosData.dataSize - 2); /* DATA SIZE INCLUDES DATA ALREADY READ */
       if (ierr) {
-	((eos_ErrorHandler *) me)->HandleError (me, th, ierr);
-	return;
+        ((eos_ErrorHandler *) me)->HandleError (me, th, ierr);
+        return;
       }
- 
+
       if ((tableNum >= 301 && tableNum <= 306) || (tableNum >= 311 && tableNum <= 316)) {
-	/* load entropy subtable if possible */
- 
-	EOS_REAL *temp_mod = NULL, *enion_mod = NULL, *anion_mod = NULL, *s_ion_mod = NULL;
-	EOS_BOOLEAN create_T0_data = EOS_FALSE;
- 
-	freeEnergyIsMissing = EOS_FALSE;
-	if (me->eosData.dataSize <= (2 + me->NR + me->NT + 2 * me->NR * me->NT)) {
-	  // Free energy table not in Sesame file.
-	  freeEnergyIsMissing = EOS_TRUE;
-	}
- 
-	optVal = _eos_getOptionEosData (&(me->eosData), EOS_CALC_FREE_ENERGY);
-	if (optVal->bval) {
-	  EOS_CHAR *eos_appendedSourceStr = " (calculated using A=U-TS)";
-	  EOS_CHAR *sesame_fname = NULL;
-	  EOS_INTEGER eos_appendedSourceStrL, sesame_fnameL;
-	  sesame_fname = _eos_GetSesameFileName (&(me->eosData));
-	  sesame_fnameL = strlen(sesame_fname);
-	  eos_appendedSourceStrL = strlen(eos_appendedSourceStr);
-	  // Free energy is to be calculated.
-	  freeEnergyIsMissing = EOS_TRUE;
-	  /* store the description of this alternative data source */
-	  EOS_FREE(me->eosData.altDataSource);
-	  me->eosData.altDataSource = (EOS_CHAR*) malloc((eos_appendedSourceStrL + sesame_fnameL + 1) *sizeof(EOS_CHAR));
-	  me->eosData.altDataSource = strcpy(me->eosData.altDataSource, sesame_fname);
-	  me->eosData.altDataSource = strcat(me->eosData.altDataSource, eos_appendedSourceStr);
-	}
- 
-	/* are the cold curve arrays allocated for 301 and 303 data? */
-	if ((tableNum == 301 || tableNum == 303) && tableNum != 306 &&
-	    me->coldCurve1 && me->coldCurve2 && me->coldCurve3
-	    && me->coldCurve4)
-	  me->eosData.coldCurveIsLoaded = EOS_TRUE;
- 
-	/* set pointer values for independent variable data */
-	dens = &(read_data[0]);
-	temp = &(read_data[me->NR]);
- 
-	optVal = _eos_getOptionEosData (&(me->eosData), EOS_CREATE_TZERO);
-	if (freeEnergyIsMissing && temp[0] > ZERO && optVal->bval) {
-	  /* cold curve data and Free energy are unavailable, so linearly extrapolate U(rho,T=0)
-	   * to allow entropy and free energy tables to be created
-	   */
-	  create_T0_data = EOS_TRUE;
-	  temp_mod = (EOS_REAL*) malloc((me->NT+1) * sizeof(EOS_REAL)); // allocate temporary T array to include T=0
- 
-	  /* set temp_mod values */
-	  temp_mod[0] = 0.0;
-	  for (j = 0; j < me->NT; j++)
-	    temp_mod[j+1] = temp[j];
- 
-	  temp = temp_mod; // reset pointer to temporary array
-	}
- 
-	if ((freeEnergyIsMissing && temp[0] <= ZERO) || create_T0_data) {
-	  // Free energy table is not in Sesame file
-	  // cold curve data is available so free energy and entropy tables can be constructed
+        /* load entropy subtable if possible */
+        ierr = _eos_Load300SeriesTables(me, th, &read_data);
+      }
 
-	  // Store the total size of the data to be stored for all subtables:
-	  // NR, NT, R[], T[], table1[], table2[], table3[], and table4[]
-	  me->eosData.dataSize = 2 + me->NR + me->NT + MAX_TABLES_RECORDTYPE1 * me->NR * me->NT;
- 
-	  // reallocate read_data to store three subtables: enion, anion, s_ion
-	  read_data =
-	    realloc (read_data, (me->eosData.dataSize - 2) * sizeof (EOS_REAL));
- 
-	  /* set pointer values for data tables to be calculated */
-	  enion = &(read_data[me->NR + me->NT + me->NR * me->NT]);
-	  anion = &(read_data[me->NR + me->NT + 2 * me->NR * me->NT]);
-	  s_ion = &(read_data[me->NR + me->NT + 3 * me->NR * me->NT]);
- 
-	  if (create_T0_data) {
-	    enion_mod = (EOS_REAL*) malloc(me->NR * (me->NT+1) * sizeof(EOS_REAL));
-	    anion_mod = (EOS_REAL*) malloc(me->NR * (me->NT+1) * sizeof(EOS_REAL));
-	    s_ion_mod = (EOS_REAL*) malloc(me->NR * (me->NT+1) * sizeof(EOS_REAL));
- 
-	    enion = &(read_data[me->NR + me->NT + me->NR * me->NT]);
- 
-	    /* copy data to temporary array */
-	    for (i = 0; i < me->NR; i++)
-	      for (j = 0; j < me->NT; j++)
-		enion_mod[me->NR * (j+1) + i] = enion[me->NR * j + i];
- 
-	    for (i = 0; i < me->NR; i++) {
-	      /* linearly extrapolate enion at [j=0,i] */
-	      enion_mod[i] = enion_mod[me->NR + i] - enion_mod[me->NR * 2 + i];
-	      enion_mod[i] /= temp[1] - temp[2];
-	      enion_mod[i] *= temp[0] - temp[2];
-	      enion_mod[i] += enion_mod[me->NR + i];
-	    }
-	  }
-	  else {
-	    /* reset pointer values for independent variable data */
-	    dens = &(read_data[0]);
-	    temp = &(read_data[me->NR]);
-	  }
- 
-	  /* calculate entropy */
- 
-	  if (create_T0_data)
-	    ierr = eos_Entropy (me, me->NR, me->NT+1, enion_mod, EOS_NullPtr, temp, dens, s_ion_mod);
-	  else
-	    ierr = eos_Entropy (me, me->NR, me->NT, enion, EOS_NullPtr, temp, dens, s_ion);
-	  if (eos_GetStandardErrorCodeFromCustomErrorCode(ierr) != EOS_OK) {
-	    /* ignore the error, just set the dataSize and numTables loaded */
-	    me->eosData.dataSize = 2 + me->NR + me->NT + 2 * me->NR * me->NT;     /* only TWO subtables */
-	    me->eosData.numSubtablesLoaded = 2;
-	    ierr = EOS_OK;
-	  }
-	  else {
-	    if (create_T0_data) {
-	      /* copy entropy data */
-	      for (i = 0; i < me->NR; i++)
-		for (j = 0; j < me->NT; j++)
-		  s_ion[me->NR * j + i] = s_ion_mod[me->NR * (j+1) + i];
-	      temp = &(read_data[me->NR]);
-	    }
-	    /* calculate free energy */
-	    for (i = 0; i < me->NR; i++)
-	      for (j = 0; j < me->NT; j++)
-		anion[i + j * me->NR] =
-		  enion[i + j * me->NR] - temp[j] * s_ion[i + j * me->NR];
-	  }
-	}
-	else if (freeEnergyIsMissing && temp[0] > ZERO) {
-	  // cold curve data and Free energy are unavailable
-	  me->eosData.coldCurveIsLoaded = EOS_FALSE;
-	  /* set the dataSize and numTables loaded */
-	  me->eosData.dataSize = 2 + me->NR + me->NT + 2 * me->NR * me->NT;     /* only TWO subtables */
-	  me->eosData.numSubtablesLoaded = 2;
-	}
-	else {
-	  // Free energy table is in Sesame file
-	  // cold curve data is available so free energy and entropy tables can be constructed
+      /* All other data (i.e., 411 and 412 sesame tables) require no additional modifications or calculations,
+       * and it is already loaded into the read_data[] array by eos_LoadSesameFiles() above.
+       */
 
-	  // Store the total size of the data to be stored for all subtables:
-	  // NR, NT, R[], T[], table1[], table2[], table3[], and table4[]
-	  me->eosData.dataSize = 2 + me->NR + me->NT + MAX_TABLES_RECORDTYPE1 * me->NR * me->NT;
- 
-	  // reallocate read_data to store three subtables: enion, anion, s_ion
-	  read_data =
-	    realloc (read_data, (me->eosData.dataSize - 2) * sizeof (EOS_REAL));
- 
-	  /* reset pointer values for independent variable data */
-	  dens = &(read_data[0]);
-	  temp = &(read_data[me->NR]);
- 
-	  /* set pointer values for data tables to be calculated */
-	  enion = &(read_data[me->NR + me->NT + me->NR * me->NT]);
-	  anion = &(read_data[me->NR + me->NT + 2 * me->NR * me->NT]);
-	  s_ion = &(read_data[me->NR + me->NT + 3 * me->NR * me->NT]);
- 
-	  /* calculate entropy using free energy data */
-	  ierr = eos_Entropy (me, me->NR, me->NT, enion, anion, temp, dens, s_ion);
-	  if (eos_GetStandardErrorCodeFromCustomErrorCode(ierr) != EOS_OK) {
-	    /* ignore the error, just set the dataSize and numTables loaded */
-	    me->eosData.dataSize = 2 + me->NR + me->NT + 3 * me->NR * me->NT;     /* only THREE subtables */
-	    me->eosData.numSubtablesLoaded = 3;
-	    ierr = EOS_OK;
-	  }
-	}
- 
-	/* reset pointer values for independent variable data */
-	dens = &(read_data[0]);
-	temp = &(read_data[me->NR]);
- 
-	EOS_FREE (temp_mod); /* deallocate local memory */
-	EOS_FREE (enion_mod);
-	EOS_FREE (anion_mod);
-	EOS_FREE (s_ion_mod);
- 
-      } /* end (tableNum == 301 || tableNum == 303 || tableNum == 304 || tableNum == 305 ||
-	   tableNum == 306) */
- 
-        /* All other data (i.e., 411 and 412 sesame tables) require no additional modifications or calculations,
-         * and it is already loaded into the read_data[] array by eos_LoadSesameFiles() above.
-         */
- 
-        // store the number of subTables stored in memory
-      me->eosData.numSubtablesLoaded = (EOS_INTEGER)
-	MIN(MAX_TABLES_RECORDTYPE1,
-	    ((me->eosData.dataSize - (2 + me->NR + me->NT)) / (me->NR * me->NT)));
+      // store the number of subTables stored in memory
+      me->eosData.numSubtablesLoaded =
+        (EOS_INTEGER)MIN(MAX_TABLES_RECORDTYPE1, ((me->eosData.dataSize - (2 + me->NR + me->NT)) / (me->NR * me->NT)));
     }
   }                             /* end !(optValForced && optValForced->bval) */
- 
+
   if (eos_GetStandardErrorCodeFromCustomErrorCode(ierr) != EOS_OK) {
     ((eos_ErrorHandler *) me)->HandleError (me, th, ierr);
     return;
   }
- 
+
   if (eos_GetStandardErrorCodeFromCustomErrorCode(ierr) != EOS_OK) {
     ((eos_ErrorHandler *) me)->HandleError (me, th, ierr);
     return;
   }
 
   count = 0;
- 
-  for (i = 0; i < me->NR; i++)
-    me->R[i] = read_data[count++];      /* 0 to NR-1 */
- 
-  for (i = 0; i < me->NT; i++)
-    me->T[i] = read_data[count++];      /* NR  to  NR+NT-1 */
- 
-  for (j = 0; j < me->NT; j++) {
-    for (i = 0; i < me->NR; i++) {
-      /* count is already NR+NT */
-      index1 = count + me->NR * j + i;
-      index2 = count + me->NR * me->NT + me->NR * j + i;
-      index3 = count + 2 * me->NR * me->NT + me->NR * j + i;
-      index4 = count + 3 * me->NR * me->NT + me->NR * j + i;
-      me->table1[j][i] =
-	(index1 < me->eosData.dataSize - 2) ? read_data[index1] : ZERO;
-      me->table2[j][i] =
-	(index2 < me->eosData.dataSize - 2) ? read_data[index2] : ZERO;
-      me->table3[j][i] =
-	(index3 < me->eosData.dataSize - 2) ? read_data[index3] : ZERO;
-      me->table4[j][i] =
-	(index4 < me->eosData.dataSize - 2) ? read_data[index4] : ZERO;
-    }
-  }
 
-  /* free unused memory if subtables not loaded */
-  _eos_FreeUnusedArraysRecordType1(me);
- 
-  //#define ENABLE_COLD_CURVE_REMOVAL
-#ifdef ENABLE_COLD_CURVE_REMOVAL
- 
-  /* if EOS_PT_SMOOTHING option is set, then do not subtract cold curves */
-  optVal = _eos_getOptionEosData (&(me->eosData), EOS_PT_SMOOTHING);
- 
-  if (optVal->bval) {
-#endif /* ENABLE_COLD_CURVE_REMOVAL */
- 
-    EOS_FREE (me->coldCurve1);
-    EOS_FREE (me->coldCurve2);
-    EOS_FREE (me->coldCurve3);
-    EOS_FREE (me->coldCurve4);
-    me->eosData.coldCurveIsLoaded = EOS_FALSE;
- 
-#ifdef ENABLE_COLD_CURVE_REMOVAL
-  }
-#endif /* ENABLE_COLD_CURVE_REMOVAL */
-
-#ifdef ENABLE_COLD_CURVE_REMOVAL
-  /* if table is 301 or 303, and coldcurve arrays are allocated, subtract cold curve for all tables */
-  for (j = 0; j < me->NT; j++) {
-    for (i = 0; i < me->NR; i++) {
-      /* first subtract cold curve */
-      if ((tableNum == 301 || tableNum == 303) && tableNum != 306
-	  && me->coldCurve1 && me->coldCurve2 && me->coldCurve3
-	  && me->coldCurve4) {
-	if (j == 0) {
-	  me->coldCurve1[i] =
-	    (me->table1
-	     && me->eosData.coldCurveIsLoaded) ? me->table1[0][i] : ZERO;
-	  me->coldCurve2[i] = (me->table2
-			       && me->eosData.coldCurveIsLoaded) ? me->
-	    table2[0][i] : ZERO;
-	  me->coldCurve3[i] = (me->table3
-			       && me->eosData.coldCurveIsLoaded) ? me->
-	    table3[0][i] : ZERO;
-	  me->coldCurve4[i] = (me->table4
-			       && me->eosData.coldCurveIsLoaded) ? me->
-	    table4[0][i] : ZERO;
-	}
- 
-	if (me->table1 && me->coldCurve1)
-	  me->table1[j][i] = me->table1[j][i] - me->coldCurve1[i];
-	if (me->table2 && me->coldCurve2)
-	  me->table2[j][i] = me->table2[j][i] - me->coldCurve2[i];
-	if (me->table3 && me->coldCurve3)
-	  me->table3[j][i] = me->table3[j][i] - me->coldCurve3[i];
-	if (me->table4 && me->coldCurve4)
-	  me->table4[j][i] = me->table4[j][i] - me->coldCurve4[i];
+  /* copy all data into object arrays */
+  for (i = 0; i < me->NR; i++) me->R[i] = read_data[count++];
+  for (i = 0; i < me->NT; i++) me->T[i] = read_data[count++];
+  for(k=0; k<MAX_TABLES_RECORDTYPE1; k++) {
+    for (j = 0; j < me->NT; j++) {
+      for (i = 0; i < me->NR; i++) {
+        /* count = NR+NT */
+        index = count + k * me->NR * me->NT + me->NR * j + i;
+        me->table[k][j][i] = (index < me->eosData.dataSize - 2) ? read_data[index] : ZERO;
       }
     }
   }
-#endif /* ENABLE_COLD_CURVE_REMOVAL */
- 
+
+  /* free unused memory if subtables not loaded or required for future usage */
+  if (me->FreeUnusedArrays)
+    _eos_FreeUnusedArraysRecordType1(me);
+
+  for(i=0; i<MAX_TABLES_RECORDTYPE1; i++) {
+    EOS_FREE (me->coldCurve[i]);
+  }
+  me->eosData.coldCurveIsLoaded = EOS_FALSE;
+
   EOS_FREE (read_data);
   me->eosData.isLoaded = 1;
- 
+
   /* if needed, expand grid */
-  eos_ExpandGridRecordType1 (me, &ierr);
+  eos_ExpandGridRecordType1 (me, th, &ierr);
   if (eos_GetStandardErrorCodeFromCustomErrorCode(ierr) != EOS_OK) {
     ((eos_ErrorHandler *) me)->HandleError (me, th, ierr);
   }
+
 }
- 
-/***********************************************************************/
-/*!
- * \brief This helper function returns a pointer to a new eos_RecordType1 object,
- *        which contains a copy of the data stored in me.
- *
- * \param[in,out] *me        - eos_RecordType1 : data object pointer;
- *                             contents are populated with data
- * \param[in]     dataType   - EOS_INTEGER : data type
- *
- * \return EOS_INTEGER : table handle associated with new_me (th < 0 if error occurs)
- *
- ***********************************************************************/
-EOS_INTEGER _eos_createObjectDataCopyRecordType1 (eos_RecordType1 *me, EOS_INTEGER dataType)
-{
-  EOS_INTEGER th = -1; /* default is invalid handle */
-  EOS_INTEGER err = EOS_OK;
-  EOS_INTEGER i, j, k;
-  EOS_REAL *R, *T, **F, *coldCurve;
-  EOS_REAL *new_R, *new_T, **new_F, *new_coldCurve;
-  eos_RecordType1 *new_me = NULL;
- 
-  /*
-    void eos_CreateTablesEosDataMap (eos_DataMap *me, EOS_INTEGER nTables,
-    EOS_INTEGER tableType[], EOS_INTEGER matID[],
-    EOS_INTEGER tableHandles[],
-    EOS_INTEGER doCreate, EOS_INTEGER isPublic,
-    EOS_INTEGER updateOnly, EOS_INTEGER userDefinedDataFileIndex,
-    EOS_INTEGER *errorCode)
-  */
- 
-  /* first construct an empty object w/o creating it (in case the table can't be created, we still want an empty object */
-  eos_CreateTablesEosDataMap (&gEosDataMap, 1, &dataType, &me->eosData.materialID,
-			      &th, EOS_FALSE, 0, EOS_FALSE, -1, &err);
- 
-  if (eos_GetStandardErrorCodeFromCustomErrorCode(err) == EOS_OK && th >= 0 && gEosDataMap.tableHandlesMap[th]) {
- 
-    /* all is well so far */
- 
-    new_me = (eos_RecordType1 *) gEosDataMap.dataObjects[gEosDataMap.tableHandlesMap[th]];
- 
-    /* allocate memory in new_me */
-    eos_SetSizeRecordType1 (new_me, me->NR, me->NT, me->eosData.tableNum);
- 
-    new_me->eosData.numSubtablesLoaded = me->eosData.numSubtablesLoaded;
- 
-    /* copy current data into new_me for all tables */
-    _eos_GetDataRecordType1 (me, &R, &T, &F, &coldCurve, 1);
-    _eos_GetDataRecordType1 (new_me, &new_R, &new_T, &new_F, &new_coldCurve, 1);
-    for (j = 0; j < me->NT; j++)
-      new_T[j] = T[j];
-    for (k = 0; k < me->NR; k++)
-      new_R[k] = R[k];
- 
-    for (i = 0; i < MAX_TABLES_RECORDTYPE1; i++) {
- 
-      if (me->eosData.numSubtablesLoaded < i + 1)
-	break;
- 
-      _eos_GetDataRecordType1 (me, &R, &T, &F, &coldCurve, i + 1);
-      _eos_GetDataRecordType1 (new_me, &new_R, &new_T, &new_F, &new_coldCurve, i + 1);
- 
-      /* get data of i-th subtable */
- 
-      for (j = 0; j < me->NT; j++) {
-	for (k = 0; k < me->NR; k++)
-	  new_F[j][k] = F[j][k];
-      }
- 
-      if ((me->eosData.tableNum == 301 || me->eosData.tableNum == 303) && coldCurve) {
-	for (k = 0; k < me->NR; k++)
-	  new_coldCurve[k] = coldCurve[k];
-      }
- 
-    }
- 
-  }
- 
-  return th;
-}
- 
+
 /***********************************************************************/
 /*!
  * \brief This helper function resizes an eos_RecordType1 object, me,
@@ -940,7 +941,7 @@ EOS_INTEGER _eos_createObjectDataCopyRecordType1 (eos_RecordType1 *me, EOS_INTEG
  * \param[in]     NR  - EOS_INTEGER : size of R array
  * \param[in]     NT  - EOS_INTEGER : size of T array
  * \param[out]   *err - EOS_INTEGER : error code
- * 
+ *
  * \return none
  *
  ***********************************************************************/
@@ -949,37 +950,42 @@ void _eos_resizeRecordType1 (eos_RecordType1 *me, EOS_INTEGER NR, EOS_INTEGER NT
   EOS_INTEGER oldNT, oldNR, i, j, k;
   EOS_REAL *oldR, *oldT, **oldF[MAX_TABLES_RECORDTYPE1], *oldColdCurve[MAX_TABLES_RECORDTYPE1];
   EOS_REAL *R, *T, **F, *coldCurve;
+  EOS_CHAR *packed_tableOptions = NULL;
+  EOS_INTEGER packed_tableOptions_sz;
   *err = EOS_OK;
- 
+
   if (me->NR == NR && me->NT == NT)
     return;                     /* nothing to do */
- 
+
+  /* The requested size(s) must be greater than the existing object value(s) */
+  assert (me->NR <= NR && me->NT <= NT);
+
   oldNT = me->NT;
   oldNR = me->NR;
   oldR = (EOS_REAL *) malloc (oldNR * sizeof (EOS_REAL));
   oldT = (EOS_REAL *) malloc (oldNT * sizeof (EOS_REAL));
- 
+
   /* first copy current data into temp arrays for all tables */
   memcpy(oldR, me->R, oldNR*sizeof(EOS_REAL));
   memcpy(oldT, me->T, oldNT*sizeof(EOS_REAL));
- 
+
   for (i = 0; i < me->eosData.numSubtablesLoaded; i++) { /* loop over existing tables */
- 
-    _eos_GetDataRecordType1 (me, &R, &T, &F, &coldCurve, i + 1);
- 
+
+    _eos_GetDataRecordType1 (me, &R, &T, &F, &coldCurve, NULL, i + 1);
+
     oldF[i] = (EOS_REAL **) malloc (oldNT * sizeof (EOS_REAL *));
- 
+
     /* allocate memory continuously */
     oldF[i][0] = (EOS_REAL *) malloc (sizeof (EOS_REAL) * oldNT * oldNR);
- 
+
     /* get data of i-th subtable */
- 
+
     for (j = 0; j < oldNT; j++) {
       oldF[i][j] = oldF[i][0] + j * oldNR;
       for (k = 0; k < oldNR; k++)
         oldF[i][j][k] = F[j][k];
     }
- 
+
     if ((me->eosData.tableNum == 301 || me->eosData.tableNum == 303) && coldCurve) {
       oldColdCurve[i] = (EOS_REAL *) malloc (oldNR * sizeof (EOS_REAL));
       for (k = 0; k < oldNR; k++)
@@ -989,32 +995,51 @@ void _eos_resizeRecordType1 (eos_RecordType1 *me, EOS_INTEGER NR, EOS_INTEGER NT
       oldColdCurve[i] = NULL;
     }
   }
- 
+
+  { /* pack the me->eosData.tableOptions into temporary memory */
+    eos_Data *eosData = (eos_Data*)me;
+    /* get packed_tableOptions_sz */
+    eos_PackOptionsEosData(eosData, (EOS_CHAR*)NULL, &packed_tableOptions_sz, err);
+    /* allocate packed_tableOptions */
+    packed_tableOptions = (EOS_CHAR*)malloc(packed_tableOptions_sz * sizeof(EOS_CHAR));
+    /* get packed_tableOptions */
+    eos_PackOptionsEosData(eosData, packed_tableOptions, &packed_tableOptions_sz, err);
+  }
+
   /* reallocate memory in new_me */
   eos_SetSizeRecordType1 (me, NR, NT, me->eosData.tableNum);
- 
+
+  { /* unpack the temporary memory into me->eosData.tableOptions */
+    eos_Data *eosData = (eos_Data*)me;
+    /* set eosData->tableOptions */
+    eos_UnpackOptionsEosData(eosData, packed_tableOptions, err);
+    /* free temporary memory */
+    EOS_FREE(packed_tableOptions);
+    packed_tableOptions_sz = 0;
+  }
+
   /* copy data into me for all tables */
   memcpy(me->R, oldR, oldNR*sizeof(EOS_REAL));
   memcpy(me->T, oldT, oldNT*sizeof(EOS_REAL));
- 
+
   for (i = 0; i < me->eosData.numSubtablesLoaded; i++) { /* loop over existing tables */
- 
-    _eos_GetDataRecordType1 (me, &R, &T, &F, &coldCurve, i + 1);
- 
+
+    _eos_GetDataRecordType1 (me, &R, &T, &F, &coldCurve, NULL, i + 1);
+
     /* get data of i-th subtable */
- 
+
     for (j = 0; j < oldNT; j++) {
       for (k = 0; k < oldNR; k++)
         F[j][k] = oldF[i][j][k];
     }
- 
+
     if ((me->eosData.tableNum == 301 || me->eosData.tableNum == 303) && coldCurve && oldColdCurve[i]) {
       memcpy(coldCurve, oldColdCurve[i], oldNR*sizeof(EOS_REAL));
       /*       for (k = 0; k < oldNR; k++) */
       /*         coldCurve[k] = oldColdCurve[i][k]; */
     }
   }
- 
+
   EOS_FREE(oldR);
   EOS_FREE(oldT);
   for (i = 0; i < me->eosData.numSubtablesLoaded; i++) { /* loop over existing tables */
@@ -1023,7 +1048,7 @@ void _eos_resizeRecordType1 (eos_RecordType1 *me, EOS_INTEGER NR, EOS_INTEGER NT
     EOS_FREE(oldColdCurve[i]);
   }
 }
- 
+
 /***********************************************************************/
 /*!
  * \brief This helper function import new data into me after me is resized
@@ -1038,7 +1063,7 @@ void _eos_resizeRecordType1 (eos_RecordType1 *me, EOS_INTEGER NR, EOS_INTEGER NT
  * \param[in]     ytbl        - EOS_REAL*   : Y values to import
  * \param[in]     ftbl        - EOS_REAL*   : F values to import
  * \param[in]     CC          - EOS_REAL*   : Cold Curve values to import
- * 
+ *
  * \return none
  *
  ***********************************************************************/
@@ -1047,7 +1072,7 @@ void _eos_importTableRecordType1 (eos_RecordType1 *me, EOS_INTEGER subTableNum, 
 {
   EOS_INTEGER j, k, err;
   EOS_REAL *R, *T, **F, *coldCurve;
- 
+
   /* reallocate memory in new_me */
   _eos_resizeRecordType1 (me, NR, NT, &err);
 
@@ -1057,43 +1082,43 @@ void _eos_importTableRecordType1 (eos_RecordType1 *me, EOS_INTEGER subTableNum, 
   assert(ftbl);
 
   /* fetch data pointers */
-  _eos_GetDataRecordType1 (me, &R, &T, &F, &coldCurve, subTableNum);
- 
+  _eos_GetDataRecordType1 (me, &R, &T, &F, &coldCurve, NULL, subTableNum);
+
   /* copy data into me for subTableNum */
   memcpy(R, xtbl, me->NR*sizeof(EOS_REAL));
   memcpy(T, ytbl, me->NT*sizeof(EOS_REAL));
- 
+
   for (j = 0; j < me->NT; j++) {
     for (k = 0; k < me->NR; k++)
       F[j][k] = ftbl[j * me->NR + k];
   }
- 
+
   if (CC && (me->eosData.tableNum == 301 || me->eosData.tableNum == 303) && coldCurve) {
     memcpy(coldCurve, CC, me->NR*sizeof(EOS_REAL));
   }
   else {
     coldCurve = NULL;
   }
- 
+
 }
 
 #ifndef MIN_TARGET_N
 #  define MIN_TARGET_N 100
 #endif
- 
+
 /***********************************************************************/
-/*! 
+/*!
  * \brief This helper function iteratively inverts the table with respect to the first
  *        independent variable as required by the specified dataType.
  *        This algorithm operates on each y-chore (i.e., isotherm) in turn.
  *        Forced-monotonicity is assumed to be already applied to the tables in me.
- * 
+ *
  * \param[in,out] *me        - eos_RecordType1 : data object pointer;
  *                             contents are populated with data
  * \param[in]     th         - EOS_INTEGER : table handle
  * \param[in]     dataType   - EOS_INTEGER : data type
  * \param[out]   errorCode   - EOS_INTEGER : error code
- * 
+ *
  * \return none
  *
  ***********************************************************************/
@@ -1105,12 +1130,12 @@ void _eos_InvertAtSetupRecordType1_CATEGORY1 (eos_RecordType1 *me, EOS_INTEGER t
   EOS_INTEGER err, nxtbl, nytbl;
   EOS_INTEGER subTableNum = EOS_TYPE_TO_SUB_TAB_NUM (dataType);
   EOS_INTEGER target_N = MIN_TARGET_N;
- 
+
   *errorCode = EOS_OK;
- 
+
   nxtbl = me->NR;
   nytbl = me->NT;
- 
+
   target_N = MAX(nxtbl, target_N);
 
   { /* allocate temporary arrays */
@@ -1122,15 +1147,15 @@ void _eos_InvertAtSetupRecordType1_CATEGORY1 (eos_RecordType1 *me, EOS_INTEGER t
   }
 
   /* Fetch data array pointers */
-  _eos_GetDataRecordType1 (me, &xtbl, &ytbl, &ftbl, &coldCurve, subTableNum);
- 
+  _eos_GetDataRecordType1 (me, &xtbl, &ytbl, &ftbl, &coldCurve, NULL, subTableNum);
+
   /* create inverted table */
   _eos_GetInvertedTable (th, dataType,
-			 NULL, NULL, NULL, NULL,
-			 &xtbl, &ytbl, ftbl, coldCurve,
-			 &nxtbl, &nytbl,
-			 &xtbl_new, &ytbl_new, &ftbl_new,
-			 &ftbl_invt_mask, &err, target_N);
+                         NULL, NULL, NULL, NULL,
+                         &xtbl, &ytbl, ftbl, coldCurve,
+                         &nxtbl, &nytbl, me->nGhostData,
+                         &xtbl_new, &ytbl_new, &ftbl_new,
+                         &ftbl_invt_mask, &err, target_N);
 #ifndef __INCLUDE_COLD_CURVE_IN_INVERTED_GRID__
   assert(target_N == nxtbl);
 #endif
@@ -1141,7 +1166,7 @@ void _eos_InvertAtSetupRecordType1_CATEGORY1 (eos_RecordType1 *me, EOS_INTEGER t
 
   assert(nxtbl == me->NR);
   assert(nytbl == me->NT);
-    
+
   EOS_FREE(xtbl_new);
   EOS_FREE(ytbl_new);
   EOS_FREE(ftbl_new);
@@ -1189,22 +1214,22 @@ void _eos_InvertAtSetupRecordType1_CATEGORY2 (eos_RecordType1 *me, EOS_INTEGER t
   }
 
   /* Fetch data array pointers */
-  _eos_GetDataRecordType1 (me, &xtbl, &ytbl, &ftbl, &coldCurve, subTableNum);
+  _eos_GetDataRecordType1 (me, &xtbl, &ytbl, &ftbl, &coldCurve, NULL, subTableNum);
 
   /* create inverted table */
   _eos_GetInvertedTable (th, dataType,
-			 NULL, NULL, NULL, NULL,
-			 &xtbl, &ytbl, ftbl, coldCurve,
-			 &nxtbl, &nytbl,
-			 &xtbl_new, &ytbl_new, &ftbl_new,
-			 &ftbl_invt_mask, &err, target_N);
+                         NULL, NULL, NULL, NULL,
+                         &xtbl, &ytbl, ftbl, coldCurve,
+                         &nxtbl, &nytbl, me->nGhostData,
+                         &xtbl_new, &ytbl_new, &ftbl_new,
+                         &ftbl_invt_mask, &err, target_N);
   assert(nxtbl == me->NR);
 #ifndef __INCLUDE_COLD_CURVE_IN_INVERTED_GRID__
   assert(target_N == nytbl);
 #endif
 
   /* Fetch data array pointers again to update coldCurve pointer -- it may have been updated */
-  _eos_GetDataRecordType1 (me, &xtbl, &ytbl, &ftbl, &coldCurve_new, subTableNum);
+  _eos_GetDataRecordType1 (me, &xtbl, &ytbl, &ftbl, &coldCurve_new, NULL, subTableNum);
 
   if (! coldCurve && coldCurve_new) {
 
@@ -1222,11 +1247,11 @@ void _eos_InvertAtSetupRecordType1_CATEGORY2 (eos_RecordType1 *me, EOS_INTEGER t
       for (j=0; j<nytbl; j++)
       { /* force linear at manufactured minimum xtbls[0] */
         ftbl_new[j*nxtbl] = ftbl_new[1+j*nxtbl] +
-          (ftbl_new[2+j*nxtbl] - ftbl_new[1+j*nxtbl]) / (xtbl_new[2] - xtbl_new[1]) * 
+          (ftbl_new[2+j*nxtbl] - ftbl_new[1+j*nxtbl]) / (xtbl_new[2] - xtbl_new[1]) *
           (xtbl_new[0] - xtbl_new[1]);
       }
     }
-      
+
   }
 
   /* reallocate memory in me and store new data in me */
@@ -1286,23 +1311,23 @@ void _eos_InvertAtSetupRecordType1_CATEGORY3 (eos_RecordType1 *me, EOS_INTEGER t
   }
 
   /* Fetch data array pointers to contain intermediate CATEGORY1 inverted data */
-  _eos_GetDataRecordType1 (me, &_xtbl2, &_ytbl2, &_ftbl2, &_coldCurve2, subTableNum2);
+  _eos_GetDataRecordType1 (me, &_xtbl2, &_ytbl2, &_ftbl2, &_coldCurve2, NULL, subTableNum2);
 
   /* Fetch data array pointers to contain inverted CATEGORY3 data */
-  _eos_GetDataRecordType1 (me, &xtbl, &ytbl, &ftbl, &coldCurve, subTableNum_new);
+  _eos_GetDataRecordType1 (me, &xtbl, &ytbl, &ftbl, &coldCurve, NULL, subTableNum_new);
 
   /* create inverted table */
   _eos_GetInvertedTable (th, dataType,
-			 _xtbl2, _ytbl2, *_ftbl2, _coldCurve2,
-			 &xtbl, &ytbl, ftbl, coldCurve,
-			 &nxtbl, &nytbl,
-			 &xtbl_new, &ytbl_new, &ftbl_new,
-			 &ftbl_invt_mask, &err, target_N);
+                         _xtbl2, _ytbl2, *_ftbl2, _coldCurve2,
+                         &xtbl, &ytbl, ftbl, coldCurve,
+                         &nxtbl, &nytbl, me->nGhostData,
+                         &xtbl_new, &ytbl_new, &ftbl_new,
+                         &ftbl_invt_mask, &err, target_N);
 #ifndef __INCLUDE_COLD_CURVE_IN_INVERTED_GRID__
   assert(target_N == nxtbl);
 #endif
   assert(nytbl == me->NT);
-    
+
   /* reallocate memory in me and store new data in me */
   _eos_importTableRecordType1 (me, subTableNum_new, nxtbl, nytbl, xtbl_new, ytbl_new, ftbl_new, NULL);
 
@@ -1359,25 +1384,25 @@ void _eos_InvertAtSetupRecordType1_CATEGORY4 (eos_RecordType1 *me, EOS_INTEGER t
   }
 
   /* Fetch data array pointers to contain intermediate CATEGORY2 inverted data */
-  _eos_GetDataRecordType1 (me, &_xtbl2, &_ytbl2, &_ftbl2, &_coldCurve2, subTableNum2);
+  _eos_GetDataRecordType1 (me, &_xtbl2, &_ytbl2, &_ftbl2, &_coldCurve2, NULL, subTableNum2);
 
   /* Fetch data array pointers to contain inverted CATEGORY4 data */
-  _eos_GetDataRecordType1 (me, &xtbl, &ytbl, &ftbl, &coldCurve, subTableNum_new);
+  _eos_GetDataRecordType1 (me, &xtbl, &ytbl, &ftbl, &coldCurve, NULL, subTableNum_new);
 
   /* create inverted table */
   _eos_GetInvertedTable (th, dataType,
-			 _xtbl2, _ytbl2, *_ftbl2, _coldCurve2,
-			 &xtbl, &ytbl, ftbl, coldCurve,
-			 &nxtbl, &nytbl,
-			 &xtbl_new, &ytbl_new, &ftbl_new,
-			 &ftbl_invt_mask, &err, target_N);
+                         _xtbl2, _ytbl2, *_ftbl2, _coldCurve2,
+                         &xtbl, &ytbl, ftbl, coldCurve,
+                         &nxtbl, &nytbl, me->nGhostData,
+                         &xtbl_new, &ytbl_new, &ftbl_new,
+                         &ftbl_invt_mask, &err, target_N);
   assert(nxtbl == me->NR);
 #ifndef __INCLUDE_COLD_CURVE_IN_INVERTED_GRID__
   assert(target_N == nytbl);
 #endif
 
   /* Re-fetch data array pointers to contain intermediate CATEGORY2 inverted data */
-  _eos_GetDataRecordType1 (me, &_xtbl2, &_ytbl2, &_ftbl2, &_coldCurve2, subTableNum2);
+  _eos_GetDataRecordType1 (me, &_xtbl2, &_ytbl2, &_ftbl2, &_coldCurve2, NULL, subTableNum2);
 
   /* reallocate memory in me and store new data in me */
   _eos_importTableRecordType1 (me, subTableNum_new, nxtbl, nytbl, xtbl_new, ytbl_new, ftbl_new, NULL);
@@ -1402,9 +1427,9 @@ void _eos_InvertAtSetupRecordType1_CATEGORY4 (eos_RecordType1 *me, EOS_INTEGER t
  *                                                  because of EOS_INVERT_AT_SETUP option?
  *
  * \return none
- * 
+ *
  ***********************************************************************/
-//#define EOS_DUMP_EXTRAPOLATIONBOUNDS
+#define EOS_DUMP_EXTRAPOLATIONBOUNDS
 void eos_SetExtrapolationBoundsRecordType1(void *ptr, EOS_INTEGER th, EOS_INTEGER dataType)
 {
   eos_RecordType1 *me;
@@ -1426,7 +1451,7 @@ void eos_SetExtrapolationBoundsRecordType1(void *ptr, EOS_INTEGER th, EOS_INTEGE
   if (optVal->bval) return; /* no tablulated data is loaded to use for bounds */
 
   /* Fetch data array pointers */
-  _eos_GetDataRecordType1 (me, &x, &y, &F, &cc, subTableNum);
+  _eos_GetDataRecordType1 (me, &x, &y, &F, &cc, NULL, subTableNum);
   if (! x || ! y || ! F) {
     /* data is unavailable for the current th */
     EOS_INTEGER errorCode = EOS_READ_DATA_FAILED;
@@ -1446,10 +1471,10 @@ void eos_SetExtrapolationBoundsRecordType1(void *ptr, EOS_INTEGER th, EOS_INTEGE
       extrapolationBounds->xHi = (EOS_REAL*)malloc(extrapolationBounds->nx * sizeof(EOS_REAL));
       extrapolationBounds->yHi = (EOS_REAL*)malloc(extrapolationBounds->ny * sizeof(EOS_REAL));
 
-      extrapolationBounds->yLo[0] = me->T[0];
-      extrapolationBounds->yHi[0] = me->T[me->NT - 1];
-      extrapolationBounds->xLo[0] = me->R[0];
-      extrapolationBounds->xHi[0] = me->R[(me->NR - 1)];
+      extrapolationBounds->yLo[0] = me->T[0 + me->nGhostData];
+      extrapolationBounds->yHi[0] = me->T[me->NT - me->nGhostData - 1];
+      extrapolationBounds->xLo[0] = me->R[0 + me->nGhostData];
+      extrapolationBounds->xHi[0] = me->R[(me->NR - me->nGhostData - 1)];
 
       extrapolationBounds->stored = EOS_TRUE;
       break;
@@ -1461,7 +1486,7 @@ void eos_SetExtrapolationBoundsRecordType1(void *ptr, EOS_INTEGER th, EOS_INTEGE
 
       /* Fetch alternative data array pointers */
       subTableNum2 = EOS_TYPE_TO_SUB_TAB_NUM (tabInd2);
-      _eos_GetDataRecordType1 (me, &x, &y, &F, &cc, subTableNum2);
+      _eos_GetDataRecordType1 (me, &x, &y, &F, &cc, NULL, subTableNum2);
 
       if (! x || ! y || ! F) {
         /* alternative data is unavailable for the current th */
@@ -1474,24 +1499,28 @@ void eos_SetExtrapolationBoundsRecordType1(void *ptr, EOS_INTEGER th, EOS_INTEGE
     }
   case EOS_CATEGORY1:          /* indicates the table is inverted with respect to 1st independent variable */
     {
-      int k = (me->R[0] <= 0.0) ? 1 : 0;
+      int k = (me->R[0+me->nGhostData] <= 0.0) ? 1+me->nGhostData : 0+me->nGhostData;
+      int x_index_lo, x_index_hi;
+
       optVal = _eos_getOptionEosData (&(me->eosData), EOS_INSERT_DATA);
       if (k && optVal->bval) k += optVal->ival; /* index shift */
-      extrapolationBounds->nx  = me->NT;
+      extrapolationBounds->nx  = me->NT-2*me->nGhostData;
       extrapolationBounds->ny  = 1;
-      extrapolationBounds->x   = (EOS_REAL*)malloc(me->NT                     * sizeof(EOS_REAL));
+      extrapolationBounds->x   = (EOS_REAL*)malloc(extrapolationBounds->nx * sizeof(EOS_REAL));
       extrapolationBounds->xLo = (EOS_REAL*)malloc(extrapolationBounds->nx * sizeof(EOS_REAL));
       extrapolationBounds->yLo = (EOS_REAL*)malloc(extrapolationBounds->ny * sizeof(EOS_REAL));
       extrapolationBounds->xHi = (EOS_REAL*)malloc(extrapolationBounds->nx * sizeof(EOS_REAL));
       extrapolationBounds->yHi = (EOS_REAL*)malloc(extrapolationBounds->ny * sizeof(EOS_REAL));
 
-      extrapolationBounds->yLo[0] = me->T[0];
-      extrapolationBounds->yHi[0] = me->T[me->NT - 1];
-      for (j=0; j<me->NT; j++) {
-        extrapolationBounds->x[j]   = me->T[j];
+      extrapolationBounds->yLo[0] = me->T[0 + me->nGhostData];
+      extrapolationBounds->yHi[0] = me->T[me->NT - me->nGhostData - 1];
+      x_index_lo = (F[me->NT-me->nGhostData-1][k] > F[me->NT-me->nGhostData-1][me->NR-me->nGhostData-1]) ? me->NR-me->nGhostData-1: k;
+      x_index_hi = (F[me->NT-me->nGhostData-1][k] < F[me->NT-me->nGhostData-1][me->NR-me->nGhostData-1]) ? me->NR-me->nGhostData-1: k;
+      for (j=0+me->nGhostData; j<me->NT-me->nGhostData; j++) {
+        extrapolationBounds->x[j-me->nGhostData]   = me->T[j];
         /* use F[j][1] if me->R[0] is zero, because data at zero density is poorly modeled in SESAME */
-        extrapolationBounds->xLo[j] = F[j][k           ];
-        extrapolationBounds->xHi[j] = F[j][(me->NR - 1)];
+        extrapolationBounds->xLo[j-me->nGhostData] = F[j][x_index_lo];
+        extrapolationBounds->xHi[j-me->nGhostData] = F[j][x_index_hi];
       }
 
 #ifdef EOS_DUMP_EXTRAPOLATIONBOUNDS
@@ -1501,7 +1530,7 @@ void eos_SetExtrapolationBoundsRecordType1(void *ptr, EOS_INTEGER th, EOS_INTEGE
         sprintf(fname, "%s.extrapolationBounds.dat", EOS_TYPE_TO_STRING(dataType));
         fh = fopen (fname, "w");
         fprintf(fh, "%5s %23s %23s %23s %23s %23s\n", "i", "x", "xLo", "xHi", "yLo", "yHi");
-        for (i=0; i<me->NT; i++) {
+        for (i=0; i<extrapolationBounds->nx; i++) {
           fprintf(fh, "%5d %23.15e %23.15e %23.15e %23.15e %23.15e\n", i,
                   extrapolationBounds->x[i],
                   extrapolationBounds->xLo[0], extrapolationBounds->xHi[0],
@@ -1520,7 +1549,7 @@ void eos_SetExtrapolationBoundsRecordType1(void *ptr, EOS_INTEGER th, EOS_INTEGE
 
       /* Fetch alternative data array pointers */
       subTableNum2 = EOS_TYPE_TO_SUB_TAB_NUM (tabInd2);
-      _eos_GetDataRecordType1 (me, &x, &y, &F, &cc, subTableNum2);
+      _eos_GetDataRecordType1 (me, &x, &y, &F, &cc, NULL, subTableNum2);
 
       if (! x || ! y || ! F) {
         /* alternative data is unavailable for the current th */
@@ -1533,29 +1562,28 @@ void eos_SetExtrapolationBoundsRecordType1(void *ptr, EOS_INTEGER th, EOS_INTEGE
     }
   case EOS_CATEGORY2:          /* indicates the table is inverted with respect to 2nd independent variable */
     {
-      int k = (me->R[0] <= 0.0) ? 1 : 0;
+      int k = (me->R[0+me->nGhostData] <= 0.0) ? 1+me->nGhostData : 0+me->nGhostData;
+      int y_index_lo, y_index_hi;
+
       optVal = _eos_getOptionEosData (&(me->eosData), EOS_INSERT_DATA);
       if (k && optVal->bval) k += optVal->ival; /* index shift */
       extrapolationBounds->nx = 1;
-      extrapolationBounds->ny = me->NR;
-      extrapolationBounds->x   = (EOS_REAL*)malloc(me->NR                     * sizeof(EOS_REAL));
+      extrapolationBounds->ny = me->NR-2*me->nGhostData;
+      extrapolationBounds->x   = (EOS_REAL*)malloc(extrapolationBounds->ny * sizeof(EOS_REAL));
       extrapolationBounds->xLo = (EOS_REAL*)malloc(extrapolationBounds->nx * sizeof(EOS_REAL));
       extrapolationBounds->yLo = (EOS_REAL*)malloc(extrapolationBounds->ny * sizeof(EOS_REAL));
       extrapolationBounds->xHi = (EOS_REAL*)malloc(extrapolationBounds->nx * sizeof(EOS_REAL));
       extrapolationBounds->yHi = (EOS_REAL*)malloc(extrapolationBounds->ny * sizeof(EOS_REAL));
 
       /* use me->R[1] if me->R[0] is zero, because data at zero density is poorly modeled in SESAME */
-      extrapolationBounds->xLo[0] = (me->R[0] <= 0.0) ? me->R[k] : me->R[0];
-      extrapolationBounds->xHi[0] = me->R[me->NR - 1];
-      for (i=0; i<me->NR; i++) {
-        extrapolationBounds->x[i]   = me->R[i];
-        extrapolationBounds->yLo[i] = F[0         ][i];
-        extrapolationBounds->yHi[i] = F[me->NT - 1][i];
-      }
-
-      for (i=0; i<me->NR; i++) {
-        extrapolationBounds->yLo[i] = F[0         ][i];
-        extrapolationBounds->yHi[i] = F[me->NT - 1][i];
+      extrapolationBounds->xLo[0] = (me->R[0+me->nGhostData] <= 0.0) ? me->R[k] : me->R[0+me->nGhostData];
+      extrapolationBounds->xHi[0] = me->R[me->NR - me->nGhostData - 1];
+      y_index_lo = (F[0+me->nGhostData][me->NR-me->nGhostData-1] > F[me->NT-me->nGhostData-1][me->NR-me->nGhostData-1]) ? me->NT-me->nGhostData-1: 0+me->nGhostData;
+      y_index_hi = (F[0+me->nGhostData][me->NR-me->nGhostData-1] < F[me->NT-me->nGhostData-1][me->NR-me->nGhostData-1]) ? me->NT-me->nGhostData-1: 0+me->nGhostData;
+      for (i=0+me->nGhostData; i<me->NR-me->nGhostData; i++) {
+        extrapolationBounds->x[i-me->nGhostData]   = me->R[i];
+        extrapolationBounds->yLo[i-me->nGhostData] = F[y_index_lo][i];
+        extrapolationBounds->yHi[i-me->nGhostData] = F[y_index_hi][i];
       }
 
 #ifdef EOS_DUMP_EXTRAPOLATIONBOUNDS
@@ -1565,7 +1593,7 @@ void eos_SetExtrapolationBoundsRecordType1(void *ptr, EOS_INTEGER th, EOS_INTEGE
         sprintf(fname, "%s.extrapolationBounds.dat", EOS_TYPE_TO_STRING(dataType));
         fh = fopen (fname, "w");
         fprintf(fh, "%5s %23s %23s %23s %23s %23s\n", "i", "x", "xLo", "xHi", "yLo", "yHi");
-        for (i=0; i<me->NR; i++) {
+        for (i=0; i<extrapolationBounds->ny; i++) {
           fprintf(fh, "%5d %23.15e %23.15e %23.15e %23.15e %23.15e\n", i,
                   extrapolationBounds->x[i],
                   extrapolationBounds->xLo[0], extrapolationBounds->xHi[0],
@@ -1583,18 +1611,18 @@ void eos_SetExtrapolationBoundsRecordType1(void *ptr, EOS_INTEGER th, EOS_INTEGE
 }
 
 /***********************************************************************/
-/*! 
+/*!
  * \brief This function inverts the tables as required by the specified dataType.
  *        All tables in me must be inverted since the independent variable changes.
  *        Forced-monotonicity is assumed to be already applied to the tables in me.
- * 
+ *
  * \param[in,out] *ptr       - void : data object pointer;
  *                             internally recast to eos_RecordType1*
  *                             contents are populated with data
  * \param[in]     th         - EOS_INTEGER : table handle
  * \param[in]     dataType   - EOS_INTEGER : data type
  * \param[out]   errorCode   - EOS_INTEGER : error code
- * 
+ *
  * \return none
  *
  ***********************************************************************/
@@ -1604,26 +1632,8 @@ void eos_InvertAtSetupRecordType1 (void *ptr, EOS_INTEGER th, EOS_INTEGER dataTy
   EOS_INTEGER subTableNum = EOS_TYPE_TO_SUB_TAB_NUM (dataType);
   EOS_INTEGER cat = EOS_CATEGORY (dataType);
 
-  //#define __SAVE_CONVERSION_FACTORS__
-#ifdef __SAVE_CONVERSION_FACTORS__
-  EOS_INTEGER err = EOS_OK;
-  EOS_REAL convX, convY, convF;
-#endif
-
   me = (eos_RecordType1 *) ptr;
   *errorCode = EOS_OK;
-
-#ifdef __SAVE_CONVERSION_FACTORS__
-  eos_GetConversionFactorsFromTableHandle (th, &dataType, &convX, &convY, &convF, &err);
-  if (err) {
-    convX = convY = convF = 1.0;
-  }
-  eos_SetOptionEosDataMap (&gEosDataMap, th, EOS_X_CONVERT, 1.0, -1, &err);
-  eos_SetOptionEosDataMap (&gEosDataMap, th, EOS_Y_CONVERT, 1.0, -1, &err);
-  eos_SetOptionEosDataMap (&gEosDataMap, th, EOS_F_CONVERT, 1.0, -1, &err);
-
-  eos_SetOptionEosInterpolation (&gEosInterpolation, th, EOS_DISABLE_GHOST_NODES, EOS_TRUE, errorCode);
-#endif
 
   /* store boundaries if necessary */
   me->eosData.SetExtrapolationBounds(ptr, th, dataType);
@@ -1666,7 +1676,7 @@ void eos_InvertAtSetupRecordType1 (void *ptr, EOS_INTEGER th, EOS_INTEGER dataTy
     }
   }
 
-  /* store new dependent values in table1 if necessary */
+  /* store new dependent values in table[0] if necessary */
   switch (cat) {
   case EOS_CATEGORY4:          /* indicates the table is a merging of a CATEGORY2 table and a CATEGORY0 table */
     {
@@ -1677,23 +1687,16 @@ void eos_InvertAtSetupRecordType1 (void *ptr, EOS_INTEGER th, EOS_INTEGER dataTy
     }
   case EOS_CATEGORY2:          /* indicates the table is inverted with respect to 2nd independent variable */
     {
-      if (subTableNum > 1) {   /* store new dependent values in table1 */
+      if (subTableNum > 1) {   /* store new dependent values in table[0] */
 
         EOS_REAL *xtbl, *ytbl, **ftbl, *coldCurve;
         EOS_REAL *xtbl_new, *ytbl_new, **ftbl_new;
-#ifdef __REMOVE_COLD_CURVE_FROM_SELECTED_INVERSIONS__
         EOS_REAL *coldCurve_new;
-#endif
-        _eos_GetDataRecordType1 (me, &xtbl, &ytbl, &ftbl, &coldCurve, subTableNum);
-#ifdef __REMOVE_COLD_CURVE_FROM_SELECTED_INVERSIONS__
-        _eos_GetDataRecordType1 (me, &xtbl_new, &ytbl_new, &ftbl_new, &coldCurve_new, 1);
-#else
-        _eos_GetDataRecordType1 (me, &xtbl_new, &ytbl_new, &ftbl_new, &coldCurve, 1);
-#endif
+        _eos_GetDataRecordType1 (me, &xtbl, &ytbl, &ftbl, &coldCurve, NULL, subTableNum);
+        _eos_GetDataRecordType1 (me, &xtbl_new, &ytbl_new, &ftbl_new, &coldCurve_new, NULL, 1);
 
         memcpy (*ftbl_new, *ftbl, me->NT * me->NR * sizeof(EOS_REAL));
 
-#ifdef __REMOVE_COLD_CURVE_FROM_SELECTED_INVERSIONS__
         switch (EOS_TYPE_TO_INDEP_VAR2(dataType)) {
           /* special cases for tables that include cold curve data */
         case EOS_Pt:
@@ -1703,9 +1706,9 @@ void eos_InvertAtSetupRecordType1 (void *ptr, EOS_INTEGER th, EOS_INTEGER dataTy
         case EOS_At:
         case EOS_Aic:
 
-          if (coldCurve && !me->coldCurve1) { /* allocate and populate me->coldCurve1 */
-            me->coldCurve1 = (EOS_REAL*)malloc(me->NR * sizeof(EOS_REAL));
-            memcpy (me->coldCurve1, coldCurve, me->NR * sizeof(EOS_REAL));
+          if (coldCurve && !me->coldCurve[0]) { /* allocate and populate me->coldCurve[0] */
+            me->coldCurve[0] = (EOS_REAL*)malloc(me->NR * sizeof(EOS_REAL));
+            memcpy (me->coldCurve[0], coldCurve, me->NR * sizeof(EOS_REAL));
           }
 
           if (cat == EOS_CATEGORY2) { /* apply MIN to all ftbl_new[] values */
@@ -1714,135 +1717,99 @@ void eos_InvertAtSetupRecordType1 (void *ptr, EOS_INTEGER th, EOS_INTEGER dataTy
               for (j=0; j<me->NT; j++) ftbl_new[j][i] = MAX(ftbl_new[j][i], 0.0);
           }
         }
-#endif
       }
 
       break;
     }
   }
 
-#ifdef __SAVE_CONVERSION_FACTORS__
-  /* restore conversion factors */
-  eos_SetOptionEosDataMap (&gEosDataMap, th, EOS_X_CONVERT, convX, -1, &err);
-  eos_SetOptionEosDataMap (&gEosDataMap, th, EOS_Y_CONVERT, convY, -1, &err);
-  eos_SetOptionEosDataMap (&gEosDataMap, th, EOS_F_CONVERT, convF, -1, &err);
-#endif
-
   me->eosData.numSubtablesLoaded = 1; /* keep only first array */
-  _eos_FreeUnusedArraysRecordType1(me);
   me->isInvertedAtSetup = EOS_TRUE;
+  _eos_FreeUnusedArraysRecordType1(me);
 }
 
 /***********************************************************************/
-/*! 
+/*!
  * \brief This function allocates enough memory in class eos_RecordType1
  *  to hold cold curve array of specified size, NR, for subTableNum.
- * 
+ *
  * \param[in,out] *ptr          - void : data object pointer
  * \param[in]     NR            - EOS_INTEGER : size of cold curve array
  * \param[in]     subTableNum   - EOS_INTEGER : subtable number
- * 
+ *
  * \return **_eos_AllocateColdCurveRecordType1 - EOS_REAL : array pointer
  *
  ***********************************************************************/
 EOS_REAL** _eos_AllocateColdCurveRecordType1 (void *ptr, EOS_INTEGER NR, EOS_INTEGER subTableNum)
 {
   EOS_REAL **rptr = NULL;
+  EOS_INTEGER i;
   eos_RecordType1 *me = (eos_RecordType1*) ptr;
 
-  switch (subTableNum) {
-  case 1:
-    EOS_FREE(me->coldCurve1);
-    me->coldCurve1 = (EOS_REAL *) malloc (NR * sizeof (EOS_REAL));
-    rptr = &me->coldCurve1;
-    break;
-  case 2:
-    EOS_FREE (me->coldCurve2);
-    me->coldCurve2 = (EOS_REAL *) malloc (NR * sizeof (EOS_REAL));
-    rptr = &me->coldCurve2;
-    break;
-  case 3:
-    EOS_FREE (me->coldCurve3);
-    me->coldCurve3 = (EOS_REAL *) malloc (NR * sizeof (EOS_REAL));
-    rptr = &me->coldCurve3;
-    break;
-  case 4:
-    EOS_FREE (me->coldCurve4);
-    me->coldCurve4 = (EOS_REAL *) malloc (NR * sizeof (EOS_REAL));
-    rptr = &me->coldCurve4;
-    break;
-  default:
-    break;
-  }
+  if(subTableNum<1) return(NULL);
+  assert(subTableNum<=MAX_TABLES_RECORDTYPE1);
+  i = subTableNum - 1;
+
+  EOS_FREE(me->coldCurve[i]);
+  me->coldCurve[i] = (EOS_REAL *) malloc (NR * sizeof (EOS_REAL));
+  rptr = &me->coldCurve[i];
+
   return(rptr);
 }
 
 /***********************************************************************/
-/*! 
+/*!
  * \brief This function allocates enough memory in class eos_RecordType1
  *  to hold R and T arrays of specified size.
- * 
+ *
  * \param[in,out] *me - eos_RecordType1 : data object pointer;
  *                      contents of *me are allocated herein
  * \param[in]     NR  - EOS_INTEGER : size of R array
  * \param[in]     NT  - EOS_INTEGER : size of T array
- * 
+ *
  * \return none
  *
  ***********************************************************************/
 void eos_SetSizeRecordType1 (eos_RecordType1 *me, EOS_INTEGER NR,
                              EOS_INTEGER NT, EOS_INTEGER tableNum)
 {
-  int i;
-  EOS_REAL *ptr, *ptr1, *ptr2, *ptr3, *ptr4;
+  int i, j;
+  EOS_REAL *ptr, *ptr_i[MAX_TABLES_RECORDTYPE1];
   EOS_BOOLEAN useColdCurve[MAX_TABLES_RECORDTYPE1];
 
-  for (i=0; i<MAX_TABLES_RECORDTYPE1; i++)
-    useColdCurve[i] = EOS_FALSE;
+  for (i=0; i<MAX_TABLES_RECORDTYPE1; i++) useColdCurve[i] = EOS_FALSE;
 
   // assume that it's the first time!
   me->NR = NR;
   me->NT = NT;
   EOS_FREE (me->R);           // This deallocates all continuous memory
-  EOS_FREE (me->table1);
-  EOS_FREE (me->table2);
-  EOS_FREE (me->table3);
-  EOS_FREE (me->table4);
+  for(i=0; i<MAX_TABLES_RECORDTYPE1; i++) EOS_FREE (me->table[i]);
 
   if (tableNum == 301 || tableNum == 303) { /* remember if individual CC arrays are already allocated */
-    if (me->coldCurve1) useColdCurve[0] = EOS_TRUE;
-    if (me->coldCurve2) useColdCurve[1] = EOS_TRUE;
-    if (me->coldCurve3) useColdCurve[2] = EOS_TRUE;
-    if (me->coldCurve4) useColdCurve[3] = EOS_TRUE;
+    for (i=0; i<MAX_TABLES_RECORDTYPE1; i++)
+      if (me->coldCurve[i]) useColdCurve[i] = EOS_TRUE;
   }
 
-  EOS_FREE (me->coldCurve1);
-  EOS_FREE (me->coldCurve2);
-  EOS_FREE (me->coldCurve3);
-  EOS_FREE (me->coldCurve4);
+  for (i=0; i<MAX_TABLES_RECORDTYPE1; i++)
+    EOS_FREE (me->coldCurve[i]);
 
   if (NR == 0 || NT == 0)
     return;                     // just deallocate memory this time
 
-  me->table1 = (EOS_REAL **) malloc (NT * sizeof (EOS_REAL *));
-  me->table2 = (EOS_REAL **) malloc (NT * sizeof (EOS_REAL *));
-  me->table3 = (EOS_REAL **) malloc (NT * sizeof (EOS_REAL *));
-  me->table4 = (EOS_REAL **) malloc (NT * sizeof (EOS_REAL *));
+  for (i=0; i<MAX_TABLES_RECORDTYPE1; i++)
+    me->table[i] = (EOS_REAL **) malloc (NT * sizeof (EOS_REAL *));
 
   /* memory is allocated continuously in one chunk for R, T and all tables */
   ptr = (EOS_REAL *) malloc (sizeof (EOS_REAL) * (NT + NR + MAX_TABLES_RECORDTYPE1 * NT * NR));
   me->R = ptr;
   me->T = ptr + NR;
-  ptr1 = ptr + NT + NR;
-  ptr2 = ptr1 + NT * NR;
-  ptr3 = ptr2 + NT * NR;
-  ptr4 = ptr3 + NT * NR;
+  ptr_i[0] = ptr + NT + NR;
+  for (i=1; i<MAX_TABLES_RECORDTYPE1; i++)
+    ptr_i[i] = ptr_i[i-1] + NT * NR;
 
   for (i = 0; i < NT; i++) {
-    me->table1[i] = ptr1 + i * NR;
-    me->table2[i] = ptr2 + i * NR;
-    me->table3[i] = ptr3 + i * NR;
-    me->table4[i] = ptr4 + i * NR;
+    for (j=0; j<MAX_TABLES_RECORDTYPE1; j++)
+      me->table[j][i] = ptr_i[j] + i * NR;
   }
 
   for (i=0; i<MAX_TABLES_RECORDTYPE1; i++)
@@ -1852,13 +1819,13 @@ void eos_SetSizeRecordType1 (eos_RecordType1 *me, EOS_INTEGER NR,
 }
 
 /***********************************************************************/
-/*! 
+/*!
  * \brief This function returns the dimensions of the specified table.
- * 
+ *
  * \param[out]    NR  - EOS_INTEGER : size of R array
  * \param[out]    NT  - EOS_INTEGER : size of T array
  * \param[in]     *me - eos_RecordType1 : data object pointer;
- * 
+ *
  * \return none
  *
  ***********************************************************************/
@@ -1871,67 +1838,126 @@ void eos_GetSizeRecordType1 (eos_RecordType1 *me, EOS_INTEGER *NR,
 }
 
 /***********************************************************************/
-/*! 
+/*!
+ * \brief This function returns EOS_TRUE or EOS_FALSE depending upon the existence
+ *        of loaded data table(s).
+ *
+ * \param[in]     *ptr     - void : data object pointer;
+ * \param[in]     dataType - EOS_INTEGER : data type
+ *
+ * \return EOS_BOOLEAN
+ *
+ ***********************************************************************/
+EOS_BOOLEAN eos_isRequiredDataLoadedRecordType1 (void *ptr, EOS_INTEGER dataType)
+{
+  eos_RecordType1 *me = (eos_RecordType1*) ptr;
+  EOS_BOOLEAN bval = EOS_TRUE;
+
+#ifdef __ONE_OBJECT_PER_TABLEHANDLE__
+  if (!me->isInvertedAtSetup) {
+    EOS_INTEGER dataType_ref1 = EOS_EOS_TABLE_TYPE_REF1(dataType);
+    EOS_INTEGER dataType_ref2 = EOS_EOS_TABLE_TYPE_REF2(dataType);
+    EOS_INTEGER table_ind  = EOS_TYPE_TO_SUB_TAB_NUM(dataType)-1;
+    EOS_INTEGER table_ind1 = EOS_TYPE_TO_SUB_TAB_NUM(dataType_ref1)-1;
+    EOS_INTEGER table_ind2 = EOS_TYPE_TO_SUB_TAB_NUM(dataType_ref2)-1;
+    if (dataType != EOS_NullTable && ! me->table[table_ind]) bval = EOS_FALSE;
+    if (dataType_ref1 != EOS_NullTable && ! me->table[table_ind1]) bval = EOS_FALSE;
+    if (dataType_ref2 != EOS_NullTable && ! me->table[table_ind2]) bval = EOS_FALSE;
+  }
+#else
+  EOS_INTEGER subTableNum = 1;
+  if (!me->isInvertedAtSetup) subTableNum = EOS_TYPE_TO_SUB_TAB_NUM (dataType);
+  bval = (subTableNum > me->eosData.numSubtablesLoaded) ? EOS_FALSE : EOS_TRUE;
+#endif
+
+  return bval;
+}
+
+/***********************************************************************/
+/*!
  * \brief This function returns pointers to data of class eos_RecordType1
- * 
+ *
  * \param[in]     *me         - eos_RecordType1 : data object pointer;
  * \param[out]    **R         - EOS_REAL : holds R-pointer
  * \param[out]    **T         - EOS_REAL : holds T-pointer
  * \param[out]    ***F        - EOS_REAL : holds F-pointer (F is 2d array allocated as 1 d array NR * NT)
  * \param[out]    **coldCurve - EOS_REAL : holds cold curve-pointer
+ * \param[out]    **ht        - eos_HashTable2D : pointer to hashtable pointer, pass NULL to not populate
  * \param[in]     subtableNum - EOS_INTEGER : number of subtable to take the data from.
- * 
+ *
  * \return none
  *
  ***********************************************************************/
 void _eos_GetDataRecordType1 (eos_RecordType1 *me, EOS_REAL **R, EOS_REAL **T,
-                              EOS_REAL ***F, EOS_REAL **coldCurve,
+                              EOS_REAL ***F, EOS_REAL **coldCurve, eos_HashTable2D** ht,
                               EOS_INTEGER subTableNum)
 {
-  *R = me->R;
-  *T = me->T;
-  *F = me->table1;
-  *coldCurve = me->coldCurve1;
+  EOS_INTEGER i=0;
 
-  if (*R && *T && *F) {
-    if (me->isInvertedAtSetup) {
-      /* only table1 is used in this object; therefore, subTableNum=1 is implied */
-      return;
-    }
+  if (!me->isInvertedAtSetup) {
+    assert(subTableNum>=1);
+    assert(subTableNum<=MAX_TABLES_RECORDTYPE1);
+    i = subTableNum - 1;
   }
 
-  if (me->eosData.numSubtablesLoaded < subTableNum) {
+
+#ifndef __ONE_OBJECT_PER_TABLEHANDLE__
+  if (me->eosData.numSubtablesLoaded < subTableNum && !me->isInvertedAtSetup) {
     *R = *T = NULL;
     *F = NULL;
     return;
   }
+#endif
 
-  switch (subTableNum) {
-  case 1:
-    *F = me->table1;
-    *coldCurve = me->coldCurve1;
-    break;
-  case 2:
-    *F = me->table2;
-    *coldCurve = me->coldCurve2;
-    break;
-  case 3:
-    *F = me->table3;
-    *coldCurve = me->coldCurve3;
-    break;
-  case 4:
-    *F = me->table4;
-    *coldCurve = me->coldCurve4;
-    break;
-  default:
-    break;
+  if (ht != NULL) {
+    *ht = me->hashTables[i];
+  }
+
+ #ifdef DO_OFFLOAD
+  if (gEosDataMap.useGpuData) {
+    if (me->table[i] == NULL) *F = NULL;
+    else if (i==0) *F = me->gpu_ftbls_th1;
+    else if (i==1) *F = me->gpu_ftbls_th2;
+    else if (i==2) *F = me->gpu_ftbls_th3;
+    else if (i==3) *F = me->gpu_ftbls_th4;
+    else if (i==4) *F = me->gpu_ftbls_th5;
+    else           *F = NULL;
+    if (me->R == NULL) *R = NULL;
+    else if (i==0) *R = me->gpu_xtbls_th1;
+    else if (i==1) *R = me->gpu_xtbls_th2;
+    else if (i==2) *R = me->gpu_xtbls_th3;
+    else if (i==3) *R = me->gpu_xtbls_th4;
+    else if (i==4) *R = me->gpu_xtbls_th5;
+    else           *R = NULL;
+    if (me->T == NULL) *T = NULL;
+    else if (i==0) *T = me->gpu_ytbls_th1;
+    else if (i==1) *T = me->gpu_ytbls_th2;
+    else if (i==2) *T = me->gpu_ytbls_th3;
+    else if (i==3) *T = me->gpu_ytbls_th4;
+    else if (i==4) *T = me->gpu_ytbls_th5;
+    else           *T = NULL;
+    if (me->coldCurve[i] == NULL) *coldCurve = NULL;
+    else if (i==0) *coldCurve = me->gpu_coldCurve_th1;
+    else if (i==1) *coldCurve = me->gpu_coldCurve_th2;
+    else if (i==2) *coldCurve = me->gpu_coldCurve_th3;
+    else if (i==3) *coldCurve = me->gpu_coldCurve_th4;
+    else if (i==4) *coldCurve = me->gpu_coldCurve_th5;
+    else           *coldCurve = NULL;
+  }
+  else
+#endif /* DO_OFFLOAD */
+  {
+    *R = me->R;
+    *T = me->T;
+    *F = me->table[i];
+    *coldCurve = me->coldCurve[i];
   }
 }
 
 /***********************************************************************/
-/*! 
+/*!
  * \brief This function prints the Taylor polynomial fit data
- * 
+ *
  * \param[in]     *me            - eos_RecordType1 : data object pointer
  * \param[in]     th             - EOS_INTEGER : table Handle
  * \param[in]     *tableFile     - FILE : output File Handle
@@ -1947,8 +1973,8 @@ void _eos_GetDataRecordType1 (eos_RecordType1 *me, EOS_REAL **R, EOS_REAL **T,
  *
  ***********************************************************************/
 void _eos_PrintTaylorFit (eos_RecordType1 *me, EOS_INTEGER th, FILE *tableFile, EOS_CHAR *sesame_fname,
-			  EOS_REAL xconv, EOS_REAL yconv, EOS_REAL fconv, EOS_INTEGER dataType,
-			  EOS_INTEGER subTableNum, EOS_INTEGER append)
+                          EOS_REAL xconv, EOS_REAL yconv, EOS_REAL fconv, EOS_INTEGER dataType,
+                          EOS_INTEGER subTableNum, EOS_INTEGER append)
 {
   int i;
   EOS_BOOLEAN freeEnergyIsDefined = (me->Taylor_objects[2]) ? EOS_TRUE : EOS_FALSE;
@@ -1958,15 +1984,15 @@ void _eos_PrintTaylorFit (eos_RecordType1 *me, EOS_INTEGER th, FILE *tableFile, 
   i = subTableNum-1;
   if (me->Taylor_objects[i]) {
     fprintf (tableFile,
-	     "%sTableHandle=%i matid =%6d source = %-20s\n%s%s\n%s%s\nTaylor polynomial %s fit parameters\n",
-	     ((append) ? "\n" : ""), th, me->eosData.materialID,
-	     sesame_fname, "Data Type = ", EOS_TYPE_TO_STRING (dataType),
-	     "Description = ", EOS_TYPE_TO_TAB_NAME (dataType),
-	     ((isOneDimDatatype)?"curve":"surface"));
+             "%sTableHandle=%i matid =%6d source = %-20s\n%s%s\n%s%s\nTaylor polynomial %s fit parameters\n",
+             ((append) ? "\n" : ""), th, me->eosData.materialID,
+             sesame_fname, "Data Type = ", EOS_TYPE_TO_STRING (dataType),
+             "Description = ", EOS_TYPE_TO_TAB_NAME (dataType),
+             ((isOneDimDatatype)?"curve":"surface"));
 
     _eos_dbl2String (fconv, _MIN_FIELD_WIDTH, buffer);
     fprintf (tableFile,
-	     "  fconv =%*s         ", _MIN_FIELD_WIDTH + 1, buffer);
+             "  fconv =%*s         ", _MIN_FIELD_WIDTH + 1, buffer);
     _eos_dbl2String (xconv, _MIN_FIELD_WIDTH, buffer);
     fprintf (tableFile, "xconv =%*s         ", _MIN_FIELD_WIDTH + 1, buffer);
     _eos_dbl2String (yconv, _MIN_FIELD_WIDTH, buffer);
@@ -1981,29 +2007,29 @@ void _eos_PrintTaylorFit (eos_RecordType1 *me, EOS_INTEGER th, FILE *tableFile, 
       int j;
 
       for (j=0; j<(me->M * me->N); j++) {
-	eos_Taylor *p;
-	p = (me->Taylor_objects[i])[j];
-	p->Print(p, dataType, tableFile);
+        eos_Taylor *p;
+        p = (me->Taylor_objects[i])[j];
+        p->Print(p, dataType, tableFile);
       }
     }
 #endif
   }
   else if (freeEnergyIsDefined) {
     fprintf (tableFile,
-	     "%sTableHandle=%i matid =%6d source = %-20s\n%s%s\n%s%s\nDependent upon the Helmholtz Free Energy Taylor polynomial %s fit parameters\n",
-	     ((append) ? "\n" : ""), th, me->eosData.materialID,
-	     sesame_fname, "Data Type = ", EOS_TYPE_TO_STRING (dataType),
-	     "Description = ", EOS_TYPE_TO_TAB_NAME (dataType),
-	     ((isOneDimDatatype)?"curve":"surface"));
+             "%sTableHandle=%i matid =%6d source = %-20s\n%s%s\n%s%s\nDependent upon the Helmholtz Free Energy Taylor polynomial %s fit parameters\n",
+             ((append) ? "\n" : ""), th, me->eosData.materialID,
+             sesame_fname, "Data Type = ", EOS_TYPE_TO_STRING (dataType),
+             "Description = ", EOS_TYPE_TO_TAB_NAME (dataType),
+             ((isOneDimDatatype)?"curve":"surface"));
   }
 
   return;
 }
 
 /***********************************************************************/
-/*! 
+/*!
  * \brief This function prints the data of class eos_RecordType1
- * 
+ *
  * \param[out]    *err - EOS_INTEGER : error code
  * \param[in]     *ptr   - void : data object pointer;
  *                         internally recast to eos_RecordType1*
@@ -2031,12 +2057,10 @@ void eos_PrintRecordType1 (void *ptr, EOS_INTEGER th, EOS_CHAR *fname,
   EOS_INTEGER dataType;
   char buffer[_MIN_FIELD_WIDTH+1];
   EOS_CHAR *sesame_fname;
-  EOS_REAL xprnt, yprnt, fprnt, *coldCurve = NULL, *xtbls = NULL, *ytbls =
-    NULL, *ftbls = NULL, xconv, yconv, fconv;
+  EOS_REAL xprnt, yprnt, fprnt, *coldCurve = NULL, *xtbls = NULL, *ytbls = NULL, *ftbls = NULL, xconv, yconv, fconv;
   EOS_BOOLEAN xtbls_local_malloc = EOS_FALSE, ytbls_local_malloc = EOS_FALSE, ftbls_local_malloc = EOS_FALSE;
   EOS_REAL *_xtbls = NULL, *_ytbls = NULL, **_ftbls = NULL, *_coldCurve = NULL;
-  EOS_REAL *_xtbls2 = NULL, *_ytbls2 = NULL, **_ftbls2 = NULL, *_coldCurve2 =
-    NULL, *f_refData = NULL;
+  EOS_REAL *_xtbls2 = NULL, *_ytbls2 = NULL, **_ftbls2 = NULL, *_coldCurve2 = NULL, *f_refData = NULL;
   EOS_REAL *xtbls_sv = NULL, *ytbls_sv = NULL, *ftbls_sv = NULL;
   EOS_INTEGER *ftbls_invt_mask = NULL;
   FILE *tableFile = NULL;
@@ -2047,14 +2071,9 @@ void eos_PrintRecordType1 (void *ptr, EOS_INTEGER th, EOS_CHAR *fname,
   EOS_CHAR my_description[EOS_META_DATA_STRLEN];
   EOS_BOOLEAN disable_FTBLS_INVT_MASK = EOS_FALSE;
   EOS_INTEGER ind;
-  eos_ExtrapolationBoundsEosDataMap *extrapolationBounds = eos_GetExtrapolationBoundsEosDataMap(&gEosDataMap, th);;
-
-  //#define DEBUG_EOS_PRINTRECORDTYPE1
-#ifdef DEBUG_EOS_PRINTRECORDTYPE1
-  EOS_INTEGER k, l;
-#endif
-
+  eos_ExtrapolationBoundsEosDataMap *extrapolationBounds = eos_GetExtrapolationBoundsEosDataMap(&gEosDataMap, th);
   EOS_BOOLEAN logAxes = EOS_TYPE_TO_LOG_AXES (gEosDataMap.tableTypes[th]);
+  EOS_BOOLEAN reset_local_values_of_array_extents = EOS_FALSE;
 
   me = (eos_RecordType1 *) ptr;
 
@@ -2072,33 +2091,10 @@ void eos_PrintRecordType1 (void *ptr, EOS_INTEGER th, EOS_CHAR *fname,
   else
     subTableNum = EOS_TYPE_TO_SUB_TAB_NUM (dataType);
 
-  if (! use_taylor_fit && subTableNum > me->eosData.numSubtablesLoaded) {
+  if (! use_taylor_fit && (me->eosData.eos_IsRequiredDataLoaded && ! me->eosData.eos_IsRequiredDataLoaded(me, dataType))) {
     *err = EOS_DATA_TYPE_NOT_FOUND;
     return;
   }
-
-#ifdef DEBUG_EOS_PRINTRECORDTYPE1
-  if (!use_taylor_fit) {
-    if (me->eosData.numSubtablesLoaded >= 4) {
-      printf
-        ("------ eos_PrintRecordType1\nmat=%i th=%i subtab=%i type=%s table1, table2, table3 and table4\n",
-         me->eosData.materialID, th, subTableNum, EOS_TYPE_TO_STRING (dataType));
-      for (l = 0; l < me->NT; l++)
-        for (k = 0; k < me->NR; k++)
-          printf ("%23.15e %23.15e %23.15e %23.15e %23.15e %23.15e\n",
-                  me->R[k], me->T[l], me->table1[l][k], me->table2[l][k],
-                  me->table3[l][k], me->table4[l][k]);
-    }
-    else if (me->eosData.numSubtablesLoaded >= 1) {
-      printf
-        ("------ eos_PrintRecordType1\nmat=%i th=%i subtab=%i type=%s table1\n",
-         me->eosData.materialID, th, subTableNum, EOS_TYPE_TO_STRING (dataType));
-      for (l = 0; l < me->NT; l++)
-        for (k = 0; k < me->NR; k++)
-          printf ("%23.15e %23.15e %23.15e\n", me->R[k], me->T[l], me->table1[l][k]);
-    }
-  }
-#endif
 
   tableFile = (append == 0) ? fopen (fname, "w") : fopen (fname, "a");
   if (!tableFile) {
@@ -2169,7 +2165,7 @@ void eos_PrintRecordType1 (void *ptr, EOS_INTEGER th, EOS_CHAR *fname,
   // set numbers of and pointers to eos data table x,y,f values.
   nxtbl = me->NR;
   nytbl = me->NT;
-  _eos_GetDataRecordType1 (me, &_xtbls, &_ytbls, &_ftbls, &_coldCurve, EOS_TYPE_TO_SUB_TAB_NUM(dataType));
+  _eos_GetDataRecordType1 (me, &_xtbls, &_ytbls, &_ftbls, &_coldCurve, NULL, EOS_TYPE_TO_SUB_TAB_NUM(dataType));
   xtbls = _xtbls;
   ytbls = _ytbls;
   ftbls = *_ftbls;
@@ -2191,7 +2187,7 @@ void eos_PrintRecordType1 (void *ptr, EOS_INTEGER th, EOS_CHAR *fname,
           EOS_RECORD_TYPE1) {
         /* get data for reference2 data type */
         _eos_GetDataRecordType1 (me, &_xtbls2, &_ytbls2, &_ftbls2,
-                                 &_coldCurve2,
+                                 &_coldCurve2, NULL,
                                  EOS_TYPE_TO_SUB_TAB_NUM
                                  (EOS_EOS_TABLE_TYPE_REF2 (dataType)));
       }
@@ -2219,7 +2215,7 @@ void eos_PrintRecordType1 (void *ptr, EOS_INTEGER th, EOS_CHAR *fname,
       switch (EOS_CATEGORY (dataType)) {
       case EOS_CATEGORY1:          /* x(F,y) */
       case EOS_CATEGORY3:          /* F(G,y) */
-        target_N = MAX(nxtbl, target_N);
+        target_N = MAX(MAX(nxtbl, target_N) - 2*me->nGhostData, target_N);
         { /* allocate temporary arrays */
           EOS_INTEGER _add_val_pad = __ADD_VAL__(nytbl);
 
@@ -2230,7 +2226,7 @@ void eos_PrintRecordType1 (void *ptr, EOS_INTEGER th, EOS_CHAR *fname,
         break;
       case EOS_CATEGORY2:          /* y(x,F) */
       case EOS_CATEGORY4:          /* F(x,G) */
-        target_N = MAX(nytbl, target_N);
+        target_N = MAX(MAX(nytbl, target_N) - 2*me->nGhostData, target_N);
         { /* allocate temporary arrays */
           EOS_INTEGER _add_val_pad = __ADD_VAL__(nxtbl);
 
@@ -2250,7 +2246,7 @@ void eos_PrintRecordType1 (void *ptr, EOS_INTEGER th, EOS_CHAR *fname,
       _eos_GetInvertedTable (th, dataType,
                              _xtbls2, _ytbls2, f_refData, _coldCurve2,
                              &xtbls, &ytbls, &ftbls, coldCurve,
-                             &nxtbl, &nytbl,
+                             &nxtbl, &nytbl, me->nGhostData,
                              &xtbl_new, &ytbl_new, &ftbl_new,
                              &ftbls_invt_mask, err, target_N /* -1 */);
       if (eos_GetStandardErrorCodeFromCustomErrorCode(*err) != EOS_OK) {
@@ -2285,10 +2281,22 @@ void eos_PrintRecordType1 (void *ptr, EOS_INTEGER th, EOS_CHAR *fname,
     ytbls_local_malloc = EOS_TRUE;
     ftbls_local_malloc = EOS_TRUE;
 
-    /* copy data into temporary arrays */
-    memcpy (xtbls, xtbls_sv, nxtbl * sizeof(EOS_REAL));
-    memcpy (ytbls, ytbls_sv, nytbl * sizeof(EOS_REAL));
-    memcpy (ftbls, ftbls_sv, nxtbl * nytbl * sizeof(EOS_REAL));
+    /* Copy data into temporary arrays.
+     * Note that memcpy is no longer used in order to facilitate copying a subset of data if me->nGhostData>0.
+     */
+    if (nytbl == 1) { /* 1-D table */
+      _eos_CopyValuesOfArraysWithCustomExtents (nxtbl, nytbl, xtbls_sv, ytbls_sv, ftbls_sv, me->nGhostData, 0,
+                                                nxtbl-me->nGhostData, nytbl, xtbls, ytbls, ftbls);
+    }
+    else { /* 2-D table */
+      _eos_CopyValuesOfArraysWithCustomExtents (nxtbl, nytbl, xtbls_sv, ytbls_sv, ftbls_sv, me->nGhostData, me->nGhostData,
+                                                nxtbl-me->nGhostData, nytbl-me->nGhostData, xtbls, ytbls, ftbls);
+    }
+
+    /* delayed reset local values of array extents */
+    reset_local_values_of_array_extents = EOS_TRUE;
+    if (nxtbl > 2*me->nGhostData) nxtbl -= 2*me->nGhostData;
+    if (nytbl > 2*me->nGhostData) nytbl -= 2*me->nGhostData;
 
   }
 
@@ -2343,6 +2351,12 @@ void eos_PrintRecordType1 (void *ptr, EOS_INTEGER th, EOS_CHAR *fname,
        x values run down page and y values run across page.
        take anti-logs if table contains common logs. */
 
+    if (reset_local_values_of_array_extents) {
+      /* reset local values of array extents */
+      /* nxtbl -= 2*me->nGhostData; */
+      /* nytbl -= 2*me->nGhostData; */
+    }
+
     EOS_REAL xconv_hdr = xconv, yconv_hdr = yconv, fconv_hdr = fconv;
     char xconv_hdr_buffer[_MIN_FIELD_WIDTH+1];
     char yconv_hdr_buffer[_MIN_FIELD_WIDTH+1];
@@ -2361,7 +2375,7 @@ void eos_PrintRecordType1 (void *ptr, EOS_INTEGER th, EOS_CHAR *fname,
 
     ipage = 0;
     for (iy = 1; iy <= nytbl; iy += 10) {
-      int i, opt_count = 0;;
+      int i, opt_count = 0;
       EOS_CHAR label[20] = "Loading Options: ";
 
       ipage = ipage + 1;
@@ -2465,16 +2479,16 @@ void eos_PrintRecordType1 (void *ptr, EOS_INTEGER th, EOS_CHAR *fname,
 }
 
 /***********************************************************************/
-/*! 
+/*!
  * \brief This packs the data of class eos_RecordType1 into provided char array
- * 
+ *
  * \param[out]    *err         - EOS_INTEGER : error code
  * \param[out]    *packedTable - EOS_CHAR    : allocated by user char array
  *                                             large enough to store packed data
  * \param[in]     *ptr         - void        : data object pointer;
  *                                             internally recast to eos_RecordType1*
  * \param[in]     th           - EOS_INTEGER : table handle
- * 
+ *
  * \return none
  *
  ***********************************************************************/
@@ -2483,139 +2497,198 @@ void eos_GetPackedTableRecordType1 (void *ptr, EOS_INTEGER th,
 {
   eos_RecordType1 *me;
   eos_RecordType2 *tbl401 = NULL;
-  EOS_INTEGER t, size401, byteCount = 0;
+  EOS_INTEGER t, size401, byteCount = 0, i;
   EOS_REAL *F, *coldCurve;
+#ifdef _DEBUG_PACKING_FUNCTIONS
+  EOS_INTEGER index = 0;
+#endif
   *err = EOS_OK;
 
   me = (eos_RecordType1 *) ptr;
 
+#ifdef _DEBUG_PACKING_FUNCTIONS
+  printf ("\n     --- enter eos_GetPackedTableRecordType1 TableHandle %3i", th);
+#endif
   memcpy (packedTable + byteCount, &(me->avgAtomicNumber), sizeof (EOS_REAL));
   byteCount += sizeof (EOS_REAL);
+#ifdef _DEBUG_PACKING_FUNCTIONS
+  printf ("\n     %3i. %i total bytes (line %i)", index++, byteCount, __LINE__);
+#endif
   memcpy (packedTable + byteCount, &(me->avgAtomicWgt), sizeof (EOS_REAL));
   byteCount += sizeof (EOS_REAL);
+#ifdef _DEBUG_PACKING_FUNCTIONS
+  printf ("\n     %3i. %i total bytes (line %i)", index++, byteCount, __LINE__);
+#endif
   memcpy (packedTable + byteCount, &(me->refDensity), sizeof (EOS_REAL));
   byteCount += sizeof (EOS_REAL);
+#ifdef _DEBUG_PACKING_FUNCTIONS
+  printf ("\n     %3i. %i total bytes (line %i)", index++, byteCount, __LINE__);
+#endif
   memcpy (packedTable + byteCount, &(me->solidBulkModulus), sizeof (EOS_REAL));
   byteCount += sizeof (EOS_REAL);
+#ifdef _DEBUG_PACKING_FUNCTIONS
+  printf ("\n     %3i. %i total bytes (line %i)", index++, byteCount, __LINE__);
+#endif
   memcpy (packedTable + byteCount, &(me->exchangeCoefficient), sizeof (EOS_REAL));
   byteCount += sizeof (EOS_REAL);
+#ifdef _DEBUG_PACKING_FUNCTIONS
+  printf ("\n     %3i. %i total bytes (line %i)", index++, byteCount, __LINE__);
+#endif
 
-  memcpy (packedTable + byteCount, &(me->isMonotonicX1),
-          sizeof (EOS_INTEGER));
-  byteCount += sizeof (EOS_INTEGER);
-  memcpy (packedTable + byteCount, &(me->isMonotonicX2),
-          sizeof (EOS_INTEGER));
-  byteCount += sizeof (EOS_INTEGER);
-  memcpy (packedTable + byteCount, &(me->isMonotonicX3),
-          sizeof (EOS_INTEGER));
-  byteCount += sizeof (EOS_INTEGER);
-  memcpy (packedTable + byteCount, &(me->isMonotonicX4),
-          sizeof (EOS_INTEGER));
-  byteCount += sizeof (EOS_INTEGER);
-  memcpy (packedTable + byteCount, &(me->shouldBeMonotonicX1),
-          sizeof (EOS_INTEGER));
-  byteCount += sizeof (EOS_INTEGER);
-  memcpy (packedTable + byteCount, &(me->shouldBeMonotonicX2),
-          sizeof (EOS_INTEGER));
-  byteCount += sizeof (EOS_INTEGER);
-  memcpy (packedTable + byteCount, &(me->shouldBeMonotonicX3),
-          sizeof (EOS_INTEGER));
-  byteCount += sizeof (EOS_INTEGER);
-  memcpy (packedTable + byteCount, &(me->shouldBeMonotonicX4),
-          sizeof (EOS_INTEGER));
-  byteCount += sizeof (EOS_INTEGER);
-  memcpy (packedTable + byteCount, &(me->isMonotonicY1),
-          sizeof (EOS_INTEGER));
-  byteCount += sizeof (EOS_INTEGER);
-  memcpy (packedTable + byteCount, &(me->isMonotonicY2),
-          sizeof (EOS_INTEGER));
-  byteCount += sizeof (EOS_INTEGER);
-  memcpy (packedTable + byteCount, &(me->isMonotonicY3),
-          sizeof (EOS_INTEGER));
-  byteCount += sizeof (EOS_INTEGER);
-  memcpy (packedTable + byteCount, &(me->isMonotonicY4),
-          sizeof (EOS_INTEGER));
-  byteCount += sizeof (EOS_INTEGER);
-  memcpy (packedTable + byteCount, &(me->shouldBeMonotonicY1),
-          sizeof (EOS_INTEGER));
-  byteCount += sizeof (EOS_INTEGER);
-  memcpy (packedTable + byteCount, &(me->shouldBeMonotonicY2),
-          sizeof (EOS_INTEGER));
-  byteCount += sizeof (EOS_INTEGER);
-  memcpy (packedTable + byteCount, &(me->shouldBeMonotonicY3),
-          sizeof (EOS_INTEGER));
-  byteCount += sizeof (EOS_INTEGER);
-  memcpy (packedTable + byteCount, &(me->shouldBeMonotonicY4),
-          sizeof (EOS_INTEGER));
-  byteCount += sizeof (EOS_INTEGER);
-  memcpy (packedTable + byteCount, &(me->shouldBeSmooth1),
-          sizeof (EOS_INTEGER));
-  byteCount += sizeof (EOS_INTEGER);
-  memcpy (packedTable + byteCount, &(me->shouldBeSmooth2),
-          sizeof (EOS_INTEGER));
-  byteCount += sizeof (EOS_INTEGER);
-  memcpy (packedTable + byteCount, &(me->shouldBeSmooth3),
-          sizeof (EOS_INTEGER));
-  byteCount += sizeof (EOS_INTEGER);
-  memcpy (packedTable + byteCount, &(me->shouldBeSmooth4),
-          sizeof (EOS_INTEGER));
-  byteCount += sizeof (EOS_INTEGER);
-  memcpy (packedTable + byteCount, &(me->shouldBePtSmooth1),
-          sizeof (EOS_INTEGER));
-  byteCount += sizeof (EOS_INTEGER);
-  memcpy (packedTable + byteCount, &(me->shouldBePtSmooth2),
-          sizeof (EOS_INTEGER));
-  byteCount += sizeof (EOS_INTEGER);
-  memcpy (packedTable + byteCount, &(me->shouldBePtSmooth3),
-          sizeof (EOS_INTEGER));
-  byteCount += sizeof (EOS_INTEGER);
-  memcpy (packedTable + byteCount, &(me->shouldBePtSmooth4),
-          sizeof (EOS_INTEGER));
-  byteCount += sizeof (EOS_INTEGER);
+  for(i=0; i<MAX_TABLES_RECORDTYPE1; i++) {
+    memcpy (packedTable + byteCount, &(me->isMonotonicX[i]), sizeof (EOS_INTEGER));
+    byteCount += sizeof (EOS_INTEGER);
+  }
+#ifdef _DEBUG_PACKING_FUNCTIONS
+  printf ("\n     %3i. %i total bytes (line %i)", index++, byteCount, __LINE__);
+#endif
+  for(i=0; i<MAX_TABLES_RECORDTYPE1; i++) {
+    memcpy (packedTable + byteCount, &(me->shouldBeMonotonicX[i]), sizeof (EOS_INTEGER));
+    byteCount += sizeof (EOS_INTEGER);
+  }
+#ifdef _DEBUG_PACKING_FUNCTIONS
+  printf ("\n     %3i. %i total bytes (line %i)", index++, byteCount, __LINE__);
+#endif
+  for(i=0; i<MAX_TABLES_RECORDTYPE1; i++) {
+    memcpy (packedTable + byteCount, &(me->isMonotonicY[i]), sizeof (EOS_INTEGER));
+    byteCount += sizeof (EOS_INTEGER);
+  }
+#ifdef _DEBUG_PACKING_FUNCTIONS
+  printf ("\n     %3i. %i total bytes (line %i)", index++, byteCount, __LINE__);
+#endif
+  for(i=0; i<MAX_TABLES_RECORDTYPE1; i++) {
+    memcpy (packedTable + byteCount, &(me->shouldBeMonotonicY[i]), sizeof (EOS_INTEGER));
+    byteCount += sizeof (EOS_INTEGER);
+  }
+#ifdef _DEBUG_PACKING_FUNCTIONS
+  printf ("\n     %3i. %i total bytes (line %i)", index++, byteCount, __LINE__);
+#endif
+  for(i=0; i<MAX_TABLES_RECORDTYPE1; i++) {
+    memcpy (packedTable + byteCount, &(me->shouldBeSmooth[i]), sizeof (EOS_INTEGER));
+    byteCount += sizeof (EOS_INTEGER);
+  }
+#ifdef _DEBUG_PACKING_FUNCTIONS
+  printf ("\n     %3i. %i total bytes (line %i)", index++, byteCount, __LINE__);
+#endif
+  for(i=0; i<MAX_TABLES_RECORDTYPE1; i++) {
+    memcpy (packedTable + byteCount, &(me->shouldBePtSmooth[i]), sizeof (EOS_INTEGER));
+    byteCount += sizeof (EOS_INTEGER);
+  }
+#ifdef _DEBUG_PACKING_FUNCTIONS
+  printf ("\n     %3i. %i total bytes (line %i)", index++, byteCount, __LINE__);
+#endif
 
   memcpy (packedTable + byteCount, &(me->NR), sizeof (EOS_INTEGER));
   byteCount += sizeof (EOS_INTEGER);
+#ifdef _DEBUG_PACKING_FUNCTIONS
+  printf ("\n     %3i. %i total bytes (line %i)", index++, byteCount, __LINE__);
+#endif
   memcpy (packedTable + byteCount, &(me->NT), sizeof (EOS_INTEGER));
   byteCount += sizeof (EOS_INTEGER);
+#ifdef _DEBUG_PACKING_FUNCTIONS
+  printf ("\n     %3i. %i total bytes (line %i)", index++, byteCount, __LINE__);
+#endif
 
   memcpy (packedTable + byteCount, me->R, sizeof (EOS_REAL) * me->NR);
   byteCount += sizeof (EOS_REAL) * me->NR;
+#ifdef _DEBUG_PACKING_FUNCTIONS
+  printf ("\n     %3i. %i total bytes (line %i)", index++, byteCount, __LINE__);
+#endif
   memcpy (packedTable + byteCount, me->T, sizeof (EOS_REAL) * me->NT);
   byteCount += sizeof (EOS_REAL) * me->NT;
+#ifdef _DEBUG_PACKING_FUNCTIONS
+  printf ("\n     %3i. %i total bytes (line %i)", index++, byteCount, __LINE__);
+#endif
   memcpy (packedTable + byteCount, &(me->eosData.numSubtablesLoaded),
           sizeof (EOS_INTEGER));
   byteCount += sizeof (EOS_INTEGER);
+#ifdef _DEBUG_PACKING_FUNCTIONS
+  printf ("\n     %3i. %i total bytes (line %i)", index++, byteCount, __LINE__);
+#endif
   memcpy (packedTable + byteCount, &(me->eosData.coldCurveIsLoaded),
           sizeof (EOS_INTEGER));
   byteCount += sizeof (EOS_INTEGER);
+#ifdef _DEBUG_PACKING_FUNCTIONS
+  printf ("\n     %3i. %i total bytes (line %i)", index++, byteCount, __LINE__);
+#endif
 
   memcpy (packedTable + byteCount, &(me->isInvertedAtSetup),
           sizeof (EOS_BOOLEAN));
   byteCount += sizeof (EOS_BOOLEAN);
+#ifdef _DEBUG_PACKING_FUNCTIONS
+  printf ("\n     %3i. %i total bytes (line %i)", index++, byteCount, __LINE__);
+#endif
+
+  memcpy (packedTable + byteCount, &(me->CreateGhostData), sizeof (EOS_BOOLEAN));
+  byteCount += sizeof (EOS_BOOLEAN);
+#ifdef _DEBUG_PACKING_FUNCTIONS
+  printf ("\n     %3i. %i total bytes (line %i)", index++, byteCount, __LINE__);
+#endif
+
+  memcpy (packedTable + byteCount, &(me->nGhostData), sizeof (EOS_INTEGER));
+  byteCount += sizeof (EOS_INTEGER);
+#ifdef _DEBUG_PACKING_FUNCTIONS
+  printf ("\n     %3i. %i total bytes (line %i)", index++, byteCount, __LINE__);
+#endif
+
+  memcpy (packedTable + byteCount, &(me->useTmpGhostData), sizeof (EOS_BOOLEAN));
+  byteCount += sizeof (EOS_BOOLEAN);
+#ifdef _DEBUG_PACKING_FUNCTIONS
+  printf ("\n     %3i. %i total bytes (line %i)", index++, byteCount, __LINE__);
+#endif
+
+#ifdef __ONE_OBJECT_PER_TABLEHANDLE__
+
+  /* pack ALL subtables flags, indicating loaded subtables */
+  for (t = 1; t <= MAX_TABLES_RECORDTYPE1; t++) {
+    EOS_BOOLEAN _true_ = EOS_TRUE;
+    EOS_BOOLEAN _false_ = EOS_FALSE;
+    if (me->table[t-1])
+      memcpy (packedTable + byteCount, &_true_, sizeof (EOS_BOOLEAN));
+    else
+      memcpy (packedTable + byteCount, &_false_, sizeof (EOS_BOOLEAN));
+    byteCount += sizeof (EOS_BOOLEAN);
+  }
+#ifdef _DEBUG_PACKING_FUNCTIONS
+    printf ("\n     %3i. %i total bytes after subtable %i (line %i)", index++, byteCount, t, __LINE__);
+#endif
+
+  /* pack ALL subtables, to be consistent with Load() for RT1 */
+  for (t = 1; t <= MAX_TABLES_RECORDTYPE1; t++) {
+    EOS_REAL _null_val_ = 0.0;
+    if (me->table[t-1]) {
+      F = &(me->table[t-1][0][0]);
+      coldCurve = me->coldCurve[t-1];
+
+      /* first pack the cold curves */
+      if (me->eosData.coldCurveIsLoaded) {
+        memcpy (packedTable + byteCount, coldCurve, me->NR * sizeof (EOS_REAL));
+        byteCount += me->NR * sizeof (EOS_REAL);
+      }
+
+      /* now pack the subtable */
+      memcpy (packedTable + byteCount, F, me->NT * me->NR * sizeof (EOS_REAL));
+      byteCount += me->NT * me->NR * sizeof (EOS_REAL);
+    }
+    else {
+      /* now pack the null value */
+      memcpy (packedTable + byteCount, &_null_val_, sizeof (EOS_REAL));
+      byteCount += sizeof (EOS_REAL);
+    }
+#ifdef _DEBUG_PACKING_FUNCTIONS
+    printf ("\n     %3i. %i total bytes after subtable %i (line %i)", index++, byteCount, t, __LINE__);
+#endif
+  }                             /* subtables loop */
+
+#else /* ! __ONE_OBJECT_PER_TABLEHANDLE__ */
 
   /* pack ALL subtables, to be consistent with Load() for RT1 */
   for (t = 1; t <= MAX_TABLES_RECORDTYPE1; t++) {
     if (t > me->eosData.numSubtablesLoaded)
       break;
 
-    switch (t) {
-    case 1:
-      F = &(me->table1[0][0]);
-      coldCurve = me->coldCurve1;
-      break;
-    case 2:
-      F = &(me->table2[0][0]);
-      coldCurve = me->coldCurve2;
-      break;
-    case 3:
-      F = &(me->table3[0][0]);
-      coldCurve = me->coldCurve3;
-      break;
-    case 4:
-      F = &(me->table4[0][0]);
-      coldCurve = me->coldCurve4;
-      break;
-    }
+    F = &(me->table[t-1][0][0]);
+    coldCurve = me->coldCurve[t-1];
 
     /* first pack the cold curves */
     if (me->eosData.coldCurveIsLoaded) {
@@ -2627,21 +2700,38 @@ void eos_GetPackedTableRecordType1 (void *ptr, EOS_INTEGER th,
     memcpy (packedTable + byteCount, F, me->NT * me->NR * sizeof (EOS_REAL));
     byteCount += me->NT * me->NR * sizeof (EOS_REAL);
 
-  }                             /* subtable loop */
+#ifdef _DEBUG_PACKING_FUNCTIONS
+    printf ("\n     %3i. %i total bytes after subtable %i (line %i)", index++, byteCount, t, __LINE__);
+#endif
+  }                             /* subtables loop */
+
+#endif /* __ONE_OBJECT_PER_TABLEHANDLE__ */
 
   memcpy (packedTable + byteCount, &(me->eosData.dataFileIndex),
           sizeof (EOS_INTEGER));
   byteCount += sizeof (EOS_INTEGER);
+#ifdef _DEBUG_PACKING_FUNCTIONS
+  printf ("\n     %3i. %i total bytes (line %i)", index++, byteCount, __LINE__);
+#endif
   memcpy (packedTable + byteCount, &(me->eosData.dataFileOffset),
           sizeof (long));
   byteCount += sizeof (long);
+#ifdef _DEBUG_PACKING_FUNCTIONS
+  printf ("\n     %3i. %i total bytes (line %i)", index++, byteCount, __LINE__);
+#endif
   memcpy (packedTable + byteCount, &(me->eosData.dataSize),
           sizeof (EOS_INTEGER));
   byteCount += sizeof (EOS_INTEGER);
+#ifdef _DEBUG_PACKING_FUNCTIONS
+  printf ("\n     %3i. %i total bytes (line %i)", index++, byteCount, __LINE__);
+#endif
 
   // pack the 401 table info here!
   memcpy (packedTable + byteCount, &(me->rt2_handle), sizeof (EOS_INTEGER));
   byteCount += sizeof (EOS_INTEGER);
+#ifdef _DEBUG_PACKING_FUNCTIONS
+  printf ("\n     %3i. %i total bytes (line %i)", index++, byteCount, __LINE__);
+#endif
   if (me->found_401) {
     tbl401 =
       (eos_RecordType2 *) gEosDataMap.dataObjects[gEosDataMap.
@@ -2653,21 +2743,58 @@ void eos_GetPackedTableRecordType1 (void *ptr, EOS_INTEGER th,
     eos_GetPackedTableRecordType2 (tbl401, me->rt2_handle,
                                    packedTable + byteCount, err);
     byteCount += size401;
+#ifdef _DEBUG_PACKING_FUNCTIONS
+  printf ("\n     %3i. %i total bytes (line %i)", index++, byteCount, __LINE__);
+#endif
   }
+
+  /* Pack Hashtables */
+  if (me->eosData.isLoaded) {
+    EOS_CHAR exists;
+    // Density hashtable
+    exists = (me->R_hashTable != NULL);
+    memcpy(packedTable + byteCount, &exists, sizeof(EOS_CHAR));
+    byteCount += sizeof(EOS_CHAR);
+    if (exists) {
+      assert(me->R != NULL);
+      byteCount += eos_HashTable1D_pack(me->R_hashTable, packedTable + byteCount);
+    }
+    // Density hashtable
+    exists = (me->T_hashTable != NULL);
+    memcpy(packedTable + byteCount, &exists, sizeof(EOS_CHAR));
+    byteCount += sizeof(EOS_CHAR);
+    if (exists) {
+      assert(me->T != NULL);
+      byteCount += eos_HashTable1D_pack(me->T_hashTable, packedTable + byteCount);
+    }
+    // Subtable hashtables
+    for (i = 0; i < MAX_TABLES_RECORDTYPE1; i++) {
+      exists = (me->hashTables[i] != NULL);
+      memcpy(packedTable + byteCount, &exists, sizeof(EOS_CHAR));
+      byteCount += sizeof(EOS_CHAR);
+      if (exists) {
+        assert(me->table[i] != NULL);
+        byteCount += eos_HashTable2D_pack(me->hashTables[i], packedTable + byteCount);
+      }
+    }
+  }
+
+#ifdef _DEBUG_PACKING_FUNCTIONS
+  printf ("\n     --- exit eos_GetPackedTableRecordType1 TableHandle %3i\n", th);
+#endif
 }
 
-
 /***********************************************************************/
-/*! 
+/*!
  * \brief This sets the data of class eos_RecordType1 from the packed char array provided by caller
- * 
+ *
  * \param[out]   *err            - EOS_INTEGER : error code
  * \param[in]    *ptr            - void : data object pointer;
  *                                        internally recast to eos_RecordType1*
  * \param[in]    th              - EOS_INTEGER : table handle
  * \param[in]    packedTableSize - EOS_INTEGER : size in chars of packed data array
  * \param[in]    *packedTable    - EOS_CHAR : allocated by user char array large enough to store packed data
- * 
+ *
  * \return none
  *
  ***********************************************************************/
@@ -2675,15 +2802,23 @@ void eos_SetPackedTableRecordType1 (void *ptr, EOS_INTEGER th,
                                     EOS_CHAR *packedTable, EOS_INTEGER *err)
 {
   eos_RecordType1 *me;
-  EOS_INTEGER dataType, nt, nr, byteCount =
-    0, tableNum, t, j, dt, tmpINT;
+  EOS_INTEGER dataType, nt, nr, byteCount = 0, tableNum, t, i, dt, tmpINT;
   EOS_REAL *F, *coldCurve = NULL;
   eos_RecordType2 *tbl401 = NULL;
   EOS_INTEGER size401;
+#ifdef __ONE_OBJECT_PER_TABLEHANDLE__
+  EOS_BOOLEAN tablesLoaded_flags[MAX_TABLES_RECORDTYPE1];
+#endif
+#ifdef _DEBUG_PACKING_FUNCTIONS
+  EOS_INTEGER index=0;
+#endif
   *err = EOS_OK;
 
   me = (eos_RecordType1 *) ptr;
 
+#ifdef _DEBUG_PACKING_FUNCTIONS
+  printf ("\n     --- enter eos_SetPackedTableRecordType1 TableHandle %3i", th);
+#endif
   dataType = eos_GetDataTypeFromTableHandle (th, err);
   if (eos_GetStandardErrorCodeFromCustomErrorCode(*err) != EOS_OK)
     return;
@@ -2692,92 +2827,83 @@ void eos_SetPackedTableRecordType1 (void *ptr, EOS_INTEGER th,
 
   memcpy (&(me->avgAtomicNumber), packedTable + byteCount, sizeof (EOS_REAL));
   byteCount += sizeof (EOS_REAL);
+#ifdef _DEBUG_PACKING_FUNCTIONS
+  printf ("\n     %3i. %i total bytes (line %i)", index++, byteCount, __LINE__);
+#endif
   memcpy (&(me->avgAtomicWgt), packedTable + byteCount, sizeof (EOS_REAL));
   byteCount += sizeof (EOS_REAL);
+#ifdef _DEBUG_PACKING_FUNCTIONS
+  printf ("\n     %3i. %i total bytes (line %i)", index++, byteCount, __LINE__);
+#endif
   memcpy (&(me->refDensity), packedTable + byteCount, sizeof (EOS_REAL));
   byteCount += sizeof (EOS_REAL);
+#ifdef _DEBUG_PACKING_FUNCTIONS
+  printf ("\n     %3i. %i total bytes (line %i)", index++, byteCount, __LINE__);
+#endif
   memcpy (&(me->solidBulkModulus), packedTable + byteCount, sizeof (EOS_REAL));
   byteCount += sizeof (EOS_REAL);
+#ifdef _DEBUG_PACKING_FUNCTIONS
+  printf ("\n     %3i. %i total bytes (line %i)", index++, byteCount, __LINE__);
+#endif
   memcpy (&(me->exchangeCoefficient), packedTable + byteCount, sizeof (EOS_REAL));
   byteCount += sizeof (EOS_REAL);
+#ifdef _DEBUG_PACKING_FUNCTIONS
+  printf ("\n     %3i. %i total bytes (line %i)", index++, byteCount, __LINE__);
+#endif
 
-  memcpy (&(me->isMonotonicX1), packedTable + byteCount,
-          sizeof (EOS_INTEGER));
-  byteCount += sizeof (EOS_INTEGER);
-  memcpy (&(me->isMonotonicX2), packedTable + byteCount,
-          sizeof (EOS_INTEGER));
-  byteCount += sizeof (EOS_INTEGER);
-  memcpy (&(me->isMonotonicX3), packedTable + byteCount,
-          sizeof (EOS_INTEGER));
-  byteCount += sizeof (EOS_INTEGER);
-  memcpy (&(me->isMonotonicX4), packedTable + byteCount,
-          sizeof (EOS_INTEGER));
-  byteCount += sizeof (EOS_INTEGER);
-  memcpy (&(me->shouldBeMonotonicX1), packedTable + byteCount,
-          sizeof (EOS_INTEGER));
-  byteCount += sizeof (EOS_INTEGER);
-  memcpy (&(me->shouldBeMonotonicX2), packedTable + byteCount,
-          sizeof (EOS_INTEGER));
-  byteCount += sizeof (EOS_INTEGER);
-  memcpy (&(me->shouldBeMonotonicX3), packedTable + byteCount,
-          sizeof (EOS_INTEGER));
-  byteCount += sizeof (EOS_INTEGER);
-  memcpy (&(me->shouldBeMonotonicX4), packedTable + byteCount,
-          sizeof (EOS_INTEGER));
-  byteCount += sizeof (EOS_INTEGER);
-  memcpy (&(me->isMonotonicY1), packedTable + byteCount,
-          sizeof (EOS_INTEGER));
-  byteCount += sizeof (EOS_INTEGER);
-  memcpy (&(me->isMonotonicY2), packedTable + byteCount,
-          sizeof (EOS_INTEGER));
-  byteCount += sizeof (EOS_INTEGER);
-  memcpy (&(me->isMonotonicY3), packedTable + byteCount,
-          sizeof (EOS_INTEGER));
-  byteCount += sizeof (EOS_INTEGER);
-  memcpy (&(me->isMonotonicY4), packedTable + byteCount,
-          sizeof (EOS_INTEGER));
-  byteCount += sizeof (EOS_INTEGER);
-  memcpy (&(me->shouldBeMonotonicY1), packedTable + byteCount,
-          sizeof (EOS_INTEGER));
-  byteCount += sizeof (EOS_INTEGER);
-  memcpy (&(me->shouldBeMonotonicY2), packedTable + byteCount,
-          sizeof (EOS_INTEGER));
-  byteCount += sizeof (EOS_INTEGER);
-  memcpy (&(me->shouldBeMonotonicY3), packedTable + byteCount,
-          sizeof (EOS_INTEGER));
-  byteCount += sizeof (EOS_INTEGER);
-  memcpy (&(me->shouldBeMonotonicY4), packedTable + byteCount,
-          sizeof (EOS_INTEGER));
-  byteCount += sizeof (EOS_INTEGER);
-  memcpy (&(me->shouldBeSmooth1), packedTable + byteCount,
-          sizeof (EOS_INTEGER));
-  byteCount += sizeof (EOS_INTEGER);
-  memcpy (&(me->shouldBeSmooth2), packedTable + byteCount,
-          sizeof (EOS_INTEGER));
-  byteCount += sizeof (EOS_INTEGER);
-  memcpy (&(me->shouldBeSmooth3), packedTable + byteCount,
-          sizeof (EOS_INTEGER));
-  byteCount += sizeof (EOS_INTEGER);
-  memcpy (&(me->shouldBeSmooth4), packedTable + byteCount,
-          sizeof (EOS_INTEGER));
-  byteCount += sizeof (EOS_INTEGER);
-  memcpy (&(me->shouldBePtSmooth1), packedTable + byteCount,
-          sizeof (EOS_INTEGER));
-  byteCount += sizeof (EOS_INTEGER);
-  memcpy (&(me->shouldBePtSmooth2), packedTable + byteCount,
-          sizeof (EOS_INTEGER));
-  byteCount += sizeof (EOS_INTEGER);
-  memcpy (&(me->shouldBePtSmooth3), packedTable + byteCount,
-          sizeof (EOS_INTEGER));
-  byteCount += sizeof (EOS_INTEGER);
-  memcpy (&(me->shouldBePtSmooth4), packedTable + byteCount,
-          sizeof (EOS_INTEGER));
-  byteCount += sizeof (EOS_INTEGER);
+  for(i=0; i<MAX_TABLES_RECORDTYPE1; i++) {
+    memcpy (&(me->isMonotonicX[i]), packedTable + byteCount, sizeof (EOS_INTEGER));
+    byteCount += sizeof (EOS_INTEGER);
+  }
+#ifdef _DEBUG_PACKING_FUNCTIONS
+  printf ("\n     %3i. %i total bytes (line %i)", index++, byteCount, __LINE__);
+#endif
+  for(i=0; i<MAX_TABLES_RECORDTYPE1; i++) {
+    memcpy (&(me->shouldBeMonotonicX[i]), packedTable + byteCount, sizeof (EOS_INTEGER));
+    byteCount += sizeof (EOS_INTEGER);
+  }
+#ifdef _DEBUG_PACKING_FUNCTIONS
+  printf ("\n     %3i. %i total bytes (line %i)", index++, byteCount, __LINE__);
+#endif
+  for(i=0; i<MAX_TABLES_RECORDTYPE1; i++) {
+    memcpy (&(me->isMonotonicY[i]), packedTable + byteCount, sizeof (EOS_INTEGER));
+    byteCount += sizeof (EOS_INTEGER);
+  }
+#ifdef _DEBUG_PACKING_FUNCTIONS
+  printf ("\n     %3i. %i total bytes (line %i)", index++, byteCount, __LINE__);
+#endif
+  for(i=0; i<MAX_TABLES_RECORDTYPE1; i++) {
+    memcpy (&(me->shouldBeMonotonicY[i]), packedTable + byteCount, sizeof (EOS_INTEGER));
+    byteCount += sizeof (EOS_INTEGER);
+  }
+#ifdef _DEBUG_PACKING_FUNCTIONS
+  printf ("\n     %3i. %i total bytes (line %i)", index++, byteCount, __LINE__);
+#endif
+  for(i=0; i<MAX_TABLES_RECORDTYPE1; i++) {
+    memcpy (&(me->shouldBeSmooth[i]), packedTable + byteCount, sizeof (EOS_INTEGER));
+    byteCount += sizeof (EOS_INTEGER);
+  }
+#ifdef _DEBUG_PACKING_FUNCTIONS
+  printf ("\n     %3i. %i total bytes (line %i)", index++, byteCount, __LINE__);
+#endif
+  for(i=0; i<MAX_TABLES_RECORDTYPE1; i++) {
+    memcpy (&(me->shouldBePtSmooth[i]), packedTable + byteCount, sizeof (EOS_INTEGER));
+    byteCount += sizeof (EOS_INTEGER);
+  }
+#ifdef _DEBUG_PACKING_FUNCTIONS
+  printf ("\n     %3i. %i total bytes (line %i)", index++, byteCount, __LINE__);
+#endif
 
   memcpy (&nr, packedTable + byteCount, sizeof (EOS_INTEGER));
   byteCount += sizeof (EOS_INTEGER);
+#ifdef _DEBUG_PACKING_FUNCTIONS
+  printf ("\n     %3i. %i total bytes (line %i)", index++, byteCount, __LINE__);
+#endif
   memcpy (&nt, packedTable + byteCount, sizeof (EOS_INTEGER));
   byteCount += sizeof (EOS_INTEGER);
+#ifdef _DEBUG_PACKING_FUNCTIONS
+  printf ("\n     %3i. %i total bytes (line %i)", index++, byteCount, __LINE__);
+#endif
 
   /* allocate memory if more memory is needed */
   if (nr > me->NR || nt > me->NT)
@@ -2787,50 +2913,101 @@ void eos_SetPackedTableRecordType1 (void *ptr, EOS_INTEGER th,
 
   memcpy (me->R, packedTable + byteCount, sizeof (EOS_REAL) * me->NR);
   byteCount += sizeof (EOS_REAL) * me->NR;
+#ifdef _DEBUG_PACKING_FUNCTIONS
+  printf ("\n     %3i. %i total bytes (line %i)", index++, byteCount, __LINE__);
+#endif
   memcpy (me->T, packedTable + byteCount, sizeof (EOS_REAL) * me->NT);
   byteCount += sizeof (EOS_REAL) * me->NT;
+#ifdef _DEBUG_PACKING_FUNCTIONS
+  printf ("\n     %3i. %i total bytes (line %i)", index++, byteCount, __LINE__);
+#endif
   memcpy (&(me->eosData.numSubtablesLoaded), packedTable + byteCount,
           sizeof (EOS_INTEGER));
   byteCount += sizeof (EOS_INTEGER);
+#ifdef _DEBUG_PACKING_FUNCTIONS
+  printf ("\n     %3i. %i total bytes (line %i)", index++, byteCount, __LINE__);
+#endif
   memcpy (&(tmpINT), packedTable + byteCount, sizeof (EOS_INTEGER));
   me->eosData.coldCurveIsLoaded = (tmpINT != 0) ? EOS_TRUE : EOS_FALSE;
   byteCount += sizeof (EOS_INTEGER);
+#ifdef _DEBUG_PACKING_FUNCTIONS
+  printf ("\n     %3i. %i total bytes (line %i)", index++, byteCount, __LINE__);
+#endif
 
   memcpy (&(tmpINT), packedTable + byteCount, sizeof (EOS_INTEGER));
   me->isInvertedAtSetup = (tmpINT != 0) ? EOS_TRUE : EOS_FALSE;
   byteCount += sizeof (EOS_BOOLEAN);
+#ifdef _DEBUG_PACKING_FUNCTIONS
+  printf ("\n     %3i. %i total bytes (line %i)", index++, byteCount, __LINE__);
+#endif
+
+  memcpy (&(me->CreateGhostData), packedTable + byteCount, sizeof (EOS_BOOLEAN));
+  byteCount += sizeof (EOS_BOOLEAN);
+#ifdef _DEBUG_PACKING_FUNCTIONS
+  printf ("\n     %3i. %i total bytes (line %i)", index++, byteCount, __LINE__);
+#endif
+
+  memcpy (&(me->nGhostData), packedTable + byteCount, sizeof (EOS_INTEGER));
+  byteCount += sizeof (EOS_INTEGER);
+#ifdef _DEBUG_PACKING_FUNCTIONS
+  printf ("\n     %3i. %i total bytes (line %i)", index++, byteCount, __LINE__);
+#endif
+
+  memcpy (&(me->useTmpGhostData), packedTable + byteCount, sizeof (EOS_BOOLEAN));
+  byteCount += sizeof (EOS_BOOLEAN);
+#ifdef _DEBUG_PACKING_FUNCTIONS
+  printf ("\n     %3i. %i total bytes (line %i)", index++, byteCount, __LINE__);
+#endif
+
+#ifdef __ONE_OBJECT_PER_TABLEHANDLE__
+
+  /* unpack ALL subtables flags, indicating loaded subtables */
+  memcpy (tablesLoaded_flags, packedTable + byteCount, MAX_TABLES_RECORDTYPE1 * sizeof (EOS_BOOLEAN));
+  byteCount += MAX_TABLES_RECORDTYPE1 * sizeof (EOS_BOOLEAN);
+#ifdef _DEBUG_PACKING_FUNCTIONS
+  printf ("\n     %3i. %i total bytes (line %i)", index++, byteCount, __LINE__);
+#endif
+
+  /* unpack ALL subtables, to be consistent with Load() for RT1 */
+  for (t = 1; t <= MAX_TABLES_RECORDTYPE1; t++) {
+    F = &(me->table[t-1][0][0]);
+    if (tablesLoaded_flags[t-1]) {
+      coldCurve = (me->eosData.coldCurveIsLoaded) ? me->coldCurve[t-1] : NULL;
+      if (! me->eosData.coldCurveIsLoaded) /* Cold curve is not stored separately */
+        EOS_FREE(me->coldCurve[t-1]);
+
+      if (tablesLoaded_flags[t-1]) {
+        /* first unpack the cold curves */
+        if (me->eosData.coldCurveIsLoaded) {
+          memcpy (coldCurve, packedTable + byteCount, me->NR * sizeof (EOS_REAL));
+          byteCount += me->NR * sizeof (EOS_REAL);
+        }
+
+        /* now unpack the subtable */
+        memcpy (F, packedTable + byteCount, me->NT * me->NR * sizeof (EOS_REAL));
+        byteCount += me->NT * me->NR * sizeof (EOS_REAL);
+      }
+    }
+    else {
+      /* memcpy (F, packedTable + byteCount, sizeof (EOS_REAL)); */
+      byteCount += sizeof (EOS_REAL);
+    }
+#ifdef _DEBUG_PACKING_FUNCTIONS
+    printf ("\n     %3i. %i total bytes after subtable %i (line %i)", index++, byteCount, t, __LINE__);
+#endif
+  }                             /* subtables loop */
+
+#else /* ! __ONE_OBJECT_PER_TABLEHANDLE__ */
 
   /* unpack ALL subtables, to be consistent with Load() for RT1 */
   for (t = 1; t <= me->eosData.numSubtablesLoaded; t++) {
     if (t > me->eosData.numSubtablesLoaded)
       break;
 
-    switch (t) {
-    case 1:
-      F = &(me->table1[0][0]);
-      coldCurve = (me->eosData.coldCurveIsLoaded) ? me->coldCurve1 : NULL;
-      if (! me->eosData.coldCurveIsLoaded) /* Cold curve is not stored separately */
-	EOS_FREE(me->coldCurve1);
-      break;
-    case 2:
-      F = &(me->table2[0][0]);
-      coldCurve = (me->eosData.coldCurveIsLoaded) ? me->coldCurve2 : NULL;
-      if (! me->eosData.coldCurveIsLoaded) /* Cold curve is not stored separately */
-	EOS_FREE(me->coldCurve2);
-      break;
-    case 3:
-      F = &(me->table3[0][0]);
-      coldCurve = (me->eosData.coldCurveIsLoaded) ? me->coldCurve3 : NULL;
-      if (! me->eosData.coldCurveIsLoaded) /* Cold curve is not stored separately */
-	EOS_FREE(me->coldCurve3);
-      break;
-    case 4:
-      F = &(me->table4[0][0]);
-      coldCurve = (me->eosData.coldCurveIsLoaded) ? me->coldCurve4 : NULL;
-      if (! me->eosData.coldCurveIsLoaded) /* Cold curve is not stored separately */
-	EOS_FREE(me->coldCurve4);
-      break;
-    }
+    F = &(me->table[t-1][0][0]);
+    coldCurve = (me->eosData.coldCurveIsLoaded) ? me->coldCurve[t-1] : NULL;
+    if (! me->eosData.coldCurveIsLoaded) /* Cold curve is not stored separately */
+      EOS_FREE(me->coldCurve[t-1]);
 
     /* first unpack the cold curves */
     if (me->eosData.coldCurveIsLoaded) {
@@ -2838,29 +3015,45 @@ void eos_SetPackedTableRecordType1 (void *ptr, EOS_INTEGER th,
       byteCount += me->NR * sizeof (EOS_REAL);
     }
     else if (coldCurve)
-      for (j = 0; j < me->NR; j++)
-        coldCurve[j] = ZERO;
+      for (i = 0; i < me->NR; i++)
+        coldCurve[i] = ZERO;
 
     /* now unpack the subtable */
     memcpy (F, packedTable + byteCount, me->NT * me->NR * sizeof (EOS_REAL));
     byteCount += me->NT * me->NR * sizeof (EOS_REAL);
-
+#ifdef _DEBUG_PACKING_FUNCTIONS
+    printf ("\n     %3i. %i total bytes after subtable %i (line %i)", index++, byteCount, t, __LINE__);
+#endif
   }                             /* subtables loop */
+
+#endif /* __ONE_OBJECT_PER_TABLEHANDLE__ */
 
   memcpy (&(me->eosData.dataFileIndex), packedTable + byteCount,
           sizeof (EOS_INTEGER));
   byteCount += sizeof (EOS_INTEGER);
+#ifdef _DEBUG_PACKING_FUNCTIONS
+  printf ("\n     %3i. %i total bytes (line %i)", index++, byteCount, __LINE__);
+#endif
   memcpy (&(me->eosData.dataFileOffset), packedTable + byteCount,
           sizeof (long));
   byteCount += sizeof (long);
+#ifdef _DEBUG_PACKING_FUNCTIONS
+  printf ("\n     %3i. %i total bytes (line %i)", index++, byteCount, __LINE__);
+#endif
   memcpy (&(me->eosData.dataSize), packedTable + byteCount,
           sizeof (EOS_INTEGER));
   byteCount += sizeof (EOS_INTEGER);
+#ifdef _DEBUG_PACKING_FUNCTIONS
+  printf ("\n     %3i. %i total bytes (line %i)", index++, byteCount, __LINE__);
+#endif
   me->eosData.isLoaded = (me->eosData.numSubtablesLoaded > 0) ? 1 : 0;
   // unpack the 401 table info here!
   // unpack handle if you can, does the handle stay the same?
   memcpy (&(me->rt2_handle), packedTable + byteCount, sizeof (EOS_INTEGER));
   byteCount += sizeof (EOS_INTEGER);
+#ifdef _DEBUG_PACKING_FUNCTIONS
+  printf ("\n     %3i. %i total bytes (line %i)", index++, byteCount, __LINE__);
+#endif
   me->found_401 = (me->rt2_handle >= 0) ? EOS_TRUE : EOS_FALSE;
   if (me->found_401) {
     /* create empty 401 table, fill it with unpacked data */
@@ -2881,6 +3074,9 @@ void eos_SetPackedTableRecordType1 (void *ptr, EOS_INTEGER th,
       eos_GetPackedTableSizeRecordType2 (tbl401, me->rt2_handle, &size401,
                                          err);
       byteCount += size401;
+#ifdef _DEBUG_PACKING_FUNCTIONS
+  printf ("\n     %3i. %i total bytes (line %i)", index++, byteCount, __LINE__);
+#endif
     }
     else {                      /* couldn't create a new handle */
 
@@ -2888,21 +3084,58 @@ void eos_SetPackedTableRecordType1 (void *ptr, EOS_INTEGER th,
       me->found_401 = EOS_FALSE;
       *err = EOS_UNDEFINED;
       *err = eos_SetCustomErrorMsg (th, *err,
-				    "eos_RecordType1::SetPackedTable ERROR couldn't create a handle for 401 table");
+                                    "eos_RecordType1::SetPackedTable ERROR couldn't create a handle for 401 table");
     }
   }
+
+  /* Unpack Hashtables */
+  if (me->eosData.isLoaded) {
+    EOS_CHAR exists;
+    // Density hashtable
+    memcpy(&exists, packedTable + byteCount, sizeof(EOS_CHAR));
+    byteCount += sizeof(EOS_CHAR);
+    if (exists) {
+      me->R_hashTable = (eos_HashTable1D*)malloc(sizeof(eos_HashTable1D));
+      byteCount += eos_HashTable1D_unpack(me->R_hashTable, packedTable + byteCount);
+    } else {
+      me->R_hashTable = NULL;
+    }
+    // Temperature hashtable
+    memcpy(&exists, packedTable + byteCount, sizeof(EOS_CHAR));
+    byteCount += sizeof(EOS_CHAR);
+    if (exists) {
+      me->T_hashTable = (eos_HashTable1D*)malloc(sizeof(eos_HashTable1D));
+      byteCount += eos_HashTable1D_unpack(me->T_hashTable, packedTable + byteCount);
+    } else {
+      me->T_hashTable = NULL;
+    }
+    for (i = 0; i < MAX_TABLES_RECORDTYPE1; i++) {
+      memcpy(&exists, packedTable + byteCount, sizeof(EOS_CHAR));
+      byteCount += sizeof(EOS_CHAR);
+      if (exists) {
+        me->hashTables[i] = (eos_HashTable2D*)malloc(sizeof(eos_HashTable2D));
+        byteCount += eos_HashTable2D_unpack(me->hashTables[i], packedTable + byteCount);
+      } else {
+        me->hashTables[i] = NULL;
+      }
+    }
+  }
+
+#ifdef _DEBUG_PACKING_FUNCTIONS
+  printf ("\n     --- exit eos_SetPackedTableRecordType1 TableHandle %3i\n", th);
+#endif
 }
 
 /***********************************************************************/
-/*! 
+/*!
  * \brief This returns the size of packed char array needed to store the data of class eos_RecordType1
- * 
+ *
  * \param[out]   *err             - EOS_INTEGER : error code
  * \param[in]    *ptr             - void : data object pointer;
  *                                         internally recast to eos_RecordType1*
  * \param[in]    *packedTableSize - EOS_INTEGER : size in chars of packed data array
  * \param[in]    th               - EOS_INTEGER : table handle
- * 
+ *
  * \return none
  *
  ***********************************************************************/
@@ -2912,26 +3145,55 @@ void eos_GetPackedTableSizeRecordType1 (void *ptr, EOS_INTEGER th,
 {
   eos_RecordType1 *me;
   eos_RecordType2 *tbl401 = NULL;
-  EOS_INTEGER size401, byteCount = 0;
+  EOS_INTEGER size401, byteCount = 0, i;
   *err = EOS_OK;
 
   me = (eos_RecordType1 *) ptr;
 
-  byteCount += sizeof (EOS_REAL) * 5;
-  byteCount += sizeof (EOS_INTEGER) * 26;
-  byteCount += sizeof (EOS_REAL) * me->NR;
-  byteCount += sizeof (EOS_REAL) * me->NT;
+  byteCount += sizeof (EOS_REAL) * 5; /* 201 bulk data */
+  for(i=0; i<MAX_TABLES_RECORDTYPE1; i++) byteCount += sizeof (EOS_INTEGER); /* me->isMonotonicX[i] */
+  for(i=0; i<MAX_TABLES_RECORDTYPE1; i++) byteCount += sizeof (EOS_INTEGER); /* me->shouldBeMonotonicX[i] */
+  for(i=0; i<MAX_TABLES_RECORDTYPE1; i++) byteCount += sizeof (EOS_INTEGER); /* me->isMonotonicY[i] */
+  for(i=0; i<MAX_TABLES_RECORDTYPE1; i++) byteCount += sizeof (EOS_INTEGER); /* me->shouldBeMonotonicY[i] */
+  for(i=0; i<MAX_TABLES_RECORDTYPE1; i++) byteCount += sizeof (EOS_INTEGER); /* me->shouldBeSmooth[i] */
+  for(i=0; i<MAX_TABLES_RECORDTYPE1; i++) byteCount += sizeof (EOS_INTEGER); /* me->shouldBePtSmooth[i] */
+  byteCount += sizeof (EOS_INTEGER); /* me->NR */
+  byteCount += sizeof (EOS_INTEGER); /* me->NT */
+  byteCount += sizeof (EOS_REAL) * me->NR; /* me->R */
+  byteCount += sizeof (EOS_REAL) * me->NT; /* me->T */
   byteCount += sizeof (EOS_INTEGER);    /* number of subtable loaded */
   byteCount += sizeof (EOS_INTEGER);    /* if cold curve is loaded */
-
   byteCount += sizeof (EOS_BOOLEAN);    /* isInvertedAtSetup */
-
+  byteCount += sizeof (EOS_BOOLEAN);    /* CreateGhostData */
+  byteCount += sizeof (EOS_INTEGER);    /* nGhostData */
+  byteCount += sizeof (EOS_BOOLEAN);    /* useTmpGhostData */
   byteCount += sizeof (EOS_INTEGER);    /* 401 handle */
 
+#ifdef __ONE_OBJECT_PER_TABLEHANDLE__
+  for(i=0; i<MAX_TABLES_RECORDTYPE1; i++) {
+    if (me->table[i]) {
+      byteCount += 1; /* flag to indicate subtable is allocated */
+      byteCount += me->NT * me->NR * sizeof (EOS_REAL); /* current subtable */
+    }
+    else {
+      byteCount += 1; /* flag to indicate subtable is allocated */
+      byteCount += sizeof (EOS_REAL); /* current subtable null pointer */
+    }
+    if (me->eosData.coldCurveIsLoaded && me->coldCurve[i]) {
+      byteCount += 1; /* flag to indicate subtable is allocated */
+      byteCount += me->NR * sizeof (EOS_REAL); /* cold curve for current subtable */
+    }
+    else {
+      byteCount += 1; /* flag to indicate subtable is allocated */
+      byteCount += sizeof (EOS_REAL); /* current subtable null pointer */
+    }
+  }
+#else
   byteCount += me->eosData.numSubtablesLoaded * me->NT * me->NR * sizeof (EOS_REAL);
 
   if (me->eosData.coldCurveIsLoaded)
     byteCount += me->eosData.numSubtablesLoaded * me->NR * sizeof (EOS_REAL);   /* cold curves for each subtable */
+#endif
   byteCount += (sizeof (EOS_INTEGER) * 2 + sizeof (long));
 
   if (me->found_401) {
@@ -2943,13 +3205,34 @@ void eos_GetPackedTableSizeRecordType1 (void *ptr, EOS_INTEGER th,
     byteCount += size401;
   }
 
+  /* Hashtables */
+  if (me->eosData.isLoaded) {
+    byteCount += sizeof(EOS_CHAR);
+    if (me->R_hashTable != NULL) {
+      assert(me->R != NULL);
+      byteCount += eos_HashTable1D_byteSize(me->R_hashTable);
+    }
+    byteCount += sizeof(EOS_CHAR);
+    if (me->T_hashTable != NULL) {
+      assert(me->T != NULL);
+      byteCount += eos_HashTable1D_byteSize(me->T_hashTable);
+    }
+    for (i = 0; i < MAX_TABLES_RECORDTYPE1; i++) {
+      byteCount += sizeof(EOS_CHAR);
+      if (me->hashTables[i] != NULL) {
+        assert(me->table[i] != NULL);
+        byteCount += eos_HashTable2D_byteSize(me->hashTables[i]);
+      }
+    }
+  }
+
   *packedTableSize = byteCount;
 }
 
 /***********************************************************************/
-/*! 
+/*!
  * \brief * Makes data of class eos_RecordType1 monotonic
- * 
+ *
  * \param[out]    *err     - EOS_INTEGER : error code
  * \param[in]     *ptr     - void : data object pointer;
  *                                  internally recast to eos_RecordType1*
@@ -2957,7 +3240,7 @@ void eos_GetPackedTableSizeRecordType1 (void *ptr, EOS_INTEGER th,
  * \param[in]     dataType - EOS_INTEGER : data type of subtable to be made monotonic
  * \param[in]     inX      - EOS_BOOLEAN : make monotonic in x?
  * \param[in]     inY      - EOS_BOOLEAN : make monotonic in y?
- * 
+ *
  * \return none
  *
  ***********************************************************************/
@@ -2966,42 +3249,22 @@ void eos_MakeMonotonicRecordType1 (void *ptr, EOS_INTEGER th,
                                    EOS_BOOLEAN inY, EOS_INTEGER *err)
 {
   eos_RecordType1 *me;
-  EOS_INTEGER subTableNum, *isMonotonicX, *isMonotonicY, indep = 0;
+  EOS_INTEGER subTableNum = EOS_TYPE_TO_SUB_TAB_NUM (dataType), *isMonotonicX, *isMonotonicY, indep = 0, i;
   EOS_REAL *table, *coldCurve;
-  me = (eos_RecordType1 *) ptr;
-  *err = EOS_OK;
-
-  subTableNum = EOS_TYPE_TO_SUB_TAB_NUM (dataType);
 
   me = (eos_RecordType1 *) ptr;
+
   *err = EOS_OK;
 
-  switch (subTableNum) {
-  case 1:
-    table = &(me->table1[0][0]);
-    coldCurve = me->coldCurve1;
-    isMonotonicX = &me->isMonotonicX1;
-    isMonotonicY = &me->isMonotonicY1;
-    break;
-  case 2:
-    table = &(me->table2[0][0]);
-    coldCurve = me->coldCurve2;
-    isMonotonicX = &me->isMonotonicX2;
-    isMonotonicY = &me->isMonotonicY2;
-    break;
-  case 3:
-    table = &(me->table3[0][0]);
-    coldCurve = me->coldCurve3;
-    isMonotonicX = &me->isMonotonicX3;
-    isMonotonicY = &me->isMonotonicY3;
-    break;
-  case 4:
-    table = &(me->table4[0][0]);
-    coldCurve = me->coldCurve4;
-    isMonotonicX = &me->isMonotonicX4;
-    isMonotonicY = &me->isMonotonicY4;
-    break;
-  }
+  if(subTableNum<1) return;
+  assert(subTableNum<=MAX_TABLES_RECORDTYPE1);
+  i = subTableNum - 1;
+
+  isMonotonicX = &me->isMonotonicX[i];
+  isMonotonicY = &me->isMonotonicY[i];
+
+  table = &(me->table[i][0][0]);
+  coldCurve = me->coldCurve[i];
 
   if (inY && inX) {
     if (*isMonotonicY && *isMonotonicX)
@@ -3023,7 +3286,7 @@ void eos_MakeMonotonicRecordType1 (void *ptr, EOS_INTEGER th,
 
   if (indep == 1 && me->eosData.coldCurveIsLoaded) {    /* make coldCurve monotonic */
 
-    if (me->eosData.numSubtablesLoaded >= subTableNum)
+    if (me->eosData.eos_IsRequiredDataLoaded && me->eosData.eos_IsRequiredDataLoaded(me, dataType))
       *err = _eos_MakeMonotonic (me->NR, 1, me->R, me->T, coldCurve, indep, NULL, EOS_FALSE);
     if (eos_GetStandardErrorCodeFromCustomErrorCode(*err) != EOS_OK) {
       ((eos_ErrorHandler *) me)->HandleError (me, th, *err);
@@ -3031,7 +3294,7 @@ void eos_MakeMonotonicRecordType1 (void *ptr, EOS_INTEGER th,
     }
   }
 
-  if (me->eosData.numSubtablesLoaded >= subTableNum)
+  if (me->eosData.eos_IsRequiredDataLoaded && me->eosData.eos_IsRequiredDataLoaded(me, dataType))
     *err = _eos_MakeMonotonic (me->NR, me->NT, me->R, me->T, table, indep, coldCurve, EOS_FALSE);
 
   if (eos_GetStandardErrorCodeFromCustomErrorCode(*err) != EOS_OK) {
@@ -3039,30 +3302,21 @@ void eos_MakeMonotonicRecordType1 (void *ptr, EOS_INTEGER th,
     return;
   }
 
-  if (inY && inX) {
-    *isMonotonicY = 1;
-    *isMonotonicX = 1;
-  }
-  else if (inY)
-    *isMonotonicY = 1;
-  else if (inX)
-    *isMonotonicX = 1;
-  else
-    return;
+  return;
 }
 
 /***********************************************************************/
-/*! 
+/*!
  * \brief checks if the data of class eos_RecordType1 is monotonic. Also returns EOS_FALSE
- * if the data is not increasing or decreasing EXCEPT the case where the data is ALL tTHE SAME!
- * 
+ * if the data is not increasing or decreasing EXCEPT the case where the data is ALL THE SAME!
+ *
  * \param[out]   *isMonotonic - EOS_BOOLEAN : is the data monotonic?
  * \param[out]   *err         - EOS_INTEGER : error code
  * \param[in]    *ptr         - void : internally recast to eos_RecordType1*
  * \param[in]    dataType     - EOS_INTEGER : dataType
  * \param[in]    inX          - EOS_BOOLEAN : make monotonic in x?
  * \param[in]    inY          - EOS_BOOLEAN : make monotonic in y?
- * 
+ *
  * \return none
  *
  ***********************************************************************/
@@ -3071,40 +3325,22 @@ void eos_IsMonotonicRecordType1 (void *ptr, EOS_INTEGER dataType,
                                  EOS_BOOLEAN inY, EOS_INTEGER *err)
 {
   eos_RecordType1 *me;
-  EOS_INTEGER subTableNum = EOS_TYPE_TO_SUB_TAB_NUM (dataType), i, j, sign =
-    0, oldSign, *isMonotonicX, *isMonotonicY;
+  EOS_INTEGER subTableNum = EOS_TYPE_TO_SUB_TAB_NUM (dataType), i, j, sign = 0,
+    oldSign, *isMonotonicX, *isMonotonicY;
   EOS_REAL diff, *table, *coldCurve;
 
   me = (eos_RecordType1 *) ptr;
   *err = EOS_OK;
 
-  switch (subTableNum)
-  {
-  case 1:
-    table = &(me->table1[0][0]);
-    coldCurve = me->coldCurve1;
-    isMonotonicX = &me->isMonotonicX1;
-    isMonotonicY = &me->isMonotonicY1;
-    break;
-  case 2:
-    table = &(me->table2[0][0]);
-    coldCurve = me->coldCurve2;
-    isMonotonicX = &me->isMonotonicX2;
-    isMonotonicY = &me->isMonotonicY2;
-    break;
-  case 3:
-    table = &(me->table3[0][0]);
-    coldCurve = me->coldCurve3;
-    isMonotonicX = &me->isMonotonicX3;
-    isMonotonicY = &me->isMonotonicY3;
-    break;
-  case 4:
-    table = &(me->table4[0][0]);
-    coldCurve = me->coldCurve4;
-    isMonotonicX = &me->isMonotonicX4;
-    isMonotonicY = &me->isMonotonicY4;
-    break;
-  }
+  if(subTableNum<1) return;
+  assert(subTableNum<=MAX_TABLES_RECORDTYPE1);
+  i = subTableNum - 1;
+
+  isMonotonicX = &me->isMonotonicX[i];
+  isMonotonicY = &me->isMonotonicY[i];
+
+  table = &(me->table[i][0][0]);
+  coldCurve = me->coldCurve[i];
 
   if (inX && !inY && *isMonotonicX != -1 /* if set */ ) {
     *isMonotonic = (*isMonotonicX != 0) ? EOS_TRUE : EOS_FALSE;
@@ -3125,7 +3361,7 @@ void eos_IsMonotonicRecordType1 (void *ptr, EOS_INTEGER dataType,
   //   *isMonotonicX = 1;
 
   if (me->eosData.coldCurveIsLoaded
-      && me->eosData.numSubtablesLoaded >= subTableNum) {
+      && (me->eosData.eos_IsRequiredDataLoaded && me->eosData.eos_IsRequiredDataLoaded(me, dataType))) {
     diff = coldCurve[1] - coldCurve[0];
     oldSign = (diff > ZERO) ? 1 : ((diff == ZERO) ? 0 : -1);
   }
@@ -3134,15 +3370,15 @@ void eos_IsMonotonicRecordType1 (void *ptr, EOS_INTEGER dataType,
   for (i = 2;
        *isMonotonicX && inX && me->eosData.coldCurveIsLoaded && i < me->NR;
        i++) {
-    if (me->eosData.numSubtablesLoaded >= subTableNum) {
+    if (me->eosData.eos_IsRequiredDataLoaded && me->eosData.eos_IsRequiredDataLoaded(me, dataType)) {
       diff = coldCurve[i] - coldCurve[i - 1];
       sign = (diff > ZERO) ? 1 : ((diff == ZERO) ? 0 : -1);
     }
 
 
-    if (me->eosData.numSubtablesLoaded >= subTableNum &&
-	(abs (sign - oldSign) > 0 ||
-	 (sign == 0 && oldSign == 0))) {
+    if ((me->eosData.eos_IsRequiredDataLoaded && me->eosData.eos_IsRequiredDataLoaded(me, dataType)) &&
+        (abs (sign - oldSign) > 0 ||
+         (sign == 0 && oldSign == 0))) {
       *isMonotonicX = 0;
       break;
     }
@@ -3150,20 +3386,20 @@ void eos_IsMonotonicRecordType1 (void *ptr, EOS_INTEGER dataType,
   }
 
   for (j = 0; *isMonotonicX && inX && j < me->NT; j++) {
-    if (me->eosData.numSubtablesLoaded >= subTableNum) {
+    if (me->eosData.eos_IsRequiredDataLoaded && me->eosData.eos_IsRequiredDataLoaded(me, dataType)) {
       diff = table[j * me->NT + 1] - table[j * me->NT];
       oldSign = (diff > ZERO) ? 1 : ((diff == ZERO) ? 0 : -1);
     }
 
     for (i = 2; i < me->NR; i++) {
-      if (me->eosData.numSubtablesLoaded >= subTableNum) {
+      if (me->eosData.eos_IsRequiredDataLoaded && me->eosData.eos_IsRequiredDataLoaded(me, dataType)) {
         diff = table[j * me->NT + i] - table[j * me->NT + i - 1];
         sign = (diff > ZERO) ? 1 : ((diff == ZERO) ? 0 : -1);
       }
 
-      if (me->eosData.numSubtablesLoaded >= subTableNum &&
-	  (abs (sign - oldSign) > 0 ||
-	   (sign == 0 && oldSign == 0))) {
+      if ((me->eosData.eos_IsRequiredDataLoaded && me->eosData.eos_IsRequiredDataLoaded(me, dataType)) &&
+          (abs (sign - oldSign) > 0 ||
+           (sign == 0 && oldSign == 0))) {
         *isMonotonicX = 0;
         break;
       }
@@ -3172,20 +3408,20 @@ void eos_IsMonotonicRecordType1 (void *ptr, EOS_INTEGER dataType,
   }
 
   for (i = 0; *isMonotonicY && inY && i < me->NR; i++) {
-    if (me->eosData.numSubtablesLoaded >= subTableNum) {
+    if (me->eosData.eos_IsRequiredDataLoaded && me->eosData.eos_IsRequiredDataLoaded(me, dataType)) {
       diff = table[me->NR + i] - table[0 + i];
       oldSign = (diff > ZERO) ? 1 : ((diff == ZERO) ? 0 : -1);
     }
 
     for (j = 2; j < me->NT; j++) {
-      if (me->eosData.numSubtablesLoaded >= subTableNum) {
+      if (me->eosData.eos_IsRequiredDataLoaded && me->eosData.eos_IsRequiredDataLoaded(me, dataType)) {
         diff = table[j * me->NR + i] - table[(j - 1) * me->NR + i];
         sign = (diff > ZERO) ? 1 : ((diff == ZERO) ? 0 : -1);
       }
 
-      if (me->eosData.numSubtablesLoaded >= subTableNum &&
-	  (abs (sign - oldSign) > 0 ||
-	   (sign == 0 && oldSign == 0))) {
+      if ((me->eosData.eos_IsRequiredDataLoaded && me->eosData.eos_IsRequiredDataLoaded(me, dataType)) &&
+          (abs (sign - oldSign) > 0 ||
+           (sign == 0 && oldSign == 0))) {
         *isMonotonicY = 0;
         break;
       }
@@ -3202,9 +3438,9 @@ void eos_IsMonotonicRecordType1 (void *ptr, EOS_INTEGER dataType,
 }
 
 /***********************************************************************/
-/*! 
+/*!
  * \brief Write object's data to output file in subdirectory, "dump_eos_data"
- * 
+ *
  * \param[in]     call_index - EOS_INTEGER : integer used as part of output file name
  * \param[in]     *ptr       - void : data object pointer;
  *                                    internally recast to eos_RecordType1*
@@ -3249,13 +3485,8 @@ void _eos_DumpData (EOS_INTEGER call_index, void *ptr, EOS_CHAR *s)
 
 #ifndef _MKDIR_NOT_AVAIL
   /* try to create dir with user rwx permissions; do nothing if fail to mkdir */
-#ifndef _MSC_VER
   if (!dirExists && !mkdir (dir, S_IRUSR | S_IWUSR | S_IXUSR))
     return;
-#else
-  if (!dirExists && !_mkdir(dir))
-      return;
-#endif
 #else
   /* return if dir does not already exist */
   if (!dirExists)
@@ -3271,8 +3502,8 @@ void _eos_DumpData (EOS_INTEGER call_index, void *ptr, EOS_CHAR *s)
   fprintf (fh, "%23s%23s%23s%23s\n", "r301", "t301", "p301", "e301");
   for (i = 0; i < me->NR; i++)
     for (j = 0; j < me->NT; j++)
-      fprintf (fh, "%23.14e%23.14e%23.14e%23.14e\n", me->R[i], me->T[j],
-               me->table1[j][i], me->table2[j][i]);
+      fprintf (fh, "%23.14e%23.14e%23.14e%23.14e\n",
+               me->R[i], me->T[j], me->table[0][j][i], me->table[1][j][i]);
 
   if (me->found_401) {
     fprintf (fh, "\n%23s%23s%23s%23s%23s%23s\n",
@@ -3285,10 +3516,10 @@ void _eos_DumpData (EOS_INTEGER call_index, void *ptr, EOS_CHAR *s)
 }
 
 /***********************************************************************/
-/*! 
+/*!
  * \brief Adjust data tables: do not allow zero density and patch to shift
  *  temperatures (used in conjunction with EOS_PT_SMOOTHING option)
- * 
+ *
  * \param[out]   *T                  - EOS_REAL : array of temperature data to be shifted
  * \param[out]   **P                 - EOS_REAL : array of pressure data to be shifted
  * \param[out]   *err                - EOS_INTEGER : error code
@@ -3303,9 +3534,9 @@ void _eos_DumpData (EOS_INTEGER call_index, void *ptr, EOS_CHAR *s)
  *
  ***********************************************************************/
 void _eos_AdjustDataTables (EOS_BOOLEAN userDefinedDataFile, EOS_INTEGER dataFileIndex,
-			    EOS_INTEGER nT, EOS_REAL *R,
-			    EOS_REAL *T, EOS_REAL **P, EOS_INTEGER mat, EOS_INTEGER *err,
-			    EOS_CHAR **errMsg)
+                            EOS_INTEGER nT, EOS_REAL *R,
+                            EOS_REAL *T, EOS_REAL **P, EOS_INTEGER mat, EOS_INTEGER *err,
+                            EOS_CHAR **errMsg)
 {
   EOS_INTEGER it;
   EOS_REAL avgAtomicNumber, avgAtomicWgt, refDensity, solidBulkModulus,
@@ -3338,8 +3569,8 @@ void _eos_AdjustDataTables (EOS_BOOLEAN userDefinedDataFile, EOS_INTEGER dataFil
   /* get solid bulk modulus */
   *err =
     eos_SesGetBulkData (mat, userDefinedDataFile, dataFileIndex,
-			&avgAtomicNumber, &avgAtomicWgt, &refDensity,
-			&solidBulkModulus, &exchangeCoeff, errMsg);
+                        &avgAtomicNumber, &avgAtomicWgt, &refDensity,
+                        &solidBulkModulus, &exchangeCoeff, errMsg);
   if (eos_GetStandardErrorCodeFromCustomErrorCode(*err) != EOS_OK) {
     // set custom message here "Could not read solid bulk modulus from 201 table!|);
     eos_SetCustomMsg_str(errMsg, "%s", "eos_RecordType1::eos_GetBulkData ERROR, bulk data not available");
@@ -3356,14 +3587,14 @@ void _eos_AdjustDataTables (EOS_BOOLEAN userDefinedDataFile, EOS_INTEGER dataFil
 }
 
 /***********************************************************************/
-/*! 
+/*!
  * \brief Makes data of class eos_RecordType1 pt smooth
- * 
+ *
  * \param[out]   *err - EOS_INTEGER : error code
  * \param[in]    *ptr - void : data object pointer;
  *                             internally recast to eos_RecordType1*
  * \param[in]    th   - EOS_INTEGER : table Handle
- * 
+ *
  * \return none
  *
  ***********************************************************************/
@@ -3473,14 +3704,11 @@ void eos_FixTableRecordType1 (void *ptr, EOS_INTEGER th, EOS_INTEGER *err)
   /* temporarily add back the cold curve data if nessesary */
   for (j = 0; j < me->NT; j++) {
     for (i = 0; i < me->NR; i++) {
-      if (me->table1 && me->coldCurve1)
-        me->table1[j][i] = me->table1[j][i] + me->coldCurve1[i];
-      if (me->table2 && me->coldCurve2)
-        me->table2[j][i] = me->table2[j][i] + me->coldCurve2[i];
-      if (me->table3 && me->coldCurve3)
-        me->table3[j][i] = me->table3[j][i] + me->coldCurve3[i];
-      if (me->table4 && me->coldCurve4)
-        me->table4[j][i] = me->table4[j][i] + me->coldCurve4[i];
+      EOS_INTEGER k;
+      for(k=0; k<MAX_TABLES_RECORDTYPE1; k++) {
+        if (me->table[k] && me->coldCurve[k])
+          me->table[k][j][i] = me->table[k][j][i] + me->coldCurve[k][i];
+      }
     }
   }
 
@@ -3490,7 +3718,7 @@ void eos_FixTableRecordType1 (void *ptr, EOS_INTEGER th, EOS_INTEGER *err)
 
   /* temporarily convert units of Sesame data into CGS units */
   _eos_ConvertUnits (_EOS_SESAME_TO_CGS, me->NR, me->NT, me->R, me->T,
-                     me->table1, me->table2, nT401, P401, T401, RG401, RL401,
+                     me->table[0], me->table[1], nT401, P401, T401, RG401, RL401,
                      EG401, EL401, AG401, AL401, &avgAtomicNumber401,
                      &avgAtomicWgt401, &refDensity401, &adjustVapPres, err, &errMsg);
   if (errMsg) *err = eos_SetCustomErrorMsg(th, *err, "%s", errMsg);
@@ -3498,12 +3726,12 @@ void eos_FixTableRecordType1 (void *ptr, EOS_INTEGER th, EOS_INTEGER *err)
   if (eos_GetStandardErrorCodeFromCustomErrorCode(*err) != EOS_OK)
     return;
 
-  _eos_CheckTable (me->NR, me->NT, me->R, me->T, me->table1, me->table2,
+  _eos_CheckTable (me->NR, me->NT, me->R, me->T, me->table[0], me->table[1],
                    me->eosData.materialID, nT401, &table_type, &table_good);
 
   /* Adjust data tables: do not allow zero density and patch to shift temperatures */
   _eos_AdjustDataTables (me->eosData.userDefinedDataFile, me->eosData.dataFileIndex,
-			 me->NT, me->R, me->T, me->table1, me->eosData.materialID, err, &errMsg);
+                         me->NT, me->R, me->T, me->table[0], me->eosData.materialID, err, &errMsg);
   if (errMsg) *err = eos_SetCustomErrorMsg(th, *err, "%s", errMsg);
   EOS_FREE(errMsg);
 
@@ -3512,8 +3740,8 @@ void eos_FixTableRecordType1 (void *ptr, EOS_INTEGER th, EOS_INTEGER *err)
 
   /* Only the first 2 subtables are needed. */
   gen401 = me->found_401;       /* if not found, it will be generated and set to EOS_TRUE */
-  _eos_FixTable (me->NR, me->NT, me->R, me->T, me->table1, me->table2,
-                 me->eosData.materialID, me->coldCurve1, me->coldCurve2,
+  _eos_FixTable (me->NR, me->NT, me->R, me->T, me->table[0], me->table[1],
+                 me->eosData.materialID, me->coldCurve[0], me->coldCurve[1],
                  &nT401, &vaporArrayOffset, &avgAtomicNumber401,
                  &avgAtomicWgt401, &refDensity401, &P401, &T401, &RG401,
                  &RL401, &EG401, &EL401, &AG401, &AL401, table_type, &gen401,
@@ -3562,7 +3790,7 @@ void eos_FixTableRecordType1 (void *ptr, EOS_INTEGER th, EOS_INTEGER *err)
      convert back to Sesame units and subtract cold curve */
 
   _eos_ConvertUnits (_EOS_CGS_TO_SESAME, me->NR, me->NT, me->R, me->T,
-                     me->table1, me->table2, nT401, P401, T401, RG401, RL401,
+                     me->table[0], me->table[1], nT401, P401, T401, RG401, RL401,
                      EG401, EL401, AG401, AL401, &avgAtomicNumber401,
                      &avgAtomicWgt401, &refDensity401, &adjustVapPres, err, &errMsg);
   if (errMsg) *err = eos_SetCustomErrorMsg(th, *err, "%s", errMsg);
@@ -3572,22 +3800,19 @@ void eos_FixTableRecordType1 (void *ptr, EOS_INTEGER th, EOS_INTEGER *err)
 
   for (j = 0; j < me->NT; j++) {
     for (i = 0; i < me->NR; i++) {
-      if (me->table1 && me->coldCurve1)
-        me->table1[j][i] = me->table1[j][i] - me->coldCurve1[i];
-      if (me->table2 && me->coldCurve2)
-        me->table2[j][i] = me->table2[j][i] - me->coldCurve2[i];
-      if (me->table3 && me->coldCurve3)
-        me->table3[j][i] = me->table3[j][i] - me->coldCurve3[i];
-      if (me->table4 && me->coldCurve4)
-        me->table4[j][i] = me->table4[j][i] - me->coldCurve4[i];
+      EOS_INTEGER k;
+      for(k=0; k<MAX_TABLES_RECORDTYPE1; k++) {
+        if (me->table[k] && me->coldCurve[k])
+          me->table[k][j][i] = me->table[k][j][i] - me->coldCurve[k][i];
+      }
     }
   }                             /* restore cold curve */
 }
 
 /***********************************************************************/
-/*! 
+/*!
  * \brief Makes data of class eos_RecordType1 smooth
- * 
+ *
  * \param[out]   *err     - EOS_INTEGER : error code
  * \param[in]     *ptr    - void : data object pointer;
  *                                 internally recast to eos_RecordType1*
@@ -3596,7 +3821,7 @@ void eos_FixTableRecordType1 (void *ptr, EOS_INTEGER th, EOS_INTEGER *err)
  * \param[in]    ptSmooth - EOS_BOOLEAN : is data  of *ptr eos_RecordType1 object to
  *                                        be made smooth according to EOS_PT_SMOOTHING
  *                                        option?
- * 
+ *
  * \return none
  *
  ***********************************************************************/
@@ -3605,25 +3830,16 @@ void eos_MakeSmoothRecordType1 (void *ptr, EOS_INTEGER th,
                                 EOS_INTEGER *err)
 {
   eos_RecordType1 *me;
-  EOS_INTEGER subTableNum = EOS_TYPE_TO_SUB_TAB_NUM (dataType);
+  EOS_INTEGER i, subTableNum = EOS_TYPE_TO_SUB_TAB_NUM (dataType);
   EOS_REAL *table;
 
   me = (eos_RecordType1 *) ptr;
   *err = EOS_OK;
 
-  switch (subTableNum) {
-  case 1:
-    table = &(me->table1[0][0]);
-    break;
-  case 2:
-    table = &(me->table2[0][0]);
-    break;
-  case 3:
-    table = &(me->table3[0][0]);
-    break;
-  case 4:
-    table = &(me->table4[0][0]);
-    break;
+  if(subTableNum>0) {
+    assert(subTableNum<=MAX_TABLES_RECORDTYPE1);
+    i = subTableNum - 1;
+    table = &(me->table[i][0][0]);
   }
 
   /* if PT_SMOOTH, load the 401 table */
@@ -3633,7 +3849,7 @@ void eos_MakeSmoothRecordType1 (void *ptr, EOS_INTEGER th,
       return;
   }
   else {
-    if (me->eosData.numSubtablesLoaded >= subTableNum)
+    if (me->eosData.eos_IsRequiredDataLoaded && me->eosData.eos_IsRequiredDataLoaded(me, dataType))
       *err = _eos_MakeSmooth (me->NR, me->NT, me->R, me->T, table);
     if (eos_GetStandardErrorCodeFromCustomErrorCode(*err) != EOS_OK)
       return;
@@ -3731,23 +3947,23 @@ EOS_INTEGER eos_SetAdjustedData (eos_RecordType1 *me,
  *
  ***********************************************************************/
 EOS_INTEGER eos_computeIdealGasData (eos_RecordType1 *me, eos_RecordType1 *altEosData,
-				     EOS_REAL *p, EOS_REAL *e, EOS_REAL *a, EOS_REAL *s)
+                                     EOS_REAL *p, EOS_REAL *e, EOS_REAL *a, EOS_REAL *s)
 {
   int i, j, ccLoaded;
   EOS_INTEGER ierr = EOS_OK;
   EOS_REAL *prtot, *entot, *prtot_cc, *entot_cc, *antot, *antot_cc;
 
   ccLoaded = altEosData->eosData.coldCurveIsLoaded;
-  prtot = &(altEosData->table1[0][0]);
-  prtot_cc = (ccLoaded) ? altEosData->coldCurve1 : NULL;
-  entot = &(altEosData->table2[0][0]);
-  entot_cc = (ccLoaded) ? altEosData->coldCurve2 : NULL;
+  prtot = &(altEosData->table[0][0][0]);
+  prtot_cc = (ccLoaded) ? altEosData->coldCurve[0] : NULL;
+  entot = &(altEosData->table[1][0][0]);
+  entot_cc = (ccLoaded) ? altEosData->coldCurve[1] : NULL;
   antot = NULL;
   antot_cc = NULL;
   if (altEosData->eosData.numSubtablesLoaded >= 3) {
     /* Total Helmholtz free energy data exists, subtable #3 */
-    antot = &(altEosData->table3[0][0]);
-    antot_cc = (ccLoaded) ? altEosData->coldCurve3 : NULL;
+    antot = &(altEosData->table[2][0][0]);
+    antot_cc = (ccLoaded) ? altEosData->coldCurve[2] : NULL;
   }
 
   // compute ideal-gas pressure, internal energy, entropy, and Helmholtz free energy (monatomic gas assumed)
@@ -3756,51 +3972,51 @@ EOS_INTEGER eos_computeIdealGasData (eos_RecordType1 *me, eos_RecordType1 *altEo
 
       p[i + j * me->NR] = UNIVERSAL_GAS_CONST / me->avgAtomicWgt * altEosData->T[j] * altEosData->R[i];
       e[i + j * me->NR] =
-	((EOS_REAL) 1.5) * UNIVERSAL_GAS_CONST / me->avgAtomicWgt * altEosData->T[j];
+        ((EOS_REAL) 1.5) * UNIVERSAL_GAS_CONST / me->avgAtomicWgt * altEosData->T[j];
 
       if (altEosData->R[i] > ZERO && altEosData->T[j] > ZERO) {
-	/* A and S are prescribed after switch statement for altEosData->R=0 */
+        /* A and S are prescribed after switch statement for altEosData->R=0 */
 
-	/*! - Helmholtz free energy equation taken from T-1's opensesame (was Grizzly). */
-	a[i + j * me->NR] = -UNIVERSAL_GAS_CONST * altEosData->T[j] / me->avgAtomicWgt *
-	  ((EOS_REAL) (-7.072343) +
-	   ((EOS_REAL) (1.5)) * log (me->avgAtomicWgt * altEosData->T[j]) +
-	   log (me->avgAtomicWgt / altEosData->R[i]));
+        /*! - Helmholtz free energy equation taken from T-1's opensesame (was Grizzly). */
+        a[i + j * me->NR] = -UNIVERSAL_GAS_CONST * altEosData->T[j] / me->avgAtomicWgt *
+          ((EOS_REAL) (-7.072343) +
+           ((EOS_REAL) (1.5)) * log (me->avgAtomicWgt * altEosData->T[j]) +
+           log (me->avgAtomicWgt / altEosData->R[i]));
 
-	/* calculate entropy */
-	s[i + j * me->NR] = (altEosData->T[j] <= ZERO) ? ZERO
-	  : (e[i + j * me->NR] -
-	     a[i + j * me->NR]) / UNIVERSAL_GAS_CONST / altEosData->T[j] * me->avgAtomicWgt;
+        /* calculate entropy */
+        s[i + j * me->NR] = (altEosData->T[j] <= ZERO) ? ZERO
+          : (e[i + j * me->NR] -
+             a[i + j * me->NR]) / UNIVERSAL_GAS_CONST / altEosData->T[j] * me->avgAtomicWgt;
       }
       else {
-	a[i + j * me->NR] = ZERO;
-	s[i + j * me->NR] = ZERO;
+        a[i + j * me->NR] = ZERO;
+        s[i + j * me->NR] = ZERO;
       }
 
       /* Using total 301 table data, calculate appropriate data for requested table: 303, 304 or 305 */
       ierr =
-	eos_SetAdjustedData (me, &p[i + j * me->NR],
-			     &prtot[i + j * me->NR],
-			     ((prtot_cc) ? &prtot_cc[i] : &prtot[i]),
-			     ccLoaded);
+        eos_SetAdjustedData (me, &p[i + j * me->NR],
+                             &prtot[i + j * me->NR],
+                             ((prtot_cc) ? &prtot_cc[i] : &prtot[i]),
+                             ccLoaded);
       ierr =
-	eos_SetAdjustedData (me, &e[i + j * me->NR],
-			     &entot[i + j * me->NR],
-			     ((entot_cc) ? &entot_cc[i] : &entot[i]),
-			     ccLoaded);
+        eos_SetAdjustedData (me, &e[i + j * me->NR],
+                             &entot[i + j * me->NR],
+                             ((entot_cc) ? &entot_cc[i] : &entot[i]),
+                             ccLoaded);
       if (antot) {
-	ierr =
-	  eos_SetAdjustedData (me, &a[i + j * me->NR],
-			       &antot[i + j * me->NR],
-			       ((antot_cc) ? &antot_cc[i] : &antot[i]),
-			       ccLoaded);
+        ierr =
+          eos_SetAdjustedData (me, &a[i + j * me->NR],
+                               &antot[i + j * me->NR],
+                               ((antot_cc) ? &antot_cc[i] : &antot[i]),
+                               ccLoaded);
       }
       else {                  /* A = U - TS; therefore, A = U at T=0 */
-	ierr =
-	  eos_SetAdjustedData (me, &a[i + j * me->NR],
-			       &entot[i + j * me->NR],
-			       ((entot_cc) ? &entot_cc[i] : &entot[i]),
-			       ccLoaded);
+        ierr =
+          eos_SetAdjustedData (me, &a[i + j * me->NR],
+                               &entot[i + j * me->NR],
+                               ((entot_cc) ? &entot_cc[i] : &entot[i]),
+                               ccLoaded);
       }
       /* s[i+j*me->NR] need not be adjusted since S=0 at T=0 */
     }
@@ -3827,7 +4043,7 @@ EOS_INTEGER eos_computeIdealGasData (eos_RecordType1 *me, eos_RecordType1 *altEo
  *
  ***********************************************************************/
 EOS_INTEGER eos_computeCowanData (eos_RecordType1 *me, eos_RecordType1 *altEosData,
-				  EOS_REAL *p, EOS_REAL *e, EOS_REAL *a, EOS_REAL *s)
+                                  EOS_REAL *p, EOS_REAL *e, EOS_REAL *a, EOS_REAL *s)
 {
   int i, j, ccLoaded;
   EOS_INTEGER ierr = EOS_OK;
@@ -3840,16 +4056,16 @@ EOS_INTEGER eos_computeCowanData (eos_RecordType1 *me, eos_RecordType1 *altEosDa
   static const EOS_REAL third2 = (EOS_REAL) 1 / (EOS_REAL) 9;
 
   ccLoaded = altEosData->eosData.coldCurveIsLoaded;
-  prtot = &(altEosData->table1[0][0]);
-  prtot_cc = (ccLoaded) ? altEosData->coldCurve1 : NULL;
-  entot = &(altEosData->table2[0][0]);
-  entot_cc = (ccLoaded) ? altEosData->coldCurve2 : NULL;
+  prtot = &(altEosData->table[0][0][0]);
+  prtot_cc = (ccLoaded) ? altEosData->coldCurve[0] : NULL;
+  entot = &(altEosData->table[1][0][0]);
+  entot_cc = (ccLoaded) ? altEosData->coldCurve[1] : NULL;
   antot = NULL;
   antot_cc = NULL;
   if (altEosData->eosData.numSubtablesLoaded >= 3) {
     /* Total Helmholtz free energy data exists, subtable #3 */
-    antot = &(altEosData->table3[0][0]);
-    antot_cc = (ccLoaded) ? altEosData->coldCurve3 : NULL;
+    antot = &(altEosData->table[2][0][0]);
+    antot_cc = (ccLoaded) ? altEosData->coldCurve[2] : NULL;
   }
 
   for (i = 0; i < me->NR; i++) {
@@ -3859,141 +4075,141 @@ EOS_INTEGER eos_computeCowanData (eos_RecordType1 *me, eos_RecordType1 *altEosDa
       /*! - use ideal gas model to initialize values of P and U */
       p[i + j * me->NR] = UNIVERSAL_GAS_CONST / me->avgAtomicWgt * altEosData->T[j] * altEosData->R[i];
       e[i + j * me->NR] =
-	((EOS_REAL) 1.5) * UNIVERSAL_GAS_CONST / me->avgAtomicWgt * altEosData->T[j];
+        ((EOS_REAL) 1.5) * UNIVERSAL_GAS_CONST / me->avgAtomicWgt * altEosData->T[j];
 
       /*! - initialize values of A=U and S=0 for T=0 or S=(A-U)/T for T!=0 */
       a[i + j * me->NR] = e[i + j * me->NR];
       if (altEosData->T[i] <= ZERO)
-	s[i + j * me->NR] = ZERO;
+        s[i + j * me->NR] = ZERO;
       else
-	s[i + j * me->NR] = - (a[i + j * me->NR] - e[i + j * me->NR]) / altEosData->T[j];
+        s[i + j * me->NR] = - (a[i + j * me->NR] - e[i + j * me->NR]) / altEosData->T[j];
 
       if (altEosData->R[i] <= ZERO)
-	continue;
+        continue;
 
       //     compute useful constants.
       xi = altEosData->R[i] / (third2 * me->avgAtomicWgt *
-			       (EOS_REAL) pow (me->avgAtomicNumber, (EOS_REAL) (-0.3)));
+                               (EOS_REAL) pow (me->avgAtomicNumber, (EOS_REAL) (-0.3)));
       rxi = ONE / (ONE + xi);
       rxi2 = rxi * rxi;
       beta = (EOS_REAL) 0.6 *(EOS_REAL) pow (me->avgAtomicNumber, third2);
       tmelt = EV_TO_KELVIN * (EOS_REAL) 0.32 *rxi2 * rxi2 *
-	(EOS_REAL) pow (xi, (THREE + third + beta + beta));
+        (EOS_REAL) pow (xi, (THREE + third + beta + beta));
 
       if (altEosData->T[j] > tmelt) {
-	// compute fluid eos.
-	phif3 = tmelt / altEosData->T[j];
-	if (phif3 > (EOS_REAL) 1.e-18) {
-	  // compute scaled eos.
-	  phif = (EOS_REAL) pow (phif3, third);
-	  gamf = THREE * beta - ONE + SIX * rxi;
-	  p[i + j * me->NR] =
-	    UNIVERSAL_GAS_CONST / me->avgAtomicWgt * altEosData->T[j] * altEosData->R[i] * (ONE +
-											    gamf * phif);
-	  e[i + j * me->NR] =
-	    UNIVERSAL_GAS_CONST / me->avgAtomicWgt * altEosData->T[j] * ((EOS_REAL) 1.5) * (ONE +
-											    phif);
+        // compute fluid eos.
+        phif3 = tmelt / altEosData->T[j];
+        if (phif3 > (EOS_REAL) 1.e-18) {
+          // compute scaled eos.
+          phif = (EOS_REAL) pow (phif3, third);
+          gamf = THREE * beta - ONE + SIX * rxi;
+          p[i + j * me->NR] =
+            UNIVERSAL_GAS_CONST / me->avgAtomicWgt * altEosData->T[j] * altEosData->R[i] * (ONE +
+                                                                                            gamf * phif);
+          e[i + j * me->NR] =
+            UNIVERSAL_GAS_CONST / me->avgAtomicWgt * altEosData->T[j] * ((EOS_REAL) 1.5) * (ONE +
+                                                                                            phif);
 
-	  /*! - Entropy and Helmholtz free energy equations taken from T-1's opensesame (was Grizzly). */
-	  tcowan = (EOS_REAL) 0.42 / ((EOS_REAL) 22.0 + me->avgAtomicNumber);
-	  entropy_factor = SEVEN - (THREE * phif + ((EOS_REAL) 1.5) *
-				    log (altEosData->T[j] / EV_TO_KELVIN *
-					 ((EOS_REAL) 0.02) / (tcowan * tcowan))) -
-	    log (xi);
-	  s[i + j * me->NR] = entropy_factor * UNIVERSAL_GAS_CONST / me->avgAtomicWgt; /* MJ/kg/K */
-	  a[i + j * me->NR] = e[i + j * me->NR] - altEosData->T[j] * s[i + j * me->NR];
-	}
+          /*! - Entropy and Helmholtz free energy equations taken from T-1's opensesame (was Grizzly). */
+          tcowan = (EOS_REAL) 0.42 / ((EOS_REAL) 22.0 + me->avgAtomicNumber);
+          entropy_factor = SEVEN - (THREE * phif + ((EOS_REAL) 1.5) *
+                                    log (altEosData->T[j] / EV_TO_KELVIN *
+                                         ((EOS_REAL) 0.02) / (tcowan * tcowan))) -
+            log (xi);
+          s[i + j * me->NR] = entropy_factor * UNIVERSAL_GAS_CONST / me->avgAtomicWgt; /* MJ/kg/K */
+          a[i + j * me->NR] = e[i + j * me->NR] - altEosData->T[j] * s[i + j * me->NR];
+        }
       }
       else {
-	// compute debye-solid eos.
-	gams = beta + (TWO) * rxi;
-	gdens = gams * altEosData->R[i];
-	tdebye =
-	  EV_TO_KELVIN * (EOS_REAL) 1.68 *rxi2 * (EOS_REAL) pow (xi,
-								 (TWO +
-								  beta)) /
-	  (me->avgAtomicNumber + (EOS_REAL) 22);
-	if (altEosData->T[j] > (tdebye * third)) {
-	  //  compute classical debye eos.
-	  phis = tdebye / altEosData->T[j];
-	  phis2 = phis * phis;
-	  e[i + j * me->NR] =
-	    THREE * UNIVERSAL_GAS_CONST / me->avgAtomicWgt * altEosData->T[j] * (ONE +
-										 phis2 *
-										 ((EOS_REAL) 0.05 -
-										  phis2 * ONE /
-										  (EOS_REAL)
-										  1680));
-	  p[i + j * me->NR] = e[i + j * me->NR] * gdens;
+        // compute debye-solid eos.
+        gams = beta + (TWO) * rxi;
+        gdens = gams * altEosData->R[i];
+        tdebye =
+          EV_TO_KELVIN * (EOS_REAL) 1.68 *rxi2 * (EOS_REAL) pow (xi,
+                                                                 (TWO +
+                                                                  beta)) /
+          (me->avgAtomicNumber + (EOS_REAL) 22);
+        if (altEosData->T[j] > (tdebye * third)) {
+          //  compute classical debye eos.
+          phis = tdebye / altEosData->T[j];
+          phis2 = phis * phis;
+          e[i + j * me->NR] =
+            THREE * UNIVERSAL_GAS_CONST / me->avgAtomicWgt * altEosData->T[j] * (ONE +
+                                                                                 phis2 *
+                                                                                 ((EOS_REAL) 0.05 -
+                                                                                  phis2 * ONE /
+                                                                                  (EOS_REAL)
+                                                                                  1680));
+          p[i + j * me->NR] = e[i + j * me->NR] * gdens;
 
-	  /* Entropy equation taken from T-1's opensesmame (was Grizzly): */
-	  entropy_factor = FOUR + THREE * (-log (phis) +
-					   phis2 * ((EOS_REAL) 0.025 -
-						    phis2 / (EOS_REAL) 2240));
-	  s[i + j * me->NR] = entropy_factor * UNIVERSAL_GAS_CONST / me->avgAtomicWgt; /* MJ/kg/K */
-	  a[i + j * me->NR] = e[i + j * me->NR] - altEosData->T[j] * s[i + j * me->NR];
-	}
-	else {
-	  // compute quantum debye eos.
-	  rphis = altEosData->T[j] / tdebye;
-	  phis = ZERO;
-	  xphis = ZERO;
-	  if (rphis > ZERO)
-	    phis = ONE / rphis;
-	  if (rphis > (((EOS_REAL) 0.01) * third))
-	    xphis = (EOS_REAL) exp (-phis);
-	  eterm =
-	    ((EOS_REAL) pow (pi, (EOS_REAL) 3) / FIVE * THREE) * rphis *
-	    rphis * rphis - (NINE +
-			     (EOS_REAL) 27 * rphis * (ONE +
-						      rphis * (TWO + rphis +
-							       rphis))) *
-	    xphis;
-	  e[i + j * me->NR] =
-	    ((EOS_REAL) 1.125) * UNIVERSAL_GAS_CONST / me->avgAtomicWgt * tdebye +
-	    UNIVERSAL_GAS_CONST / me->avgAtomicWgt * altEosData->T[j] * eterm;
-	  p[i + j * me->NR] = e[i + j * me->NR] * gdens;
+          /* Entropy equation taken from T-1's opensesmame (was Grizzly): */
+          entropy_factor = FOUR + THREE * (-log (phis) +
+                                           phis2 * ((EOS_REAL) 0.025 -
+                                                    phis2 / (EOS_REAL) 2240));
+          s[i + j * me->NR] = entropy_factor * UNIVERSAL_GAS_CONST / me->avgAtomicWgt; /* MJ/kg/K */
+          a[i + j * me->NR] = e[i + j * me->NR] - altEosData->T[j] * s[i + j * me->NR];
+        }
+        else {
+          // compute quantum debye eos.
+          rphis = altEosData->T[j] / tdebye;
+          phis = ZERO;
+          xphis = ZERO;
+          if (rphis > ZERO)
+            phis = ONE / rphis;
+          if (rphis > (((EOS_REAL) 0.01) * third))
+            xphis = (EOS_REAL) exp (-phis);
+          eterm =
+            ((EOS_REAL) pow (pi, (EOS_REAL) 3) / FIVE * THREE) * rphis *
+            rphis * rphis - (NINE +
+                             (EOS_REAL) 27 * rphis * (ONE +
+                                                      rphis * (TWO + rphis +
+                                                               rphis))) *
+            xphis;
+          e[i + j * me->NR] =
+            ((EOS_REAL) 1.125) * UNIVERSAL_GAS_CONST / me->avgAtomicWgt * tdebye +
+            UNIVERSAL_GAS_CONST / me->avgAtomicWgt * altEosData->T[j] * eterm;
+          p[i + j * me->NR] = e[i + j * me->NR] * gdens;
 
-	  /* Entropy equation taken from T-1's opensesmame (was Grizzly): */
-	  if (phis > ZERO) {
-	    entropy_factor = FOUR *
-	      ((EOS_REAL) pow (pi, (EOS_REAL) 4) / FIVE * rphis * rphis * rphis -
-	       (NINE / FOUR + NINE * rphis + NINE * TWO * rphis * rphis +
-		NINE * TWO * rphis * rphis * rphis) * xphis);
-	  }
-	  else {
-	    entropy_factor = ZERO;
-	  }
+          /* Entropy equation taken from T-1's opensesmame (was Grizzly): */
+          if (phis > ZERO) {
+            entropy_factor = FOUR *
+              ((EOS_REAL) pow (pi, (EOS_REAL) 4) / FIVE * rphis * rphis * rphis -
+               (NINE / FOUR + NINE * rphis + NINE * TWO * rphis * rphis +
+                NINE * TWO * rphis * rphis * rphis) * xphis);
+          }
+          else {
+            entropy_factor = ZERO;
+          }
 
-	  s[i + j * me->NR] = entropy_factor * UNIVERSAL_GAS_CONST / me->avgAtomicWgt; /* MJ/kg/K */
-	  a[i + j * me->NR] = e[i + j * me->NR] - altEosData->T[j] * s[i + j * me->NR];
-	}
+          s[i + j * me->NR] = entropy_factor * UNIVERSAL_GAS_CONST / me->avgAtomicWgt; /* MJ/kg/K */
+          a[i + j * me->NR] = e[i + j * me->NR] - altEosData->T[j] * s[i + j * me->NR];
+        }
       }
 
       /* Using total 301 table data, calculate appropriate data for requested table: 303, 304 or 305 */
       ierr =
-	eos_SetAdjustedData (me, &p[i + j * me->NR],
-			     &prtot[i + j * me->NR],
-			     ((prtot_cc) ? &prtot_cc[i] : &prtot[i]),
-			     ccLoaded);
+        eos_SetAdjustedData (me, &p[i + j * me->NR],
+                             &prtot[i + j * me->NR],
+                             ((prtot_cc) ? &prtot_cc[i] : &prtot[i]),
+                             ccLoaded);
       ierr =
-	eos_SetAdjustedData (me, &e[i + j * me->NR],
-			     &entot[i + j * me->NR],
-			     ((entot_cc) ? &entot_cc[i] : &entot[i]),
-			     ccLoaded);
+        eos_SetAdjustedData (me, &e[i + j * me->NR],
+                             &entot[i + j * me->NR],
+                             ((entot_cc) ? &entot_cc[i] : &entot[i]),
+                             ccLoaded);
       if (antot) {
-	ierr =
-	  eos_SetAdjustedData (me, &a[i + j * me->NR],
-			       &antot[i + j * me->NR],
-			       ((antot_cc) ? &antot_cc[i] : &antot[i]),
-			       ccLoaded);
+        ierr =
+          eos_SetAdjustedData (me, &a[i + j * me->NR],
+                               &antot[i + j * me->NR],
+                               ((antot_cc) ? &antot_cc[i] : &antot[i]),
+                               ccLoaded);
       }
       else {                  /* A = U - TS; therefore, A = U at T=0 */
-	ierr =
-	  eos_SetAdjustedData (me, &a[i + j * me->NR],
-			       &entot[i + j * me->NR],
-			       ((entot_cc) ? &entot_cc[i] : &entot[i]),
-			       ccLoaded);
+        ierr =
+          eos_SetAdjustedData (me, &a[i + j * me->NR],
+                               &entot[i + j * me->NR],
+                               ((entot_cc) ? &entot_cc[i] : &entot[i]),
+                               ccLoaded);
       }
       /* s[i+j*me->NR] need not be adjusted since S=0 at T=0 */
     }
@@ -4001,7 +4217,7 @@ EOS_INTEGER eos_computeCowanData (eos_RecordType1 *me, eos_RecordType1 *altEosDa
 
   return ierr;
 }
- 
+
 /***********************************************************************/
 /*!
  * \brief Compute the number-proportional pressure, internal energy, entropy, and Helmholtz
@@ -4020,7 +4236,7 @@ EOS_INTEGER eos_computeCowanData (eos_RecordType1 *me, eos_RecordType1 *altEosDa
  *
  ***********************************************************************/
 EOS_INTEGER eos_computeNumPropData (eos_RecordType1 *me, eos_RecordType1 *altEosData,
-				    EOS_REAL *p, EOS_REAL *e, EOS_REAL *a, EOS_REAL *s)
+                                    EOS_REAL *p, EOS_REAL *e, EOS_REAL *a, EOS_REAL *s)
 {
   int i, j, ccLoaded;
   EOS_INTEGER ierr = EOS_OK, ierr2 = EOS_OK;
@@ -4037,16 +4253,16 @@ EOS_INTEGER eos_computeNumPropData (eos_RecordType1 *me, eos_RecordType1 *altEos
   static const EOS_REAL cfermi = (EOS_REAL) 6.6677e-11;
 
   ccLoaded = altEosData->eosData.coldCurveIsLoaded;
-  prtot = &(altEosData->table1[0][0]);
-  prtot_cc = (ccLoaded) ? altEosData->coldCurve1 : NULL;
-  entot = &(altEosData->table2[0][0]);
-  entot_cc = (ccLoaded) ? altEosData->coldCurve2 : NULL;
+  prtot = &(altEosData->table[0][0][0]);
+  prtot_cc = (ccLoaded) ? altEosData->coldCurve[0] : NULL;
+  entot = &(altEosData->table[1][0][0]);
+  entot_cc = (ccLoaded) ? altEosData->coldCurve[1] : NULL;
   antot = NULL;
   antot_cc = NULL;
   if (altEosData->eosData.numSubtablesLoaded >= 3) {
     /* Total Helmholtz free energy data exists, subtable #3 */
-    antot = &(altEosData->table3[0][0]);
-    antot_cc = (ccLoaded) ? altEosData->coldCurve3 : NULL;
+    antot = &(altEosData->table[2][0][0]);
+    antot_cc = (ccLoaded) ? altEosData->coldCurve[2] : NULL;
   }
 
   // compute ideal-gas pressure, internal energy, entropy, and Helmholtz free energy
@@ -4071,29 +4287,29 @@ EOS_INTEGER eos_computeNumPropData (eos_RecordType1 *me, eos_RecordType1 *altEos
       /* use ideal gas model as initial values of P and U */
       p[i + j * me->NR] = UNIVERSAL_GAS_CONST / me->avgAtomicWgt * altEosData->T[j] * altEosData->R[i];
       e[i + j * me->NR] =
-	((EOS_REAL) 1.5) * UNIVERSAL_GAS_CONST / me->avgAtomicWgt * altEosData->T[j];
+        ((EOS_REAL) 1.5) * UNIVERSAL_GAS_CONST / me->avgAtomicWgt * altEosData->T[j];
 
       /* initialize zf value to zero */
       zf_arr[i + j * me->NR] = ZERO;
 
       if (p[i + j * me->NR] <= ZERO)
-	continue;
+        continue;
 
       z0 =
-	(EOS_REAL) MAX (ONE,
-			(prtot[i + j * me->NR] -
-			 pcold * mult) / (UNIVERSAL_GAS_CONST / me->avgAtomicWgt *
-					  altEosData->T[j] * altEosData->R[i]));
+        (EOS_REAL) MAX (ONE,
+                        (prtot[i + j * me->NR] -
+                         pcold * mult) / (UNIVERSAL_GAS_CONST / me->avgAtomicWgt *
+                                          altEosData->T[j] * altEosData->R[i]));
       /*! - Impose an upperbound on z0, which is physically-consistent
        *    with the tabulated average atomic number.
        */
       z0 = MIN(z0, me->avgAtomicNumber);
 
       z1 =
-	cfermi * altEosData->T[j] * altEosData->T[j] * pow (altEosData->T[j],
-							    ONE / TWO) / (UNIVERSAL_GAS_CONST /
-									  me->avgAtomicWgt * altEosData->T[j] *
-									  altEosData->R[i]);
+        cfermi * altEosData->T[j] * altEosData->T[j] * pow (altEosData->T[j],
+                                                            ONE / TWO) / (UNIVERSAL_GAS_CONST /
+                                                                          me->avgAtomicWgt * altEosData->T[j] *
+                                                                          altEosData->R[i]);
       it = 0;
 
       zl = zfmin;
@@ -4107,26 +4323,26 @@ EOS_INTEGER eos_computeNumPropData (eos_RecordType1 *me, eos_RecordType1 *altEos
        */
       // iterate to convergence using successive bisection.
       do {
-	it++;
-	zf = ONE / TWO * (zl + zh);
-	fz = zf / z1;
-	fz =
-	  ONE + fz * ((EOS_REAL) 0.88388 +
-		      fz * ((EOS_REAL) 0.37208 +
-			    (EOS_REAL) 0.02645 * (pow (fz, FOUR / THREE))));
-	fz = (EOS_REAL) (z0 * (pow (fz, (EOS_REAL) (-ONE / FIVE))) - ONE);
-	if (zf > fz) {
-	  zh = zf;
-	}
-	else {
-	  zl = zf;
-	}
+        it++;
+        zf = ONE / TWO * (zl + zh);
+        fz = zf / z1;
+        fz =
+          ONE + fz * ((EOS_REAL) 0.88388 +
+                      fz * ((EOS_REAL) 0.37208 +
+                            (EOS_REAL) 0.02645 * (pow (fz, FOUR / THREE))));
+        fz = (EOS_REAL) (z0 * (pow (fz, (EOS_REAL) (-ONE / FIVE))) - ONE);
+        if (zf > fz) {
+          zh = zf;
+        }
+        else {
+          zl = zf;
+        }
       } while ((ABS (zf - fz) > (_tolerance * zf)) && (it < _maxiter));
 
       /* set alternative ierr2 code if convergence failed */
       if ((ABS (zf - fz) > (_tolerance * zf)) || (it >= _maxiter)) {
 
-	ierr2 =EOS_SPLIT_FAILED;
+        ierr2 =EOS_SPLIT_FAILED;
       }
 
       /* store zf value for calculating Helmholtz Energy below */
@@ -4134,9 +4350,9 @@ EOS_INTEGER eos_computeNumPropData (eos_RecordType1 *me, eos_RecordType1 *altEos
 
       // calculate ion data
       p[i + j * me->NR] =
-	(prtot[i + j * me->NR] - pcold * mult) / (ONE + zf);
+        (prtot[i + j * me->NR] - pcold * mult) / (ONE + zf);
       e[i + j * me->NR] =
-	(entot[i + j * me->NR] - ecold * mult) / (ONE + zf);
+        (entot[i + j * me->NR] - ecold * mult) / (ONE + zf);
       //changes for artf7471
       //zfmin = zf;
     }
@@ -4150,20 +4366,20 @@ EOS_INTEGER eos_computeNumPropData (eos_RecordType1 *me, eos_RecordType1 *altEos
     ierr = eos_Entropy (me, me->NR, me->NT, e, EOS_NullPtr, altEosData->T, altEosData->R, s);
     if (eos_GetStandardErrorCodeFromCustomErrorCode(ierr) != EOS_OK) {
       if (ierr == -2 || ierr == -3) {
-	/* ignore the error, just set the dataSize and numTables loaded */
-	me->eosData.dataSize = 2 + me->NR + me->NT + 2 * me->NR * me->NT;     /* only TWO subtables */
-	me->eosData.numSubtablesLoaded = 2;
-	ierr = EOS_OK;
+        /* ignore the error, just set the dataSize and numTables loaded */
+        me->eosData.dataSize = 2 + me->NR + me->NT + 2 * me->NR * me->NT;     /* only TWO subtables */
+        me->eosData.numSubtablesLoaded = 2;
+        ierr = EOS_OK;
       }
       else
-	return ierr;
+        return ierr;
     }
     else {
       /* calculate Helmholtz free energy */
       for (i = 0; i < me->NR; i++) {
-	for (j = 0; j < me->NT; j++) {
-	  a[i + j * me->NR] = e[i + j * me->NR] - altEosData->T[j] * s[i + j * me->NR];
-	}
+        for (j = 0; j < me->NT; j++) {
+          a[i + j * me->NR] = e[i + j * me->NR] - altEosData->T[j] * s[i + j * me->NR];
+        }
       }
     }
   }
@@ -4173,9 +4389,9 @@ EOS_INTEGER eos_computeNumPropData (eos_RecordType1 *me, eos_RecordType1 *altEos
     for (i = 0; i < me->NR; i++) {
       acold = antot[i];
       for (j = 0; j < me->NT; j++) {
-	a[i + j * me->NR] =
-	  (antot[i + j * me->NR] - mult * acold) /
-	  (ONE + zf_arr[i + j * me->NR]);
+        a[i + j * me->NR] =
+          (antot[i + j * me->NR] - mult * acold) /
+          (ONE + zf_arr[i + j * me->NR]);
       }
     }
 
@@ -4183,13 +4399,13 @@ EOS_INTEGER eos_computeNumPropData (eos_RecordType1 *me, eos_RecordType1 *altEos
     ierr = eos_Entropy (me, me->NR, me->NT, e, a, altEosData->T, altEosData->R, s);
     if (eos_GetStandardErrorCodeFromCustomErrorCode(ierr) != EOS_OK) {
       if (ierr == -2 || ierr == -3) {
-	/* ignore the error, just set the dataSize and numTables loaded */
-	me->eosData.dataSize = 2 + me->NR + me->NT + 2 * me->NR * me->NT;     /* only TWO subtables */
-	me->eosData.numSubtablesLoaded = 3;
-	ierr = EOS_OK;
+        /* ignore the error, just set the dataSize and numTables loaded */
+        me->eosData.dataSize = 2 + me->NR + me->NT + 2 * me->NR * me->NT;     /* only TWO subtables */
+        me->eosData.numSubtablesLoaded = 3;
+        ierr = EOS_OK;
       }
       else
-	return ierr;
+        return ierr;
     }
   }
 
@@ -4201,24 +4417,24 @@ EOS_INTEGER eos_computeNumPropData (eos_RecordType1 *me, eos_RecordType1 *altEos
       acold = (antot_cc) ? antot_cc[i] : ((antot) ? antot[i] : ZERO);
 
       ierr =
-	eos_SetAdjustedData (me, &p[i + j * me->NR],
-			     &prtot[i + j * me->NR], &pcold, ccLoaded);
+        eos_SetAdjustedData (me, &p[i + j * me->NR],
+                             &prtot[i + j * me->NR], &pcold, ccLoaded);
       ierr =
-	eos_SetAdjustedData (me, &e[i + j * me->NR],
-			     &entot[i + j * me->NR], &ecold, ccLoaded);
+        eos_SetAdjustedData (me, &e[i + j * me->NR],
+                             &entot[i + j * me->NR], &ecold, ccLoaded);
       if (antot) {
-	ierr =
-	  eos_SetAdjustedData (me, &a[i + j * me->NR],
-			       &antot[i + j * me->NR],
-			       ((antot_cc) ? &antot_cc[i] : &antot[i]),
-			       ccLoaded);
+        ierr =
+          eos_SetAdjustedData (me, &a[i + j * me->NR],
+                               &antot[i + j * me->NR],
+                               ((antot_cc) ? &antot_cc[i] : &antot[i]),
+                               ccLoaded);
       }
       else {                  /* A = U - TS; therefore, A = U at T=0 */
-	ierr =
-	  eos_SetAdjustedData (me, &a[i + j * me->NR],
-			       &entot[i + j * me->NR],
-			       ((entot_cc) ? &entot_cc[i] : &entot[i]),
-			       ccLoaded);
+        ierr =
+          eos_SetAdjustedData (me, &a[i + j * me->NR],
+                               &entot[i + j * me->NR],
+                               ((entot_cc) ? &entot_cc[i] : &entot[i]),
+                               ccLoaded);
       }
       /* s[i+j*me->NR] need not be adjusted since S=0 at T=0 */
     }
@@ -4287,12 +4503,14 @@ EOS_INTEGER eos_AnalyticalEOS (eos_RecordType1 *me, const EOS_INTEGER imodel,
     eos_SetSizeRecordType1 (me, altEosData->NR, altEosData->NT, me->eosData.tableNum);
   me->NR = altEosData->NR;
   me->NT = altEosData->NT;
-  // store the total size of the data to be stored for all subtables:
-  // NR, NT, R[], T[], table1[], table2[], table3[], and table4[]
+  // store the total size of the data to be stored for all subtables
   me->eosData.dataSize = 2 + me->NR + me->NT + MAX_TABLES_RECORDTYPE1 * me->NR * me->NT;
 
   // load the total pressure, the total internal energy,
   // and (optionally) the total Helmholtz free energy data from 301 table
+  // keep all subtables in new object
+  altEosData->FreeUnusedArrays = EOS_FALSE;
+  altEosData->CreateGhostData = EOS_FALSE;
   eos_LoadTablesEosDataMap (&gEosDataMap, 1, &alt_handle, &ierr);
   if (ierr)
     return (ierr);
@@ -4301,7 +4519,7 @@ EOS_INTEGER eos_AnalyticalEOS (eos_RecordType1 *me, const EOS_INTEGER imodel,
   if (altEosData->T[0] > 0.0 && altEosData->eosData.numSubtablesLoaded < 3) {
     ierr = EOS_SPLIT_FAILED;
     eos_SetCustomMsg_str(errMsg,
-			 "EOS_SPLIT_FAILED: The data splitting algorithm failed because T[0]>0 and no free energy table exists.");
+                         "EOS_SPLIT_FAILED: The data splitting algorithm failed because T[0]>0 and no free energy table exists.");
     return (ierr);
   }
 
@@ -4320,9 +4538,7 @@ EOS_INTEGER eos_AnalyticalEOS (eos_RecordType1 *me, const EOS_INTEGER imodel,
   s_ion = &((*read_data)[me->NR + me->NT + 3 * me->NR * me->NT]);
 
   // allocate memory for me (i.e., eos_RecordType1) if it has not yet been done
-  if (!
-      (me->R && me->T && me->table1 && me->table2 && me->table3
-       && me->table4))
+  if (!(me->R && me->T && me->table[0] && me->table[1] && me->table[2] && me->table[3]))
     eos_SetSizeRecordType1 (me, me->NR, me->NT, me->eosData.tableNum);
 
   switch (imodel) {
@@ -4377,7 +4593,7 @@ EOS_INTEGER eos_AnalyticalEOS (eos_RecordType1 *me, const EOS_INTEGER imodel,
 
   me->eosData.numSubtablesLoaded = (EOS_INTEGER)
     MIN(MAX_TABLES_RECORDTYPE1,
-	((me->eosData.dataSize - (2 + me->NR + me->NT)) / (me->NR * me->NT)));
+        ((me->eosData.dataSize - (2 + me->NR + me->NT)) / (me->NR * me->NT)));
 
 
   if (eos_GetStandardErrorCodeFromCustomErrorCode(ierr2) != EOS_OK &&
@@ -4388,17 +4604,82 @@ EOS_INTEGER eos_AnalyticalEOS (eos_RecordType1 *me, const EOS_INTEGER imodel,
 }
 
 /***********************************************************************/
-/*! 
+/*!
  * \brief adds points in between grid points of class eos_RecordType1 if the option is set
- * 
+ *
  * \param[out]   *err - EOS_INTEGER : error code
  * \param[in]    *ptr - void : data object pointer;
  *                             internally recast to eos_RecordType1*
- * 
+ *
  * \return none
  *
  ***********************************************************************/
-void eos_ExpandGridRecordType1 (void *ptr, EOS_INTEGER *err)
+#ifdef DEBUG_EOS_EXPANDGRIDINTERPOLATE      /* this is defined in eos_Utils.h */
+void eos_DumpExpandedGridRecordType1 (void *ptr, EOS_INTEGER th, EOS_CHAR *fn, EOS_INTEGER *err)
+{
+  eos_RecordType1 *me = (eos_RecordType1 *) ptr;
+  FILE *fp = NULL;
+  EOS_REAL *R, *T, **F, *coldCurve;
+  EOS_INTEGER i, j, k, nAdd, oldNR, oldNT, NR, NT, tableNum;
+  EOS_INTEGER dataType = eos_GetDataTypeFromTableHandle (th, err);
+  eos_OptionValue *optionVal;
+
+  optionVal = _eos_getOptionEosData (&(me->eosData), EOS_INSERT_DATA);
+  nAdd = optionVal->ival;
+  if (nAdd == 0)
+    return;                     /* nothing to do */
+
+  NR = me->NR;
+  switch (dataType)
+  { /* This conditional logic is necessary because me->eosData.tableNum may have been
+       temporarily reset in parent call stack */
+  case EOS_Pc_D:
+  case EOS_Uc_D:
+  case EOS_Ac_D:
+  case EOS_Gc_D:
+    NT = 1;
+    tableNum = 306;
+    break;
+  default:
+    NT = me->NT;
+    tableNum = me->eosData.tableNum;
+    break;
+  }
+  oldNR = (NR + 1) / (nAdd + 1);
+  oldNT = (NT + 1) / (nAdd + 1);
+
+  *err = EOS_OK;
+  fp = fopen(fn, "a");
+
+  fprintf(fp, "---\n");
+  for (i = 0; i < MAX_TABLES_RECORDTYPE1; i++)
+  {
+    if (me->eosData.numSubtablesLoaded < i + 1)
+      break;
+
+  /* get pointers to new data */
+    _eos_GetDataRecordType1 (me, &R, &T, &F, &coldCurve, NULL, i + 1);
+
+    fprintf(fp, "TH %d, %s, TABLE %d, NR=%d, NT=%d, tableNum=%d, nAdd=%d, oldNR=%d, oldNT=%d\n",
+            th, EOS_TYPE_TO_STRING(dataType), i+1, NR, NT, tableNum, nAdd, oldNR, oldNT);
+    fprintf(fp, "%23s ", "R   |   T->");
+    for (k=0; k < NT; k++)
+      fprintf(fp, "%23.15e ", T[k]);
+    fprintf(fp, "\n");
+    for (j=0; j < NR; j++) {
+      fprintf(fp, "%23.15e ", R[j]);
+      for (k=0; k < NT; k++)
+        fprintf(fp, "%23.15e ", F[k][j]);
+      fprintf(fp, "\n");
+    }
+    fprintf(fp, "\n");
+  }
+
+  fclose(fp);
+}
+#endif
+
+void eos_ExpandGridRecordType1 (void *ptr, EOS_INTEGER th, EOS_INTEGER *err)
 {
   EOS_INTEGER nAdd, oldNT, oldNR, i, j, k, *xyBounds = NULL;
   EOS_REAL *oldR, *oldT, **oldF[MAX_TABLES_RECORDTYPE1], *oldColdCurve[MAX_TABLES_RECORDTYPE1];
@@ -4435,7 +4716,7 @@ void eos_ExpandGridRecordType1 (void *ptr, EOS_INTEGER *err)
     if (me->eosData.numSubtablesLoaded < i + 1)
       break;
 
-    _eos_GetDataRecordType1 (me, &R, &T, &F, &coldCurve, i + 1);
+    _eos_GetDataRecordType1 (me, &R, &T, &F, &coldCurve, NULL, i + 1);
 
     oldF[i] = (EOS_REAL **) malloc (oldNT * sizeof (EOS_REAL *));
 
@@ -4471,7 +4752,7 @@ void eos_ExpandGridRecordType1 (void *ptr, EOS_INTEGER *err)
       break;
 
     /* get pointers to new data */
-    _eos_GetDataRecordType1 (me, &R, &T, &F, &coldCurve, i + 1);
+    _eos_GetDataRecordType1 (me, &R, &T, &F, &coldCurve, NULL, i + 1);
     eos_ExpandGridInterpolate (nAdd, oldNR, oldNT, oldR, oldT, oldF[i], R, T,
                                F, err);
 
@@ -4481,12 +4762,16 @@ void eos_ExpandGridRecordType1 (void *ptr, EOS_INTEGER *err)
       xyBounds =
         (EOS_INTEGER *) malloc (sizeof (EOS_INTEGER) *
                                 ((oldNR - 1) * nAdd + oldNR));
-      eos_RationalInterpolate ((oldNR - 1) * nAdd + oldNR, oldNR, 1, 0, oldR,
-                               oldColdCurve[i], R, coldCurve, NULL, 'y',
+      eos_RationalInterpolate (EOS_FALSE, (oldNR - 1) * nAdd + oldNR, oldNR, 1, 0, oldR,
+                               oldColdCurve[i], R, coldCurve, NULL, 'y', NULL,
                                xyBounds, err);
       EOS_FREE (xyBounds);
     }
   }
+
+#ifdef DEBUG_EOS_EXPANDGRIDINTERPOLATE
+  me->eosData.DumpExpandedGrid (ptr, th, "EOS_EXPANDGRIDINTERPOLATE.txt", err);
+#endif
 
   EOS_FREE(oldR);
   EOS_FREE(oldT);
@@ -4499,8 +4784,183 @@ void eos_ExpandGridRecordType1 (void *ptr, EOS_INTEGER *err)
 
 /***********************************************************************/
 /*!
+ * \brief get (me->CreateGhostData && !me->nGhostData) to indicate the need to
+ *        create ghost data.
+ *
+ * \param[in]    *ptr       - void : data object pointer;
+ *                                   internally recast to eos_RecordType1*
+ *
+ * \return EOS_BOOLEAN
+ *
+ ***********************************************************************/
+EOS_BOOLEAN eos_AreGhostDataRequiredRecordType1 (void *ptr)
+{
+  eos_RecordType1 *me;
+  eos_OptionValue *optVal = NULL;
+  me = (eos_RecordType1 *) ptr;
+
+  /* ignore object without loaded data */
+  if (! me->eosData.isLoaded || ! me->eosData.numSubtablesLoaded)
+    return(EOS_FALSE);
+
+  /* if EOS_INVERT_AT_SETUP option is set, then disallow ghost data */
+  /* 2020-01-16 DAP -- This test should be removed if code is rebaselined for ghost data with EOS_INVERT_AT_SETUP */
+  optVal = _eos_getOptionEosData (&(me->eosData), EOS_INVERT_AT_SETUP);
+  if (optVal && optVal->bval)
+    return(EOS_FALSE);
+
+  /* if EOS_PT_SMOOTHING option is set, then disallow ghost data */
+  optVal = _eos_getOptionEosData (&(me->eosData), EOS_PT_SMOOTHING);
+  if (optVal && optVal->bval)
+    return(EOS_FALSE);
+
+  return(me->CreateGhostData && !me->nGhostData);
+}
+
+/***********************************************************************/
+/*!
+ * \brief set me->useTmpGhostData to EOS_TRUE or EOS_FALSE, which is internally-used to indicate
+ *        a need to force the creation of ghost data.
+ *
+ * \param[in]    *ptr            - void : data object pointer;
+ *                                        internally recast to eos_RecordType1*
+ * \param[in]    useTmpGhostData - EOS_INTEGER : number of data points to add to tables' periphery
+ *
+ * \return EOS_BOOLEAN
+ *
+ ***********************************************************************/
+void eos_SetUseTmpGhostDataRecordType1 (void *ptr, EOS_BOOLEAN useTmpGhostData)
+{
+  eos_RecordType1 *me;
+  me = (eos_RecordType1 *) ptr;
+  me->useTmpGhostData = useTmpGhostData;
+}
+
+/***********************************************************************/
+/*!
+ * \brief adds ghost data points to tables of class eos_RecordType1
+ *
+ * \param[out]   *err       - EOS_INTEGER : error code
+ * \param[in]    nGhostData - EOS_INTEGER : number of data points to add to tables' periphery
+ * \param[in]    *ptr       - void : data object pointer;
+ *                                   internally recast to eos_RecordType1*
+ *
+ * \return none
+ *
+ ***********************************************************************/
+void eos_AddGhostDataRecordType1 (void *ptr, EOS_INTEGER nGhostData, EOS_INTEGER *err)
+{
+  EOS_INTEGER oldNT, oldNR, i, j, k;
+  EOS_REAL *oldR, *oldT, **oldF[MAX_TABLES_RECORDTYPE1], *oldColdCurve[MAX_TABLES_RECORDTYPE1];
+  EOS_REAL *R, *T, **F, *coldCurve;
+  EOS_REAL *ptr1[MAX_TABLES_RECORDTYPE1];
+  /* eos_OptionValue *optionVal; */
+  eos_RecordType1 *me;
+  me = (eos_RecordType1 *) ptr;
+  *err = EOS_OK;
+
+  if (nGhostData <= 0)
+    return;                     /* nothing to do */
+
+  /* initialize arrays */
+  for (i = 0; i < MAX_TABLES_RECORDTYPE1; i++) {
+    oldColdCurve[i] = NULL;
+    oldF[i] = NULL;
+    ptr1[i] = NULL;
+  }
+
+  oldNT = me->NT;
+  oldNR = me->NR;
+  oldR = (EOS_REAL *) malloc (oldNR * sizeof (EOS_REAL));
+  for (k = 0; k < oldNR; k++)
+    oldR[k] = me->R[k];
+  oldT = (EOS_REAL *) malloc (oldNT * sizeof (EOS_REAL));
+  for (k = 0; k < oldNT; k++)
+    oldT[k] = me->T[k];
+
+  /* first copy current data into temp array for all tables */
+  for (i = 0; i < MAX_TABLES_RECORDTYPE1; i++) {
+    if (me->eosData.numSubtablesLoaded < i + 1)
+      break;
+
+    _eos_GetDataRecordType1 (me, &R, &T, &F, &coldCurve, NULL, i + 1);
+
+    oldF[i] = (EOS_REAL **) malloc (oldNT * sizeof (EOS_REAL *));
+
+    /* allocate memory continuously */
+    ptr1[i] = (EOS_REAL *) malloc (sizeof (EOS_REAL) * oldNT * oldNR);
+
+    /* get data of i-th subtable */
+
+    for (j = 0; j < oldNT; j++) {
+      oldF[i][j] = ptr1[i] + j * oldNR;
+      for (k = 0; k < oldNR; k++)
+        oldF[i][j][k] = F[j][k];
+    }
+
+    if ((me->eosData.tableNum == 301 || me->eosData.tableNum == 303)
+        && coldCurve) {
+      oldColdCurve[i] = (EOS_REAL *) malloc (oldNR * sizeof (EOS_REAL));
+      for (k = 0; k < oldNR; k++)
+        oldColdCurve[i][k] = coldCurve[k];
+    }
+    else {
+      oldColdCurve[i] = NULL;
+    }
+  }
+
+  /* now reallocate our memory */
+  eos_SetSizeRecordType1 (me, oldNR+2*nGhostData, oldNT+2*nGhostData, me->eosData.tableNum);
+
+  /* now fill in new values into the memory for all tables */
+  for (k = 0; k < MAX_TABLES_RECORDTYPE1; k++) {
+    EOS_REAL *xtbls = NULL, *ytbls = NULL, **ftbls = NULL;
+    EOS_CHAR *errMsg = NULL;
+
+    if (me->eosData.numSubtablesLoaded < k + 1)
+      break;
+
+    _eos_CreateGhostData (EOS_FALSE, nGhostData, oldNR, oldNT, &(oldR[0]), &(oldT[0]), oldF[k], NULL,
+                          &me->NR, &me->NT, &xtbls, &ytbls, &ftbls, NULL, err, &errMsg);
+    EOS_FREE(errMsg);
+
+    if (eos_GetStandardErrorCodeFromCustomErrorCode(*err) != EOS_OK)  {
+      me->nGhostData = 0;
+      if (nGhostData > 0) {
+        /* reset our memory allocation */
+        eos_SetSizeRecordType1 (me, oldNR, oldNT, me->eosData.tableNum);
+      }
+      goto CLEANUP;
+    }
+
+    /* copy all data into object arrays */
+    me->nGhostData = nGhostData;
+    for (i = 0; i < me->NR; i++) me->R[i] = xtbls[i];
+    for (i = 0; i < me->NT; i++) me->T[i] = ytbls[i];
+    for (j = 0; j < me->NT; j++) {
+      for (i = 0; i < me->NR; i++) {
+        me->table[k][j][i] = ftbls[j][i];
+      }
+    }
+
+    EOS_FREE(xtbls);
+    EOS_FREE(ftbls);
+  }
+
+ CLEANUP:
+  EOS_FREE(oldR);
+  EOS_FREE(oldT);
+  for (i = 0; i < MAX_TABLES_RECORDTYPE1; i++) {
+    EOS_FREE(oldColdCurve[i]);
+    EOS_FREE(oldF[i]);
+    EOS_FREE(ptr1[i]);
+  }
+}
+
+/***********************************************************************/
+/*!
  * \brief returns information items for the table.
- * 
+ *
  * \param[out]   *err         - EOS_INTEGER : error code
  * \param[in]    *ptr         - void : data object pointer;
  *                                     internally recast to eos_RecordType1*
@@ -4508,7 +4968,7 @@ void eos_ExpandGridRecordType1 (void *ptr, EOS_INTEGER *err)
  * \param[in]    numInfoItems - EOS_INTEGER : # of requested items
  * \param[in]    *infoItems   - EOS_INTEGER : array of requested items
  * \param[in]    *infoVals    - EOS_REAL : return item values
- * 
+ *
  * \return none
  *
  ***********************************************************************/
@@ -4526,7 +4986,7 @@ void eos_GetTableInfoRecordType1 (void *ptr, EOS_INTEGER th,
 
   me = (eos_RecordType1 *) ptr;
   *err = EOS_OK;
-  
+
   /* if either EOS_ALLOW_ALL_INFO_ITEMS option or me->isInvertedAtSetup is set, then lift data type restrictions */
   allow_all_info_items = me->isInvertedAtSetup ||
     gEosDataMap.generalOptions[EOS_GENERAL_OPTION_FLAG_TO_INDEX (EOS_ALLOW_ALL_INFO_ITEMS)][th].bval;
@@ -4534,11 +4994,11 @@ void eos_GetTableInfoRecordType1 (void *ptr, EOS_INTEGER th,
   if (EOS_ALLOW_CAT0_ONLY_INFO_ITEM (infoItems[0]) || allow_all_info_items) {
     /* determine if infoItems[0] is restricted to category 0 datatypes */
     if (EOS_CATEGORY (eos_GetDataTypeFromTableHandle (th, err)) != 0
-	&& ! allow_all_info_items) {
+        && ! allow_all_info_items) {
       /* return error */
       *err = EOS_INVALID_INFO_FLAG;
       *err = eos_SetCustomErrorMsg(th, *err,
-				   "Invalid info flag. This info flag is only valid for simple, non-inverted data types.");
+                                   "Invalid info flag. This info flag is only valid for simple, non-inverted data types.");
       return;
     }
     else {
@@ -4587,7 +5047,7 @@ void eos_GetTableInfoRecordType1 (void *ptr, EOS_INTEGER th,
     else {
       *err = EOS_INVALID_TABLE_HANDLE;
       *err = eos_SetCustomErrorMsg(th, *err,
-				   "Invalid table handle. 401 table data not available to supplied table handle.");
+                                   "Invalid table handle. 401 table data not available to supplied table handle.");
       return;
     }
     break;
@@ -4596,26 +5056,28 @@ void eos_GetTableInfoRecordType1 (void *ptr, EOS_INTEGER th,
   }
 
   if (infoItems[0] == EOS_R_Array) {
-    if (numInfoItems < me->NR) {
+    if (numInfoItems < me->NR - 2*me->nGhostData) {
       *err = EOS_FAILED;
       *err = eos_SetCustomErrorMsg(th, *err,
-				   "Operation failed. Insufficient memory allocation assumed because numInfoItems<NR.");
+                                   "Operation failed. Insufficient memory allocation assumed because numInfoItems<NR.");
       return;
     }
-    for (i = 0; i < MIN (numInfoItems, me->NR); i++)
-      infoVals[i] = me->R[i] * xconv;
+    j = 0;
+    for (i = me->nGhostData; i < MIN (numInfoItems+me->nGhostData, me->NR-me->nGhostData); i++)
+      infoVals[j++] = me->R[i] * xconv;
     return;
   }
 
   if (infoItems[0] == EOS_T_Array) {
-    if (numInfoItems < me->NT) {
+    if (numInfoItems < me->NT - 2*me->nGhostData) {
       *err = EOS_FAILED;
       *err = eos_SetCustomErrorMsg(th, *err,
-				   "Operation failed. Insufficient memory allocation assumed because numInfoItems<NT.");
+                                   "Operation failed. Insufficient memory allocation assumed because numInfoItems<NT.");
       return;
     }
-    for (i = 0; i < MIN (numInfoItems, me->NT); i++)
-      infoVals[i] = me->T[i] * yconv;
+    j = 0;
+    for (i = me->nGhostData; i < MIN (numInfoItems+me->nGhostData, me->NT-me->nGhostData); i++)
+      infoVals[j++] = me->T[i] * yconv;
     return;
   }
 
@@ -4650,14 +5112,14 @@ void eos_GetTableInfoRecordType1 (void *ptr, EOS_INTEGER th,
     if (! p) {
       *err = EOS_WARNING;
       *err = eos_SetCustomErrorMsg(th, *err,
-				   "Operation failed. The requested data (%s) is unavailable for table handle %d.",
-				   s, th);
+                                   "Operation failed. The requested data (%s) is unavailable for table handle %d.",
+                                   s, th);
       return;
     }
     if (numInfoItems < nXYPairs) {
       *err = EOS_FAILED;
       *err = eos_SetCustomErrorMsg(th, *err,
-				   "Operation failed. Insufficient memory allocation assumed because numInfoItems<nTables.");
+                                   "Operation failed. Insufficient memory allocation assumed because numInfoItems<nTables.");
       return;
     }
     for (i = 0; i < MIN (numInfoItems, nXYPairs); i++)
@@ -4665,56 +5127,145 @@ void eos_GetTableInfoRecordType1 (void *ptr, EOS_INTEGER th,
     return;
   }
 
-  if (infoItems[0] == EOS_F_Array) {
-    if (numInfoItems < me->NR * me->NT) {
+  if (infoItems[0] == EOS_X_LOWER_BOUND || infoItems[0] == EOS_X_UPPER_BOUND ||
+      infoItems[0] == EOS_Y_LOWER_BOUND || infoItems[0] == EOS_Y_UPPER_BOUND ||
+      infoItems[0] == EOS_X_BOUND_GRID  || infoItems[0] == EOS_Y_BOUND_GRID) {
+    /* Return upper/lower bounds if requested */
+    EOS_REAL *p = NULL;
+    EOS_INTEGER N = 0;
+    EOS_REAL DEFAULT_SCALAR = 0.0;
+    eos_ExtrapolationBoundsEosDataMap *extrapolationBounds = eos_GetExtrapolationBoundsEosDataMap(&gEosDataMap, th);
+    switch (infoItems[0]) {
+    case EOS_X_BOUND_GRID:
+      {
+        strcpy(s, "EOS_X_BOUND_GRID");
+        N = extrapolationBounds->nx;
+        if (N > 1 && extrapolationBounds->x)
+          p = extrapolationBounds->x;
+        else
+          p = &DEFAULT_SCALAR;
+        break;
+      }
+    case EOS_Y_BOUND_GRID:
+      {
+        strcpy(s, "EOS_Y_BOUND_GRID");
+        N = extrapolationBounds->ny;
+        if (N > 1 && extrapolationBounds->x)
+          p = extrapolationBounds->x;
+        else
+          p = &DEFAULT_SCALAR;
+        break;
+      }
+    case EOS_X_LOWER_BOUND:
+      {
+        strcpy(s, "EOS_X_LOWER_BOUND");
+        N = extrapolationBounds->nx;
+        p = extrapolationBounds->xLo;
+        break;
+      }
+    case EOS_X_UPPER_BOUND:
+      {
+        strcpy(s, "EOS_X_UPPER_BOUND");
+        N = extrapolationBounds->nx;
+        p = extrapolationBounds->xHi;
+        break;
+      }
+    case EOS_Y_LOWER_BOUND:
+      {
+        strcpy(s, "EOS_X_LOWER_BOUND");
+        N = extrapolationBounds->ny;
+        p = extrapolationBounds->yLo;
+        break;
+      }
+    case EOS_Y_UPPER_BOUND:
+      {
+        strcpy(s, "EOS_X_UPPER_BOUND");
+        N = extrapolationBounds->ny;
+        p = extrapolationBounds->yHi;
+        break;
+      }
+    }
+
+    /* Check if data is available */
+    if (! p) {
+      *err = EOS_WARNING;
+      *err = eos_SetCustomErrorMsg(th, *err,
+                                   "Operation failed. The requested data (%s) is unavailable for table handle %d.",
+                                   s, th);
+      return;
+    }
+
+    /* Copy all data to output */
+    if (numInfoItems < N) {
       *err = EOS_FAILED;
       *err = eos_SetCustomErrorMsg(th, *err,
-				   "Operation failed. Insufficient memory allocation assumed because numInfoItems<NR*NT.");
+                                   "Operation failed. Insufficient memory allocation assumed because numInfoItems<%d.", N);
+      return;
+    }
+    for (i = 0; i < MIN (numInfoItems, N); i++)
+      infoVals[i] = p[i];
+    return;
+  }
+
+  if (infoItems[0] == EOS_F_Array) {
+    if (numInfoItems < (me->NR - 2*me->nGhostData) * (me->NT - 2*me->nGhostData)) {
+      *err = EOS_FAILED;
+      *err = eos_SetCustomErrorMsg(th, *err,
+                                   "Operation failed. Insufficient memory allocation assumed because numInfoItems<NR*NT.");
       return;
     }
     subTable =
       EOS_TYPE_TO_SUB_TAB_NUM (eos_GetDataTypeFromTableHandle (th, err));
     if (eos_GetStandardErrorCodeFromCustomErrorCode(*err) != EOS_OK)
       return;
-    switch (subTable) {
-    case 1:
-      F = me->table1;
-      CC = me->coldCurve1;
-      break;
-    case 2:
-      F = me->table2;
-      CC = me->coldCurve2;
-      break;
-    case 3:
-      F = me->table3;
-      CC = me->coldCurve3;
-      break;
-    case 4:
-      F = me->table4;
-      CC = me->coldCurve4;
-      break;
+    if (subTable>=1 && subTable<=MAX_TABLES_RECORDTYPE1) {
+      F = me->table[subTable-1];
+      CC = me->coldCurve[subTable-1];
     }
-    i = 0;
-    for (k = 0; k < me->NT; k++)
-      for (j = 0; j < me->NR; j++) {
-        CCval = (CC) ? CC[j] : ZERO;
-        infoVals[i++] = (F[k][j] + CCval) * fconv;
+    {
+      EOS_INTEGER klo=0, khi=me->NT, jlo=me->nGhostData, jhi=me->NR-me->nGhostData;
+      i = 0;
+      if (me->NT > me->nGhostData+1) {
+        klo=me->nGhostData;
+        khi=me->NT-me->nGhostData;
+        /* jlo=0; */
+        /* jhi=me->NR; */
       }
+      for (k = klo; k < khi; k++)
+        for (j = jlo; j < jhi; j++) {
+          CCval = (CC) ? CC[j] : ZERO;
+          infoVals[i++] = (F[k][j] + CCval) * fconv;
+        }
+    }
     return;
   }
 
   for (i = 0; i < numInfoItems; i++) {
     if (EOS_ALLOW_CAT0_ONLY_INFO_ITEM (infoItems[0]) &&
         EOS_CATEGORY (eos_GetDataTypeFromTableHandle (th, err)) != 0 &&
-	! allow_all_info_items) {
+        ! allow_all_info_items) {
       /* return error */
       *err = EOS_INVALID_INFO_FLAG;
       *err = eos_SetCustomErrorMsg(th, *err,
-				   "Invalid info flag. This info flag is only valid for simple, non-inverted data types.");
+                                   "Invalid info flag. This info flag is only valid for simple, non-inverted data types.");
       return;
     }
 
     switch (infoItems[i]) {
+    case EOS_NX:
+      {
+        /* process array extent option */
+        eos_ExtrapolationBoundsEosDataMap *extrapolationBounds = eos_GetExtrapolationBoundsEosDataMap(&gEosDataMap, th);
+        infoVals[i] = extrapolationBounds->nx;
+        break;
+      }
+    case EOS_NY:
+      {
+        /* process array extent option */
+        eos_ExtrapolationBoundsEosDataMap *extrapolationBounds = eos_GetExtrapolationBoundsEosDataMap(&gEosDataMap, th);
+        infoVals[i] = extrapolationBounds->ny;
+        break;
+      }
     case EOS_X_Convert_Factor:
       /* process x-conversion option */
       infoVals[i] = eos_getRealOptionFromTableHandle (th, EOS_X_CONVERT, err);
@@ -4744,81 +5295,59 @@ void eos_GetTableInfoRecordType1 (void *ptr, EOS_INTEGER th,
       break;
 
     case EOS_Fmin:
-      subTable =
-        EOS_TYPE_TO_SUB_TAB_NUM (eos_GetDataTypeFromTableHandle (th, err));
+      subTable = EOS_TYPE_TO_SUB_TAB_NUM (eos_GetDataTypeFromTableHandle (th, err));
       if (eos_GetStandardErrorCodeFromCustomErrorCode(*err) != EOS_OK)
         return;
-      switch (subTable) {
-      case 1:
-        F = me->table1;
-        break;
-      case 2:
-        F = me->table2;
-        break;
-      case 3:
-        F = me->table3;
-        break;
-      case 4:
-        F = me->table4;
-        break;
-      }
+      assert(subTable>=1);
+      assert(subTable<=MAX_TABLES_RECORDTYPE1);
+      j = subTable - 1;
+      F = me->table[j];
       infoVals[i] = F[0][0];
-      for (j = 0; j < me->NR; j++) {
-        for (k = 0; k < me->NT; k++)
+      for (j = me->nGhostData; j < me->NR-me->nGhostData; j++) {
+        for (k = me->nGhostData; k < me->NT-me->nGhostData; k++)
           if (F[k][j] < infoVals[i])
             infoVals[i] = F[k][j];
       }
       break;
 
     case EOS_Fmax:
-      subTable =
-        EOS_TYPE_TO_SUB_TAB_NUM (eos_GetDataTypeFromTableHandle (th, err));
+      subTable = EOS_TYPE_TO_SUB_TAB_NUM (eos_GetDataTypeFromTableHandle (th, err));
       if (eos_GetStandardErrorCodeFromCustomErrorCode(*err) != EOS_OK)
         return;
-      switch (subTable) {
-      case 1:
-        F = me->table1;
-        break;
-      case 2:
-        F = me->table2;
-        break;
-      case 3:
-        F = me->table3;
-        break;
-      case 4:
-        F = me->table4;
-        break;
-      }
+      assert(subTable>=1);
+      assert(subTable<=MAX_TABLES_RECORDTYPE1);
+      j = subTable - 1;
+      F = me->table[j];
       infoVals[i] = F[0][0];
-      for (j = 0; j < me->NR; j++) {
-        for (k = 0; k < me->NT; k++)
+      for (j = me->nGhostData; j < me->NR-me->nGhostData; j++) {
+        for (k = me->nGhostData; k < me->NT-me->nGhostData; k++)
           if (F[k][j] > infoVals[i])
             infoVals[i] = F[k][j];
       }
       break;
 
     case EOS_Rmin:
-      infoVals[i] = me->R[0];
+      infoVals[i] = me->R[me->nGhostData];
       break;
 
     case EOS_Rmax:
-      infoVals[i] = me->R[me->NR - 1];
+      infoVals[i] = me->R[me->NR - me->nGhostData - 1];
       break;
 
     case EOS_Tmin:
-      infoVals[i] = me->T[0];
+      infoVals[i] = me->T[me->nGhostData];
       break;
 
     case EOS_Tmax:
-      infoVals[i] = me->T[me->NT - 1];
+      infoVals[i] = me->T[me->NT - me->nGhostData - 1];
       break;
 
     case EOS_NR:
-      infoVals[i] = (EOS_REAL) me->NR;
+      infoVals[i] = (EOS_REAL) me->NR - ((me->NR > 2*me->nGhostData) ? 2*me->nGhostData : 0);
       break;
 
     case EOS_NT:
-      infoVals[i] = (EOS_REAL) me->NT;
+      infoVals[i] = (EOS_REAL) me->NT - ((me->NT > 2*me->nGhostData) ? 2*me->nGhostData : 0);
       break;
 
     case EOS_Mean_Atomic_Num:
@@ -4871,7 +5400,7 @@ void eos_GetTableInfoRecordType1 (void *ptr, EOS_INTEGER th,
 
       *err = EOS_INVALID_INFO_FLAG;
       *err = eos_SetCustomErrorMsg(th, *err,
-				   "Invalid info flag because %s may only be used without any other info flags.", s);
+                                   "Invalid info flag because %s may only be used without any other info flags.", s);
       break;
 
     default:
@@ -4880,21 +5409,21 @@ void eos_GetTableInfoRecordType1 (void *ptr, EOS_INTEGER th,
   }
 }
 
-/************************************************************************
- * 
- * returns meta data information items for the table.
- * 
- * Returned Values:
- * EOS_INTEGER *err    - output error code
- * EOS_CHAR *infoStr   - allocated string to contain all comments
+/***********************************************************************/
+/*!
+ * \brief returns meta data information items for the table.
  *
- * Input Value:
- * void *ptr           - this pointer (pointer to the instance of type eos_RecordType1
- * EOS_CHAR *infoItem  - flag specifying what meta data item to fetch
- * 
- ************************************************************************/
+ * \param[out]   *err         - EOS_INTEGER : error code
+ * \param[in]    *ptr         - void : data object pointer;
+ *                                     internally recast to eos_RecordType1*
+ * \param[in]    *infoItem    - EOS_INTEGER : flag specifying what meta data item to fetch
+ * \param[out]   *infoStr     - EOS_CHAR* : allocated string to contain all comments
+ *
+ * \return none
+ *
+ ***********************************************************************/
 void eos_GetTableMetaDataRecordType1 (void *ptr, EOS_INTEGER infoItem,
-				      EOS_CHAR *infoStr, EOS_INTEGER *err)
+                                      EOS_CHAR *infoStr, EOS_INTEGER *err)
 {
   //eos_RecordType1 *me;
 
@@ -4905,7 +5434,7 @@ void eos_GetTableMetaDataRecordType1 (void *ptr, EOS_INTEGER infoItem,
 /***********************************************************************/
 /*!
  * \section calculate_entropy Calculate Entropy
- * \brief Determines entropy using existing internal energy, temperature and, 
+ * \brief Determines entropy using existing internal energy, temperature and,
  * if available, free energy data.
  *
  * \param[out]   S[NR*NT]  - EOS_REAL : locally allocated array containing
@@ -4985,7 +5514,7 @@ EOS_INTEGER eos_Entropy (eos_RecordType1 *me,
       for (j = 0; j < NT; j++) {
         integrandValues[j] =
           (T[j] <= ZERO) ? ZERO : (U[i + j * NR] - U[i]) / (T[j] * T[j]);
-	integralValues[j] = ZERO;
+        integralValues[j] = ZERO;
       }
 
 #if 0
@@ -4993,7 +5522,7 @@ EOS_INTEGER eos_Entropy (eos_RecordType1 *me,
       for (j = 0; j < NT; j++) {
         ierr =
           eos_TrapezoidIntegrate (0, NT-1, T[j], NT, integrandValues, T, 99, &integralValue,
-				  (!(i==(NR-1) && j==(NT-1)))?EOS_TRUE:EOS_FALSE);
+                                  (!(i==(NR-1) && j==(NT-1)))?EOS_TRUE:EOS_FALSE);
         S[i + j * NR] =
           (T[j] <= ZERO) ? ZERO : (U[i + j * NR] - U[i]) / T[j] + integralValue;
       }
@@ -5002,16 +5531,16 @@ EOS_INTEGER eos_Entropy (eos_RecordType1 *me,
       j = 0;
       if (T[j] <= ZERO) S[i + j * NR] = ZERO;
       for (j = 1; j < NT; j++) {
-	if (T[j] <= ZERO) {
-	  S[i + j * NR] = ZERO;
-	}
-	else {
-	  ierr =
-	    eos_TrapezoidIntegrate (j-1, j, T[j], NT, integrandValues, T, 99, &integralValue,
-				    (!(i==(NR-1) && j==(NT-1)))?EOS_TRUE:EOS_FALSE);
-	  integralValues[j] = integralValues[j-1] + integralValue;
-	  S[i + j * NR] = (U[i + j * NR] - U[i]) / T[j] + integralValues[j];
-	}
+        if (T[j] <= ZERO) {
+          S[i + j * NR] = ZERO;
+        }
+        else {
+          ierr =
+            eos_TrapezoidIntegrate (j-1, j, T[j], NT, integrandValues, T, 99, &integralValue,
+                                    (!(i==(NR-1) && j==(NT-1)))?EOS_TRUE:EOS_FALSE);
+          integralValues[j] = integralValues[j-1] + integralValue;
+          S[i + j * NR] = (U[i + j * NR] - U[i]) / T[j] + integralValues[j];
+        }
       }
 #endif
     }
@@ -5027,7 +5556,7 @@ EOS_INTEGER eos_Entropy (eos_RecordType1 *me,
 /*!
  * \brief This function gets data from 201 table. These values are needed
  *  for entropy and free energy data calculations.
- * 
+ *
  * \param[out]   errorCode - EOS_INTEGER : output error code
  * \param[out]   *zbar     - EOS_REAL : mean atomic number
  * \param[out]   *abar     - EOS_REAL : mean atomic mass
@@ -5052,10 +5581,10 @@ void eos_GetLoadedBulkDataRecordType1 (void *ptr, EOS_REAL *zbar,
 
 /***********************************************************************/
 /*!
- * \brief This function assumes that tableNum 303 or 301 were loaded for a
- *  requested table Number 306 (cold Curve) We need to delete all data
+ * \brief This function assumes that either tableNum 303 or 301 was loaded for a
+ *  requested table Number 306 (cold Curve). We need to delete all data
  *  other than the cold Curve data and reset the table num to 306.
- * 
+ *
  * \param[out]   err        - EOS_INTEGER : error code
  * \param[out]   *zbar      - EOS_REAL : mean atomic number
  * \param[out]   *abar      - EOS_REAL : mean atomic mass
@@ -5069,116 +5598,57 @@ void eos_GetLoadedBulkDataRecordType1 (void *ptr, EOS_REAL *zbar,
 void _eos_CleanUpColdCurveRecordType1 (void *ptr, EOS_INTEGER *err)
 {
   eos_RecordType1 *me;
-  EOS_INTEGER numSubTables, j, nr;
-  EOS_REAL temp, *newR = NULL, *tableRow1 = NULL, *tableRow2 =
-    NULL, *tableRow3 = NULL, *tableRow4 = NULL;
+  EOS_INTEGER numSubTables, j, k, nr;
+  EOS_REAL temp, *newR = NULL, *tableRow[MAX_TABLES_RECORDTYPE1];
+
   me = (eos_RecordType1 *) ptr;
   *err = EOS_OK;
 
-  /* first copy the available cold curve data into newly allocated arrays */
-  tableRow1 = (EOS_REAL *) malloc (me->NR * sizeof (EOS_REAL));
-  tableRow2 = (EOS_REAL *) malloc (me->NR * sizeof (EOS_REAL));
-  tableRow3 = (EOS_REAL *) malloc (me->NR * sizeof (EOS_REAL));
-  tableRow4 = (EOS_REAL *) malloc (me->NR * sizeof (EOS_REAL));
+  /* first allocate some temporary arrays */
+  for(k=0; k<MAX_TABLES_RECORDTYPE1; k++) {
+    tableRow[k] = NULL;
+    tableRow[k] = (EOS_REAL *) malloc (me->NR * sizeof (EOS_REAL));
+  }
+
+  /* copy the available cold curve data into newly allocated arrays */
+  for(k=0; k<MAX_TABLES_RECORDTYPE1; k++) {
+    if (tableRow[k]) {
+      if (me->table[k] && me->coldCurve[k]) {
+        /* cold curve was separated in eos_LoadRecordType1 */
+        for (j = 0; j < me->NR; j++)
+          tableRow[k][j] = me->table[k][0][j] + me->coldCurve[k][j];
+      }
+      else if (me->table[k] && ! me->coldCurve[k]) {
+        /* cold curve was not separated in eos_LoadRecordType1 */
+        for (j = 0; j < me->NR; j++)
+          tableRow[k][j] = me->table[k][0][j];
+      }
+      else if (! me->table[k] && me->coldCurve[k]) {
+        /* cold curve was not separated in eos_LoadRecordType1 */
+        for (j = 0; j < me->NR; j++)
+          tableRow[k][j] = me->coldCurve[k][j];
+      }
+      else {
+        /* something was messed up in eos_LoadRecordType1 */
+        for (j = 0; j < me->NR; j++)
+          tableRow[k][j] = ZERO;
+      }
+    }
+  }
+
+  /* allocate another temporary array */
   newR = (EOS_REAL *) malloc (me->NR * sizeof (EOS_REAL));
 
-  if (tableRow1) {
-    if (me->table1 && me->coldCurve1) {
-      /* cold curve was separated in eos_LoadRecordType1 */
-      for (j = 0; j < me->NR; j++)
-	tableRow1[j] = me->table1[0][j] + me->coldCurve1[j];
-    }
-    else if (me->table1 && ! me->coldCurve1) {
-      /* cold curve was not separated in eos_LoadRecordType1 */
-      for (j = 0; j < me->NR; j++)
-	tableRow1[j] = me->table1[0][j];
-    }
-    else if (! me->table1 && me->coldCurve1) {
-      /* cold curve was not separated in eos_LoadRecordType1 */
-      for (j = 0; j < me->NR; j++)
-	tableRow1[j] = me->coldCurve1[j];
-    }
-    else {
-      /* something was messed up in eos_LoadRecordType1 */
-      for (j = 0; j < me->NR; j++)
-	tableRow1[j] = ZERO;
-    }
-  }
-  if (tableRow2) {
-    if (me->table2 && me->coldCurve2) {
-      /* cold curve was separated in eos_LoadRecordType1 */
-      for (j = 0; j < me->NR; j++)
-	tableRow2[j] = me->table2[0][j] + me->coldCurve2[j];
-    }
-    else if (me->table2 && ! me->coldCurve2) {
-      /* cold curve was not separated in eos_LoadRecordType1 */
-      for (j = 0; j < me->NR; j++)
-	tableRow2[j] = me->table2[0][j];
-    }
-    else if (! me->table2 && me->coldCurve2) {
-      /* cold curve was not separated in eos_LoadRecordType1 */
-      for (j = 0; j < me->NR; j++)
-	tableRow2[j] = me->coldCurve2[j];
-    }
-    else {
-      /* something was messed up in eos_LoadRecordType1 */
-      for (j = 0; j < me->NR; j++)
-	tableRow2[j] = ZERO;
-    }
-  }
-  if (tableRow3) {
-    if (me->table3 && me->coldCurve3) {
-      /* cold curve was separated in eos_LoadRecordType1 */
-      for (j = 0; j < me->NR; j++)
-	tableRow3[j] = me->table3[0][j] + me->coldCurve3[j];
-    }
-    else if (me->table3 && ! me->coldCurve3) {
-      /* cold curve was not separated in eos_LoadRecordType1 */
-      for (j = 0; j < me->NR; j++)
-	tableRow3[j] = me->table3[0][j];
-    }
-    else if (! me->table3 && me->coldCurve3) {
-      /* cold curve was not separated in eos_LoadRecordType1 */
-      for (j = 0; j < me->NR; j++)
-	tableRow3[j] = me->coldCurve3[j];
-    }
-    else {
-      /* something was messed up in eos_LoadRecordType1 */
-      for (j = 0; j < me->NR; j++)
-	tableRow3[j] = ZERO;
-    }
-  }
-  if (tableRow4) {
-    if (me->table4 && me->coldCurve4) {
-      /* cold curve was separated in eos_LoadRecordType1 */
-      for (j = 0; j < me->NR; j++)
-	tableRow4[j] = me->table4[0][j] + me->coldCurve4[j];
-    }
-    else if (me->table4 && ! me->coldCurve4) {
-      /* cold curve was not separated in eos_LoadRecordType1 */
-      for (j = 0; j < me->NR; j++)
-	tableRow4[j] = me->table4[0][j];
-    }
-    else if (! me->table4 && me->coldCurve4) {
-      /* cold curve was not separated in eos_LoadRecordType1 */
-      for (j = 0; j < me->NR; j++)
-	tableRow4[j] = me->coldCurve4[j];
-    }
-    else {
-      /* something was messed up in eos_LoadRecordType1 */
-      for (j = 0; j < me->NR; j++)
-	tableRow4[j] = ZERO;
-    }
-  }
+  /* copy the available density data into newly allocated array */
   if (newR) {
     if (me->R) {
       for (j = 0; j < me->NR; j++)
-	newR[j] = me->R[j];
+        newR[j] = me->R[j];
     }
     else {
       /* something was messed up in eos_LoadRecordType1 */
       for (j = 0; j < me->NR; j++)
-	newR[j] = ZERO;
+        newR[j] = ZERO;
     }
   }
 
@@ -5199,32 +5669,38 @@ void _eos_CleanUpColdCurveRecordType1 (void *ptr, EOS_INTEGER *err)
   me->eosData.numSubtablesLoaded = numSubTables;
   me->T[0] = temp;
 
-  for (j = 0; j < me->NR; j++) {
-    if (numSubTables >= 1)
-      me->table1[0][j] = tableRow1[j];
-    if (numSubTables >= 2)
-      me->table2[0][j] = tableRow2[j];
-    if (numSubTables >= 3)
-      me->table3[0][j] = tableRow3[j];
-    if (numSubTables >= 4)
-      me->table4[0][j] = tableRow4[j];
-    me->R[j] = newR[j];
+  /* copy temproray data into the newly-sized object */
+#ifndef __ONE_OBJECT_PER_TABLEHANDLE__
+  for(k=0; k<MAX_TABLES_RECORDTYPE1; k++) {
+    for (j = 0; j < me->NR; j++) {
+      if (numSubTables > k)
+        me->table[k][0][j] = tableRow[k][j];
+      me->R[j] = newR[j];
+    }
   }
+#else
+  for(k=0; k<MAX_TABLES_RECORDTYPE1; k++) {
+    if (! tableRow[k][j] || ! me->table[k]) continue; /* skip empty arrays */
+    for (j = 0; j < me->NR; j++) {
+      me->table[k][0][j] = tableRow[k][j];
+      me->R[j] = newR[j];
+    }
+  }
+#endif
 
+  /* deallocate temporary memory */
   EOS_FREE (newR);
-  if (tableRow1) EOS_FREE (tableRow1);
-  if (tableRow2) EOS_FREE (tableRow2);
-  if (tableRow3) EOS_FREE (tableRow3);
-  if (tableRow4) EOS_FREE (tableRow4);
+  for(k=0; k<MAX_TABLES_RECORDTYPE1; k++) {
+    if (tableRow[k]) EOS_FREE (tableRow[k]);
+  }
   me->eosData.coldCurveIsLoaded = EOS_FALSE;    /* indicates that cold curves arrays are null! */
   me->eosData.isLoaded = 1;     /* indicate that data is loaded into object */
 }
 
-
 /***********************************************************************/
 /*!
  * \brief Get the smoothing option flags.
- * 
+ *
  * \param[in]    dataType     - EOS_INTEGER : data type of *ptr eos_RecordType1 object
  * \param[out]   *isSmooth    - EOS_INTEGER : is data  of *ptr eos_RecordType1 object smooth
  *                                            according to EOS_SMOOTH option?
@@ -5241,31 +5717,19 @@ void eos_GetSmoothingRecordType1 (void *ptr, EOS_INTEGER dataType,
                                   EOS_INTEGER *isPtSmooth)
 {
   eos_RecordType1 *me;
-  EOS_INTEGER subTableNum;
+  EOS_INTEGER i, subTableNum = EOS_TYPE_TO_SUB_TAB_NUM (dataType);
+
+  me = (eos_RecordType1 *) ptr;
 
   /* initialize values */
   *isSmooth = *isPtSmooth = 0;
 
-  me = (eos_RecordType1 *) ptr;
-  subTableNum = EOS_TYPE_TO_SUB_TAB_NUM (dataType);
-  switch (subTableNum) {
-  case 1:
-    *isSmooth = me->shouldBeSmooth1;
-    *isPtSmooth = me->shouldBePtSmooth1;
-    break;
-  case 2:
-    *isSmooth = me->shouldBeSmooth2;
-    *isPtSmooth = me->shouldBePtSmooth2;
-    break;
-  case 3:
-    *isSmooth = me->shouldBeSmooth3;
-    *isPtSmooth = me->shouldBePtSmooth4;
-    break;
-  case 4:
-    *isSmooth = me->shouldBeSmooth4;
-    *isPtSmooth = me->shouldBePtSmooth4;
-    break;
-  }
+  if(subTableNum<1) return;
+  assert(subTableNum<=MAX_TABLES_RECORDTYPE1);
+  i = subTableNum - 1;
+
+  *isSmooth = me->shouldBeSmooth[i];
+  *isPtSmooth = me->shouldBePtSmooth[i];
 }
 
 /***********************************************************************/
@@ -5286,31 +5750,17 @@ void eos_GetSmoothingRecordType1 (void *ptr, EOS_INTEGER dataType,
 void eos_GetMonotonicityRecordType1 (void *ptr, EOS_INTEGER dataType,
                                      EOS_INTEGER *inX, EOS_INTEGER *inY)
 {
-  EOS_INTEGER subTableNum = 1;
+  EOS_INTEGER i, subTableNum = EOS_TYPE_TO_SUB_TAB_NUM (dataType);
   eos_RecordType1 *me;
 
-
   me = (eos_RecordType1 *) ptr;
-  subTableNum = EOS_TYPE_TO_SUB_TAB_NUM (dataType);
 
-  switch (subTableNum) {
-  case 1:
-    *inX = me->shouldBeMonotonicX1;
-    *inY = me->shouldBeMonotonicY1;
-    break;
-  case 2:
-    *inX = me->shouldBeMonotonicX2;
-    *inY = me->shouldBeMonotonicY2;
-    break;
-  case 3:
-    *inX = me->shouldBeMonotonicX3;
-    *inY = me->shouldBeMonotonicY3;
-    break;
-  case 4:
-    *inX = me->shouldBeMonotonicX4;
-    *inY = me->shouldBeMonotonicY4;
-    break;
-  }
+  if(subTableNum<1) return;
+  assert(subTableNum<=MAX_TABLES_RECORDTYPE1);
+  i = subTableNum - 1;
+
+  *inX = me->shouldBeMonotonicX[i];
+  *inY = me->shouldBeMonotonicY[i];
 }
 
 /***********************************************************************/
@@ -5331,54 +5781,26 @@ void eos_GetMonotonicityRecordType1 (void *ptr, EOS_INTEGER dataType,
 void eos_SetMonotonicityRecordType1 (void *ptr, EOS_INTEGER dataType,
                                      EOS_INTEGER inX, EOS_INTEGER inY)
 {
-  EOS_INTEGER subTableNum = 1;
+  EOS_INTEGER i, subTableNum = EOS_TYPE_TO_SUB_TAB_NUM (dataType);
   eos_RecordType1 *me;
 
-
   me = (eos_RecordType1 *) ptr;
-  subTableNum = EOS_TYPE_TO_SUB_TAB_NUM (dataType);
 
-  switch (subTableNum) {
-  case 1:
-    if (me->shouldBePtSmooth1)
-      return;
-    if (inX >= 0 && !me->shouldBeMonotonicX1)
-      me->shouldBeMonotonicX1 = inX;
-    if (inY >= 0 && !me->shouldBeMonotonicY1)
-      me->shouldBeMonotonicY1 = inY;
-    break;
-  case 2:
-    if (me->shouldBePtSmooth2)
-      return;
-    if (inX >= 0 && !me->shouldBeMonotonicX2)
-      me->shouldBeMonotonicX2 = inX;
-    if (inY >= 0 && !me->shouldBeMonotonicY2)
-      me->shouldBeMonotonicY2 = inY;
-    break;
-  case 3:
-    if (me->shouldBePtSmooth3)
-      return;
-    if (inX >= 0 && !me->shouldBeMonotonicX3)
-      me->shouldBeMonotonicX3 = inX;
-    if (inY >= 0 && !me->shouldBeMonotonicY3)
-      me->shouldBeMonotonicY3 = inY;
-    break;
-  case 4:
-    if (me->shouldBePtSmooth4)
-      return;
-    if (inX >= 0 && !me->shouldBeMonotonicX4)
-      me->shouldBeMonotonicX4 = inX;
-    if (inY >= 0 && !me->shouldBeMonotonicY4)
-      me->shouldBeMonotonicY4 = inY;
-    break;
-  }
+  if(subTableNum<1) return;
+  assert(subTableNum<=MAX_TABLES_RECORDTYPE1);
+  i = subTableNum - 1;
+
+  if (me->shouldBePtSmooth[i]) return;
+
+  if (inX >= 0 && !me->shouldBeMonotonicX[i]) me->shouldBeMonotonicX[i] = inX;
+  if (inY >= 0 && !me->shouldBeMonotonicY[i]) me->shouldBeMonotonicY[i] = inY;
 }
 
 /***********************************************************************/
 /*!
  * \brief Find out if the requested type, monotonicity combo can share our table
  *  object
- * 
+ *
  * \param[out]   *compatible  - EOS_BOOLEAN : are the monotonic options compatible?
  * \param[in]    *ptr         - void : data object pointer;
  *                                     internally recast to eos_RecordType1*
@@ -5400,48 +5822,24 @@ void eos_AreMonotonicRequirementsCompatibleRecordType1 (void *ptr,
                                                         EOS_BOOLEAN
                                                         *compatible)
 {
-  EOS_INTEGER subTableNum = 1, subTableNumStart, subTableNumEnd;
+  EOS_INTEGER i, subTableNum = 1, subTableNumStart, subTableNumEnd;
   eos_RecordType1 *me;
-  EOS_INTEGER *shouldBeMonotonicX=0, *shouldBeMonotonicY=0, *shouldBePtSmooth=0;
 
   me = (eos_RecordType1 *) ptr;
   if (dataType > 0)
     subTableNumStart = subTableNumEnd = EOS_TYPE_TO_SUB_TAB_NUM (dataType);
-  else {                        /* do all 4 substables */
-
+  else {                        /* do all subtables */
     subTableNumStart = 1;
-    subTableNumEnd = 4;
+    subTableNumEnd = MAX_TABLES_RECORDTYPE1;
   }
   *compatible = EOS_TRUE;
 
-  for (subTableNum = subTableNumStart; subTableNum <= subTableNumEnd;
-       subTableNum++) {
-    switch (subTableNum) {
-    case 1:
-      shouldBeMonotonicX = &(me->shouldBeMonotonicX1);
-      shouldBeMonotonicY = &(me->shouldBeMonotonicY1);
-      shouldBePtSmooth = &(me->shouldBePtSmooth1);
-      break;
-    case 2:
-      shouldBeMonotonicX = &(me->shouldBeMonotonicX2);
-      shouldBeMonotonicY = &(me->shouldBeMonotonicY2);
-      shouldBePtSmooth = &(me->shouldBePtSmooth2);
-      break;
-    case 3:
-      shouldBeMonotonicX = &(me->shouldBeMonotonicX3);
-      shouldBeMonotonicY = &(me->shouldBeMonotonicY3);
-      shouldBePtSmooth = &(me->shouldBePtSmooth3);
-      break;
-    case 4:
-      shouldBeMonotonicX = &(me->shouldBeMonotonicX4);
-      shouldBeMonotonicY = &(me->shouldBeMonotonicY4);
-      shouldBePtSmooth = &(me->shouldBePtSmooth4);
-      break;
-    }
+  for (subTableNum = subTableNumStart; subTableNum <= subTableNumEnd; subTableNum++) {
+    i = subTableNum - 1;
 
-    if (inX >= 0 && *shouldBeMonotonicX != inX) *compatible = EOS_FALSE;
-    if (inY >= 0 && *shouldBeMonotonicY != inY) *compatible = EOS_FALSE;
-    if ((inX != 0 || inY != 0) && *shouldBePtSmooth > 0) *compatible = EOS_FALSE;
+    if (inX >= 0 && me->shouldBeMonotonicX[i] != inX) *compatible = EOS_FALSE;
+    if (inY >= 0 && me->shouldBeMonotonicY[i] != inY) *compatible = EOS_FALSE;
+    if ((inX != 0 || inY != 0) && me->shouldBePtSmooth[i] > 0) *compatible = EOS_FALSE;
 
     if (*compatible == EOS_FALSE)
       break;
@@ -5451,7 +5849,7 @@ void eos_AreMonotonicRequirementsCompatibleRecordType1 (void *ptr,
 /***********************************************************************/
 /*!
  * \brief Set the flags so that appropriate data will be made smooth upon loading
- * 
+ *
  * \param[in]    *ptr      - void : data object pointer;
  *                                  internally recast to eos_RecordType1*
  * \param[in]    dataType  - EOS_INTEGER : data type of *ptr eos_RecordType1 object
@@ -5467,40 +5865,26 @@ void eos_SetSmoothingRecordType1 (void *ptr, EOS_INTEGER dataType,
                                   EOS_INTEGER smooth, EOS_INTEGER pt_smooth)
 {
   eos_RecordType1 *me;
-  EOS_INTEGER subTableNum;
-  me = (eos_RecordType1 *) ptr;
-  subTableNum = EOS_TYPE_TO_SUB_TAB_NUM (dataType);
+  EOS_INTEGER i, subTableNum = EOS_TYPE_TO_SUB_TAB_NUM (dataType);
 
-  switch (subTableNum) {
-  case 1:
-    if (!me->shouldBePtSmooth1)
-      me->shouldBeSmooth1 = (smooth != 0);
-    break;
-  case 2:
-    if (!me->shouldBePtSmooth2)
-      me->shouldBeSmooth2 = (smooth != 0);
-    break;
-  case 3:
-    if (!me->shouldBePtSmooth3)
-      me->shouldBeSmooth3 = (smooth != 0);
-    break;
-  case 4:
-    if (!me->shouldBePtSmooth4)
-      me->shouldBeSmooth4 = (smooth != 0);
-    break;
-  }
+  me = (eos_RecordType1 *) ptr;
+
+  if(subTableNum<1) return;
+  assert(subTableNum<=MAX_TABLES_RECORDTYPE1);
+  i = subTableNum - 1;
+
+  if (!me->shouldBePtSmooth[i]) me->shouldBeSmooth[i] = (smooth != 0);
 
   /* set all shouldBePtSmooth flags */
-  me->shouldBePtSmooth1 =
-    me->shouldBePtSmooth2 =
-    me->shouldBePtSmooth3 = me->shouldBePtSmooth4 = (pt_smooth != 0);
-
+  for(i=0; i<MAX_TABLES_RECORDTYPE1; i++) {
+    me->shouldBePtSmooth[i] = (pt_smooth != 0);
+  }
   if (pt_smooth != 0) {
     /* override ALL shouldBeMonotonic flags */
-    me->shouldBeMonotonicX1 = me->shouldBeMonotonicX2 =
-      me->shouldBeMonotonicX3 = me->shouldBeMonotonicX4 =
-      me->shouldBeMonotonicY1 = me->shouldBeMonotonicY2 =
-      me->shouldBeMonotonicY3 = me->shouldBeMonotonicY4 = EOS_FALSE;
+    for(i=0; i<MAX_TABLES_RECORDTYPE1; i++) {
+      me->shouldBeMonotonicX[i] = EOS_FALSE;
+      me->shouldBeMonotonicY[i] = EOS_FALSE;
+    }
   }
 }
 
@@ -5530,52 +5914,29 @@ void eos_AreSmoothingRequirementsCompatibleRecordType1 (void *ptr,
                                                         *compatible)
 {
   eos_RecordType1 *me;
-  EOS_INTEGER subTableNum;
+  EOS_INTEGER i, subTableNum = EOS_TYPE_TO_SUB_TAB_NUM (dataType);
+
   me = (eos_RecordType1 *) ptr;
-  subTableNum = EOS_TYPE_TO_SUB_TAB_NUM (dataType);
+
   *compatible = EOS_TRUE;
 
-  switch (subTableNum) {
-  case 1:
-    if (me->shouldBeSmooth1 != makeSmooth)
-      *compatible = EOS_FALSE;
-    if (me->shouldBePtSmooth1 != makePtSmooth)
-      *compatible = EOS_FALSE;
-    if (makeSmooth != 0 && me->shouldBePtSmooth1 != 0)
-      *compatible = EOS_FALSE;
-    break;
-  case 2:
-    if (me->shouldBeSmooth2 != makeSmooth)
-      *compatible = EOS_FALSE;
-    if (me->shouldBePtSmooth2 != makePtSmooth)
-      *compatible = EOS_FALSE;
-    if (makeSmooth != 0 && me->shouldBePtSmooth2 != 0)
-      *compatible = EOS_FALSE;
-    break;
-  case 3:
-    if (me->shouldBeSmooth3 != makeSmooth)
-      *compatible = EOS_FALSE;
-    if (me->shouldBePtSmooth3 != makePtSmooth)
-      *compatible = EOS_FALSE;
-    if (makeSmooth != 0 && me->shouldBePtSmooth3 != 0)
-      *compatible = EOS_FALSE;
-    break;
-  case 4:
-    if (me->shouldBeSmooth4 != makeSmooth)
-      *compatible = EOS_FALSE;
-    if (me->shouldBePtSmooth4 != makePtSmooth)
-      *compatible = EOS_FALSE;
-    if (makeSmooth != 0 && me->shouldBePtSmooth4 != 0)
-      *compatible = EOS_FALSE;
-    break;
-  }
+  if(subTableNum<1) return;
+  assert(subTableNum<=MAX_TABLES_RECORDTYPE1);
+  i = subTableNum - 1;
+
+  if (me->shouldBeSmooth[i] != makeSmooth)
+    *compatible = EOS_FALSE;
+  if (me->shouldBePtSmooth[i] != makePtSmooth)
+    *compatible = EOS_FALSE;
+  if (makeSmooth != 0 && me->shouldBePtSmooth[i] != 0)
+    *compatible = EOS_FALSE;
 }
 
 /***********************************************************************/
 /*!
  * \brief This is used to perform inverse interpolation at a given T when
  *  EOS_PT_SMOOTHING is set for the EOS_Ut_PtT or EOS_V_PtT data type.
- * 
+ *
  * \param[out]   *fVals     - EOS_REAL : nXYPairs of specific volume or specific internal energy
  * \param[out]   *dFx       - EOS_REAL : nXYPairs of partial derivatives w.r.t. pressure
  * \param[out]   **dFy      - EOS_REAL : nXYPairs of partial derivatives w.r.t. temperature
@@ -5595,7 +5956,7 @@ void _eos_SesameInvTRecordType1 (eos_RecordType1 *me, EOS_INTEGER dataType,
                                  EOS_REAL *pres, EOS_REAL *temp,
                                  EOS_REAL *fVals, EOS_REAL *dFx,
                                  EOS_REAL *dFy, EOS_INTEGER *xyBounds,
-				 EOS_INTEGER *errorCode, EOS_CHAR **errMsg)
+                                 EOS_INTEGER *errorCode, EOS_CHAR **errMsg)
 {
   EOS_INTEGER irlo, irhi, ir, j;
   EOS_REAL sr, sv, vol;
@@ -5625,49 +5986,49 @@ void _eos_SesameInvTRecordType1 (eos_RecordType1 *me, EOS_INTEGER dataType,
     if (dataType == EOS_V_PtT) {
 
       /*
-	Calculate the specific volume values for all pres[j] and temp[j] values
+        Calculate the specific volume values for all pres[j] and temp[j] values
       */
       if (pres[j] < isotherm_p[0]) {
 
-	/* _eos_sesame_isotherm_buildRecordType1 can return ZERO in isotherm_p and isotherm_r arrays,
-	   and pres array can contain ZERO -- appropriate checks must be made */
+        /* _eos_sesame_isotherm_buildRecordType1 can return ZERO in isotherm_p and isotherm_r arrays,
+           and pres array can contain ZERO -- appropriate checks must be made */
 
-	/* isotherm_p may contain zero which is minimum possible -- see _eos_sesame_isotherm_buildRecordType1 */
-	/* isotherm_r may contain zero which is minimum possible -- see SESAME data */
-	/* pres may contain negative, zero and/or positive values -- input */
-	/* ORIGINAL CODE:
-	   fVals[j] = ONE / (isotherm_r[0] * (pres[j] / isotherm_p[0]));
-	*/
-	fVals[j] = isotherm_r[0] * (pres[j] / FLOOR(isotherm_p[0]));
-	if (fabs(fVals[j]) <= TINY_D || fabs(isotherm_p[0]) <= TINY_D) {
-	  xyBounds[j] = EOS_CANT_INVERT_DATA;
-	  if (fabs(isotherm_p[0]) <= TINY_D)
-	    xyBounds[j] = EOS_UNDEFINED; /* density scaling is undefined */
-	  err = EOS_INTERP_EXTRAPOLATED; /* store err until j-loop is finished */
-	}
-	fVals[j] = ONE / FLOOR(fVals[j]);
-	/* 	dFx[j] = ????;  THIS IS CURRENTLY UNDEFINED AS DOCUMENTED IN THE USER MANUAL -- DAP */
-	/* 	dFy[j] = ????;  THIS IS CURRENTLY UNDEFINED AS DOCUMENTED IN THE USER MANUAL -- DAP */
+        /* isotherm_p may contain zero which is minimum possible -- see _eos_sesame_isotherm_buildRecordType1 */
+        /* isotherm_r may contain zero which is minimum possible -- see SESAME data */
+        /* pres may contain negative, zero and/or positive values -- input */
+        /* ORIGINAL CODE:
+           fVals[j] = ONE / (isotherm_r[0] * (pres[j] / isotherm_p[0]));
+        */
+        fVals[j] = isotherm_r[0] * (pres[j] / FLOOR(isotherm_p[0]));
+        if (fabs(fVals[j]) <= TINY_D || fabs(isotherm_p[0]) <= TINY_D) {
+          xyBounds[j] = EOS_CANT_INVERT_DATA;
+          if (fabs(isotherm_p[0]) <= TINY_D)
+            xyBounds[j] = EOS_UNDEFINED; /* density scaling is undefined */
+          err = EOS_INTERP_EXTRAPOLATED; /* store err until j-loop is finished */
+        }
+        fVals[j] = ONE / FLOOR(fVals[j]);
+        /* 	dFx[j] = ????;  THIS IS CURRENTLY UNDEFINED AS DOCUMENTED IN THE USER MANUAL -- DAP */
+        /* 	dFy[j] = ????;  THIS IS CURRENTLY UNDEFINED AS DOCUMENTED IN THE USER MANUAL -- DAP */
 
       }
       else if (pres[j] >= isotherm_p[isotherm_nr]) {
 
-	/* isotherm_p may contain zero which is minimum possible -- see _eos_sesame_isotherm_buildRecordType1 */
-	/* isotherm_r may contain zero which is minimum possible -- see SESAME data */
-	/* pres may contain negative, zero and/or positive values -- input */
-	/* ORIGINAL CODE:
-	   fVals[j] = ONE / (isotherm_r[isotherm_nr] * (pres[j] / isotherm_p[isotherm_nr]));
-	*/
+        /* isotherm_p may contain zero which is minimum possible -- see _eos_sesame_isotherm_buildRecordType1 */
+        /* isotherm_r may contain zero which is minimum possible -- see SESAME data */
+        /* pres may contain negative, zero and/or positive values -- input */
+        /* ORIGINAL CODE:
+           fVals[j] = ONE / (isotherm_r[isotherm_nr] * (pres[j] / isotherm_p[isotherm_nr]));
+        */
         fVals[j] = isotherm_r[isotherm_nr] * (pres[j] / FLOOR(isotherm_p[isotherm_nr]));
-	if (fabs(fVals[j]) < TINY_D || fabs(isotherm_p[isotherm_nr]) <= TINY_D) {
-	  xyBounds[j] = EOS_CANT_INVERT_DATA;
-	  if (fabs(isotherm_p[isotherm_nr]) <= TINY_D)
-	    xyBounds[j] = EOS_UNDEFINED; /* density scaling is undefined */
-	  err = EOS_INTERP_EXTRAPOLATED; /* store err until j-loop is finished */
-	}
-	fVals[j] = ONE / FLOOR(fVals[j]);
-	/* 	dFx[j] = ????;  THIS IS CURRENTLY UNDEFINED AS DOCUMENTED IN THE USER MANUAL -- DAP */
-	/* 	dFy[j] = ????;  THIS IS CURRENTLY UNDEFINED AS DOCUMENTED IN THE USER MANUAL -- DAP */
+        if (fabs(fVals[j]) < TINY_D || fabs(isotherm_p[isotherm_nr]) <= TINY_D) {
+          xyBounds[j] = EOS_CANT_INVERT_DATA;
+          if (fabs(isotherm_p[isotherm_nr]) <= TINY_D)
+            xyBounds[j] = EOS_UNDEFINED; /* density scaling is undefined */
+          err = EOS_INTERP_EXTRAPOLATED; /* store err until j-loop is finished */
+        }
+        fVals[j] = ONE / FLOOR(fVals[j]);
+        /* 	dFx[j] = ????;  THIS IS CURRENTLY UNDEFINED AS DOCUMENTED IN THE USER MANUAL -- DAP */
+        /* 	dFy[j] = ????;  THIS IS CURRENTLY UNDEFINED AS DOCUMENTED IN THE USER MANUAL -- DAP */
 
       }
       else {
@@ -5689,17 +6050,17 @@ void _eos_SesameInvTRecordType1 (eos_RecordType1 *me, EOS_INTEGER dataType,
 
         sr =
           (pres[j] - isotherm_p[irlo]) / FLOOR(isotherm_p[irhi] -
-					       isotherm_p[irlo]);
+                                               isotherm_p[irlo]);
         fVals[j] =
           ONE / FLOOR(isotherm_r[irlo] +
-		      sr * (isotherm_r[irhi] - isotherm_r[irlo]));
+                      sr * (isotherm_r[irhi] - isotherm_r[irlo]));
 
-	if (fabs(isotherm_r[irlo] + sr * (isotherm_r[irhi] - isotherm_r[irlo])) <= TINY_D) {
-	  xyBounds[j] = EOS_CANT_INVERT_DATA;
-	  err = EOS_INTERP_EXTRAPOLATED; /* store err until j-loop is finished */
-	}
-	/* 	dFx[j] = ????;  THIS IS CURRENTLY UNDEFINED AS DOCUMENTED IN THE USER MANUAL -- DAP */
-	/* 	dFy[j] = ????;  THIS IS CURRENTLY UNDEFINED AS DOCUMENTED IN THE USER MANUAL -- DAP */
+        if (fabs(isotherm_r[irlo] + sr * (isotherm_r[irhi] - isotherm_r[irlo])) <= TINY_D) {
+          xyBounds[j] = EOS_CANT_INVERT_DATA;
+          err = EOS_INTERP_EXTRAPOLATED; /* store err until j-loop is finished */
+        }
+        /* 	dFx[j] = ????;  THIS IS CURRENTLY UNDEFINED AS DOCUMENTED IN THE USER MANUAL -- DAP */
+        /* 	dFy[j] = ????;  THIS IS CURRENTLY UNDEFINED AS DOCUMENTED IN THE USER MANUAL -- DAP */
 
       }
 
@@ -5707,20 +6068,20 @@ void _eos_SesameInvTRecordType1 (eos_RecordType1 *me, EOS_INTEGER dataType,
     else if (dataType == EOS_Ut_PtT) {
 
       /*
-	Calculate the specific internal energy values for all pres[j] and temp[j] values
+        Calculate the specific internal energy values for all pres[j] and temp[j] values
       */
       if (pres[j] < isotherm_p[0]) {
 
         fVals[j] = isotherm_e[0];
-	/* 	dFx[j] = ????;  THIS IS CURRENTLY UNDEFINED AS DOCUMENTED IN THE USER MANUAL -- DAP */
-	/* 	dFy[j] = ????;  THIS IS CURRENTLY UNDEFINED AS DOCUMENTED IN THE USER MANUAL -- DAP */
+        /* 	dFx[j] = ????;  THIS IS CURRENTLY UNDEFINED AS DOCUMENTED IN THE USER MANUAL -- DAP */
+        /* 	dFy[j] = ????;  THIS IS CURRENTLY UNDEFINED AS DOCUMENTED IN THE USER MANUAL -- DAP */
 
       }
       else if (pres[j] >= isotherm_p[isotherm_nr]) {
 
         fVals[j] = isotherm_e[isotherm_nr];
-	/* 	dFx[j] = ????;  THIS IS CURRENTLY UNDEFINED AS DOCUMENTED IN THE USER MANUAL -- DAP */
-	/* 	dFy[j] = ????;  THIS IS CURRENTLY UNDEFINED AS DOCUMENTED IN THE USER MANUAL -- DAP */
+        /* 	dFx[j] = ????;  THIS IS CURRENTLY UNDEFINED AS DOCUMENTED IN THE USER MANUAL -- DAP */
+        /* 	dFy[j] = ????;  THIS IS CURRENTLY UNDEFINED AS DOCUMENTED IN THE USER MANUAL -- DAP */
 
       }
       else {
@@ -5750,8 +6111,8 @@ void _eos_SesameInvTRecordType1 (eos_RecordType1 *me, EOS_INTEGER dataType,
         sv = (vol - isotherm_v[irlo]) / (isotherm_v[irhi] - isotherm_v[irlo]);
         fVals[j] =
           isotherm_e[irlo] + sv * (isotherm_e[irhi] - isotherm_e[irlo]);
-	/* 	dFx[j] = ????;  THIS IS CURRENTLY UNDEFINED AS DOCUMENTED IN THE USER MANUAL -- DAP */
-	/* 	dFy[j] = ????;  THIS IS CURRENTLY UNDEFINED AS DOCUMENTED IN THE USER MANUAL -- DAP */
+        /* 	dFx[j] = ????;  THIS IS CURRENTLY UNDEFINED AS DOCUMENTED IN THE USER MANUAL -- DAP */
+        /* 	dFy[j] = ????;  THIS IS CURRENTLY UNDEFINED AS DOCUMENTED IN THE USER MANUAL -- DAP */
 
       }
 
@@ -5796,7 +6157,7 @@ void _eos_sesame_isotherm_buildRecordType1 (eos_RecordType1 *me,
                                             EOS_REAL **isotherm_r,
                                             EOS_REAL **isotherm_v,
                                             EOS_INTEGER *errorCode,
-					    EOS_CHAR **errMsg)
+                                            EOS_CHAR **errMsg)
 {
 
   EOS_BOOLEAN bad;
@@ -5820,8 +6181,8 @@ void _eos_sesame_isotherm_buildRecordType1 (eos_RecordType1 *me,
   if (temp < ZERO) {
     *errorCode = EOS_UNDEFINED;
     eos_SetCustomMsg_str (errMsg,
-			  "_eos_sesame_isotherm_buildRecordType1 ERROR: Invalid temperature=%g",
-			  temp);
+                          "_eos_sesame_isotherm_buildRecordType1 ERROR: Invalid temperature=%g",
+                          temp);
     return;
   }
 
@@ -5838,8 +6199,8 @@ void _eos_sesame_isotherm_buildRecordType1 (eos_RecordType1 *me,
     if (vapor_num < 0) {
       *errorCode = EOS_UNDEFINED;
       eos_SetCustomMsg_str (errMsg,
-			    "_eos_sesame_isotherm_buildRecordType1 ERROR vapor_num (%i) < 0",
-			    vapor_num);
+                            "_eos_sesame_isotherm_buildRecordType1 ERROR vapor_num (%i) < 0",
+                            vapor_num);
       return;
     }
 
@@ -5927,7 +6288,7 @@ void _eos_sesame_isotherm_buildRecordType1 (eos_RecordType1 *me,
   if (me->R[0] > ZERO) {
     scr_num = scr_num + 1;
     scr_p[scr_num] = ZERO;
-    scr_e[scr_num] = me->table2[0][0];
+    scr_e[scr_num] = me->table[1][0][0];
     scr_r[scr_num] = ZERO;
   }
 
@@ -5936,22 +6297,18 @@ void _eos_sesame_isotherm_buildRecordType1 (eos_RecordType1 *me,
 
     switch (which) {
     case -1:
-      p = me->table1[0][ir];
-      e = me->table2[0][ir];
+      p = me->table[0][0][ir];
+      e = me->table[1][0][ir];
       if (p > ZERO)
         p = p * st;
       break;
     case 1:
-      p = me->table1[me->NT - 1][ir] * st;
-      e = me->table2[me->NT - 1][ir] * st;
+      p = me->table[0][me->NT - 1][ir] * st;
+      e = me->table[1][me->NT - 1][ir] * st;
       break;
     default:
-      p =
-        me->table1[itlo][ir] + st * (me->table1[ithi][ir] -
-                                     me->table1[itlo][ir]);
-      e =
-        me->table2[itlo][ir] + st * (me->table2[ithi][ir] -
-                                     me->table2[itlo][ir]);
+      p = me->table[0][itlo][ir] + st * (me->table[0][ithi][ir] - me->table[0][itlo][ir]);
+      e = me->table[1][itlo][ir] + st * (me->table[1][ithi][ir] - me->table[1][itlo][ir]);
       break;
     }
 
@@ -6003,7 +6360,7 @@ void _eos_sesame_isotherm_buildRecordType1 (eos_RecordType1 *me,
       /* call global_error('SESAME_ISOTHERM_BUILD: irhi.eq.0 .and. irlo.gt.0') */
       *errorCode = EOS_FAILED;
       eos_SetCustomMsg_str (errMsg,
-			    "_eos_sesame_isotherm_buildRecordType1: irhi == 0 && irlo > 0");
+                            "_eos_sesame_isotherm_buildRecordType1: irhi == 0 && irlo > 0");
       return;
     }
     use_flag = 1;
@@ -6014,7 +6371,7 @@ void _eos_sesame_isotherm_buildRecordType1 (eos_RecordType1 *me,
     if (irlo < 0) {
       *errorCode = EOS_FAILED;
       eos_SetCustomMsg_str (errMsg,
-			    "_eos_sesame_isotherm_buildRecordType1: irhi > 0 && irlo < 0");
+                            "_eos_sesame_isotherm_buildRecordType1: irhi > 0 && irlo < 0");
       return;
     }
 
@@ -6022,7 +6379,7 @@ void _eos_sesame_isotherm_buildRecordType1 (eos_RecordType1 *me,
     if (irlo >= irhi) {
       *errorCode = EOS_FAILED;
       eos_SetCustomMsg_str (errMsg,
-			    "_eos_sesame_isotherm_buildRecordType1: irlo >= irhi");
+                            "_eos_sesame_isotherm_buildRecordType1: irlo >= irhi");
       return;
     }
 
@@ -6040,7 +6397,7 @@ void _eos_sesame_isotherm_buildRecordType1 (eos_RecordType1 *me,
     /* call global_error('SESAME_ISOTHERM_BUILD: scr_num+2.gt.isotherm_dim') */
     *errorCode = EOS_FAILED;
     eos_SetCustomMsg_str (errMsg,
-			  "_eos_sesame_isotherm_buildRecordType1: scr_num+2>isotherm_dim");
+                          "_eos_sesame_isotherm_buildRecordType1: scr_num+2>isotherm_dim");
     return;
   }
 
@@ -6165,7 +6522,7 @@ void _eos_sesame_isotherm_buildRecordType1 (eos_RecordType1 *me,
     /* call global_error('SESAME_ISOTHERM_BUILD: unknown use_flag') */
     *errorCode = EOS_FAILED;
     eos_SetCustomMsg_str (errMsg,
-			  "_eos_sesame_isotherm_buildRecordType1: unknown use_flag");
+                          "_eos_sesame_isotherm_buildRecordType1: unknown use_flag");
     break;
   }
 
@@ -6233,7 +6590,7 @@ void _eos_sesame_isotherm_buildRecordType1 (eos_RecordType1 *me,
     /*             call global_error('SESAME_ISOTHERM_BUILD: bad build') */
     *errorCode = EOS_FAILED;
     eos_SetCustomMsg_str (errMsg,
-			  "_eos_sesame_isotherm_buildRecordType1: bad build");
+                          "_eos_sesame_isotherm_buildRecordType1: bad build");
   }
 
   /*  free temporary storage */
@@ -6246,3 +6603,120 @@ void _eos_sesame_isotherm_buildRecordType1 (eos_RecordType1 *me,
   _eos_DEBUG_PRINT ("*** LEAVING SESAME_ISOTHERM_BUILD\n");
 }
 
+/**
+ * \brief This function generates search hash tables for record type 1
+ * 
+ * \param[in,out] *ptr  - void : data object pointer
+ */
+void eos_GenerateHashTablesRecordType1(void *ptr)
+{
+  int i;
+  eos_RecordType1 *me = (eos_RecordType1*)ptr;
+  if (me->R != NULL) { me->R_hashTable = eos_HashTable1D_gen(me->R, me->NR); }
+                else { me->R_hashTable = NULL; }
+  if (me->T != NULL) { me->T_hashTable = eos_HashTable1D_gen(me->T, me->NT); }
+                else { me->T_hashTable = NULL; }
+  for (i = 0; i < MAX_TABLES_RECORDTYPE1; i++) {
+    if (me->table[i] != NULL) {
+      // Workaround for corners, which are skipped normally skipped during extrapolation
+      // Checks for being a 1D table, in which case the "corners" are searched over
+      if (me->nGhostData > 0 && me->NR > 2 && me->NT > 2) {
+        int j;
+        for (j = 0; j < me->nGhostData; j++) {
+          me->table[i][0][j] = me->table[i][0][j + 1];
+          me->table[i][0][me->NR - j - 1] = me->table[i][0][me->NR - j - 2];
+          me->table[i][me->NT - 1][j] = me->table[i][me->NT - 1][j + 1];
+          me->table[i][me->NT - 1][me->NR - j - 1] = me->table[i][me->NT - 1][me->NR - j - 2];
+        }
+      }
+      me->hashTables[i] = eos_HashTable2D_gen(me->table[i], me->NR, me->NT);
+    } else {
+      me->hashTables[i] = NULL;
+    }
+  }
+}
+
+#ifdef DO_OFFLOAD
+
+/***********************************************************************/
+/*!
+ * \brief This function offloads object's data to the target GPU device.
+ *
+ * \param[in,out] *ptr           - void : data object pointer
+ * \param[in]     th             - EOS_INTEGER : table Handle
+ * \param[out]    *errorCode     - EOS_INTEGER : error code
+ *
+ * \return errorCode             - EOS_INTEGER : error code
+ *
+ ***********************************************************************/
+EOS_INTEGER eos_GpuOffloadDataRecordType1(void *ptr, EOS_INTEGER th)
+{
+  eos_RecordType1 *me = (eos_RecordType1*) ptr;
+  EOS_REAL *xtbls = NULL, *ytbls = NULL, **ftbls = NULL, *coldCurve = NULL;
+  EOS_REAL *gpu_ftbls = NULL, *gpu_coldCurve = NULL;
+  EOS_INTEGER dataType, subTableNum;
+  EOS_INTEGER i=0;
+  EOS_INTEGER err = EOS_OK;
+  int h_ = omp_get_initial_device();
+  int t_ = omp_get_default_device();
+
+  dataType = eos_GetDataTypeFromTableHandle (th, &err);
+  if (eos_GetStandardErrorCodeFromCustomErrorCode(err) != EOS_OK)
+    return(err);
+  subTableNum = EOS_TYPE_TO_SUB_TAB_NUM(dataType);
+  // set numbers of and pointers to eos data table x,y,f values.
+  _eos_GetDataRecordType1 (me, &xtbls, &ytbls, &ftbls, &coldCurve, NULL, EOS_TYPE_TO_SUB_TAB_NUM(dataType));
+  /* allocate necessary device memory */
+
+    /* store new pointers in me for later use */
+  if (!me->isInvertedAtSetup) {
+    assert(EOS_TYPE_TO_SUB_TAB_NUM(dataType)>=1);
+    assert(EOS_TYPE_TO_SUB_TAB_NUM(dataType)<=MAX_TABLES_RECORDTYPE1);
+    i = EOS_TYPE_TO_SUB_TAB_NUM(dataType) - 1;
+  }
+  EOS_REAL *ftblsd, *xtblsd, *ytblsd, *ccd;
+  if (ftbls)     {
+    if      (i==0) me->gpu_ftbls_th1     = (EOS_REAL*) omp_target_alloc(sizeof(EOS_REAL)*me->NR*me->NT, t_);
+    else if (i==1) me->gpu_ftbls_th2     = (EOS_REAL*) omp_target_alloc(sizeof(EOS_REAL)*me->NR*me->NT, t_);
+    else if (i==2) me->gpu_ftbls_th3     = (EOS_REAL*) omp_target_alloc(sizeof(EOS_REAL)*me->NR*me->NT, t_);
+    else if (i==3) me->gpu_ftbls_th4     = (EOS_REAL*) omp_target_alloc(sizeof(EOS_REAL)*me->NR*me->NT, t_);
+    else if (i==4) me->gpu_ftbls_th5     = (EOS_REAL*) omp_target_alloc(sizeof(EOS_REAL)*me->NR*me->NT, t_);
+    else assert(EOS_FALSE);
+    ftblsd = (i==0?me->gpu_ftbls_th1:(i==1?me->gpu_ftbls_th2:(i==2?me->gpu_ftbls_th3:(i==3?me->gpu_ftbls_th4:me->gpu_ftbls_th5))));
+    omp_target_memcpy(ftblsd, &(ftbls[0][0]), sizeof(EOS_REAL)*me->NR*me->NT, 0, 0, t_, h_);
+  }
+  if (xtbls)     {
+    if      (i==0) me->gpu_xtbls_th1     = (EOS_REAL*) omp_target_alloc(sizeof(EOS_REAL)*me->NR, t_);
+    else if (i==1) me->gpu_xtbls_th2     = (EOS_REAL*) omp_target_alloc(sizeof(EOS_REAL)*me->NR, t_);
+    else if (i==2) me->gpu_xtbls_th3     = (EOS_REAL*) omp_target_alloc(sizeof(EOS_REAL)*me->NR, t_);
+    else if (i==3) me->gpu_xtbls_th4     = (EOS_REAL*) omp_target_alloc(sizeof(EOS_REAL)*me->NR, t_);
+    else if (i==4) me->gpu_xtbls_th5     = (EOS_REAL*) omp_target_alloc(sizeof(EOS_REAL)*me->NR, t_);
+    else assert(EOS_FALSE);
+    xtblsd = (i==0?me->gpu_xtbls_th1:(i==1?me->gpu_xtbls_th2:(i==2?me->gpu_xtbls_th3:(i==3?me->gpu_xtbls_th4:me->gpu_xtbls_th5))));
+    omp_target_memcpy(xtblsd, xtbls, sizeof(EOS_REAL)*me->NR, 0, 0, t_, h_);
+  }
+  if (ytbls)     {
+    if      (i==0) me->gpu_ytbls_th1     = (EOS_REAL*) omp_target_alloc(sizeof(EOS_REAL)*me->NT, t_);
+    else if (i==1) me->gpu_ytbls_th2     = (EOS_REAL*) omp_target_alloc(sizeof(EOS_REAL)*me->NT, t_);
+    else if (i==2) me->gpu_ytbls_th3     = (EOS_REAL*) omp_target_alloc(sizeof(EOS_REAL)*me->NT, t_);
+    else if (i==3) me->gpu_ytbls_th4     = (EOS_REAL*) omp_target_alloc(sizeof(EOS_REAL)*me->NT, t_);
+    else if (i==4) me->gpu_ytbls_th5     = (EOS_REAL*) omp_target_alloc(sizeof(EOS_REAL)*me->NT, t_);
+    else assert(EOS_FALSE);
+    ytblsd = (i==0?me->gpu_ytbls_th1:(i==1?me->gpu_ytbls_th2:(i==2?me->gpu_ytbls_th3:(i==3?me->gpu_ytbls_th4:me->gpu_ytbls_th5))));
+    omp_target_memcpy(ytblsd, ytbls, sizeof(EOS_REAL)*me->NT, 0, 0, t_, h_);
+  }
+  if (coldCurve) {
+    if      (i==0) me->gpu_coldCurve_th1 = (EOS_REAL*) omp_target_alloc(sizeof(EOS_REAL)*me->NR, t_);
+    else if (i==1) me->gpu_coldCurve_th2 = (EOS_REAL*) omp_target_alloc(sizeof(EOS_REAL)*me->NR, t_);
+    else if (i==2) me->gpu_coldCurve_th3 = (EOS_REAL*) omp_target_alloc(sizeof(EOS_REAL)*me->NR, t_);
+    else if (i==3) me->gpu_coldCurve_th4 = (EOS_REAL*) omp_target_alloc(sizeof(EOS_REAL)*me->NR, t_);
+    else if (i==4) me->gpu_coldCurve_th5 = (EOS_REAL*) omp_target_alloc(sizeof(EOS_REAL)*me->NR, t_);
+    else assert(EOS_FALSE);
+    ccd = (i==0?me->gpu_coldCurve_th1:(i==1?me->gpu_coldCurve_th2:(i==2?me->gpu_coldCurve_th3:(i==3?me->gpu_coldCurve_th4:me->gpu_coldCurve_th5))));
+    omp_target_memcpy(ccd, coldCurve, sizeof(EOS_REAL)*me->NR, 0, 0, t_, h_);
+  }
+
+  return(err);
+}
+
+#endif /* DO_OFFLOAD */

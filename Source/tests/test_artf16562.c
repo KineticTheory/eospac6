@@ -8,7 +8,7 @@
  ********************************************************************/
 
 /*! \file
- *  \ingroup tests quick
+ *  \ingroup C tests quick
  *  \brief Ensure the new eos_SetDataFileName and eos_GetMaxDataFileNameLength
  *         work as expected. See SourceForge© Issue #artf16562 for more details:
  *         https://tf.lanl.gov/sf/go/artf16562

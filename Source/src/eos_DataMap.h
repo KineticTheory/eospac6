@@ -47,6 +47,19 @@ typedef struct
     EOS_INTEGER nAlloc;                   /* allocated size of the dataObjects array; in order that a
                                              tableHandle value is not re-used during execution, nAlloc is not decreased
                                              until either eos_DestroyAll is called or code execution terminates */
+    EOS_BOOLEAN skipExtrapCheck;            /* do not check for extrapolation warnings during interpolation? */
+
+#ifdef DO_OFFLOAD
+    EOS_BOOLEAN useGpuData;               /* use GPU device pointers? */
+    EOS_REAL* eb_xLo;                     /* extrapolation bounds GPU device pointers, flat array for all table handles */
+    EOS_REAL* eb_yLo;
+    EOS_REAL* eb_xHi;
+    EOS_REAL* eb_yHi;
+    EOS_REAL* eb_x;
+    EOS_INTEGER* xinds;          /*indices for start of xLo & xHi*/
+    EOS_INTEGER* yinds;          /* yHi & yLo */
+    EOS_INTEGER* xarrinds;       /* overloaded eb_x */
+#endif /* DO_OFFLOAD */
 } eos_DataMap;
 
 #include "eos_DataMap.proto.h"

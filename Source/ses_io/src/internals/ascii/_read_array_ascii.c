@@ -8,6 +8,7 @@
 
 #define check_errors_READ_ARRAY_ASCII HEADER(check_arrays_READ_ARRAY_ASCII)
 
+#undef DEBUG_PRINT
 
 ses_error_flag _read_array_ascii(struct _ses_file_handle* pSFH, ses_word_reference the_buffer, long size ,unsigned int nsig, ses_boolean do_valid) {
 
@@ -25,6 +26,9 @@ ses_error_flag _read_array_ascii(struct _ses_file_handle* pSFH, ses_word_referen
     }
 
     /*  read the ses word array */
+#ifdef DEBUG_PRINT
+    printf("_read_array_ascii:  _read_ses_word_array_ascii size: %ld, nsig: %ld, do_valid: %ld\n", size, nsig, do_valid);
+#endif
 
     ses_word_reference the_read_buffer = _read_ses_word_array_ascii(pSFH, size, nsig, do_valid);
     if (the_read_buffer == (ses_word_reference)NULL) {
@@ -37,7 +41,9 @@ ses_error_flag _read_array_ascii(struct _ses_file_handle* pSFH, ses_word_referen
 
 
     //  copy the read buffer into the output buffer
-
+    //printf("GINGER _read_array_ascii:: size: %ld, the_buffer: %s, the_read_buffer: %s\n", size, the_buffer, the_read_buffer);
+    //printf("GINGER _read_array_ascii:: size: %ld, the_buffer: %ld, the_read_buffer: %ld\n", size, the_buffer, the_read_buffer);
+    //printf("GINGER _read_array_ascii:: size: %ld, strlen(the_buffer): %ld, strlen(the_read_buffer): %ld\n", size, strlen((char*)the_buffer), strlen((char*)the_read_buffer));
     int i=0;
     for (i=0; i<size; i++) {
       the_buffer[i] = the_read_buffer[i];

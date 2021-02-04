@@ -7,11 +7,11 @@ function ses_set_date_f90(the_handle, the_date)
    implicit none
 
    SES_ERROR_FLAG :: ses_set_date_f90
+   SES_ERROR_FLAG :: ses_set_date
 
    SES_FILE_HANDLE, INTENT(IN) :: the_handle
    LONG :: the_date
-
-   long :: ses_date
+   LONG :: ses_date
  
  
 #ifdef DEBUG_WRAP

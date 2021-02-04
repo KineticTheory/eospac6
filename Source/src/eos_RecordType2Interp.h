@@ -6,6 +6,7 @@
  * Copyright -- see file named COPYRIGHTNOTICE
  * 
  *********************************************************************/
+
 #ifndef  EOS_RECORDTYPE2INTERP_H
 #define  EOS_RECORDTYPE2INTERP_H
 

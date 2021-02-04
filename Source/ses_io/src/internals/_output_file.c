@@ -6,6 +6,8 @@
 
 #include <string.h>
 
+#undef DEBUG_PRINT
+
 #define check_errors_get_size_of_directory HEADER(check_errors_get_size_of_directory)
 #define check_errors_dmeiof HEADER(check_errors_dmeiof)
 #define check_errors_set_directory HEADER(check_errors_set_directory)
@@ -640,7 +642,7 @@ struct _ses_output_file*  _read_into_output_file(ses_file_handle the_handle) {
   /*  open the file for reading */
 
   if (pFILE == (FILE*)NULL) {
-    pFILE = fopen(filename, "rb");  /*  Note file not exist returns 0 */
+    pFILE = fopen(filename, "r");  /*  Note file not exist returns 0 */
     if (pFILE == (FILE*)NULL) {
 
       /*  destroy constructed output file on error */
@@ -713,6 +715,7 @@ struct _ses_output_file*  _read_into_output_file(ses_file_handle the_handle) {
   /*  close the file */
   if (needed_to_open == SES_TRUE) {
     int close_return = fclose(pFILE);
+    
 
     FILE_LIST[the_handle]->_the_handle->_c_file_handle = (FILE*)NULL;
     pFILE = (FILE*)NULL;
@@ -834,15 +837,34 @@ ses_boolean _ses_write(struct _ses_output_file* the_file, struct _ses_file_handl
 
   FILE* pFILE = pSFH->_c_file_handle;
   /* int fseek_return = 0; */
-  /* fseek_return = */ fseek(pFILE, 0, SEEK_SET);
-
-
+  /* fseek_return = */
+    
+  // Go to the end, if it's append... 6/11/19 Fix for appending ASCII.
+  if (pSFH->_the_open_mode == 'A'){
+      if (pSFH->_filetype == 'A'){
+#ifdef DEBUG_PRINT
+        int current_pos = ftell(pFILE);
+        printf("_ses_write: seek to: %ld\n", current_pos);
+#endif
+        fseek(pFILE, (long)-81, SEEK_END); // write this before the EOF marker...
+      }
+      else{
+#ifdef DEBUG_PRINT
+        int current_pos = ftell(pFILE);
+        printf("_ses_write: BINARY seek to: %ld\n", current_pos);
+#endif
+        fseek(pFILE, (long)0, SEEK_SET);
+      }
+  }
+  else
+    fseek(pFILE, 0, SEEK_SET);
+    
   ses_boolean didit_write_dir = _write_directory(
        the_file->_directory_to_write,
        pSFH);
   if (didit_write_dir == SES_FALSE) {
 #ifdef DEBUG_PRINT
-    printf("_ses_write: write directory failed, returning false\n");
+      printf("_ses_write: write directory failed, returning false\n");
 #endif
     _set_latest_error(SES_WRITE_ERROR);
     return SES_FALSE;

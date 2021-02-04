@@ -729,7 +729,10 @@ Description = Total Specific-Internal-Energy (MJ/kg) (Density (Mg/m^3)- and Temp
    1.500000000000000E+01   2.447000000000000E+06
 
 TableHandle=4 matid =  5030 Data Type = EOS_At_DT	NOT LOADED
-Description = Total Specific-Free-Energy (MJ/kg) (Density (Mg/m^3)- and Temperature (K)-dependent)
+Description = Total Specific-Helmholtz-Free-Energy (MJ/kg) (Density (Mg/m^3)- and Temperature (K)-dependent)
 
 TableHandle=5 matid =  5030 Data Type = EOS_St_DT	NOT LOADED
 Description = Total Specific-Entropy (MJ/kg/K) (Density (Mg/m^3)- and Temperature (K)-dependent)
+
+TableHandle=6 matid =  5030 Data Type = EOS_Gt_DT	NOT LOADED
+Description = Total Specific-Gibbs-Free-Energy (MJ/kg) (Density (Mg/m^3)- and Temperature (K)-dependent)

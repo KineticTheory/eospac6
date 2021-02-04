@@ -10,19 +10,21 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
 #include <math.h>
-
+#include <string.h>
 #include "eos_wrappers.h"
-
 #include "eos_types_internal.h"
-
 #include "eos_Data.h"
 #include "eos_DataMap.h"
 
 #include "eos_Utils.h"
-
 #include "eos_SesUtils.h"
+
+#ifdef USE_SPLUNK
+#include "eos_Splunk.h"
+/* taken from TEST_FUNCTIONS.proto.h */
+EOS_CHAR* get_optionStr_FromFlag(EOS_INTEGER f);
+#endif
 
 /************************************************************************
  *
@@ -80,22 +82,17 @@
  ************************************************************************/
 #if defined(_WIN32)
 # include <float.h>
-#  ifdef _PC_64
-#    define x86_SetPrecision
-#    define x86_RestorePrecision
-#  else
-#   ifdef SINGLE
-#    define _CW_PREC PC_24
-#   else
-#    define _CW_PREC PC_53
-#   endif
-#   define x86_SetPrecision \
+# ifdef SINGLE
+#  define _CW_PREC PC_24
+# else
+#  define _CW_PREC PC_53
+# endif
+# define x86_SetPrecision \
   unsigned int _oldcw_pc; \
   _oldcw_pc = _control87(0,0) & MCW_PC; \
   _control87(_CW_PREC,MCW_PC)
 # define x86_RestorePrecision \
   _control87(_oldcw_pc,MCW_PC)
-#endif
 
 #elif defined(i386) && defined(__FreeBSD__)
 # include <floatingpoint.h>
@@ -208,6 +205,8 @@ void FUNC_INTER eos_CheckExtrap (EOS_INTEGER *tableHandle,
 
   /* Initialize errorCode */
   *errorCode = EOS_OK;
+  gEosDataMap.skipExtrapCheck =  EOS_FALSE;
+
 
   if (*tableHandle < 0) /* negative tableHandle will cause fatal errors if we proceed further */
   {
@@ -264,6 +263,13 @@ void FUNC_INTER eos_CheckExtrap (EOS_INTEGER *tableHandle,
     *errorCode = EOS_OK;
 
  eos_CheckExtrap_CLEANUP:
+#ifdef USE_SPLUNK
+  if (! _eos_splunk_get_acc_disable(EOS_SPLUNK_ACCUMULATOR_EOS_CHECKEXTRAP)) {
+    EOS_CHAR val[800];
+    sprintf(val, "nXYPairs=%d errorCode=%d", *nXYPairs, *errorCode);
+    _eos_splunk(EOS_SPLUNK_ACCUMULATOR_EOS_CHECKEXTRAP, val);
+  }
+#endif
   x86_RestorePrecision;  /* reset extended-double-precision rounding on x86 architectures */
 }
 
@@ -357,6 +363,25 @@ void FUNC_INTER eos_CreateTables (EOS_INTEGER *nTables,
   if (eos_GetStandardErrorCodeFromCustomErrorCode(*errorCode) == EOS_OK)
     *errorCode = EOS_OK;
 
+  /* Ignore EOS_NO_SESAME_FILES until eos_LoadTables */
+  if (eos_GetStandardErrorCodeFromCustomErrorCode(*errorCode) == EOS_NO_SESAME_FILES) {
+    *errorCode = EOS_OK;
+    for (i = 0; i < *nTables; i++) {
+      eos_HandleErrorEosDataMap (&gEosDataMap, tableHandles[i], *errorCode);
+    }
+  }
+  
+#ifdef USE_SPLUNK
+  if (! _eos_splunk_get_acc_disable(EOS_SPLUNK_ACCUMULATOR_EOS_CREATETABLES)) {
+    EOS_CHAR val[800];
+    sprintf(val, "nTables=%d errorCode=%d", *nTables, *errorCode);
+    _eos_splunk(EOS_SPLUNK_ACCUMULATOR_EOS_CREATETABLES, val);
+    for (i = 0; i < *nTables; i++) {
+      sprintf(val, "tableType=%s matID=%d", EOS_TYPE_TO_STRING(tableType[i]), matID[i]);
+      _eos_splunk(EOS_SPLUNK_ACCUMULATOR_EOS_CREATETABLES, val);
+    }
+  }
+#endif
   x86_RestorePrecision;  /* reset extended-double-precision rounding on x86 architectures */
 }
 
@@ -399,7 +424,21 @@ void FUNC_INTER eos_DestroyAll (EOS_INTEGER *errorCode)
   _eos_DestroyTableListReverseMap();
   _eos_destroyMatidMap();
 
-  x86_RestorePrecision;  /* reset extended-double-precision rounding on x86 architectures */
+#ifdef USE_SPLUNK
+  if (! _eos_splunk_get_acc_disable(EOS_SPLUNK_ACCUMULATOR_EOS_DESTROYALL)) {
+    EOS_CHAR val[800];
+    EOS_INTEGER key;
+    sprintf(val, "errorCode=%d", *errorCode);
+    _eos_splunk(EOS_SPLUNK_ACCUMULATOR_EOS_DESTROYALL, val);
+
+    for (key=EOS_SPLUNK_ACCUMULATOR_MIN_KEY; key<=EOS_SPLUNK_ACCUMULATOR_MAX_KEY; key++) {
+
+      _eos_splunk_flush(key);
+
+    }
+  }
+#endif
+ x86_RestorePrecision;  /* reset extended-double-precision rounding on x86 architectures */
 }
 
 /*************************************************************************
@@ -443,6 +482,13 @@ void FUNC_INTER eos_DestroyTables (EOS_INTEGER *nTables,
   if (eos_GetStandardErrorCodeFromCustomErrorCode(*errorCode) == EOS_OK)
     *errorCode = EOS_OK;
 
+#ifdef USE_SPLUNK
+  if (! _eos_splunk_get_acc_disable(EOS_SPLUNK_ACCUMULATOR_EOS_DESTROYTABLES)) {
+    EOS_CHAR val[800];
+    sprintf(val, "nTables=%d errorCode=%d", *nTables, *errorCode);
+    _eos_splunk(EOS_SPLUNK_ACCUMULATOR_EOS_DESTROYTABLES, val);
+  }
+#endif
   x86_RestorePrecision;  /* reset extended-double-precision rounding on x86 architectures */
 }
 
@@ -483,6 +529,13 @@ void FUNC_INTER eos_GetErrorCode (EOS_INTEGER *tableHandle,
     *errorCode = EOS_OK;
 
  eos_GetErrorCode_CLEANUP:
+#ifdef USE_SPLUNK
+  if (! _eos_splunk_get_acc_disable(EOS_SPLUNK_ACCUMULATOR_EOS_GETERRORCODE)) {
+    EOS_CHAR val[800];
+    sprintf(val, "errorCode=%d", *errorCode);
+    _eos_splunk(EOS_SPLUNK_ACCUMULATOR_EOS_GETERRORCODE, val);
+  }
+#endif
   x86_RestorePrecision;  /* reset extended-double-precision rounding on x86 architectures */
 }
 
@@ -509,6 +562,13 @@ void FUNC_INTER eos_GetErrorMessage (EOS_INTEGER *errorCode,
   }
   sprintf (errorMsg, "%s", eos_GetErrorMsg (*errorCode));
 
+#ifdef USE_SPLUNK
+  if (! _eos_splunk_get_acc_disable(EOS_SPLUNK_ACCUMULATOR_EOS_GETERRORMESSAGE)) {
+    EOS_CHAR val[800];
+    sprintf(val, "errorCode=%d", *errorCode);
+    _eos_splunk(EOS_SPLUNK_ACCUMULATOR_EOS_GETERRORMESSAGE, val);
+  }
+#endif
   x86_RestorePrecision;  /* reset extended-double-precision rounding on x86 architectures */
 }
 
@@ -585,6 +645,13 @@ void FUNC_INTER eos_GetPackedTables (EOS_INTEGER *nTables,
   if (eos_GetStandardErrorCodeFromCustomErrorCode(*errorCode) == EOS_OK)
     *errorCode = EOS_OK;
 
+#ifdef USE_SPLUNK
+  if (! _eos_splunk_get_acc_disable(EOS_SPLUNK_ACCUMULATOR_EOS_GETPACKEDTABLES)) {
+    EOS_CHAR val[800];
+    sprintf(val, "nTables=%d errorCode=%d", *nTables, *errorCode);
+    _eos_splunk(EOS_SPLUNK_ACCUMULATOR_EOS_GETPACKEDTABLES, val);
+  }
+#endif
   x86_RestorePrecision;  /* reset extended-double-precision rounding on x86 architectures */
 }
 
@@ -645,6 +712,13 @@ void FUNC_INTER eos_GetPackedTablesSize (EOS_INTEGER *nTables,
   if (eos_GetStandardErrorCodeFromCustomErrorCode(*errorCode) == EOS_OK)
     *errorCode = EOS_OK;
 
+#ifdef USE_SPLUNK
+  if (! _eos_splunk_get_acc_disable(EOS_SPLUNK_ACCUMULATOR_EOS_GETPACKEDTABLESSIZE)) {
+    EOS_CHAR val[800];
+    sprintf(val, "nTables=%d packedTablesSize=%d errorCode=%d", *nTables, *packedTablesSize, *errorCode);
+    _eos_splunk(EOS_SPLUNK_ACCUMULATOR_EOS_GETPACKEDTABLESSIZE, val);
+  }
+#endif
   x86_RestorePrecision;  /* reset extended-double-precision rounding on x86 architectures */
 }
 
@@ -762,6 +836,13 @@ void FUNC_INTER eos_GetMetaData (EOS_INTEGER *infoItem, EOS_INTEGER *infoItemCat
   if (eos_GetStandardErrorCodeFromCustomErrorCode(*errorCode) == EOS_OK)
     *errorCode = EOS_OK;
 
+#ifdef USE_SPLUNK
+  if (! _eos_splunk_get_acc_disable(EOS_SPLUNK_ACCUMULATOR_EOS_GETMETADATA)) {
+    EOS_CHAR val[800];
+    sprintf(val, "errorCode=%d", *errorCode);
+    _eos_splunk(EOS_SPLUNK_ACCUMULATOR_EOS_GETMETADATA, val);
+  }
+#endif
   x86_RestorePrecision;  /* reset extended-double-precision rounding on x86 architectures */
 }
 
@@ -836,6 +917,13 @@ void FUNC_INTER eos_GetTableMetaData (EOS_INTEGER *tableHandle, EOS_INTEGER *inf
   //memset(infoStr[MIN(strlen(infoStr)+1, EOS_META_DATA_STRLEN-1)], ' ', EOS_META_DATA_STRLEN-1);
 
  eos_GetTableMetaData_CLEANUP:
+#ifdef USE_SPLUNK
+  if (! _eos_splunk_get_acc_disable(EOS_SPLUNK_ACCUMULATOR_EOS_GETTABLEMETADATA)) {
+    EOS_CHAR val[800];
+    sprintf(val, "errorCode=%d", *errorCode);
+    _eos_splunk(EOS_SPLUNK_ACCUMULATOR_EOS_GETTABLEMETADATA, val);
+  }
+#endif
   x86_RestorePrecision;  /* reset extended-double-precision rounding on x86 architectures */
 }
 
@@ -885,6 +973,13 @@ void FUNC_INTER eos_GetTableInfo (EOS_INTEGER *tableHandle, EOS_INTEGER *numInfo
     *errorCode = EOS_OK;
 
  eos_GetTableInfo_CLEANUP:
+#ifdef USE_SPLUNK
+  if (! _eos_splunk_get_acc_disable(EOS_SPLUNK_ACCUMULATOR_EOS_GETTABLEINFO)) {
+    EOS_CHAR val[800];
+    sprintf(val, "errorCode=%d", *errorCode);
+    _eos_splunk(EOS_SPLUNK_ACCUMULATOR_EOS_GETTABLEINFO, val);
+  }
+#endif
   x86_RestorePrecision;  /* reset extended-double-precision rounding on x86 architectures */
 }
 
@@ -932,6 +1027,13 @@ void FUNC_INTER eos_GetTableCmnts (EOS_INTEGER *tableHandle, EOS_CHAR *cmntStr,
     *errorCode = EOS_OK;
 
  eos_GetTableCmnts_CLEANUP:
+#ifdef USE_SPLUNK
+  if (! _eos_splunk_get_acc_disable(EOS_SPLUNK_ACCUMULATOR_EOS_GETTABLECMNTS)) {
+    EOS_CHAR val[800];
+    sprintf(val, "errorCode=%d", *errorCode);
+    _eos_splunk(EOS_SPLUNK_ACCUMULATOR_EOS_GETTABLECMNTS, val);
+  }
+#endif
   x86_RestorePrecision;  /* reset extended-double-precision rounding on x86 architectures */
 }
 
@@ -996,6 +1098,13 @@ void FUNC_INTER eos_Interpolate (EOS_INTEGER *tableHandle,
     *errorCode = EOS_OK;
 
  eos_Interpolate_CLEANUP:
+#ifdef USE_SPLUNK
+  if (! _eos_splunk_get_acc_disable(EOS_SPLUNK_ACCUMULATOR_EOS_INTERPOLATE)) {
+    EOS_CHAR val[800];
+    sprintf(val, "nXYPairs=%d errorCode=%d", *nXYPairs, *errorCode);
+    _eos_splunk(EOS_SPLUNK_ACCUMULATOR_EOS_INTERPOLATE, val);
+  }
+#endif
   x86_RestorePrecision;  /* reset extended-double-precision rounding on x86 architectures */
 }
 
@@ -1046,6 +1155,13 @@ void FUNC_INTER eos_LoadTables (EOS_INTEGER *nTables,
   if (eos_GetStandardErrorCodeFromCustomErrorCode(*errorCode) == EOS_OK)
     *errorCode = EOS_OK;
 
+#ifdef USE_SPLUNK
+  if (! _eos_splunk_get_acc_disable(EOS_SPLUNK_ACCUMULATOR_EOS_LOADTABLES)) {
+    EOS_CHAR val[800];
+    sprintf(val, "nTables=%d errorCode=%d", *nTables, *errorCode);
+    _eos_splunk(EOS_SPLUNK_ACCUMULATOR_EOS_LOADTABLES, val);
+  }
+#endif
   x86_RestorePrecision;  /* reset extended-double-precision rounding on x86 architectures */
 }
 
@@ -1116,6 +1232,13 @@ void FUNC_INTER eos_Mix (EOS_INTEGER *nTables, EOS_INTEGER *tableHandles,
     *errorCode = EOS_OK;
 
  eos_Mix_CLEANUP:
+#ifdef USE_SPLUNK
+  if (! _eos_splunk_get_acc_disable(EOS_SPLUNK_ACCUMULATOR_EOS_MIX)) {
+    EOS_CHAR val[800];
+    sprintf(val, "nTables=%d nXYPairs=%d errorCode=%d", *nTables, *nXYPairs, *errorCode);
+    _eos_splunk(EOS_SPLUNK_ACCUMULATOR_EOS_MIX, val);
+  }
+#endif
   x86_RestorePrecision;  /* reset extended-double-precision rounding on x86 architectures */
 }
 
@@ -1234,7 +1357,14 @@ void FUNC_INTER eos_SetPackedTables (EOS_INTEGER *nTables,
   if (eos_GetStandardErrorCodeFromCustomErrorCode(*errorCode) == EOS_OK)
     *errorCode = EOS_OK;
 
-  x86_RestorePrecision;  /* reset extended-double-precision rounding on x86 architectures */
+#ifdef USE_SPLUNK
+  if (! _eos_splunk_get_acc_disable(EOS_SPLUNK_ACCUMULATOR_EOS_SETPACKEDTABLES)) {
+    EOS_CHAR val[800];
+    sprintf(val, "nTables=%d packedTablesSize=%d errorCode=%d", *nTables, *packedTablesSize, *errorCode);
+    _eos_splunk(EOS_SPLUNK_ACCUMULATOR_EOS_SETPACKEDTABLES, val);
+  }
+#endif
+ x86_RestorePrecision;  /* reset extended-double-precision rounding on x86 architectures */
 }
 
 /*************************************************************************
@@ -1284,6 +1414,14 @@ void FUNC_INTER eos_SetOption (EOS_INTEGER *tableHandle,
     *errorCode = EOS_OK;
 
  eos_SetOption_CLEANUP:
+#ifdef USE_SPLUNK
+  if (! _eos_splunk_get_acc_disable(EOS_SPLUNK_ACCUMULATOR_EOS_SETOPTION)) {
+    EOS_CHAR val[800];
+    sprintf(val, "tableOption=%s tableOptionVal=%g errorCode=%d",
+            get_optionStr_FromFlag(*tableOption), *tableOptionVal, *errorCode);
+    _eos_splunk(EOS_SPLUNK_ACCUMULATOR_EOS_SETOPTION, val);
+  }
+#endif
   x86_RestorePrecision;  /* reset extended-double-precision rounding on x86 architectures */
 }
 
@@ -1334,6 +1472,14 @@ void FUNC_INTER eos_ResetOption (EOS_INTEGER *tableHandle,
     *errorCode = EOS_OK;
 
  eos_ResetOption_CLEANUP:
+#ifdef USE_SPLUNK
+  if (! _eos_splunk_get_acc_disable(EOS_SPLUNK_ACCUMULATOR_EOS_RESETOPTION)) {
+    EOS_CHAR val[800];
+    sprintf(val, "tableOption=%s errorCode=%d",
+            get_optionStr_FromFlag(*tableOption), *errorCode);
+    _eos_splunk(EOS_SPLUNK_ACCUMULATOR_EOS_RESETOPTION, val);
+  }
+#endif
   x86_RestorePrecision;  /* reset extended-double-precision rounding on x86 architectures */
 }
 
@@ -1356,6 +1502,13 @@ void FUNC_INTER eos_ResetOption (EOS_INTEGER *tableHandle,
 void FUNC_INTER eos_GetMaxDataFileNameLength (EOS_INTEGER *max_length)
 {
   *max_length = PATH_MAX;
+#ifdef USE_SPLUNK
+  if (! _eos_splunk_get_acc_disable(EOS_SPLUNK_ACCUMULATOR_EOS_GETMAXDATAFILENAMELENGTH)) {
+    EOS_CHAR val[800];
+    sprintf(val, "max_length=%d", *max_length);
+    _eos_splunk(EOS_SPLUNK_ACCUMULATOR_EOS_GETMAXDATAFILENAMELENGTH, val);
+  }
+#endif
 }
 
 /*************************************************************************
@@ -1395,14 +1548,23 @@ void FUNC_INTER eos_SetDataFileName (EOS_INTEGER *tableHandle,
   if (*tableHandle < 0) /* negative tableHandle will cause fatal errors if we proceed further */
   {
     *errorCode = EOS_INVALID_TABLE_HANDLE;
-    return;
+    goto eos_SetDataFileName_CLEANUP;
   }
 
-  /* Is handle invalid with associated setup errorcode */
-  if (! eos_IsHandleValid(*tableHandle) && gEosDataMap.errorCodes[*tableHandle] != EOS_OK) {
-    *errorCode = gEosDataMap.errorCodes[*tableHandle];
-    eos_HandleErrorEosDataMap (&gEosDataMap, *tableHandle, *errorCode);
-    return;
+  if (sesameFilesL > 0 && sesameFiles) { /* at least one SESAME file has been discovered */
+    /* Is handle invalid with associated setup errorcode */
+    if (! eos_IsHandleValid(*tableHandle) && gEosDataMap.errorCodes[*tableHandle] != EOS_OK) {
+      *errorCode = gEosDataMap.errorCodes[*tableHandle];
+      eos_HandleErrorEosDataMap (&gEosDataMap, *tableHandle, *errorCode);
+      goto eos_SetDataFileName_CLEANUP;
+    }
+  }
+  else { /* no SESAME file has been discovered, let's try again */
+    *errorCode = EOS_OK;
+    /* reset all internally-stored error codes */
+    for (i = 0; i < gEosDataMap.nAlloc; i++) {
+      eos_HandleErrorEosDataMap (&gEosDataMap, i, *errorCode);
+    }
   }
 
   /* if tableHandle is invalid, reset tableHandlesMap entry */
@@ -1417,7 +1579,7 @@ void FUNC_INTER eos_SetDataFileName (EOS_INTEGER *tableHandle,
     eos_HandleErrorEosDataMap (&gEosDataMap, *tableHandle, *errorCode);
     *errorCode = eos_SetCustomErrorMsg (*tableHandle, *errorCode,
                                         "EOS_FAILED: Internal temporary memory allocation failure");
-    return;
+    goto eos_SetDataFileName_CLEANUP;
   }
 
   /* Issue warning and exit if eosData->isLoaded */
@@ -1430,7 +1592,7 @@ void FUNC_INTER eos_SetDataFileName (EOS_INTEGER *tableHandle,
                                         "EOS_WARNING: Could not reset data file name, because data is already loaded for the specified handle, %d",
                                         *tableHandle);
     EOS_FREE(_fn);
-    return;
+    goto eos_SetDataFileName_CLEANUP;
   }
 
   /* create a local copy of fileName to ensure a valid C-string with max length of PATH_MAX */
@@ -1454,7 +1616,7 @@ void FUNC_INTER eos_SetDataFileName (EOS_INTEGER *tableHandle,
     *errorCode = eos_SetCustomErrorMsg (*tableHandle, *errorCode,
                                         "EOS_OPEN_SESAME_FILE_FAILED: Could not open data file, because it does not exist");
     EOS_FREE(_fn);
-    return;
+    goto eos_SetDataFileName_CLEANUP;
   }
 
   /* determine if the fileName already exists in sesameFiles[] */
@@ -1515,7 +1677,7 @@ void FUNC_INTER eos_SetDataFileName (EOS_INTEGER *tableHandle,
                                           "EOS_OPEN_SESAME_FILE_FAILED: Could not open data file, because its length > %d characters",
                                           PATH_MAX);
       EOS_FREE(_fn);
-      return;
+      goto eos_SetDataFileName_CLEANUP;
     }
 
     createNewObject = EOS_TRUE;
@@ -1571,6 +1733,16 @@ void FUNC_INTER eos_SetDataFileName (EOS_INTEGER *tableHandle,
   if (eos_GetStandardErrorCodeFromCustomErrorCode(*errorCode) == EOS_OK)
     *errorCode = EOS_OK;
 
+ eos_SetDataFileName_CLEANUP:
+#ifdef USE_SPLUNK
+  if (! _eos_splunk_get_acc_disable(EOS_SPLUNK_ACCUMULATOR_EOS_SETDATAFILENAME)) {
+    EOS_CHAR val[800];
+    sprintf(val, "tableHandle=%d errorCode=%d", *tableHandle, *errorCode);
+    _eos_splunk(EOS_SPLUNK_ACCUMULATOR_EOS_SETDATAFILENAME, val);
+  }
+#else
+  ; /* this semicolon is necessary in the event that USE_SPLUNK is undefined*/
+#endif
 }
 
 /*************************************************************************
@@ -1592,8 +1764,20 @@ void FUNC_INTER eos_SetDataFileName (EOS_INTEGER *tableHandle,
 void FUNC_INTER eos_ErrorCodesEqual (EOS_INTEGER *err1, EOS_INTEGER *err2, EOS_BOOLEAN *result)
 {
   *result = EOS_FALSE;
+
+#ifdef DO_OFFLOAD
+  EOS_BOOLEAN  useGpuData=_EOS_GET_USEGPUDATA_EOSDATAMAP;
+  if (useGpuData) return;
+#endif  
   if (eos_GetStandardErrorCodeFromCustomErrorCode(*err1) ==
       eos_GetStandardErrorCodeFromCustomErrorCode(*err2)) *result = EOS_TRUE;
+#ifdef USE_SPLUNK
+  if (! _eos_splunk_get_acc_disable(EOS_SPLUNK_ACCUMULATOR_EOS_ERRORCODESEQUAL)) {
+    EOS_CHAR val[800];
+    sprintf(val, "err1=%d err2=%d result=%d", *err1, *err2, *result);
+    _eos_splunk(EOS_SPLUNK_ACCUMULATOR_EOS_ERRORCODESEQUAL, val);
+  }
+#endif
 }
 
 #ifndef NO_EOS_SETDATAFILENAME_CWRAPPER
@@ -1606,9 +1790,35 @@ void FUNC_INTER eos_SetDataFileName_Cwrapper (EOS_INTEGER *tableHandle,
 {
   long int fileName_len = strlen(fileName);
   eos_SetDataFileName (tableHandle, matID, tableType, fileName, errorCode, fileName_len);
+#ifdef USE_SPLUNK
+  if (! _eos_splunk_get_acc_disable(EOS_SPLUNK_ACCUMULATOR_EOS_SETDATAFILENAME_CWRAPPER)) {
+    EOS_CHAR val[800];
+    sprintf(val, "tableHandle=%d errorCode=%d", *tableHandle, *errorCode);
+    _eos_splunk(EOS_SPLUNK_ACCUMULATOR_EOS_SETDATAFILENAME_CWRAPPER, val);
+  }
+#endif
 }
 
 #endif
+
+#ifdef DO_OFFLOAD
+/***********************************************************************/
+/*! 
+ * \brief This function allocates memory on a GPU device, copies the
+ * required data from the CPU data structures to the corresponding device
+ * memory, and sets the gEosDataMap.useGpuData=EOS_TRUE to prevent future
+ * usage of EOSPAC setup functions prior to calling eos_DestroyAll.
+ * 
+ * \param[out]    *errorCode    - EOS_INTEGER : error code
+ * 
+ * \return none
+ *
+ ***********************************************************************/
+void eos_GpuOffloadData (EOS_INTEGER * errorCode)
+{
+  eos_GpuOffloadDataEosDataMap (&gEosDataMap, errorCode);
+}
+#endif /* DO_OFFLOAD */
 
 /************************************************************************
  * 
@@ -1693,28 +1903,57 @@ void FUNC_INTER eos_Time (EOS_BOOLEAN *reset, EOS_REAL *wctime,
 
   }
 
+#ifdef USE_SPLUNK
+  if (! _eos_splunk_get_acc_disable(EOS_SPLUNK_ACCUMULATOR_EOS_TIME)) {
+    EOS_CHAR val[800];
+    sprintf(val, "err=%d", *err);
+    _eos_splunk(EOS_SPLUNK_ACCUMULATOR_EOS_TIME, val);
+  }
+#endif
   x86_RestorePrecision;  /* reset extended-double-precision rounding on x86 architectures */
 
   return;
 }
 
+#define _eos_get_version_length _eos_get_version_length_ ## __STATIC_MANGLE_NAME__
+#define _eos_get_version        _eos_get_version_        ## __STATIC_MANGLE_NAME__
+
 #ifndef EOSPAC6_VERSION_FUNCTIONS_REDEFINED
-static const EOS_CHAR *eos_version_info_msg =
+static EOS_CHAR *eos_version_info_msg =
   "No version information has been defined for this build of EOSPAC 6.";
-void FUNC_INTER eos_GetVersionLength (EOS_INTEGER *length)
+EOS_INTEGER _eos_get_version_length()
 {
   /* include space for the '\0' character */
-  *length = strlen (eos_version_info_msg) + 1;
+  return(strlen (eos_version_info_msg) + 1);
+}
+void FUNC_INTER eos_GetVersionLength (EOS_INTEGER *length)
+{
+  *length = _eos_get_version_length();
+#ifdef USE_SPLUNK
+  if (! _eos_splunk_get_acc_disable(EOS_SPLUNK_ACCUMULATOR_EOS_GETVERSIONLENGTH)) {
+    EOS_CHAR val[800];
+    sprintf(val, "length=%d", *length);
+    _eos_splunk(EOS_SPLUNK_ACCUMULATOR_EOS_GETVERSIONLENGTH, val);
+  }
+#endif
 }
 
+EOS_CHAR* _eos_get_version()
+{
+  return(eos_version_info_msg);
+}
 void FUNC_INTER eos_GetVersion (EOS_CHAR *version)
 {
-  strcpy (version, eos_version_info_msg);
+  strcpy (version, _eos_get_version());
+#ifdef USE_SPLUNK
+  if (! _eos_splunk_get_acc_disable(EOS_SPLUNK_ACCUMULATOR_EOS_GETVERSION)) {
+    _eos_splunk(EOS_SPLUNK_ACCUMULATOR_EOS_GETVERSION, version);
+  }
+#endif
   return;
 }
-#endif
+#endif /* EOSPAC6_VERSION_FUNCTIONS_REDEFINED */
 
 #ifdef __cplusplus
 }
 #endif
-

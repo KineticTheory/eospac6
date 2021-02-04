@@ -13,20 +13,24 @@
 
 /*
  * ---------------------------------------------------
- * 5 PUBLIC FUNCTION PROTOTYPES FOR eos_RecordType1.c
+ * 6 PUBLIC FUNCTION PROTOTYPES FOR eos_RecordType1.c
  * ---------------------------------------------------
  */
-void _eos_GetDataRecordType1 (eos_RecordType1 *me, EOS_REAL **R, EOS_REAL **T, EOS_REAL ***F, EOS_REAL **coldCurve, EOS_INTEGER subTableNum);
+void _eos_GetDataRecordType1 (eos_RecordType1 *me, EOS_REAL **R, EOS_REAL **T, EOS_REAL ***F, EOS_REAL **coldCurve, eos_HashTable2D** ht, EOS_INTEGER subTableNum);
 void _eos_SesameInvTRecordType1 (eos_RecordType1 *me, EOS_INTEGER dataType, EOS_INTEGER nXYPairs, EOS_REAL *pres, EOS_REAL *temp, EOS_REAL *fVals, EOS_REAL *dFx, EOS_REAL *dFy, EOS_INTEGER *xyBounds, EOS_INTEGER *errorCode, EOS_CHAR **errMsg);
 void eos_ConstructRecordType1 (eos_RecordType1 *me, EOS_INTEGER th, EOS_INTEGER materialID);
 void eos_GetSizeRecordType1 (eos_RecordType1 *me, EOS_INTEGER *NR, EOS_INTEGER *NT);
 void eos_LoadRecordType1 (void *ptr, EOS_INTEGER th);
 
+#ifdef DO_OFFLOAD
+EOS_INTEGER eos_GpuOffloadDataRecordType1(void *ptr, EOS_INTEGER th);
+#endif /* DO_OFFLOAD */
+
 #ifdef _EOS_RECORDTYPE1_INTERNAL_PROTOTYPES
 
 /*
  * -----------------------------------------------------
- * 46 PRIVATE FUNCTION PROTOTYPES FOR eos_RecordType1.c
+ * 49 PRIVATE FUNCTION PROTOTYPES FOR eos_RecordType1.c
  * -----------------------------------------------------
  */
 void _eos_AdjustDataTables (EOS_BOOLEAN userDefinedDataFile, EOS_INTEGER dataFileIndex, EOS_INTEGER nT, EOS_REAL *R, EOS_REAL *T, EOS_REAL **P, EOS_INTEGER mat, EOS_INTEGER *err, EOS_CHAR **errMsg);
@@ -39,8 +43,8 @@ void _eos_InvertAtSetupRecordType1_CATEGORY1 (eos_RecordType1 *me, EOS_INTEGER t
 void _eos_InvertAtSetupRecordType1_CATEGORY2 (eos_RecordType1 *me, EOS_INTEGER th, EOS_INTEGER dataType, EOS_INTEGER *errorCode);
 void _eos_InvertAtSetupRecordType1_CATEGORY3 (eos_RecordType1 *me, EOS_INTEGER th, EOS_INTEGER dataType, EOS_INTEGER *errorCode);
 void _eos_InvertAtSetupRecordType1_CATEGORY4 (eos_RecordType1 *me, EOS_INTEGER th, EOS_INTEGER dataType, EOS_INTEGER *errorCode);
+EOS_INTEGER _eos_LoadTaylorFit(eos_RecordType1 *me, EOS_INTEGER th);
 void _eos_PrintTaylorFit (eos_RecordType1 *me, EOS_INTEGER th, FILE *tableFile, EOS_CHAR *sesame_fname, EOS_REAL xconv, EOS_REAL yconv, EOS_REAL fconv, EOS_INTEGER dataType, EOS_INTEGER subTableNum, EOS_INTEGER append);
-EOS_INTEGER _eos_createObjectDataCopyRecordType1 (eos_RecordType1 *me, EOS_INTEGER dataType);
 void _eos_importTableRecordType1 (eos_RecordType1 *me, EOS_INTEGER subTableNum, EOS_INTEGER NR, EOS_INTEGER NT, EOS_REAL *xtbl, EOS_REAL *ytbl, EOS_REAL *ftbl, EOS_REAL *CC);
 void _eos_resizeRecordType1 (eos_RecordType1 *me, EOS_INTEGER NR, EOS_INTEGER NT, EOS_INTEGER *err);
 void _eos_sesame_isotherm_buildRecordType1 (eos_RecordType1 *me, EOS_REAL temp, EOS_INTEGER *isotherm_nr, EOS_REAL **isotherm_p, EOS_REAL **isotherm_e, EOS_REAL **isotherm_r, EOS_REAL **isotherm_v, EOS_INTEGER *errorCode, EOS_CHAR **errMsg);
@@ -50,7 +54,8 @@ void eos_AreSmoothingRequirementsCompatibleRecordType1 (void *ptr, EOS_INTEGER d
 void eos_CreateRecordType1 (void *ptr, EOS_INTEGER th);
 void eos_DestroyRecordType1 (void* ptr);
 EOS_INTEGER eos_Entropy (eos_RecordType1 *me, EOS_INTEGER NR, EOS_INTEGER NT, EOS_REAL *U, EOS_REAL *F, EOS_REAL *T, EOS_REAL *R, EOS_REAL *S);
-void eos_ExpandGridRecordType1 (void *ptr, EOS_INTEGER *err);
+void eos_ExpandGridRecordType1 (void *ptr, EOS_INTEGER th, EOS_INTEGER *err);
+void eos_AddGhostDataRecordType1 (void *ptr, EOS_INTEGER nGhostData, EOS_INTEGER *err);
 void eos_FixTableRecordType1 (void *ptr, EOS_INTEGER th, EOS_INTEGER *err);
 EOS_INTEGER eos_GetAnalyticalEOSFlags (eos_RecordType1 *me, EOS_INTEGER *imodel, eos_OptionValue **optValForced);
 void eos_GetLoadedBulkDataRecordType1 (void *ptr, EOS_REAL *zbar, EOS_REAL *abar, EOS_REAL *dens0, EOS_INTEGER *errorCode);
@@ -62,6 +67,7 @@ void eos_GetTableInfoRecordType1 (void *ptr, EOS_INTEGER th, EOS_INTEGER numInfo
 void eos_GetTableMetaDataRecordType1 (void *ptr, EOS_INTEGER infoItem, EOS_CHAR *infoStr, EOS_INTEGER *err);
 void eos_InvertAtSetupRecordType1 (void *ptr, EOS_INTEGER th, EOS_INTEGER dataType, EOS_INTEGER *errorCode);
 void eos_IsMonotonicRecordType1 (void *ptr, EOS_INTEGER dataType, EOS_BOOLEAN *isMonotonic, EOS_BOOLEAN inX, EOS_BOOLEAN inY, EOS_INTEGER *err);
+EOS_INTEGER _eos_Load300SeriesTables(eos_RecordType1 *me, EOS_INTEGER th, EOS_REAL **read_data);
 void eos_MakeMonotonicRecordType1 (void *ptr, EOS_INTEGER th, EOS_INTEGER dataType, EOS_BOOLEAN inX, EOS_BOOLEAN inY, EOS_INTEGER *err);
 void eos_MakeSmoothRecordType1 (void *ptr, EOS_INTEGER th, EOS_INTEGER dataType, EOS_BOOLEAN ptSmooth, EOS_INTEGER *err);
 void eos_PrintRecordType1 (void *ptr, EOS_INTEGER th, EOS_CHAR *fname, EOS_INTEGER append, EOS_INTEGER *err);
@@ -75,6 +81,14 @@ void eos_SetSmoothingRecordType1 (void *ptr, EOS_INTEGER dataType, EOS_INTEGER s
 EOS_INTEGER eos_computeCowanData (eos_RecordType1 *me, eos_RecordType1 *altEosData, EOS_REAL *p, EOS_REAL *e, EOS_REAL *a, EOS_REAL *s);
 EOS_INTEGER eos_computeIdealGasData (eos_RecordType1 *me, eos_RecordType1 *altEosData, EOS_REAL *p, EOS_REAL *e, EOS_REAL *a, EOS_REAL *s);
 EOS_INTEGER eos_computeNumPropData (eos_RecordType1 *me, eos_RecordType1 *altEosData, EOS_REAL *p, EOS_REAL *e, EOS_REAL *a, EOS_REAL *s);
+EOS_BOOLEAN eos_isRequiredDataLoadedRecordType1 (void *ptr, EOS_INTEGER dataType);
+EOS_BOOLEAN eos_AreGhostDataRequiredRecordType1 (void *ptr);
+void eos_SetUseTmpGhostDataRecordType1 (void *ptr, EOS_BOOLEAN useTmpGhostData);
+void eos_GenerateHashTablesRecordType1 (void *ptr);
+
+#ifdef DEBUG_EOS_EXPANDGRIDINTERPOLATE
+void eos_DumpExpandedGridRecordType1 (void *ptr, EOS_INTEGER th, EOS_CHAR *fn, EOS_INTEGER *err);
+#endif
 
 #endif /* _EOS_RECORDTYPE1_INTERNAL_PROTOTYPES */
 

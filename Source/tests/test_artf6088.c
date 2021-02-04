@@ -8,7 +8,7 @@
  ********************************************************************/
 
 /*! \file
- *  \ingroup tests
+ *  \ingroup C tests
  *  \brief Ensure selected tables, which are associated with Sesame 411 and 412 tables
  *         can be created, loaded, fetched, interpolated and destroyed.
  *

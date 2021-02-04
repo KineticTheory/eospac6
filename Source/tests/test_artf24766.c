@@ -8,7 +8,7 @@
  ********************************************************************/
 
 /*! \file
- *  \ingroup tests
+ *  \ingroup C tests
  *  \brief Test code to exercise the Taylor Polynomial class methods and attributes
  *         via the public interface's EOS_USE_TAYLOR_FIT option.
  *

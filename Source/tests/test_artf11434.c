@@ -8,7 +8,7 @@
  ********************************************************************/
 
 /*! \file
- * \ingroup tests quick
+ * \ingroup C tests quick
  * \brief Test the eos_TrapezoidIntegrate function with data generate by a
  *        simple polynomial and its integral:
  *             \f$ y=x^2+5x+1 \f$,
@@ -25,6 +25,9 @@
 #include <math.h>
 #include <assert.h>
 #include "eos_Interface.h"
+#ifdef DO_OFFLOAD
+#include <omp.h>
+#endif
 
 EOS_INTEGER eos_TrapezoidIntegrate (EOS_INTEGER ilower, EOS_INTEGER iupper, EOS_REAL x,
 				    EOS_INTEGER nData, EOS_REAL *fData, EOS_REAL *xData,
@@ -44,6 +47,10 @@ int main ()
   EOS_INTEGER errorCode;
   EOS_INTEGER N;
   EOS_CHAR errorMessage[EOS_MaxErrMsgLen];
+
+  #ifdef DO_OFFLOAD
+  omp_set_num_threads(1);
+  #endif
 
   N = N_enum;
 

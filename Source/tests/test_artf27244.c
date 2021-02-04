@@ -8,7 +8,7 @@
  ********************************************************************/
 
 /*! \file
- *  \ingroup tests
+ *  \ingroup C tests
  *  \brief Test for invalid memory access in eos_SetPackedTables.
  *
  *  See SourceForge issue 

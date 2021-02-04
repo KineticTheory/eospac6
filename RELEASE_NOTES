@@ -1,26 +1,38 @@
-SUBJECT: EOSPAC 6.4.0 is released
-DATE:    February 25, 2019
-SYMBOL:  WRS-19-008(U)
+SUBJECT: EOSPAC 6.5.0alpha.1 is released
+DATE:    January 17, 2021
+SYMBOL:  n/a
 
-Various changes have been implemented, but one is of particular interest to the user community
-(Fix floating point exception errors on KNL), which responds to a specific user request and is the
-primary motivation of this release. EOSPAC 6.4.0 has been released for general use as both the
-default and the latest versions (i.e., eospac6-default and eospac6-latest). The following changes
-have been implemented since the release of EOSPAC 6.4.0beta.4:
+EOSPAC 6.5.0alpha.1 has been released for general use. This is a limited release because it has not
+been deployed for all possible available compilers on the various LANL and LLNL systems. Rather
+this release is targeted for the IBM XL compilers on available powerpc clusters: RZAnsel at LLNL,
+Sierra at LLNL, and Darwin-Power9 at LANL.
+
+The following changes have been implemented since the release of EOSPAC 6.5.0alpha:
 
 High Priority:
-* Fix floating point exception errors on KNL
-* New Makefile logic required
+* Some SESAME ascii files cannot be read (#676)
+* Incorrect _eos_splunk implementation in custom eos_version_name_* (#663)
+* Fatal seg fault has recurred for Trinitite KNL compilation (#660)
 
 Normal Priority:
-* config.guess.wrapper returns unwanted gcc error on powerpc
-* Index file parser fails when lines end with white space
-* Fix trinitite test environment
-* Fix user manual
-* Fix build to accommodate differences between avx2 and avx512 instructions
-* Rewrite user manual
-* Fix some build script logic to accommodate new QoS requirements
-* Import new script, Tools/query_gitlab_issues.pl
+* Fix test030 failure on capulin (#679)
+* Fix test_getAllMaterials failure on capulin (#678)
+* Tests failing on trinititie when using -O (#677)
+* Fix memory issues in eos_GpuOffloadDataEosDataMap (#670)
+* Fix labeling in test_artf11602 and test_artf11602_se stdout (#669)
+* Clean up code prior to merge !26 (#667)
+* generate_Log10DistributedPoints numerical sensitivities cause platform-specific problems (#666)
+* Fix scripts/compile_and_run_tests_on_slurm_node.sbatch script (#662)
+* Repair TCL module script for Lmod nuance (#661)
+* Add more tests to skip_extrap branch (#658)
+* Update test descriptions for new tests (#657)
+* Cross-platform testing of skip_extrap branch (#656)
+* Fix makefiles on multiple branches (#652)
+* Implement an EOSPAC 6 options key/value configuration file (#38)
 
-See section 3 for more details regarding all of these changes.
-See section 6 for a list of issues that are known to cause usage problems.
+More details are forthcoming with the next release of EOSPAC 6.5.0beta -- a date is yet to be determined.
+
+The most current user manual is distributed with the library on the various platforms.
+A link to it can also be found on the open and secure at the following URL:
+
+https://xweb.lanl.gov/projects/data/eos/

@@ -8,7 +8,7 @@
  ********************************************************************/
 
 /*! \file
- * \ingroup tests
+ * \ingroup C tests
  * \brief Test end of file search token usage within "sesameFilesDir.txt".
  *        Test MATID matid-to-file association token usage within "sesameFilesDir.txt".
  *        See SourceForge© Issue #artf4034 for more details:

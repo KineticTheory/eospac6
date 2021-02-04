@@ -13,20 +13,25 @@
 
 /*
  * ---------------------------------------------------
- * 5 PUBLIC FUNCTION PROTOTYPES FOR eos_RecordType2.c
+ * 7 PUBLIC FUNCTION PROTOTYPES FOR eos_RecordType2.c
  * ---------------------------------------------------
  */
-void _eos_GetDataRecordType2 (eos_RecordType2 *me, EOS_REAL **T, EOS_REAL **F, EOS_INTEGER subTableNum);
+void _eos_GetDataRecordType2 (eos_RecordType2 *me, EOS_REAL **T, EOS_REAL **F, eos_HashTable1D** F_ht, EOS_INTEGER subTableNum);
+void eos_GetSizeRecordType2 (eos_RecordType2 *me, EOS_INTEGER *NT);
 void eos_ConstructRecordType2 (eos_RecordType2 *me, EOS_INTEGER th, EOS_INTEGER materialID);
 void eos_GetPackedTableRecordType2 (void *ptr, EOS_INTEGER th, EOS_CHAR *packedTable, EOS_INTEGER *err);
 void eos_GetPackedTableSizeRecordType2 (void *ptr, EOS_INTEGER th, EOS_INTEGER *packedTableSize, EOS_INTEGER *err);
 void eos_SetPackedTableRecordType2 (void *ptr, EOS_INTEGER th, EOS_CHAR *packedTable, EOS_INTEGER *err);
 
+#ifdef DO_OFFLOAD
+EOS_INTEGER eos_GpuOffloadDataRecordType2(void *ptr, EOS_INTEGER th);
+#endif /* DO_OFFLOAD */
+
 #ifdef _EOS_RECORDTYPE2_INTERNAL_PROTOTYPES
 
 /*
  * -----------------------------------------------------
- * 18 PRIVATE FUNCTION PROTOTYPES FOR eos_RecordType2.c
+ * 19 PRIVATE FUNCTION PROTOTYPES FOR eos_RecordType2.c
  * -----------------------------------------------------
  */
 void eos_AreMonotonicRequirementsCompatibleRecordType2 (void *ptr, EOS_INTEGER dataType, EOS_INTEGER inX, EOS_INTEGER inY, EOS_BOOLEAN *compatible);
@@ -47,6 +52,8 @@ void eos_SetFileIndexesRecordType2 (void *ptr, EOS_INTEGER th);
 void eos_SetMonotonicityRecordType2 (void *ptr, EOS_INTEGER dataType, EOS_INTEGER inX, EOS_INTEGER inY);
 void eos_SetSizeRecordType2 (eos_RecordType2 *me, EOS_INTEGER NT);
 void eos_SetSmoothingRecordType2 (void *me, EOS_INTEGER dataType, EOS_INTEGER makeSmooth, EOS_INTEGER makePtSmooth);
+EOS_BOOLEAN eos_isRequiredDataLoadedRecordType2 (void *ptr, EOS_INTEGER dataType);
+void eos_GenerateHashTablesRecordType2(void *ptr);
 
 #endif /* _EOS_RECORDTYPE2_INTERNAL_PROTOTYPES */
 

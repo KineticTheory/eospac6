@@ -61,6 +61,9 @@ void eos_SetOptionEosDataMap (eos_DataMap * me, EOS_INTEGER tableHandle, EOS_INT
 void eos_SetPackedTablesEosDataMap (eos_DataMap * me, EOS_INTEGER nTables, EOS_INTEGER tableHandles[],
                                     EOS_CHAR * packedTables, EOS_INTEGER * unpackedTablesSize,
                                     EOS_INTEGER * errorCode);
+#ifdef DO_OFFLOAD
+void eos_GpuOffloadDataEosDataMap (eos_DataMap * me, EOS_INTEGER * errorCode);
+#endif /* DO_OFFLOAD */
 
 #ifdef _EOS_DATAMAP_INTERNAL_PROTOTYPES
 

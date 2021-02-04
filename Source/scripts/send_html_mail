@@ -16,10 +16,12 @@ use strict;
 use File::Basename;
 use Getopt::Long;
 my $options={};
-GetOptions($options,"--debug","--subject=s","--plaintextfile=s","--mail_server=s");
+GetOptions($options,"--debug","--subject=s","--plaintextfile=s","--mail_server=s", "--verbose", "--email=s");
 
 # define recipient's email address
 my $email_address = 'eospac_testing@lanl.gov';
+$email_address = $options->{"email"} if ($options->{"email"});
+print "email_address = $email_address\n" if ($options->{"verbose"});
 
 # define default/custom subject
 my $subject = "EOSPAC 6 Testing Status report";
@@ -28,15 +30,26 @@ $subject = $options->{"subject"}
 my $subject_wrapped_html = $subject;
 $subject_wrapped_html =~ s|s*\(|<br><i>(|;
 $subject_wrapped_html .= '</i>';
+print "subject = $subject\n" if ($options->{"verbose"});
 
 # define default/custom smtp server name
 my $smtp_server_name = 'mail';
+my $long_hostname = `hostname --long`;
+chomp $long_hostname;
+if ($long_hostname =~ /llnl\.gov/) {
+  # use alternative default mail server name
+  $smtp_server_name = 'nospam.llnl.gov';
+}
 $smtp_server_name = $options->{"mail_server"}
   if ($options->{"mail_server"});
+print "smtp_server_name = $smtp_server_name\n" if ($options->{"verbose"});
 
 my $scriptname = basename($0);
+print "scriptname = $scriptname\n" if ($options->{"verbose"});
 my $host = `hostname`; chomp $host;
+print "host = $host\n" if ($options->{"verbose"});
 my $sender = "\"$scriptname \@ $host\"";
+print "sender = $sender\n" if ($options->{"verbose"});
 
 my $msgstr = "";
 # load HTML file in memory

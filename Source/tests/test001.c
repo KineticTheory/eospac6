@@ -8,7 +8,7 @@
  ********************************************************************/
 
 /*! \file
- *  \ingroup tests
+ *  \ingroup C tests
  *  \brief Verify results of category 0, 2 and 4 interpolation for both
  *  EOS_RATIONAL and EOS_LINEAR interpolation options.
  *

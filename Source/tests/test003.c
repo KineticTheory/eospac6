@@ -8,7 +8,7 @@
  ********************************************************************/
 
 /*! \file
- *  \ingroup tests
+ *  \ingroup C tests
  *  \brief Test eos_GetTableInfo and eos_GetTableCmnts public functions.
  *
  * Uses the following routines:

@@ -8,7 +8,7 @@
  ********************************************************************/
 
 /*! \file
- *  \ingroup tests
+ *  \ingroup C tests
  *  \brief Perform the following tests:
  *    -# Verify memory error in eos_CleanUpColdCurveRecordType1 was fixed
  *

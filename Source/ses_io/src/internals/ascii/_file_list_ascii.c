@@ -22,6 +22,7 @@
 
 #define MAX_BUFFER_SIZE 300
 
+// _read_double_tomax_ascii reads in a "to max" number of doubles while skipping over the end of line cruft.
 double _read_double_tomax_ascii(struct _ses_file_handle* pSFH, unsigned int nsig, ses_boolean do_validation, int max_length) {
     
     /*  read a double from the current file handle */
@@ -33,6 +34,9 @@ double _read_double_tomax_ascii(struct _ses_file_handle* pSFH, unsigned int nsig
     ses_boolean my_do_validation_double(double the_double);
     
     /*  end function prototypes */
+#ifdef DEBUG_PRINT
+    printf("_read_double_tomax_ascii: size: %d, nsig: %d, do_validation: %d\n",max_length, nsig, do_validation);
+#endif
     
     double return_value = 0.0;
     
@@ -41,7 +45,7 @@ double _read_double_tomax_ascii(struct _ses_file_handle* pSFH, unsigned int nsig
     
     if (pSFH == (struct _ses_file_handle*)NULL) {
 #ifdef DEBUG_PRINT
-        printf("_read_double_ascii: Null ses file handle passed to _read_double_ascii\n");
+        printf("_read_double_tomax_ascii: Null ses file handle passed to _read_double_ascii\n");
 #endif
         _set_latest_error(SES_NULL_OBJECT_ERROR);
         return return_value;
@@ -50,7 +54,7 @@ double _read_double_tomax_ascii(struct _ses_file_handle* pSFH, unsigned int nsig
     int lnsig = nsig;
     if (lnsig < 0) {
 #ifdef DEBUG_PRINT
-        printf("_read_double_ascii: nsig < 0, error -- changing nsig to 0\n");
+        printf("_read_double_tomax_ascii: nsig < 0, error -- changing nsig to 0\n");
 #endif
         nsig = 0;
         
@@ -61,7 +65,7 @@ double _read_double_tomax_ascii(struct _ses_file_handle* pSFH, unsigned int nsig
     FILE* pFILE = pSFH->_c_file_handle;
     if (pFILE == (FILE*)NULL) {
 #ifdef DEBUG_PRINT
-        printf("_read_double_ascii: Null FILE* in _read_double\n");
+        printf("_read_double_tomax_ascii: Null FILE* in _read_double\n");
 #endif
         _set_latest_error(SES_NULL_OBJECT_ERROR);
         return return_value;
@@ -75,24 +79,77 @@ double _read_double_tomax_ascii(struct _ses_file_handle* pSFH, unsigned int nsig
     
     
     int number_read = fread(&cbuffer, 1, 1, pFILE);
-    int index = 0;
-    int tolength = 1;
+    int index       = 0;
+    int tolength    = 1;
+    
+#ifdef DEBUG_PRINT
+    printf("_read_double_tomax_ascii, FIRST read. number_read: %d, cbuffer: '%c'\n",number_read, cbuffer);
+#endif
+    
     //  peel off leading blanks
     while ((cbuffer == ' ') && (number_read > 0) && (tolength < max_length)) {
         myBuffer[index] = cbuffer;
         index++;
         number_read = fread(&cbuffer, 1, 1, pFILE);
+#ifdef DEBUG_PRINT
+            printf("Peel Off:: INDEX: %d, cbuffer: '%c'\n", index, cbuffer);
+#endif
         tolength++;
     }
+    
     //  read the double as a string
-    while ((number_read > 0) && (tolength < max_length)) {
-        
+#ifdef DEBUG_PRINT
+    printf("_read_double_tomax_ascii: max_length: %d, INDEX: %d cbuffer:", max_length, index);
+#endif
+  while ((number_read > 0) && (tolength < max_length)) {
+    
+    myBuffer[index] = cbuffer;
+    index++;
+    number_read = fread(&cbuffer, 1, 1, pFILE);
+    
+    // Some times the indexing is screwed up, if you hit \r or \n and the index=5, then you have
+    // run into the end of line cruft (11111 to 10000), skip over that crap and start at new index & tolength.
+    
+    if ((cbuffer == '\r' || cbuffer == '\n') & (index == 5)){
+#ifdef DEBUG_PRINT
+      printf("\n_read_double_tomax_ascii INDEX is 5!: index: %d tolength: %d, max_length: %d\n", index, tolength, max_length);
+#endif
+      
+      // Start at the beginning of the next line!?
+      number_read = fread(&cbuffer, 1, 1, pFILE);
+      index = 0;
+      tolength = 0;
+      
+      //  peel off leading blank - there should be one, if it's a positive number.
+      while ((cbuffer == ' ') && (number_read > 0) && (tolength < max_length)) {
         myBuffer[index] = cbuffer;
         index++;
         number_read = fread(&cbuffer, 1, 1, pFILE);
+#ifdef DEBUG_PRINT
+        printf("Peel:: INDEX: %d, cbuffer: '%c'\n", index, cbuffer);
+#endif
         tolength++;
-        
+      }
     }
+    
+#ifdef DEBUG_PRINT
+        printf(" %c",cbuffer);
+#endif
+       tolength++;
+       
+    }
+#ifdef DEBUG_PRINT
+    printf("\n");
+    printf("_read_double_tomax_ascii SECOND Time: INDEX: %d tolength: %d  ", index, tolength);
+#endif
+    
+
+#ifdef DEBUG_PRINT
+    // Move the file pointer to te correct index:
+    int current_location = ftell( pSFH->_c_file_handle);
+    printf("_read_double_tomax_ascii: CURRENT_location: %d\n", current_location);
+#endif
+    
     if (tolength == max_length) {
         myBuffer[index] = cbuffer;
     }
@@ -107,14 +164,20 @@ double _read_double_tomax_ascii(struct _ses_file_handle* pSFH, unsigned int nsig
     mydBuffer = strtod(the_string, NULL);
     
     double tmp_double;
-    
+
     /*  truncate for significant digits */
     if (nsig != 0) {
         tmp_double = my_truncate_for_significant_digits(mydBuffer, nsig);
         return_value = tmp_double;
+#ifdef DEBUG_PRINT
+          printf("_read_double_tomax_ascii: from tmp_double.\n");
+#endif
     }
     else {
         return_value = mydBuffer;
+#ifdef DEBUG_PRINT
+          printf("_read_double_tomax_ascii: from mydBuffer, return_value: %lf\n", return_value);
+#endif
     }
     
     /*  do validation */
@@ -122,12 +185,15 @@ double _read_double_tomax_ascii(struct _ses_file_handle* pSFH, unsigned int nsig
     if (do_validation == SES_TRUE) {
         if (my_do_validation_double(return_value) == SES_FALSE) {
 #ifdef DEBUG_PRINT
-            printf("_read_double_ascii: do validation error on double -- setting error\n");
+            printf("_read_double_tomax_ascii: do validation error on double -- setting error\n");
 #endif
             _set_latest_error(SES_READ_ERROR);
             return_value = 0.0;
         }
     }
+#ifdef DEBUG_PRINT
+    printf("_read_double_tomax_ascii: value: %lf\n",return_value);
+#endif
     
     return return_value;
     
@@ -473,7 +539,7 @@ ses_boolean _write_double_ascii(struct _ses_file_handle* pSFH, double the_double
     
 }
 
-long               _read_long_tomax_ascii(struct _ses_file_handle* pSFH, unsigned int fixed_size) {
+long  _read_long_tomax_ascii(struct _ses_file_handle* pSFH, unsigned int fixed_size) {
     
     /*  read a long as an ascii from the current file handle */
     
@@ -484,7 +550,7 @@ long               _read_long_tomax_ascii(struct _ses_file_handle* pSFH, unsigne
     
     if (pSFH == (struct _ses_file_handle*)NULL) {
 #ifdef DEBUG_PRINT
-        printf("_read_long_ascii: ses file handle null in _read_long\n");
+        printf("_read_long_tomax_ascii: ses file handle null in _read_long\n");
 #endif
         _set_latest_error(SES_NULL_OBJECT_ERROR);
         return 0;
@@ -494,7 +560,7 @@ long               _read_long_tomax_ascii(struct _ses_file_handle* pSFH, unsigne
     
     if (pFILE == (FILE*)NULL) {
 #ifdef DEBUG_PRINT
-        printf("_read_long_ascii: null c file handle into _read_long_ascii\n");
+        printf("_read_long_tomax_ascii: null c file handle into _read_long_ascii\n");
 #endif
         _set_latest_error(SES_NULL_OBJECT_ERROR);
         return 0;
@@ -508,16 +574,24 @@ long               _read_long_tomax_ascii(struct _ses_file_handle* pSFH, unsigne
     char cbuffer = ' ';
     ses_boolean at_start = SES_TRUE;
     
-    int number_read = fread(&cbuffer, 1, 1, pFILE);
     int index = 0;
+    int number_read = fread(&cbuffer, 1, 1, pFILE);
+    myBuffer[index] = cbuffer;
+    index = 1;
+
+#ifdef DEBUG_PRINT
+    printf("_read_long_tomax_ascii1: Index: %d cbuffer: \'%c\'\n", index, cbuffer);
+#endif
     
     
     //  while ( (((int)cbuffer != 32) || (at_start == SES_TRUE)) && (number_read > 0)) {
     while ( (((int)cbuffer != 32) || (at_start == SES_TRUE)) && (number_read > 0) && (index < fixed_size)) {
-        
+        number_read = fread(&cbuffer, 1, 1, pFILE);
         myBuffer[index] = cbuffer;
         index++;
-        number_read = fread(&cbuffer, 1, 1, pFILE);
+#ifdef DEBUG_PRINT
+        printf("_read_long_tomax_ascii:  Index: %d,  cbuffer: %c, index %d\n", index, cbuffer, index);
+#endif
         if ((int)cbuffer != 32) {
             at_start = SES_FALSE;
         }
@@ -535,12 +609,12 @@ long               _read_long_tomax_ascii(struct _ses_file_handle* pSFH, unsigne
     mylBuffer = (long)mydBuffer;
     
 #ifdef DEBUG_PRINT
-    printf("_read_fixed_long_ascii:  read long %ld, fixed_size: %i\n", mylBuffer, fixed_size);
+    printf("_read_long_tomax_ascii:  mylBuffer: %ld, fixed_size: %i\n", mylBuffer, fixed_size);
 #endif
     
     if (index <= 0) {
 #ifdef DEBUG_PRINT
-        printf("_read_long_ascii: Failure in reading long, fixed_size: %i\n", fixed_size);
+        printf("_read_long_tomax_ascii: Failure in reading long, fixed_size: %i\n", fixed_size);
 #endif
         _set_latest_error(SES_READ_ERROR);
         return_value = 0;
@@ -708,32 +782,56 @@ long  _read_long_tomax_pFILE_ascii(FILE* pFILE, unsigned int fixed_size, ses_boo
     long mylBuffer;
     char myBuffer[MAX_BUFFER_SIZE];
     char cbuffer = ' ';
-    int index = 0;
-    
     int number_read = fread(&cbuffer, 1, 1, pFILE);
-    if ((cbuffer == ' ') && (number_read > 0)) {
-        number_read = fread(&cbuffer, 1,1, pFILE);
+    int index       = 0;
+    int tolength    = 1;
+    
+#ifdef DEBUG_PRINT
+    printf("_read_long_tomax_pFILE_ascii: index: %d, cbuffer: %c, number_read: %d\n",index, cbuffer, number_read);
+#endif
+    //  peel off leading blanks
+    while ((cbuffer == ' ') && (number_read > 0) && (tolength < fixed_size)) {
+        number_read = fread(&cbuffer, 1, 1, pFILE);
+        tolength++;
+#ifdef DEBUG_PRINT
+        printf("_read_long_tomax_pFILE_ascii: tolength: %d, cbuffer: %c\n",tolength, cbuffer);
+#endif
     }
-    //  while ((cbuffer != ' ') && (number_read > 0)) {
-    //  while ((cbuffer != ' ') && (number_read > 0) && (index < fixed_size)) {
-    while ((number_read > 0) && (index < fixed_size)) {
+    // Grab the first non-blank character
+    myBuffer[index] = cbuffer;
+    index++;
+#ifdef DEBUG_PRINT
+    printf("_read_long_tomax_pFILE_ascii: myBuffer: %s\n", myBuffer);
+#endif
+    
+    // read the actual value
+    while ((number_read > 0) && (tolength < fixed_size)) {
+        
+        number_read = fread(&cbuffer, 1, 1, pFILE);
+        tolength++;
+        
         myBuffer[index] = cbuffer;
         index++;
-        number_read = fread(&cbuffer, 1, 1, pFILE);
-        
+
+#ifdef DEBUG_PRINT
+        printf("_read_long_tomax_pFILE_ascii: tolength: %d, index: %d, cbuffer: %c\n", tolength, index, cbuffer);
+#endif
     }
     
     myBuffer[index] = '\0';
     char* the_string = &myBuffer[0];
+#ifdef DEBUG_PRINT
+    printf("_read_long_tomax_pFILE_ascii: index: %d, myBuffer %s, the_string: %s\n",index, myBuffer, the_string);
+#endif
     
     /* convert the input character stream to a long  */
     mylBuffer = 0;
     
-    double myldBuffer = atof(the_string);
+    double myldBuffer = strtod(the_string, NULL);
     mylBuffer = (long)myldBuffer;
     
 #ifdef DEBUG_PRINT
-    printf("_read_long_tomax_pFILE_ascii:  read long %ld, Fixed_size: %i\n", mylBuffer,fixed_size);
+    printf("_read_long_tomax_pFILE_ascii:  read long, mylBuffer: %ld, index: %i\n", mylBuffer,index);
 #endif
     
     
@@ -780,14 +878,14 @@ long _read_long_pFILE_ascii(FILE* pFILE, ses_boolean needs_flip) {
     int index = 0;
     
     int number_read = fread(&cbuffer, 1, 1, pFILE);
+    
     if ((cbuffer == ' ') && (number_read > 0)) {
         number_read = fread(&cbuffer, 1,1, pFILE);
     }
     while ((cbuffer != ' ') && (number_read > 0)) {
         myBuffer[index] = cbuffer;
         index++;
-        number_read = fread(&cbuffer, 1, 1, pFILE);
-        
+        number_read = fread(&cbuffer, 1, 1, pFILE);        
     }
     
     myBuffer[index] = '\0';
@@ -958,6 +1056,9 @@ ses_word_reference _read_ses_word_array_ascii(struct _ses_file_handle* pSFH, lon
     ses_word_reference return_value = (ses_word_reference)NULL;
     
     /*  allocate the memory for the return */
+#ifdef DEBUG_PRINT
+    printf("_read_ses_word_array_ascii: size of read: %ld\n", size_array);
+#endif
     
     return_value = malloc(sizeof(ses_word)*size_array);
     int i2 = 0;
@@ -972,49 +1073,51 @@ ses_word_reference _read_ses_word_array_ascii(struct _ses_file_handle* pSFH, lon
         return (ses_word_reference)NULL;
     }
     
+#ifdef DEBUG_PRINT
+    printf("_read_ses_word_array_ascii: size of read: %ld, word_size: %d\n", size_array, pSFH->_word_size);
+#endif
     
-    int num_lines = 0;
-    int current_location = ftell(pSFH->_c_file_handle);
-    double tmp = _read_double_tomax_ascii(pSFH, nsig, do_validation,pSFH->_word_size);
+    int    num_lines        = 0;
+    int    current_location = ftell(pSFH->_c_file_handle);
+    double tmp              = _read_double_tomax_ascii(pSFH, nsig, do_validation,pSFH->_word_size);
+#ifdef DEBUG_PRINT
+    int    next_location    = ftell(pSFH->_c_file_handle);
+#endif
     
     if (size_array == 1) {
         return_value[0] = tmp;
+        
+#ifdef DEBUG_PRINT
+        int diff_locations = next_location - current_location;
+        printf("_read_ses_word_array_ascii: next_LOCATION: %d, current_location: %d, difference: %d\n", next_location, current_location, diff_locations);
+#endif
+        
         return return_value;
     }
     
     
-    int next_location = ftell(pSFH->_c_file_handle);
-    int size_double_ascii = next_location - current_location;
-    
-    /*  if at end of line where we have 11111\n -- resize */
-    
-    if (tmp > 3.0e+300) {
-        size_double_ascii = size_double_ascii - 6;
-    }
-    
-    
-    // GINGER!!
 #ifdef DEBUG_PRINT
-    printf("_read_ses_word_array_ascii: word_size SET to %d\n", size_double_ascii);
+    printf("_read_ses_word_array_ascii: next_location: %d, current_location: %d, pSFH->_word_size: %d\n", next_location, current_location, pSFH->_word_size);
+    printf("_read_ses_word_array_ascii: _word_size SET to %d, tmp : %f\n", pSFH->_word_size, tmp);
 #endif
-    pSFH->_word_size = size_double_ascii;
+    
     fseek(pSFH->_c_file_handle, current_location, SEEK_SET);
     
     int i = 0;
     char line[128];
+    
     /*  initialize */
     for (i=0; i < 127; i++) {
         line[i] = ' ';
     }
     line[127] = '\0';
     
-    int num_per_line = (128/size_double_ascii);
+    int num_per_line = (128/pSFH->_word_size);
     
     num_lines = size_array/num_per_line;
-    if (num_lines*num_per_line  <= 0) {
+    if ( (num_lines * num_per_line) <= 0) {
         num_lines++;    //  gotta be at least one line
     }
-    
     
     int j = 0;
     int start_index = 0;
@@ -1022,9 +1125,9 @@ ses_word_reference _read_ses_word_array_ascii(struct _ses_file_handle* pSFH, lon
     for (i=0; i < num_lines; i++) {
         current_location = ftell(pSFH->_c_file_handle);
         fgets ( &line[0], sizeof line, pSFH->_c_file_handle);
+        //printf("_read_ses_word_array_ascii: LINE \'%s\', num_lines: %d\n", line, num_lines);
         for (j = 127; j >= 0; j--) {
             if (line[j] == '1') break;
-            
         }
         
         start_index = j - 4;
@@ -1041,9 +1144,7 @@ ses_word_reference _read_ses_word_array_ascii(struct _ses_file_handle* pSFH, lon
             line[127] = '\0';
         }
         //  parse the doubles off the line
-        int next_index = my_parse_doubles_from_line(&line[0], return_value, double_index, size_double_ascii, size_array, pSFH->_c_file_handle);
-        
-        
+        int next_index = my_parse_doubles_from_line(&line[0], return_value, double_index, pSFH->_word_size, size_array, pSFH->_c_file_handle);
         
         double_index = next_index;
         if ((i == num_lines-1) && (next_index < size_array)) {
@@ -1052,21 +1153,23 @@ ses_word_reference _read_ses_word_array_ascii(struct _ses_file_handle* pSFH, lon
         if (next_index >= size_array) {
             //  on the last line, you've read some of the 'next' array
             //  need to move the file handle back
-            int num_on_line = (ftell(pSFH->_c_file_handle) - current_location)/size_double_ascii;
+            int num_on_line = (ftell(pSFH->_c_file_handle) - current_location)/pSFH->_word_size;
+            
+#ifdef DEBUG_PRINT
+            printf("_read_ses_word_array_ascii: Num_on_line %d\n", num_on_line);
+#endif
             
             fseek(pSFH->_c_file_handle, current_location , SEEK_SET);
             int i = 0;
             int many = num_on_line - (next_index - size_array)  ;
             for (i = 0; i < many; i++) {
+#ifdef DEBUG_PRINT
+                printf("_read_ses_word_array_ascii:  word_size: %d\n", pSFH->_word_size);
+#endif
                 tmp = _read_double_tomax_ascii(pSFH, nsig, do_validation, pSFH->_word_size);
             }
             
-            
-            
         }
-        
-        
-        
         
     }
     

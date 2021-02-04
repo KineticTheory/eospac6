@@ -218,6 +218,15 @@ module eos_Interface2003
      end subroutine eos_Mix_cfunc_scalar
   end interface
 
+  interface eos_GpuOffloadData
+     pure subroutine eos_GpuOffloadData_cfunc(errorCode) &
+          bind(C, name="eos_GpuOffloadData")
+       import :: EOS_INTEGER
+       integer(EOS_INTEGER), intent(out) :: errorCode
+     end subroutine eos_GpuOffloadData_cfunc
+  end interface
+
+
   interface eos_SetOption
      pure subroutine eos_SetOption_cfunc(tableHandle, tableOption, tableOptionVal, errorCode) &
           bind(C, name="eos_SetOption")

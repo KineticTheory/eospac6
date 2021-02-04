@@ -8,7 +8,7 @@
  ********************************************************************/
 
 /*! \file
- *  \ingroup tests quick
+ *  \ingroup C tests quick
  *  \brief This is a unit test of the eos_Utils::eos_SetCustomErrorMsg
  *  function.
  *
