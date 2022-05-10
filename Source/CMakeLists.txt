@@ -130,7 +130,7 @@ if( MSVC )
     RUNTIME DESTINATION bin
     ARCHIVE DESTINATION lib )
   # For Debug under VS, also install the pdb files.
-  install( FILES ${PROJECT_BINARY_DIR}/libeospac6.dir/Debug/libeospac6.pdb
+  install( FILES ${PROJECT_BINARY_DIR}/Debug/eospac6.pdb
     CONFIGURATIONS Debug 
     DESTINATION lib)
 else()
