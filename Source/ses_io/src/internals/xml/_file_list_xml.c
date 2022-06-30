@@ -7,14 +7,13 @@
 #include "stdlib.h"
 
 
+/*  function prototoypes */
+long _read_long_text_pFILE(FILE* pFILE) {};
+
 
 long _read_long_text(struct _ses_file_handle* pSFH) {
  
   long return_value = 0;
-
-  /*  function prototoypes */
-
-  long _read_long_text_pFILE(FILE* pFILE);
 
   /*  end function prototypes */
 

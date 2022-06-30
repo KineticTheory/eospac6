@@ -2310,7 +2310,7 @@ eos_SetCustomMsg_str (EOS_CHAR ** msg, const EOS_CHAR * fmt, ...)
   va_end (args);
 }
 
-inline EOS_INTEGER
+/*inline*/ EOS_INTEGER
 eos_GetHandleFromCustomErrorCode (const EOS_INTEGER err)
 {
   /* remove the original err value from the err, returning the th (th<0 indicates no th included) */
@@ -2320,7 +2320,7 @@ eos_GetHandleFromCustomErrorCode (const EOS_INTEGER err)
   return(th);
 }
 
-inline EOS_INTEGER
+/*inline*/ EOS_INTEGER
 eos_GetStandardErrorCodeFromCustomErrorCode (const EOS_INTEGER err)
 {
   /* remove the th value from the err, returning the original err */

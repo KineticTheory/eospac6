@@ -43,7 +43,9 @@ ses_error_flag _read_index_record_llnl_xml(struct _ses_index_record* the_index_r
   /*  function prototypes */
 
    ses_error_flag check_errors_READ_INDEX_RECORD_LLNL_XML(struct _ses_index_record* ptIR, struct _ses_file_handle* pSFH, long offset);
+#ifdef USE_LIBXML2
   ses_error_flag parse_my_material_tag(struct _ses_index_record* the_index_record, struct _ses_file_handle* pSFH, long offset);
+#endif
 
    /*  end function prototypes */
 
@@ -56,7 +58,11 @@ ses_error_flag _read_index_record_llnl_xml(struct _ses_index_record* the_index_r
 
 
   ses_error_flag return_value = SES_READ_ERROR; 
+#ifdef USE_LIBXML2
   return_value = parse_my_material_tag(the_index_record, pSFH, offset);
+#else
+  return_value = 0;
+#endif
   the_index_record->_date1 = 0;
   the_index_record->_date2 = 0;
   the_index_record->_vers = 0;
